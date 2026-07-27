@@ -1,3 +1,7 @@
+## 1.8.36-dev.20
+
+- Rename user-facing My Commands labels to Commands in the new Portal UI.
+
 ## 1.8.36-dev.19
 
 - Fix standalone Settings save so Commands module enablement and options are persisted.

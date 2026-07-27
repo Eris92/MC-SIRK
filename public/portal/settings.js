@@ -31,7 +31,7 @@
         management: [{ type: "module", key: "myjira", title: "Jira" }],
         reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
         security: [{ type: "module", key: "defendertools", title: "Defender" }],
-        settings: [{ type: "portal", title: "Portal i sesja" }, { type: "module", key: "mycommands", title: "Polecenia urządzeń (ogólne)" }],
+        settings: [{ type: "portal", title: "Portal i sesja" }, { type: "module", key: "mycommands", title: "Commands" }],
         permissions: [{ type: "folderpermissions", title: "Permissions" }]
     };
 

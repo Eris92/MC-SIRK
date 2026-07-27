@@ -18,7 +18,7 @@
     var providerOrder = ["moverequests", "mycommands", "myscripts"];
     var providerTitles = {
         moverequests: "Move Requests",
-        mycommands: "My Commands",
+        mycommands: "Commands",
         myscripts: "My Scripts"
     };
     var providerIcons = {

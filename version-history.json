@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.20",
+    "date": "2026-07-27",
+    "changes": [
+      "Rename user-facing My Commands labels to Commands in the new Portal UI"
+    ]
+  },
+  {
     "version": "1.8.36-dev.19",
     "date": "2026-07-27",
     "changes": [

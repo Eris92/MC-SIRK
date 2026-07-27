@@ -192,7 +192,7 @@
     function refresh(shell) { var toolbar = shell.state.page && shell.state.page.toolbar; if (toolbar) toolbar.setEnabled("refresh", false); shell.post("refresh", {}).then(function (response) { sourceTree = response.tree || sourceTree; catalog = response.catalog || catalog; tree = buildTree(); if (treeState.selectedScript && !window.SharedDirectoryTree.find(tree, treeState.selectedScript)) treeState.selectedScript = ""; shell.render(); }).catch(function (error) { note(shell, msg("Odświeżanie nie powiodło się", "Refresh failed"), error.message || String(error), true); }).then(function () { if (toolbar) toolbar.setEnabled("refresh", true); }); }
 
     var module = window.SirkPlatformModuleShell.create({
-        key: "mycommands", title: "My Commands", menuTitle: "My Commands", showInMenu: false, order: 150, preset: "mycommands",
+        key: "mycommands", title: "Commands", menuTitle: "Commands", showInMenu: false, order: 150, preset: "mycommands",
         deviceTab: { title: "Commands", pageId: "sirk-platform-mycommands-device-page", topTabId: "MainDevSirkPlatform-Commands" },
         buttons: {
             collapse: { side: "left", order: 10 },
