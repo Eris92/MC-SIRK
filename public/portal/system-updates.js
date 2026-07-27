@@ -42,6 +42,14 @@
         })[0] || null;
     }
 
+    function activeJob(snapshot) {
+        var job = latestJob(snapshot);
+        if (!job) return null;
+        if (job.status === "queued" || job.status === "running") return job;
+        if (snapshot.current && snapshot.current.pending && job.type === "update") return job;
+        return null;
+    }
+
     function jobMarkup(job) {
         if (!job) return "";
         return '<div class="sirk-update-job ' + escapeHtml(job.status || "") + '"><strong>' + escapeHtml(job.type || "operacja") + '</strong>' +
@@ -49,19 +57,32 @@
             '<progress max="100" value="' + Number(job.progress || 0) + '"></progress><small>' + Number(job.progress || 0) + '%</small></div>';
     }
 
+    function stateMarkup(remote, current) {
+        if (remote.error) {
+            return '<div class="sirk-card"><strong>Nie udało się sprawdzić aktualizacji</strong><p>' + escapeHtml(remote.error) + '</p></div>';
+        }
+        if (remote.updateAvailable) {
+            return '<div class="sirk-card"><strong>Dostępna jest aktualizacja systemu</strong><p>Możesz zaktualizować system z wersji <strong>' +
+                escapeHtml(current.version || "—") + '</strong> do <strong>' + escapeHtml(remote.availableVersion || "—") + '</strong>.</p></div>';
+        }
+        return '<div class="sirk-card"><strong>System jest aktualny</strong><p>Zainstalowana jest najnowsza dostępna wersja dla wybranego kanału.</p></div>';
+    }
+
     function renderUpdates(host, snapshot) {
         var remote = snapshot.remote || {};
         var current = snapshot.current || {};
-        var job = latestJob(snapshot);
+        var job = activeJob(snapshot);
+        var isBusy = busy(snapshot);
         var restartButton = current.pending ? '<button type="button" class="sirk-button" data-update-action="restart">Uruchom ponownie MeshCentral</button>' : '';
         host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions">' +
             '<button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button>' +
-            '<button type="button" class="sirk-button" data-update-action="install"' + (busy(snapshot) || current.pending ? ' disabled' : '') + '>Aktualizuj</button></div>' +
+            '<button type="button" class="sirk-button" data-update-action="install"' + (isBusy || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj system</button></div>' +
             '<div class="sirk-update-summary"><p>Aktualna wersja: <strong>' + escapeHtml(current.version || "—") + '</strong></p>' +
             '<p>Dostępna wersja: <strong>' + escapeHtml(remote.availableVersion || remote.error || "—") + '</strong></p>' +
             '<p>Aktywny kanał: <strong>' + escapeHtml(current.channel || "—") + '</strong> · <code>' + escapeHtml(current.branch || "—") + '</code></p>' +
             '<p>Status: <strong>' + (remote.updateAvailable ? 'Dostępna aktualizacja' : 'Aktualne') + '</strong></p></div>' +
-            jobMarkup(job) + (current.pending ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.<br>' + restartButton + '</p>' : '') + '</div>';
+            stateMarkup(remote, current) + jobMarkup(job) +
+            (current.pending ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.<br>' + restartButton + '</p>' : '') + '</div>';
     }
 
     function renderBackups(host, snapshot) {
@@ -87,7 +108,7 @@
         var current = snapshot.current || {};
         host.innerHTML = '<div class="sirk-update-section"><label class="sirk-update-channel-label">Kanał aktualizacji<select data-update-channel>' +
             '<option value="stable">Normalny — main</option><option value="beta">Beta — beta</option><option value="dev">Developerski — develop</option></select></label>' +
-            '<div class="sirk-update-actions"><button type="button" class="sirk-button" data-update-action="save-channel"' + (busy(snapshot) || current.pending ? ' disabled' : '') + '>Zapisz</button></div>' +
+            '<div class="sirk-update-actions"><button type="button" class="sirk-button" data-update-action="save-channel"' + (busy(snapshot) ? ' disabled' : '') + '>Zapisz</button></div>' +
             '<p>Zmiana kanału zacznie obowiązywać dopiero po kliknięciu <strong>Zapisz</strong>.</p></div>';
         host.querySelector("[data-update-channel]").value = current.channel || "stable";
     }
@@ -152,73 +173,5 @@
         load(host, section);
     }
 
-    function settingsLayout(host) {
-        if (!host || host.getAttribute("data-system-settings-ready") === "1") return;
-        host.setAttribute("data-system-settings-ready", "1");
-
-        var original = document.createElement("div");
-        original.className = "sirk-settings-original";
-        while (host.firstChild) original.appendChild(host.firstChild);
-
-        var shell = document.createElement("section");
-        shell.className = "sirk-standalone-view-scroll";
-        shell.innerHTML = '<div class="sirk-toolbar-host"><div class="sirk-toolbar"><strong>Ustawienia</strong></div></div>' +
-            '<div class="sirk-layout-host"><div class="sirk-layout"><aside class="sirk-column-primary">' +
-            '<button type="button" class="sirk-nav-item is-active" data-settings-group="portal">Portal</button>' +
-            '<button type="button" class="sirk-nav-item" data-settings-group="system">System</button></aside>' +
-            '<aside class="sirk-column-secondary" data-settings-secondary></aside>' +
-            '<div class="sirk-column-details" data-settings-details></div></div></div>';
-        host.appendChild(shell);
-
-        var secondary = shell.querySelector("[data-settings-secondary]");
-        var details = shell.querySelector("[data-settings-details]");
-
-        function selectGroup(group) {
-            Array.prototype.forEach.call(shell.querySelectorAll("[data-settings-group]"), function (item) {
-                item.classList.toggle("is-active", item.getAttribute("data-settings-group") === group);
-            });
-            secondary.innerHTML = "";
-            details.innerHTML = "";
-            if (group === "system") {
-                secondary.innerHTML = '<button type="button" class="sirk-nav-item is-active" data-system-section="updates">Aktualizacje</button>' +
-                    '<button type="button" class="sirk-nav-item" data-system-section="backups">Backupy</button>' +
-                    '<button type="button" class="sirk-nav-item" data-system-section="history">Historia</button>' +
-                    '<button type="button" class="sirk-nav-item" data-system-section="channel">Kanał aktualizacji</button>';
-                mount(details, "updates");
-            } else {
-                details.appendChild(original);
-            }
-        }
-
-        shell.addEventListener("click", function (event) {
-            var group = event.target.closest("[data-settings-group]");
-            if (group) {
-                selectGroup(group.getAttribute("data-settings-group"));
-                return;
-            }
-            var button = event.target.closest("[data-system-section]");
-            if (!button) return;
-            Array.prototype.forEach.call(shell.querySelectorAll("[data-system-section]"), function (item) {
-                item.classList.toggle("is-active", item === button);
-            });
-            mount(details, button.getAttribute("data-system-section"));
-        });
-
-        selectGroup("portal");
-    }
-
-    function installSettingsIntegration() {
-        function apply() {
-            var content = document.getElementById("sirkStandaloneContent");
-            if (!content || content.getAttribute("data-active-view") !== "settings") return;
-            var host = content.querySelector(".sirk-portal-view-host") || content.firstElementChild;
-            settingsLayout(host);
-        }
-        new MutationObserver(apply).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-active-view"] });
-        apply();
-    }
-
     window.SirkSystemUpdates = { mount: mount, refresh: load };
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", installSettingsIntegration);
-    else installSettingsIntegration();
 }());
