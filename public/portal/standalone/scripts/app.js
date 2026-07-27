@@ -447,7 +447,7 @@
         var shell = document.createElement("section");
         shell.className = "sirk-standalone-view-scroll sirk-settings-module-shell";
         var toolbar = document.createElement("header");
-        toolbar.className = "sirk-toolbar-host sirk-settings-module-toolbar";
+        toolbar.className = "sirk-toolbar sirk-toolbar-host sirk-settings-module-toolbar";
         toolbar.innerHTML = '<strong>' + escapeHtml(viewName("settings")) + '</strong>';
         var workspace = document.createElement("div");
         workspace.className = "sirk-layout-host sirk-settings-module-workspace";
