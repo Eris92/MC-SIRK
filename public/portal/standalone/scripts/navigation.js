@@ -61,6 +61,12 @@
         if (nativeLink) nativeLink.innerHTML = window.SirkIcons.svg("external-link", "sirk-nav-svg");
     }
 
+    function commandsEnabled() {
+        var runtime = window.SirkPlatformRuntime;
+        var modules = runtime && runtime.state && runtime.state.bootstrap && runtime.state.bootstrap.modules;
+        return !!(modules && modules.mycommands && modules.mycommands.enabled === true);
+    }
+
     function normalizeDeviceWorkspace() {
         var content = document.getElementById("sirkStandaloneContent");
         var workspace = content && content.querySelector(":scope > .sirk-device-workspace");
@@ -68,6 +74,17 @@
         var header = workspace.querySelector(":scope > .sirk-device-compact-header");
         var tabs = workspace.querySelector(":scope > .sirk-device-tabs,:scope > .sirk-device-compact-tabs");
         if (!header || !tabs) return;
+
+        var commandsTab = tabs.querySelector('[data-device-tab="commands"]');
+        if (commandsTab && !commandsEnabled()) {
+            var wasActive = commandsTab.classList.contains("is-active") || commandsTab.getAttribute("aria-selected") === "true";
+            commandsTab.remove();
+            if (wasActive) {
+                var overviewTab = tabs.querySelector('[data-device-tab="general"]');
+                if (overviewTab) overviewTab.click();
+            }
+        }
+
         [".sirk-device-compact-back", ".sirk-device-compact-icon", ".sirk-device-compact-main"].forEach(function (selector) {
             var element = header.querySelector(selector);
             if (element) element.remove();
