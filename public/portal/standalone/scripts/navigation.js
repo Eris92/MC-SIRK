@@ -151,7 +151,9 @@
             else if (["Show In Menu", "Show On Device", "Host Button Enabled", "Menu Enabled"].indexOf(text) >= 0) technical.push(field);
         });
 
-        technical.forEach(function (field) { field.hidden = true; });
+        technical.forEach(function (field) {
+            if (field && field.parentNode) field.parentNode.removeChild(field);
+        });
         if (!candidates.length) return;
 
         var primary = candidates[0];
@@ -167,14 +169,13 @@
             primaryCopy.appendChild(description);
         }
         if (description) description.textContent = "Jednocześnie włącza funkcję modułu i pokazuje jego zakładkę w Portalu.";
-        primary.hidden = false;
+        primary.removeAttribute("hidden");
         primary.setAttribute("data-unified-module-toggle", "1");
 
         candidates.slice(1).forEach(function (field) {
             var input = field.querySelector('input[type="checkbox"]');
             if (input) linked.push(input);
-            field.hidden = true;
-            field.removeAttribute("data-unified-module-toggle");
+            if (field && field.parentNode) field.parentNode.removeChild(field);
         });
 
         if (!primaryInput) return;
