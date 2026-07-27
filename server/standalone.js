@@ -77,7 +77,7 @@ function portalHtml() {
         .replace(/__NATIVE_URL_JSON__/g, JSON.stringify(""))
         .replace(/__LOGOUT_URL_JSON__/g, JSON.stringify("/auth/logout"))
         .replace(/__USER_IMAGE_URL_JSON__/g, JSON.stringify("/api/user/image"))
-        .replace(/__DEFAULT_USER_IMAGE_URL_JSON__/g, JSON.stringify("/assets/images/user-256.png"))
+        .replace(/__DEFAULT_USER_IMAGE_URL_JSON__/g, JSON.stringify("/assets/icons/sirk-ui.svg"))
         .replace(/__VERSION_JSON__/g, JSON.stringify(VERSION))
         .replace(/__ASSET_BASE__/g, "/assets")
         .replace(/__NATIVE_URL__/g, "")

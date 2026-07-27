@@ -221,7 +221,8 @@ module.exports.createRuntime = function (options) {
                 ? module.apiPost(asset, req, user)
                 : module.apiGet(asset, req, user);
         } catch (error) {
-            shared.sendJson(res, 400, { ok: false, error: String(error && error.message || error) });
+            var syncMessage = String(error && error.message || error);
+            shared.sendJson(res, /not configured|unavailable/i.test(syncMessage) ? 200 : 400, { ok: false, unavailable: /not configured|unavailable/i.test(syncMessage), error: syncMessage });
             return;
         }
         Promise.resolve(operation).then(function (value) {
@@ -231,6 +232,7 @@ module.exports.createRuntime = function (options) {
             var status = /permission|access|disabled/i.test(message)
                 ? 403
                 : /not found|unavailable|missing/i.test(message) ? 404 : 400;
+            if (/not configured/i.test(message)) status = 200;
             shared.sendJson(res, status, { ok: false, error: message });
         });
     }
