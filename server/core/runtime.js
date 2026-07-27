@@ -250,6 +250,15 @@ module.exports.createRuntime = function (options) {
         var knownGroups = shared.getUserGroups(parent).map(function (group) { return group.id; });
 
         return settings.update(function (current) {
+            var portal = payload.portal || {};
+            if (current.modules.portal && payload.portal) {
+                ["enabled", "showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart", "showPasswordReset"].forEach(function (key) {
+                    if (Object.prototype.hasOwnProperty.call(portal, key)) current.modules.portal[key] = portal[key] === true;
+                });
+                ["defaultView", "passwordResetUrl", "siteName", "siteIconUrl"].forEach(function (key) {
+                    if (Object.prototype.hasOwnProperty.call(portal, key)) current.modules.portal[key] = String(portal[key] || "");
+                });
+            }
             Object.keys(modules).forEach(function (key) {
                 if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
                     current.modules[key].enabled = moduleValues[key] === true;
