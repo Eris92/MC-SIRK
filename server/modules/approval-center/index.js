@@ -31,6 +31,22 @@ module.exports.createModule = function (context) {
             current.modules.approvalcenter.providers[type] || {};
     }
 
+    function settingsWithPolicies(user) {
+        var value = context.approval.getSettings(user);
+        if (!value) return value;
+        value.providers = (value.providers || []).map(function (provider) {
+            var policy = normalizeProvider(providerPolicy(provider.type));
+            return Object.assign({}, provider, {
+                enabled: policy.enabled,
+                showTab: policy.showTab,
+                showOverview: policy.showOverview,
+                allowNoApproval: policy.allowNoApproval,
+                levels: policy.levels
+            });
+        });
+        return value;
+    }
+
     function installPolicyGuard() {
         if (policyGuardInstalled || context.approval.__explicitNoApprovalGuard) return;
         var originalSubmit = context.approval.submit;
@@ -44,8 +60,6 @@ module.exports.createModule = function (context) {
                 : [];
             var policy = providerPolicy(type);
 
-            // The legacy key "myscripts" is retained for stored settings and requests.
-            // An empty level list means direct execution and must stay empty.
             if (type !== "myscripts" && !levels.length && policy.allowNoApproval !== true) {
                 levels = [1];
             }
@@ -98,7 +112,7 @@ module.exports.createModule = function (context) {
                 return saveOneProvider(user, type, providers[type]);
             }));
         }).then(function () {
-            return { ok: true, settings: context.approval.getSettings(user) };
+            return { ok: true, settings: settingsWithPolicies(user) };
         });
     }
 
@@ -134,7 +148,7 @@ module.exports.createModule = function (context) {
             if (asset === "overview") return context.approval.overview(user).then(function (cards) { return { ok: true, cards: cards }; });
             if (asset === "requests") return context.approval.list(user, q).then(function (value) { value.ok = true; return value; });
             if (asset === "request") return { ok: true, request: context.approval.getRequest(user, q.id) };
-            if (asset === "settings") return { ok: true, settings: context.approval.getSettings(user) };
+            if (asset === "settings") return { ok: true, settings: settingsWithPolicies(user) };
             throw new Error("Unknown Approvals action.");
         },
         apiPost: function (asset, req, user) {
@@ -145,7 +159,7 @@ module.exports.createModule = function (context) {
             }
             if (asset === "settings") return saveSettings(user, value);
             if (asset === "provider-settings") {
-                return saveOneProvider(user, value.type, value).then(function () { return { ok: true }; });
+                return saveOneProvider(user, value.type, value).then(function () { return { ok: true, settings: settingsWithPolicies(user) }; });
             }
             if (asset === "create-token") return { ok: true, result: context.approval.createApiToken(user, value) };
             if (asset === "revoke-token") return { ok: true, revoked: context.approval.revokeApiToken(user, value.id) };
