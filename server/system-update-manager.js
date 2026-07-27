@@ -139,6 +139,28 @@ function create(options) {
         });
     }
 
+    function validateBackupId(backupId) {
+        backupId = String(backupId || "");
+        if (!/^[a-z0-9._-]+$/i.test(backupId)) throw new Error("Invalid backup identifier.");
+        return backupId;
+    }
+
+    async function deleteBackup(backupId) {
+        backupId = validateBackupId(backupId);
+        var state = loadState();
+        var busy = Object.keys(state.jobs || {}).some(function (id) {
+            return state.jobs[id] && (state.jobs[id].status === "queued" || state.jobs[id].status === "running");
+        });
+        if (busy || state.pending) throw new Error("Backup cannot be deleted while another update operation is running.");
+        var directory = path.join(backupRoot, backupId);
+        if (!fs.existsSync(directory)) throw new Error("Backup was not found.");
+        await fs.promises.rm(directory, { recursive: true, force: false });
+        state.history = Array.isArray(state.history) ? state.history : [];
+        state.history.unshift({ type: "backup-deleted", at: new Date().toISOString(), backupId: backupId });
+        saveState(state);
+        return { deleted: true, backupId: backupId };
+    }
+
     function updateJob(jobId, patch) {
         var state = loadState();
         state.jobs = state.jobs || {};
@@ -271,8 +293,7 @@ function create(options) {
 
     function restore(backupId) {
         return startJob("restore", async function (progress) {
-            backupId = String(backupId || "");
-            if (!/^[a-z0-9._-]+$/i.test(backupId)) throw new Error("Invalid backup identifier.");
+            backupId = validateBackupId(backupId);
             var source = path.join(backupRoot, backupId, "app");
             if (!fs.existsSync(source)) throw new Error("Backup was not found.");
             var backupManifest = readJson(path.join(backupRoot, backupId, "manifest.json"));
@@ -313,7 +334,7 @@ function create(options) {
         return (loadState().jobs || {})[String(jobId || "")] || null;
     }
 
-    return { channels: CHANNELS, current: current, state: loadState, setChannel: setChannel, check: check, backup: backup, backups: listBackups, install: install, restore: restore, health: health, job: job, restart: restart };
+    return { channels: CHANNELS, current: current, state: loadState, setChannel: setChannel, check: check, backup: backup, backups: listBackups, deleteBackup: deleteBackup, install: install, restore: restore, health: health, job: job, restart: restart };
 }
 
 module.exports = { create: create, channels: CHANNELS };
