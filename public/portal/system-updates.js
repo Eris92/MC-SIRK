@@ -82,6 +82,30 @@
         if (close) close.onclick = function () { overlay.remove(); };
     }
 
+    function confirmUpdate() {
+        return new Promise(function (resolve) {
+            var overlay = ensureOverlay();
+            overlay.setAttribute("role", "dialog");
+            overlay.setAttribute("aria-modal", "true");
+            overlay.setAttribute("aria-labelledby", "sirkUpdateConfirmTitle");
+            overlay.innerHTML = '<div style="width:min(620px,100%);padding:28px;border:1px solid var(--sirk-border,#dce3ec);border-radius:14px;background:var(--sirk-panel,#fff);box-shadow:0 24px 70px rgba(15,23,42,.2)">' +
+                '<h1 id="sirkUpdateConfirmTitle" style="margin:0 0 12px;font-size:26px">Czy na pewno chcesz zaktualizować system?</h1>' +
+                '<p style="margin:0 0 12px;line-height:1.55">Przed aktualizacją zostanie utworzony backup bezpieczeństwa.</p>' +
+                '<p style="margin:0 0 22px;line-height:1.55;font-weight:700">Po zakończeniu aktualizacji usługa serwera MeshCentral zostanie automatycznie zrestartowana. Użytkownicy mogą zostać chwilowo rozłączeni.</p>' +
+                '<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">' +
+                '<button type="button" class="sirk-button" data-update-confirm-cancel>Anuluj</button>' +
+                '<button type="button" class="sirk-button" data-update-confirm-accept>Tak, aktualizuj system</button>' +
+                '</div></div>';
+            function finish(value) {
+                overlay.remove();
+                resolve(value);
+            }
+            overlay.querySelector("[data-update-confirm-cancel]").onclick = function () { finish(false); };
+            overlay.querySelector("[data-update-confirm-accept]").onclick = function () { finish(true); };
+            overlay.querySelector("[data-update-confirm-accept]").focus();
+        });
+    }
+
     function loginRedirect() {
         clearRestartState();
         window.location.replace(String(window.__SIRK_PLATFORM_LOGOUT_URL__ || "/logout"));
@@ -201,7 +225,7 @@
                 var action = actionNode.getAttribute("data-update-action");
                 if (action === "check") api("check", "POST", { channel: state.snapshot.current.channel }).then(function () { load(host, section); }).catch(function (error) { window.alert(error.message); });
                 if (action === "backup") startJob(host, section, "backup", { reason: "manual" });
-                if (action === "install" && window.confirm("Utworzyć backup, zaktualizować system i automatycznie zrestartować MeshCentral?")) runUpdate();
+                if (action === "install") confirmUpdate().then(function (confirmed) { if (confirmed) runUpdate(); });
                 if (action === "save-channel") {
                     var channel = host.querySelector("[data-update-channel]");
                     api("channel", "POST", { channel: channel.value }).then(function () { return load(host, section); }).catch(function (error) { window.alert(error.message); });
