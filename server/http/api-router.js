@@ -50,6 +50,23 @@ module.exports.createHandler = function (runtime, host) {
                 });
                 return;
             }
+            if (url.pathname === "/api/admin/settings") {
+                if (req.method === "GET") {
+                    var snapshot = runtime.adminSnapshot(user.raw || user);
+                    if (!snapshot) { sendJson(res, 403, { ok: false, error: "Permission denied." }); return; }
+                    sendJson(res, 200, { ok: true, value: snapshot });
+                    return;
+                }
+                if (req.method === "POST") {
+                    if (typeof runtime.saveAdminSettings !== "function") { sendJson(res, 503, { ok: false, error: "Settings service unavailable." }); return; }
+                    Promise.resolve(runtime.saveAdminSettings(user.raw || user, state.body)).then(function (value) {
+                        sendJson(res, 200, { ok: true, value: value });
+                    }).catch(function (error) { sendJson(res, /permission/i.test(String(error && error.message || error)) ? 403 : 400, { ok: false, error: String(error && error.message || error) }); });
+                    return;
+                }
+                sendJson(res, 405, { ok: false, error: "Method not allowed." });
+                return;
+            }
             var match = url.pathname.match(/^\/api\/modules\/([^/]+)\/([^/]+)$/);
             if (!match) { sendJson(res, 404, { ok: false, error: "Endpoint not found." }); return; }
             Promise.resolve(runtime.request(req.method, decodeURIComponent(match[1]), decodeURIComponent(match[2]), {
