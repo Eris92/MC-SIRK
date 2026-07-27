@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.21",
+    "date": "2026-07-27",
+    "changes": [
+      "Hide disabled module views from the left menu and restore Assets module settings"
+    ]
+  },
+  {
     "version": "1.8.36-dev.20",
     "date": "2026-07-27",
     "changes": [

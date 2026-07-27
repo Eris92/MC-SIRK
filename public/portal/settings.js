@@ -27,7 +27,7 @@
         approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
         automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
         monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
-        assets: [{ type: "empty", title: "Zasoby", text: "Ustawienia zasobów będą dostępne tutaj." }],
+        assets: [{ type: "module", key: "myjira", title: "Zasoby" }],
         management: [{ type: "module", key: "myjira", title: "Jira" }],
         reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
         security: [{ type: "module", key: "defendertools", title: "Defender" }],

@@ -123,7 +123,14 @@
         return views && views[view] && typeof views[view] === "object" ? views[view] : {};
     }
 
-    function viewEnabled(view) { return viewConfig(view).enabled !== false; }
+    var VIEW_MODULE_KEYS = { assets: "myjira", security: "defendertools" };
+    function viewEnabled(view) {
+        if (viewConfig(view).enabled === false) return false;
+        var moduleKey = VIEW_MODULE_KEYS[view];
+        if (!moduleKey) return true;
+        var module = moduleState(moduleKey);
+        return !module || module.enabled !== false;
+    }
 
     function firstEnabledView() {
         return VIEW_KEYS.find(function (key) { return viewEnabled(key); }) || "overview";

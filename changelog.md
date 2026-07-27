@@ -1,3 +1,7 @@
+## 1.8.36-dev.21
+
+- Hide disabled module views from the left menu and restore Assets module settings so disabled integrations can be enabled.
+
 ## 1.8.36-dev.20
 
 - Rename user-facing My Commands labels to Commands in the new Portal UI.
