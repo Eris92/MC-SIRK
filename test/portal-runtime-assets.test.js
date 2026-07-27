@@ -12,5 +12,7 @@ assert.ok(core.indexOf('searchParams.set("pin", "SIRKPortal")') >= 0, "Standalon
 assert.ok(core.indexOf('searchParams.set("pin", "SirkPlatform")') < 0, "Legacy Portal pin must not remain.");
 assert.ok(server.indexOf('"vendor/sirk-portal/portal-ui-contract.css": "vendor/portal-ui-contract.css"') >= 0, "Portal UI contract asset must be routed as CSS.");
 assert.ok(fs.existsSync(path.join(root, "public/portal/vendor/portal-ui-contract.css")), "Portal UI contract stylesheet must exist.");
+assert.ok(server.indexOf('"no-store, no-cache, must-revalidate, max-age=0"') >= 0, "MeshCentral-hosted Portal responses must disable browser caching.");
+assert.ok(server.indexOf("revision: version + \"-\"") >= 0, "MeshCentral-hosted Portal assets must use a live revision.");
 assert.ok(app.indexOf('"sirk-toolbar sirk-toolbar-host sirk-settings-module-toolbar"') >= 0, "Standalone Settings must use the canonical Portal toolbar style.");
 console.log("Portal runtime assets: OK");

@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.3",
+    "date": "2026-07-27",
+    "changes": [
+      "Disable Portal response caching and invalidate runtime assets immediately after file updates"
+    ]
+  },
+  {
     "version": "1.8.36-dev.2",
     "date": "2026-07-27",
     "changes": [

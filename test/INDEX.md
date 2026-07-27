@@ -17,6 +17,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | marketplace | `plugin-marketplace.test.js` |
 | trwałe zakładki urządzeń | `portal-device-tabs.test.js` |
 | wspólny kontrakt UI | `portal-ui-contract.test.js` |
+| cache i rewizja assetów Portalu | `portal-cache-invalidation.test.js`, `portal-runtime-assets.test.js` |
 | cleanup Portalu | `portal-cleanup.test.js` |
 | izolacja GUI | `portal-gui-isolation-script.test.js` |
 

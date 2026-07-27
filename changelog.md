@@ -1,3 +1,8 @@
+## 1.8.36-dev.3
+
+- Disabled browser caching for Portal HTML, redirects and runtime assets.
+- Added a live asset revision so updated files are fetched immediately without waiting for the host process to reload.
+
 ## 1.8.36-dev.2
 
 - Kept the complete Portal shell visible during refresh while permissions and device workspaces are restored.

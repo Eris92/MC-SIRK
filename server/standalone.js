@@ -11,6 +11,7 @@ var updateManagerFactory = require("./system-update-manager.js");
 var updateRouterFactory = require("./http/update-router.js");
 var VERSION = require("../config.json").version;
 var ROOT = path.resolve(__dirname, "..");
+var CONFIG_PATH = path.join(ROOT, "config.json");
 
 var ASSETS = {
     "icons/sirk-ui.svg": "assets/icons/sirk-ui.svg",
@@ -68,6 +69,12 @@ var ASSETS = {
     "script-edit-actions.js", "system-credentials-form.js"
 ].forEach(function (name) { ASSETS["shared-ui/" + name] = "public/shared/ui/" + name; });
 
+function setNoStore(res) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+}
+
 function contentType(name) {
     if (/\.css$/i.test(name)) return "text/css; charset=utf-8";
     if (/\.js$/i.test(name)) return "text/javascript; charset=utf-8";
@@ -77,8 +84,35 @@ function contentType(name) {
     return "application/octet-stream";
 }
 
+function currentVersion() {
+    try {
+        return String(JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8")).version || VERSION);
+    } catch (error) {
+        return VERSION;
+    }
+}
+
+function portalBuild() {
+    var version = currentVersion();
+    var latestMtime = 0;
+    [CONFIG_PATH,
+        path.join(ROOT, "public/portal/standalone/index.html"),
+        path.join(ROOT, "public/portal/standalone/login.html")
+    ].concat(Object.keys(ASSETS).map(function (name) {
+        return path.resolve(ROOT, ASSETS[name]);
+    })).forEach(function (file) {
+        try { latestMtime = Math.max(latestMtime, fs.statSync(file).mtimeMs || 0); }
+        catch (error) { /* Missing assets are handled by their route. */ }
+    });
+    return {
+        version: version,
+        revision: version + "-" + String(Math.floor(latestMtime))
+    };
+}
+
 function portalHtml() {
     var nativeUrl = String(process.env.SIRK_MESHCENTRAL_URL || "https://mc.sir-k.local/");
+    var build = portalBuild();
     var html = fs.readFileSync(path.join(ROOT, "public/portal/standalone/index.html"), "utf8")
         .replace(/__API_BASE_JSON__/g, JSON.stringify("/api"))
         .replace(/__ASSET_BASE_JSON__/g, JSON.stringify("/assets"))
@@ -86,23 +120,24 @@ function portalHtml() {
         .replace(/__LOGOUT_URL_JSON__/g, JSON.stringify("/auth/logout"))
         .replace(/__USER_IMAGE_URL_JSON__/g, JSON.stringify("/api/user/image"))
         .replace(/__DEFAULT_USER_IMAGE_URL_JSON__/g, JSON.stringify("/assets/icons/sirk-ui.svg"))
-        .replace(/__VERSION_JSON__/g, JSON.stringify(VERSION))
+        .replace(/__VERSION_JSON__/g, JSON.stringify(build.version))
         .replace(/__ASSET_BASE__/g, "/assets")
         .replace(/__NATIVE_URL__/g, nativeUrl)
-        .replace(/__VERSION__/g, VERSION);
-    html = html.replace("</head>", '<link rel="stylesheet" href="/assets/portal-management-frame.css?v=' + VERSION + '"><link rel="stylesheet" href="/assets/system-updates.css?v=' + VERSION + '"></head>');
-    return html.replace("</body>", '<script src="/assets/standalone-core-rest.js?v=' + VERSION + '"></script><script src="/assets/system-updates.js?v=' + VERSION + '"></script></body>');
+        .replace(/__VERSION__/g, build.revision);
+    html = html.replace("</head>", '<link rel="stylesheet" href="/assets/portal-management-frame.css?v=' + build.revision + '"><link rel="stylesheet" href="/assets/system-updates.css?v=' + build.revision + '"></head>');
+    return html.replace("</body>", '<script src="/assets/standalone-core-rest.js?v=' + build.revision + '"></script><script src="/assets/system-updates.js?v=' + build.revision + '"></script></body>');
 }
 
 function loginHtml() {
+    var build = portalBuild();
     return fs.readFileSync(path.join(ROOT, "public/portal/standalone/login.html"), "utf8")
         .replace(/__ASSET_BASE_JSON__/g, JSON.stringify("/assets"))
         .replace(/__PORTAL_URL_JSON__/g, JSON.stringify("/"))
         .replace(/__NATIVE_URL_JSON__/g, JSON.stringify("/"))
         .replace(/__FORCE_PORTAL_JSON__/g, JSON.stringify(true))
         .replace(/__ASSET_BASE__/g, "/assets")
-        .replace(/__VERSION_JSON__/g, JSON.stringify(VERSION))
-        .replace(/__VERSION__/g, VERSION);
+        .replace(/__VERSION_JSON__/g, JSON.stringify(build.version))
+        .replace(/__VERSION__/g, build.revision);
 }
 
 function start(options) {
@@ -126,6 +161,7 @@ function start(options) {
     var updateApi = updateRouterFactory.createHandler(updateManager);
     return Promise.resolve(runtime.initialize()).then(function () {
         var server = http.createServer(function (req, res) {
+            setNoStore(res);
             var url = new URL(req.url, "http://sirk.local");
             if (url.pathname === "/api/auth/login" && req.method === "POST") {
                 var chunks = [];
@@ -180,7 +216,10 @@ function start(options) {
             res.statusCode = 404; res.end("Not found");
         });
         return new Promise(function (resolve) {
-            server.listen(Number(options.port || process.env.PORT || 8080), options.host || process.env.HOST || "127.0.0.1", function () { resolve(server); });
+            var port = options.port === undefined || options.port === null
+                ? Number(process.env.PORT || 8080)
+                : Number(options.port);
+            server.listen(port, options.host || process.env.HOST || "127.0.0.1", function () { resolve(server); });
         });
     });
 }

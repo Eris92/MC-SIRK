@@ -6,6 +6,7 @@ var baseFactory = require("./plugin-main.js");
 var VERSION = require("./config.json").version;
 
 var PORTAL_ROOT = path.join(__dirname, "public", "portal");
+var CONFIG_PATH = path.join(__dirname, "config.json");
 var ASSETS = {
     "vendor/sirk-portal/sirk-portal.css": "vendor/sirk-portal.css",
     "vendor/sirk-portal/portal-ui-contract.css": "vendor/portal-ui-contract.css",
@@ -73,21 +74,34 @@ function normalizeBase(value) {
     return value.replace(/\/+/g, "/");
 }
 
+function setNoStore(res) {
+    var cacheControl = "no-store, no-cache, must-revalidate, max-age=0";
+    if (typeof res.set === "function") {
+        res.set("Cache-Control", cacheControl);
+        res.set("Pragma", "no-cache");
+        res.set("Expires", "0");
+    } else if (typeof res.setHeader === "function") {
+        res.setHeader("Cache-Control", cacheControl);
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+    }
+}
+
 function send(res, status, type, body) {
     if (typeof res.status === "function") res.status(status); else res.statusCode = status;
+    setNoStore(res);
     if (typeof res.set === "function") {
         res.set("Content-Type", type);
-        res.set("Cache-Control", "no-store");
         res.set("X-Content-Type-Options", "nosniff");
     } else if (typeof res.setHeader === "function") {
         res.setHeader("Content-Type", type);
-        res.setHeader("Cache-Control", "no-store");
         res.setHeader("X-Content-Type-Options", "nosniff");
     }
     if (typeof res.send === "function") res.send(body); else res.end(body);
 }
 
 function redirect(res, target) {
+    setNoStore(res);
     if (typeof res.redirect === "function") res.redirect(302, target);
     else {
         res.statusCode = 302;
@@ -119,6 +133,30 @@ function assetPath(name) {
     return allowedRoots.some(function (root) {
         return target === root || target.indexOf(root + path.sep) === 0;
     }) ? target : null;
+}
+
+function currentVersion() {
+    try {
+        return String(JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8")).version || VERSION);
+    } catch (error) {
+        return VERSION;
+    }
+}
+
+function portalBuild() {
+    var version = currentVersion();
+    var latestMtime = 0;
+    [CONFIG_PATH,
+        path.join(PORTAL_ROOT, "standalone", "index.html"),
+        path.join(PORTAL_ROOT, "standalone", "login.html")
+    ].concat(Object.keys(ASSETS).map(assetPath).filter(Boolean)).forEach(function (file) {
+        try { latestMtime = Math.max(latestMtime, fs.statSync(file).mtimeMs || 0); }
+        catch (error) { /* Missing assets are handled by their route. */ }
+    });
+    return {
+        version: version,
+        revision: version + "-" + String(Math.floor(latestMtime))
+    };
 }
 
 function json(res, status, value) {
@@ -161,7 +199,7 @@ module.exports.createPlugin = function (parent, shortName) {
         var method = String(req && req.method || "GET").toUpperCase();
         var route = String(req && (req.path || req.url) || "/").split("?")[0].replace(/\/+$/, "") || "/";
         if (method === "GET" && route === "/health") {
-            json(res, 200, { ok: true, data: { service: "sirk-platform-approvals", apiVersion: "v1", pluginVersion: VERSION } });
+            json(res, 200, { ok: true, data: { service: "sirk-platform-approvals", apiVersion: "v1", pluginVersion: currentVersion() } });
             return;
         }
 
@@ -262,6 +300,7 @@ module.exports.createPlugin = function (parent, shortName) {
 
     function portalHtml(base) {
         var assetBase = base + "sirkportal/assets";
+        var build = portalBuild();
         return renderTemplate("index.html", {
             "__API_BASE_JSON__": JSON.stringify(base + "pluginadmin.ashx"),
             "__ASSET_BASE_JSON__": JSON.stringify(assetBase),
@@ -269,24 +308,25 @@ module.exports.createPlugin = function (parent, shortName) {
             "__LOGOUT_URL_JSON__": JSON.stringify(base + "logout"),
             "__USER_IMAGE_URL_JSON__": JSON.stringify(base + "userimage.ashx"),
             "__DEFAULT_USER_IMAGE_URL_JSON__": JSON.stringify(base + "images/user-256.png"),
-            "__VERSION_JSON__": JSON.stringify(VERSION),
+            "__VERSION_JSON__": JSON.stringify(build.version),
             "__ASSET_BASE__": assetBase,
             "__NATIVE_URL__": base + "meshcentral/",
-            "__VERSION__": VERSION
+            "__VERSION__": build.revision
         });
     }
 
     function loginHtml(base) {
         var assetBase = base + "sirkportal/assets";
+        var build = portalBuild();
         return renderTemplate("login.html", {
             "__ASSET_BASE_JSON__": JSON.stringify(assetBase),
             "__PORTAL_URL_JSON__": JSON.stringify(base + "sirkportal/"),
             "__NATIVE_URL_JSON__": JSON.stringify(base + "?sirkNative=1"),
             "__NATIVE_LOGIN_URL__": base + "?sirkAuth=1",
             "__FORCE_PORTAL_JSON__": JSON.stringify(portalSettings().forcePortalInterface === true),
-            "__VERSION_JSON__": JSON.stringify(VERSION),
+            "__VERSION_JSON__": JSON.stringify(build.version),
             "__ASSET_BASE__": assetBase,
-            "__VERSION__": VERSION
+            "__VERSION__": build.revision
         });
     }
 
