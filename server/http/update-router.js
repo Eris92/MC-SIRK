@@ -59,6 +59,7 @@ module.exports.createHandler = function (manager) {
                 if (action === "channel") return manager.setChannel(body.channel);
                 if (action === "check") return manager.check(body.channel);
                 if (action === "backup") return manager.backup(body.reason || "manual");
+                if (action === "delete-backup") return manager.deleteBackup(body.backupId);
                 if (action === "update") return manager.install(body.channel);
                 if (action === "restore") return manager.restore(body.backupId);
                 if (action === "restart") return manager.restart();
