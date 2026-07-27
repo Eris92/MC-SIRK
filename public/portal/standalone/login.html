@@ -6,14 +6,11 @@
   <meta name="color-scheme" content="light dark">
   <title>SirK Portal — logowanie</title>
   <link rel="stylesheet" href="__ASSET_BASE__/portal-login.css?v=__VERSION__">
+  <style>.sirk-login-card{max-width:430px;margin:10vh auto;padding:36px;border:1px solid #dce3ec;border-radius:18px;background:#fff;box-shadow:0 20px 60px #0002;font:16px Segoe UI,Arial;color:#172033}.sirk-login-card h1{margin:14px 0 8px}.sirk-login-card label{display:block;margin:16px 0 6px;font-weight:600}.sirk-login-card input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:11px;border:1px solid #cbd5e1;border-radius:8px}.sirk-login-card button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:#3867d6;color:#fff;font-weight:700}.sirk-login-mark{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#6346ed;color:#fff;font-weight:800;font-size:24px}.sirk-login-card p{color:#657187}.sirk-login-card [role=alert]{min-height:20px}</style>
 </head>
 <body>
   <main class="sirk-login-frame-shell">
-    <iframe id="sirkLoginFrame" title="Logowanie MeshCentral" src="__NATIVE_LOGIN_URL__"></iframe>
-    <div id="sirkLoginLoading" class="sirk-login-frame-loading" role="status">
-      <span></span>
-      <strong>Ładowanie bezpiecznego logowania…</strong>
-    </div>
+    <section class="sirk-login-card"><div class="sirk-login-mark">S</div><h1>SirK Portal</h1><p>Zaloguj się, aby przejść do nowego portalu.</p><form id="sirkStandaloneLoginForm"><label>Nazwa użytkownika<input name="username" autocomplete="username" required></label><label>Hasło<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Zaloguj się</button><p id="sirkLoginMessage" role="alert"></p></form></section>
   </main>
   <script>
     window.__SIRK_PLATFORM_LOGIN_ASSET_BASE__ = __ASSET_BASE_JSON__;
@@ -21,6 +18,9 @@
     window.__SIRK_PLATFORM_LOGIN_NATIVE_URL__ = __NATIVE_URL_JSON__;
     window.__SIRK_PLATFORM_FORCE_PORTAL__ = __FORCE_PORTAL_JSON__;
     window.__SIRK_PLATFORM_PORTAL_VERSION__ = __VERSION_JSON__;
+  </script>
+  <script>
+  (function(){var form=document.getElementById("sirkStandaloneLoginForm"),message=document.getElementById("sirkLoginMessage");if(!form)return;form.addEventListener("submit",function(event){event.preventDefault();message.textContent="Logowanie…";window.location.replace("/");});}());
   </script>
   <script src="__ASSET_BASE__/portal-branding.js?v=__VERSION__"></script>
   <script src="__ASSET_BASE__/portal-login.js?v=__VERSION__"></script>
