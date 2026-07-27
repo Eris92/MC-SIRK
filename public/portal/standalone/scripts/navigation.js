@@ -78,6 +78,33 @@
         header.setAttribute("data-compact-tabs-mounted", "1");
     }
 
+    function normalizeSettingsNavigation() {
+        var content = document.getElementById("sirkStandaloneContent");
+        var secondary = content && content.querySelector(".sirk-settings-module-workspace > .sirk-column-secondary");
+        if (!secondary) return;
+
+        var moduleButton = null;
+        var settingsButton = null;
+        Array.prototype.forEach.call(secondary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
+            var label = String(button.textContent || "").trim();
+            if (label === "Moduły") moduleButton = button;
+            else if (label === "Ustawienia") settingsButton = button;
+        });
+        if (!moduleButton || !settingsButton) return;
+
+        secondary.insertBefore(settingsButton, moduleButton.nextSibling);
+        var divider = secondary.querySelector(":scope > .sirk-settings-nav-divider");
+        if (!divider) {
+            divider = document.createElement("div");
+            divider.className = "sirk-settings-nav-divider";
+            divider.setAttribute("aria-hidden", "true");
+            divider.style.height = "1px";
+            divider.style.margin = "8px 4px";
+            divider.style.background = "var(--sirk-border,#dce3ec)";
+        }
+        secondary.insertBefore(divider, settingsButton.nextSibling);
+    }
+
     function observeDeviceWorkspace() {
         var content = document.getElementById("sirkStandaloneContent");
         if (!content) return;
@@ -88,10 +115,12 @@
             window.requestAnimationFrame(function () {
                 scheduled = false;
                 normalizeDeviceWorkspace();
+                normalizeSettingsNavigation();
             });
         });
         observer.observe(content, { childList: true, subtree: true });
         normalizeDeviceWorkspace();
+        normalizeSettingsNavigation();
     }
 
     function navigate(view) {
