@@ -51,6 +51,12 @@ module.exports.install = function (plugin, parent, webserver, meshServer) {
         webserver.app.get(base + "sirkportal/assets/system-updates.css", function (req, res) {
             sendFile(res, path.resolve(__dirname, "..", "..", "public", "portal", "system-updates.css"), "text/css; charset=utf-8");
         });
+        webserver.app.get(base + "sirkportal/assets/settings.js", function (req, res) {
+            sendFile(res, path.resolve(__dirname, "..", "..", "public", "portal", "settings.js"), "text/javascript; charset=utf-8");
+        });
+        webserver.app.get(base + "sirkportal/assets/settings.css", function (req, res) {
+            sendFile(res, path.resolve(__dirname, "..", "..", "public", "portal", "settings.css"), "text/css; charset=utf-8");
+        });
         webserver.app.use(prefix, function (req, res) {
             var dispatch = function () {
                 var requestUrl = new URL(String(req.originalUrl || req.url || ""), "http://sirk.local");
