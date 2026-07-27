@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.15",
+    "date": "2026-07-27",
+    "changes": [
+      "Route standalone Settings through the independent Portal API and add transition controls"
+    ]
+  },
+  {
     "version": "1.8.3-dev.1",
     "date": "2026-07-27",
     "changes": [

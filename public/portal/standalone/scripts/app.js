@@ -458,7 +458,7 @@
         var modules = document.createElement("div"); modules.className = "sirk-admin-grid";
         var save = document.createElement("button"); save.type = "submit"; save.className = "sirk-admin-primary"; save.textContent = "Save settings";
         form.appendChild(modules); form.appendChild(save); panel.appendChild(form); workspace.appendChild(panel);
-        var base = String(window.__SIRK_PLATFORM_API_BASE__ || "/api").replace(/\/$/, "");
+        var base = "/api";
         fetch(base + "/admin/settings", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok) throw new Error(value.error || "Settings unavailable."); return value.value; }); }).then(function (snapshot) {
             var portalSettings = snapshot.moduleSettings && snapshot.moduleSettings.portal || {};
             ["showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart"].forEach(function (key) { var row = document.createElement("label"); row.className = "sirk-card"; var input = document.createElement("input"); input.type = "checkbox"; input.name = "portal." + key; input.checked = portalSettings[key] === true; row.appendChild(input); row.appendChild(document.createTextNode(" " + key)); modules.appendChild(row); });
