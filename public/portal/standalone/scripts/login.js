@@ -120,6 +120,33 @@
         }
     }
 
+    function renderLoginBanner(config) {
+        var previous = document.getElementById("sirkLoginPublicBanner");
+        if (previous) previous.remove();
+        var banner = config && config.banner;
+        if (!banner || banner.enabled !== true || banner.showOnLogin !== true) return;
+        var template = banner.templates && banner.templates[banner.activeTemplate];
+        if (!template || !String(template.text || "").trim()) return;
+        var node = document.createElement("div");
+        node.id = "sirkLoginPublicBanner";
+        node.textContent = String(template.text);
+        node.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:2147483600;padding:12px 18px;text-align:center;font-family:Segoe UI,Arial,sans-serif;box-shadow:0 1px 0 rgba(15,23,42,.14);box-sizing:border-box";
+        node.style.background = String(template.backgroundColor || "#dcfce7");
+        node.style.color = String(template.textColor || "#166534");
+        node.style.fontSize = Math.max(10, Math.min(48, Number(template.fontSize) || 16)) + "px";
+        document.body.appendChild(node);
+        if (template.noEnd !== true && Number(template.durationMinutes) > 0) {
+            window.setTimeout(function () { if (node.parentNode) node.remove(); }, Number(template.durationMinutes) * 60000);
+        }
+    }
+
+    if (assetBase) {
+        fetch(assetBase + "/portal-branding.json?v=" + version, { credentials: "same-origin", cache: "no-store" })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (value) { if (value) renderLoginBanner(value); })
+            .catch(function () {});
+    }
+
     frame.addEventListener("load", inspect);
     probeSession();
     window.setInterval(inspect, 500);
