@@ -41,6 +41,16 @@ module.exports.createRuntime = function (options) {
     context.settings.defaults.modules.portal = shared.copy(PORTAL_DEFAULTS);
     runtime.modules.portal = portalFactory.createModule(context);
 
+    var baseSaveAdminSettings = runtime.saveAdminSettings;
+    runtime.saveAdminSettings = function (user, payload) {
+        payload = payload && typeof payload === "object" ? shared.copy(payload) : {};
+        payload.moduleOptions = payload.moduleOptions && typeof payload.moduleOptions === "object" ? payload.moduleOptions : {};
+        if (!payload.portal && payload.moduleOptions.portal && typeof payload.moduleOptions.portal === "object") {
+            payload.portal = shared.copy(payload.moduleOptions.portal);
+        }
+        return baseSaveAdminSettings(user, payload);
+    };
+
     var baseSnapshot = runtime.adminSnapshot;
     runtime.adminSnapshot = function (user) {
         var value = baseSnapshot(user);
