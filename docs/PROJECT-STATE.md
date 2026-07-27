@@ -1,38 +1,60 @@
 # SIRK Management Platform — aktualny stan projektu
 
-Stan dokumentacji: 2026-07-24  
-Bieżąca wersja: `1.5.140`  
-Branch refaktoryzacji: `refactor/repository-layout-v2`
+Stan dokumentacji: 2026-07-27
+Bieżąca wersja: `1.8.36-dev.26`
+Bieżący commit: `83b871b67eb82add33a1912771ebbb70924b099c`
+Gałąź robocza: `develop`
 
-## Status
+## Punkt startowy dla nowego czatu
 
-Repozytorium `Eris92/SIRK-Portal` jest kanonicznym źródłem pluginu `SIRK-Portal`.
-
-Branch posiada finalny podział:
+Projekt korzysta z dwóch lokalnych repozytoriów:
 
 ```text
-server/         backend
-public/portal/  standalone Portal
-public/native/  adapter MeshCentral
-public/shared/  wspólny frontend
-public/modules/ renderery modułów
-web/admin/      panel administracyjny
+C:\Users\Kris\Documents\SIRK-Portal
+C:\Users\Kris\Documents\SIRK-Portal_Build
 ```
 
-Usunięto entrypointy, widoki, runtime fallbacki i katalogi backendowe `MyCompany`. Plugin nie utrzymuje migracji ustawień ani zgodności ze starym katalogiem danych.
+- `SIRK-Portal` zawiera kod aplikacji;
+- `SIRK-Portal_Build` zawiera instrukcje Codex, indeks i pamięć projektu;
+- kod aplikacji nie może trafiać do repozytorium Build;
+- pamięć i indeks nie mogą trafiać do repozytorium aplikacji.
 
-## Nazwy
-
-- techniczna nazwa pluginu: `SIRK-Portal`;
-- pełna nazwa: `SIRK Management Platform`;
-- nazwa UI: `SIRK Platform`.
-
-## Runtime
-
-Łańcuch ładowania:
+Nowy czat należy rozpocząć od:
 
 ```text
-SIRK-Portal.js
+AGENTS.md
+docs/INDEX.md
+public/INDEX.md, server/INDEX.md albo innego indeksu właściwej warstwy
+```
+
+Następnie należy korzystać z indeksu i pamięci w `SIRK-Portal_Build`. Nie wolno ponownie wykonywać promptów bootstrap.
+
+## Gałęzie i publikacja
+
+Stan potwierdzony 2026-07-27:
+
+```text
+develop        83b871b67eb82add33a1912771ebbb70924b099c
+origin/develop 83b871b67eb82add33a1912771ebbb70924b099c
+origin/main    83b871b67eb82add33a1912771ebbb70924b099c
+```
+
+`develop` pozostaje obowiązkową gałęzią roboczą. Kanały aktualizacji:
+
+```text
+stable -> main
+beta   -> beta
+dev    -> develop
+```
+
+Nie publikować do `beta` ani `main` bez osobnego polecenia użytkownika.
+
+## Architektura
+
+Kanoniczny łańcuch runtime:
+
+```text
+SIRKPortal.js
   -> plugin-main-standalone.js
     -> plugin-main.js
       -> server/core/runtime-portal.js
@@ -40,72 +62,78 @@ SIRK-Portal.js
           -> server/modules/*
 ```
 
-Runtime używa wyłącznie `server/core/` i `server/modules/`.
-
-## Moduły
-
-- Automation;
-- Commands;
-- Approvals;
-- Device Transfers;
-- Jira Integration;
-- Security;
-- Portal.
-
-## Dane trwałe
+Warstwy:
 
 ```text
-meshcentral-data/sirk-platform-data
+server/         backend, API, storage i integracje
+public/portal/  niezależny Portal, login, Settings i workspace
+public/native/  adapter MeshCentral i sesje urządzeń
+public/shared/  wspólny runtime oraz komponenty UI
+public/modules/ renderery modułów
+web/admin/      panel administracyjny
 ```
 
-Nie ma automatycznego odczytu, kopiowania ani migracji `mycompany-data`. Ustawienia testowej wtyczki nie są zachowywane.
+Runtime używa danych w `sirk-platform-data`. Nie ma fallbacków, aliasów ani migracji `MyCompany`.
 
-## Frontend
+## Bieżący zakres nowego UI
 
-Kanoniczne warstwy:
+Portal posiada:
 
-- `public/portal/` — dokument standalone, login, navigation, workspace i style;
-- `public/native/` — launcher oraz integracja urządzeń z natywnym MeshCentral;
-- `public/shared/` — runtime, komponenty, style i rejestr ikon;
-- `public/modules/` — po jednym rendererze na moduł.
+- niezależny shell, login, nawigację i API;
+- Overview z informacją o urządzeniach, akceptacjach, integracjach i stanie aktualizacji;
+- widoki urządzeń oraz zakładki Desktop, Terminal, Commands, Files, Registry, Software i Intel AMT;
+- Approvals, Automation, Monitoring, Assets, Management, Reports, Security i Settings;
+- ustawienia widoczności modułów;
+- osobny moduł Commands;
+- sekcje Permissions przypisane do modułów;
+- system aktualizacji, backupów, historii, kanałów i restartu usługi.
 
-Panel administracyjny używa `views/SIRK-Portal.handlebars`, `web/admin/` oraz `window.SirkPlatformAdminData`.
+## Ostatnie zmiany
+
+W wersjach `1.8.36-dev.15`–`1.8.36-dev.26`:
+
+- dodano stan aktualizacji do Overview;
+- uporządkowano trzykolumnowe Settings;
+- dodano trwały zapis widoczności pozycji Portalu;
+- ukryto wyłączone widoki w lewym menu i drugiej kolumnie Settings;
+- przeniesiono Commands do osobnego modułu i dodano jego przełącznik w `Settings -> Moduły`;
+- przeniesiono Permissions do poszczególnych modułów;
+- wymuszono odczyty aktualizacji bez cache;
+- zabezpieczono aktualizator przed zapętlaniem po błędzie;
+- ograniczono wysokość `.sirk-device-tabs.sirk-device-tabs-standalone` do `44px`.
 
 ## Kontrakt sesji urządzeń
 
-- iframe hosta jest tworzony najwyżej raz na otwartą zakładkę;
-- pozostaje podłączony do stałej warstwy sesji;
-- przełączanie widoków nie przenosi iframe i nie zmienia `src`;
-- aktywny host i podzakładka są odtwarzane po `F5`;
+- iframe aktywnej sesji hosta pozostaje stale podłączony do DOM;
+- przełączanie widoków nie zmienia `src` i nie przenosi iframe;
+- aktywny host i podzakładka są zapisywane oddzielnie;
 - Desktop, Terminal i Files nie mogą zostać zerwane przez przejście do innego widoku;
-- PL/EN i motyw synchronizują się bez przeładowania workspace.
+- PL/EN oraz motyw synchronizują się bez przeładowania workspace.
 
-## Indeksy repozytorium
+## Stan weryfikacji
 
-Nowe zadania rozpoczynają się od:
+Potwierdzone:
 
-```text
-AGENTS.md
-docs/INDEX.md
-<indeks właściwej warstwy>
-```
+- `npm test` przechodzi dla commita `83b871b`;
+- wersje w `package.json`, `config.json`, `README.md`, `changelog.md` i `version-history.json` są zsynchronizowane;
+- `develop`, `origin/develop` i `origin/main` są zgodne.
 
-Pełny skan repozytorium nie jest domyślnym sposobem pracy.
+Do weryfikacji w środowisku użytkownika:
 
-## Wersja 1.5.140
+- zapis i ponowny odczyt przełącznika Commands;
+- ukrywanie wyłączonych modułów po zapisaniu Settings;
+- wysokość paska `sirk-device-tabs-standalone`;
+- natychmiastowa widoczność nowej wersji po publikacji;
+- rzeczywiste połączenia Desktop, Terminal i Files po aktualizacji.
 
-- zaktualizowano nazwę repozytorium i wszystkie URL-e metadata do `Eris92/SIRK-Portal`;
-- usunięto z dokumentacji informacje o kompatybilności i migracji `MyCompany`;
-- zsynchronizowano dokumentację z finalnym layoutem `server/public/web`;
-- dodano hierarchię indeksów wymuszającą selektywny odczyt repozytorium;
-- zaktualizowano reguły agenta i prompt startowy.
+Nie uznawać tych punktów za rozwiązane wyłącznie na podstawie testów kontraktowych. W kolejnym czacie zaczynać od aktualnego zrzutu ekranu, żądania sieciowego i odpowiedzi API.
 
-## Weryfikacja
+## Weryfikacja po zmianach
 
-Wymagane po commicie:
+Po zmianie runtime lub UI:
 
-```bash
+```powershell
 npm test
 ```
 
-Dodatkowo należy sprawdzić CI brancha i ręcznie zweryfikować Portal po lokalnym wdrożeniu. Sam commit dokumentacyjno-metadata nie wykonuje restartu ani deploymentu.
+Następnie sprawdzić diff, spójność wersji, właściwy endpoint i rzeczywiste zachowanie w przeglądarce. Zmiany kodu publikować osobno od zmian indeksu i pamięci.
