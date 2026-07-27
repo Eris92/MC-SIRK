@@ -112,7 +112,7 @@
 
     function normalizeSettingsNavigation() {
         var content = document.getElementById("sirkStandaloneContent");
-        var workspace = content && content.querySelector(".sirk-settings-module-workspace");
+        var workspace = content && (content.querySelector("[data-portal-settings] .sirk-layout") || content.querySelector(".sirk-settings-module-workspace"));
         if (!workspace) return;
         var primary = workspace.querySelector(":scope > .sirk-column-primary");
         var activateSettings = false;
