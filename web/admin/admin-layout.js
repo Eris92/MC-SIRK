@@ -59,7 +59,8 @@
         defendertools: svg('<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z"/><path d="m8.5 12 2.3 2.3 4.7-5"/>'),
         config: svg('<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>'),
         logs: svg('<path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/>'),
-        errors: svg('<path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17h.01"/>')
+        errors: svg('<path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17h.01"/>'),
+        system: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5M8 17h8"/>')
     };
 
     function toolButton(action, title, icon) {
@@ -129,6 +130,9 @@
         middle.querySelectorAll("[data-server-key]").forEach(function (button) {
             decorateButton(button, "server");
         });
+        middle.querySelectorAll("[data-system-key]").forEach(function (button) {
+            decorateButton(button, "system");
+        });
     }
 
     function activeTab() {
@@ -164,7 +168,8 @@
         var selector = active === "settings"
             ? ".mc-admin-settings-nav:not(.mc-admin-debug-nav)"
             : active === "debug" ? ".mc-admin-debug-nav"
-            : active === "server" ? ".mc-admin-server-nav" : "";
+            : active === "server" ? ".mc-admin-server-nav"
+                : active === "system" ? ".mc-admin-system-nav" : "";
         var navigation = selector ? (content.querySelector(selector) || middle.querySelector(selector)) : null;
 
         middle.innerHTML = "";

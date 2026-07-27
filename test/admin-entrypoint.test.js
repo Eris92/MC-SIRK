@@ -21,6 +21,9 @@ assert.strictEqual(fs.existsSync(path.join(root, "SIRK-Portal.js")), false, "Uns
 assert.strictEqual(fs.existsSync(path.join(root, "SIRK-PortalAdmin.js")), false, "Unsafe legacy admin entrypoint must not exist");
 assert.ok(adminUi.indexOf('var serverSection = "service"') >= 0, "Server view must track the active service subcategory");
 assert.ok(adminUi.indexOf('title: "Usługa"') >= 0, "Server view must expose the Usługa subcategory");
+assert.ok(adminUi.indexOf('data-tab=\"system\"') >= 0 || adminUi.indexOf('active === "system"') >= 0, "Admin UI must expose System");
+assert.ok(adminUi.indexOf('data-system-key') >= 0, "Admin UI must expose System subcategories");
 assert.ok(adminLayout.indexOf('".mc-admin-server-nav"') >= 0, "Admin layout must relocate Server subnavigation");
+assert.ok(adminLayout.indexOf('".mc-admin-system-nav"') >= 0, "Admin layout must relocate System subnavigation");
 
 console.log("SIRK Portal JavaScript-safe entrypoints: OK");

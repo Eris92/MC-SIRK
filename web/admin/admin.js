@@ -32,6 +32,13 @@
     var serverItems = [
         { key: "service", title: "Usługa" }
     ];
+    var systemItems = [
+        { key: "updates", title: "Aktualizacje" },
+        { key: "backups", title: "Backupy" },
+        { key: "history", title: "Historia" },
+        { key: "channel", title: "Kanał aktualizacji" }
+    ];
+    var systemSection = "updates";
 
     function element(tag, className, text) {
         var value = document.createElement(tag);
@@ -1103,6 +1110,25 @@
         content.appendChild(layout);
     }
 
+    function systemView() {
+        var layout = element("div", "mc-admin-settings-layout mc-admin-system-layout");
+        var navigation = element("nav", "mc-admin-settings-nav mc-admin-system-nav");
+        var panel = element("div", "mc-admin-settings-panel mc-admin-system-panel");
+        systemItems.forEach(function (item) {
+            var button = element("button", "", item.title);
+            button.type = "button";
+            button.setAttribute("data-system-key", item.key);
+            button.classList.toggle("active", item.key === systemSection);
+            button.onclick = function () { systemSection = item.key; render(); };
+            navigation.appendChild(button);
+        });
+        layout.appendChild(navigation);
+        layout.appendChild(panel);
+        content.appendChild(layout);
+        if (window.SirkSystemUpdates && typeof window.SirkSystemUpdates.mount === "function") window.SirkSystemUpdates.mount(panel, systemSection);
+        else panel.appendChild(element("div", "mc-admin-notice", "Moduł ustawień systemowych jest niedostępny."));
+    }
+
     function render() {
         if (!draft) resetDraft();
         content.innerHTML = "";
@@ -1115,6 +1141,7 @@
         if (active === "settings") settings();
         else if (active === "plugins") pluginsView();
         else if (active === "server") serverView();
+        else if (active === "system") systemView();
         else if (active === "debug") debug();
         else overview();
     }
