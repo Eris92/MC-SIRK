@@ -6,14 +6,20 @@ var path = require("path");
 
 var root = path.resolve(__dirname, "..");
 var runtime = fs.readFileSync(path.join(root, "server/core/portal-experience-runtime.js"), "utf8");
-var settings = fs.readFileSync(path.join(root, "public/portal/vendor/settings-structure.js"), "utf8");
+var settingsPath = path.join(root, "public/portal/vendor/settings-structure.js");
+var servedSettingsPath = path.join(root, "public/vendor/sirk-portal/settings-structure.js");
+var settings = fs.readFileSync(settingsPath, "utf8");
+var servedSettings = fs.readFileSync(servedSettingsPath, "utf8");
 var branding = fs.readFileSync(path.join(root, "public/portal/standalone/scripts/branding.js"), "utf8");
 
+assert.strictEqual(servedSettings, settings, "MeshCentral vendor route must serve the current settings structure source.");
 assert.ok(runtime.indexOf("BUILT_IN_ANIMATIONS") >= 0, "Runtime must define built-in animations.");
 assert.ok(runtime.indexOf("portalSettings.animations = animations") >= 0, "Animation settings must be normalized before saving.");
 assert.ok(runtime.indexOf("animations: animations(portalSettings.animations)") >= 0, "Public Portal configuration must contain animations.");
 
 assert.ok(settings.indexOf('ensureLeaf(portal, "Animacje"') >= 0, "Portal settings must contain the Animacje tab.");
+assert.ok(settings.indexOf('ensureLeaf(portal, "Release"') >= 0, "Portal settings must contain the Release tab.");
+assert.ok(settings.indexOf('ensureLeaf(portal, "Zaślepka"') >= 0, "Portal settings must contain the maintenance tab.");
 assert.ok(settings.indexOf('"Dodaj animację"') >= 0, "Portal settings must allow custom animations to be added.");
 assert.ok(settings.indexOf('"Podgląd animacji"') >= 0, "Portal settings must provide an animation preview.");
 assert.ok(settings.indexOf('"Padający śnieg"') >= 0, "Snow must be available as a built-in animation.");
