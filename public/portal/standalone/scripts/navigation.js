@@ -4,6 +4,9 @@
     if (window.__sirkPlatformStandaloneNavigationLoaded) return;
     window.__sirkPlatformStandaloneNavigationLoaded = true;
 
+    var moveRequestsMode = null;
+    var forwardingMoveRequestClick = false;
+
     function asset(name) {
         var base = String(window.__SIRK_PLATFORM_ASSET_BASE__ || "").replace(/\/$/, "");
         var version = encodeURIComponent(String(window.__SIRK_PLATFORM_PORTAL_VERSION__ || ""));
@@ -127,6 +130,100 @@
         group.appendChild(channelButton);
     }
 
+    function groupByLabel(host, label) {
+        var result = null;
+        Array.prototype.some.call(host.querySelectorAll(":scope > .sirk-settings-nav-group"), function (group) {
+            var summary = group.querySelector(":scope > summary");
+            if (String(summary && summary.textContent || "").trim() !== label) return false;
+            result = group;
+            return true;
+        });
+        return result;
+    }
+
+    function ensureMoveRequestsNavigation(secondary) {
+        var modulesGroup = groupByLabel(secondary, "Moduły");
+        var modulesBody = modulesGroup && modulesGroup.querySelector(":scope > .sirk-settings-nav-group-body");
+        if (!modulesBody) return;
+        var approvalsGroup = groupByLabel(modulesBody, "Akceptacje");
+        if (!approvalsGroup) return;
+
+        Array.prototype.forEach.call(secondary.querySelectorAll(".sirk-nav-item"), function (button) {
+            if (button.getAttribute("data-move-request-nav") === "1" || button.getAttribute("data-move-reset-bound") === "1") return;
+            button.setAttribute("data-move-reset-bound", "1");
+            button.addEventListener("click", function () {
+                if (!forwardingMoveRequestClick) moveRequestsMode = null;
+            });
+        });
+
+        var moveGroup = groupByLabel(modulesBody, "Przenoszenie urządzeń");
+        if (!moveGroup) {
+            moveGroup = document.createElement("details");
+            moveGroup.className = "sirk-settings-nav-group";
+            var summary = document.createElement("summary");
+            summary.textContent = "Przenoszenie urządzeń";
+            moveGroup.appendChild(summary);
+            var body = document.createElement("div");
+            body.className = "sirk-settings-nav-group-body";
+            moveGroup.appendChild(body);
+            approvalsGroup.parentNode.insertBefore(moveGroup, approvalsGroup.nextSibling);
+
+            ["Ogólne", "Permissions"].forEach(function (label) {
+                var button = document.createElement("button");
+                button.type = "button";
+                button.className = "sirk-nav-item sirk-settings-nav-leaf";
+                button.textContent = label;
+                button.setAttribute("data-move-request-nav", "1");
+                button.addEventListener("click", function () {
+                    var approvalBody = approvalsGroup.querySelector(":scope > .sirk-settings-nav-group-body");
+                    var target = null;
+                    Array.prototype.some.call(approvalBody.querySelectorAll(":scope > .sirk-nav-item"), function (candidate) {
+                        if (String(candidate.textContent || "").trim() !== label) return false;
+                        target = candidate;
+                        return true;
+                    });
+                    if (!target) return;
+                    moveRequestsMode = label === "Permissions" ? "permissions" : "general";
+                    forwardingMoveRequestClick = true;
+                    target.click();
+                    forwardingMoveRequestClick = false;
+                });
+                body.appendChild(button);
+            });
+        }
+
+        moveGroup.open = !!moveRequestsMode;
+        Array.prototype.forEach.call(moveGroup.querySelectorAll('[data-move-request-nav="1"]'), function (button) {
+            var selected = moveRequestsMode === "permissions" ? "Permissions" : "Ogólne";
+            button.classList.toggle("active", !!moveRequestsMode && String(button.textContent || "").trim() === selected);
+        });
+    }
+
+    function filterMoveRequestsSections(workspace) {
+        var form = workspace.querySelector("[data-settings-form]");
+        if (!form) return;
+        var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
+        var modulesGroup = secondary && groupByLabel(secondary, "Moduły");
+        var modulesBody = modulesGroup && modulesGroup.querySelector(":scope > .sirk-settings-nav-group-body");
+        var approvalsGroup = modulesBody && groupByLabel(modulesBody, "Akceptacje");
+        var approvalsActive = !!(approvalsGroup && approvalsGroup.querySelector(".sirk-nav-item.active,.sirk-nav-item.is-active"));
+        if (!approvalsActive && !moveRequestsMode) return;
+
+        Array.prototype.forEach.call(form.querySelectorAll(":scope > [data-settings-section]"), function (section) {
+            var summary = section.querySelector(":scope > summary");
+            var text = String(summary && summary.textContent || "").trim().toLowerCase();
+            var isMoveRequests = text.indexOf("moverequests") >= 0;
+            if ((moveRequestsMode && !isMoveRequests) || (!moveRequestsMode && isMoveRequests)) section.remove();
+        });
+
+        if (moveRequestsMode) {
+            Array.prototype.forEach.call(form.querySelectorAll(":scope > [data-settings-field]"), function (field) {
+                var label = field.querySelector("[data-settings-field-copy] strong");
+                if (String(label && label.textContent || "").trim() === "Widoczność zakładki") field.remove();
+            });
+        }
+    }
+
     function removeModuleCardWrappers(workspace) {
         var primary = workspace.querySelector(":scope > .sirk-column-primary");
         var activePrimary = primary && primary.querySelector(":scope > .sirk-nav-item.active,:scope > .sirk-nav-item.is-active");
@@ -213,6 +310,8 @@
         var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
         if (!secondary) return;
         normalizeServerNavigation(primary, secondary);
+        ensureMoveRequestsNavigation(secondary);
+        filterMoveRequestsSections(workspace);
         removeModuleCardWrappers(workspace);
         normalizeUnifiedModuleToggle(workspace);
     }
