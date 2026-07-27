@@ -119,6 +119,11 @@ function start(options) {
                 res.end(loginHtml());
                 return;
             }
+            if (url.pathname === "/favicon.ico") {
+                res.setHeader("Content-Type", "image/svg+xml");
+                fs.createReadStream(path.join(ROOT, "assets/icons/sirk-ui.svg")).pipe(res);
+                return;
+            }
             if (url.pathname === "/" || url.pathname === "/sirkportal/") {
                 res.setHeader("Content-Type", "text/html; charset=utf-8");
                 res.end(portalHtml());
