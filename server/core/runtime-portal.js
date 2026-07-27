@@ -6,16 +6,16 @@ var portalFactory = require("../modules/portal/safe.js");
 var VERSION = require("../../config.json").version;
 
 var VIEW_DEFAULTS = {
-    overview: { enabled: true, personalized: false, label: "", accent: "#4d6bd8" },
-    devices: { enabled: true, personalized: false, label: "", accent: "#55b8ff" },
-    approvals: { enabled: true, personalized: false, label: "", accent: "#35d7a4" },
-    automation: { enabled: true, personalized: false, label: "", accent: "#ffae00" },
-    monitoring: { enabled: true, personalized: false, label: "", accent: "#34d1e7" },
-    assets: { enabled: true, personalized: false, label: "", accent: "#9a7cff" },
-    management: { enabled: true, personalized: false, label: "", accent: "#ff5f7d" },
-    reports: { enabled: true, personalized: false, label: "", accent: "#7f85ff" },
-    security: { enabled: true, personalized: false, label: "", accent: "#ff385d" },
-    settings: { enabled: true, personalized: false, label: "", accent: "#94a3b8" }
+    overview: { enabled: true, personalized: false, label: "", accent: "#4d6bd8", accessGroupIds: [] },
+    devices: { enabled: true, personalized: false, label: "", accent: "#55b8ff", accessGroupIds: [] },
+    approvals: { enabled: true, personalized: false, label: "", accent: "#35d7a4", accessGroupIds: [] },
+    automation: { enabled: true, personalized: false, label: "", accent: "#ffae00", accessGroupIds: [] },
+    monitoring: { enabled: true, personalized: false, label: "", accent: "#34d1e7", accessGroupIds: [] },
+    assets: { enabled: true, personalized: false, label: "", accent: "#9a7cff", accessGroupIds: [] },
+    management: { enabled: true, personalized: false, label: "", accent: "#ff5f7d", accessGroupIds: [] },
+    reports: { enabled: true, personalized: false, label: "", accent: "#7f85ff", accessGroupIds: [] },
+    security: { enabled: true, personalized: false, label: "", accent: "#ff385d", accessGroupIds: [] },
+    settings: { enabled: true, personalized: false, label: "", accent: "#94a3b8", accessGroupIds: [] }
 };
 
 var PORTAL_DEFAULTS = {
@@ -41,12 +41,64 @@ module.exports.createRuntime = function (options) {
     context.settings.defaults.modules.portal = shared.copy(PORTAL_DEFAULTS);
     runtime.modules.portal = portalFactory.createModule(context);
 
+    function knownGroups() {
+        return shared.getUserGroups(context.parent);
+    }
+
+    function normalizeGroupIds(value) {
+        var known = knownGroups().map(function (group) { return group.id; });
+        return (Array.isArray(value) ? value : []).map(String).filter(function (id, index, list) {
+            return known.indexOf(id) >= 0 && list.indexOf(id) === index;
+        });
+    }
+
+    function hasGroupAccess(user, groupIds) {
+        if (shared.isSiteAdmin(user)) return true;
+        groupIds = Array.isArray(groupIds) ? groupIds : [];
+        return !groupIds.length || shared.isUserInAnyGroup(user, groupIds);
+    }
+
+    function moduleGroupAccess(user, key) {
+        var current = context.settings.read();
+        var config = current.modules && current.modules[key] || {};
+        return hasGroupAccess(user, config.accessGroupIds);
+    }
+
+    function applyPortalViewAccess(config, user) {
+        config = shared.copy(config || {});
+        if (!config.views || typeof config.views !== "object") return config;
+        Object.keys(config.views).forEach(function (key) {
+            var view = config.views[key] || {};
+            if (!hasGroupAccess(user, view.accessGroupIds)) view.enabled = false;
+            config.views[key] = view;
+        });
+        return config;
+    }
+
     var baseSaveAdminSettings = runtime.saveAdminSettings;
     runtime.saveAdminSettings = function (user, payload) {
         payload = payload && typeof payload === "object" ? shared.copy(payload) : {};
         payload.moduleOptions = payload.moduleOptions && typeof payload.moduleOptions === "object" ? payload.moduleOptions : {};
         if (!payload.portal && payload.moduleOptions.portal && typeof payload.moduleOptions.portal === "object") {
             payload.portal = shared.copy(payload.moduleOptions.portal);
+        }
+        Object.keys(payload.moduleOptions).forEach(function (key) {
+            var value = payload.moduleOptions[key];
+            if (!value || typeof value !== "object" || Array.isArray(value)) return;
+            if (Object.prototype.hasOwnProperty.call(value, "accessGroupIds")) {
+                value.accessGroupIds = normalizeGroupIds(value.accessGroupIds);
+            }
+        });
+        var portal = payload.portal || payload.moduleOptions.portal;
+        if (portal && portal.views && typeof portal.views === "object") {
+            Object.keys(portal.views).forEach(function (key) {
+                var view = portal.views[key];
+                if (view && typeof view === "object" && Object.prototype.hasOwnProperty.call(view, "accessGroupIds")) {
+                    view.accessGroupIds = normalizeGroupIds(view.accessGroupIds);
+                }
+            });
+            payload.portal = portal;
+            payload.moduleOptions.portal = shared.copy(portal);
         }
         return baseSaveAdminSettings(user, payload);
     };
@@ -58,6 +110,7 @@ module.exports.createRuntime = function (options) {
             value.plugin.name = "SIRK Management Platform";
             value.plugin.shortName = "SIRK-Portal";
             value.plugin.version = VERSION;
+            value.userGroups = knownGroups();
         }
         return value;
     };
@@ -66,14 +119,18 @@ module.exports.createRuntime = function (options) {
         var result = {};
         Object.keys(runtime.modules).forEach(function (key) {
             var module = runtime.modules[key];
+            var access = module.getAccess(user);
+            if (!moduleGroupAccess(user, key)) access = Object.assign({}, access || {}, { allowed: false, siteAdmin: false });
+            var config = module.clientConfig(user);
+            if (key === "portal") config = applyPortalViewAccess(config, user);
             result[key] = {
                 enabled: context.settings.isModuleEnabled(key),
                 ready: !module.__loadError,
                 error: module.__loadError
                     ? (shared.isSiteAdmin(user) ? module.__loadError : "Module failed to load.")
                     : null,
-                config: module.clientConfig(user),
-                access: module.getAccess(user)
+                config: config,
+                access: access
             };
         });
         return {
@@ -92,6 +149,11 @@ module.exports.createRuntime = function (options) {
     runtime.request = function (method, moduleName, asset, req, res, user) {
         if (moduleName === "_runtime" && method === "GET") {
             shared.sendJson(res, 200, runtime.bootstrap(user));
+            return;
+        }
+        moduleName = String(moduleName || "").toLowerCase();
+        if (moduleName && runtime.modules[moduleName] && !moduleGroupAccess(user, moduleName)) {
+            shared.sendJson(res, 403, { ok: false, error: "Permission denied." });
             return;
         }
         return baseRequest(method, moduleName, asset, req, res, user);
