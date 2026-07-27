@@ -1,3 +1,7 @@
+## 1.8.36-dev.18
+
+- Force uncached update status requests so newly published versions are visible immediately.
+
 ## 1.8.36-dev.17
 
 - Clean up Settings: add Overview visibility controls, hide disabled views, make module Enabled the parent switch, and separate Permissions from device commands.

@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.18",
+    "date": "2026-07-27",
+    "changes": [
+      "Force uncached update status requests so newly published versions are visible immediately"
+    ]
+  },
+  {
     "version": "1.8.36-dev.17",
     "date": "2026-07-27",
     "changes": [

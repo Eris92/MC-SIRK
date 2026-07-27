@@ -17,10 +17,14 @@
     }
 
     function api(action, method, body) {
-        return fetch(updateBase() + action, {
-            method: method || "GET",
+        var requestMethod = method || "GET";
+        var endpoint = updateBase() + action;
+        if (requestMethod === "GET") endpoint += (endpoint.indexOf("?") >= 0 ? "&" : "?") + "sirk_refresh=" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        return fetch(endpoint, {
+            method: requestMethod,
             credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-cache, no-store, max-age=0", Pragma: "no-cache" },
             body: body ? JSON.stringify(body) : undefined
         }).then(function (response) {
             return response.json().catch(function () { throw new Error("Update API returned an invalid response."); });
