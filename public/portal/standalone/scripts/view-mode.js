@@ -13,7 +13,6 @@
     (document.head || document.documentElement).appendChild(original);
 
     var saving = false;
-    var integrationKeys = ["ad", "defender", "entra", "jira", "zabbix", "sms"];
 
     function workspace() {
         return document.querySelector("[data-portal-settings] .sirk-layout,.sirk-settings-module-workspace");
@@ -55,7 +54,11 @@
     }
 
     function snapshot() {
-        return fetch(apiUrl("portal-admin-snapshot"), { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } }).then(parse);
+        return fetch(apiUrl("portal-admin-snapshot"), {
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { Accept: "application/json" }
+        }).then(parse);
     }
 
     function saveSnapshot(value, modules, moduleOptions, integrations) {
@@ -63,23 +66,44 @@
         var clean = base.pathname.replace(/\/+$/, "");
         if (/\/api$/.test(clean)) {
             var standalone = new URLSearchParams();
-            standalone.set("payload", JSON.stringify({ modules: modules, moduleOptions: moduleOptions, portal: moduleOptions.portal || {}, integrations: integrations, secrets: {} }));
-            return fetch(clean + "/admin/settings", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" }, body: standalone.toString() }).then(parse);
+            standalone.set("payload", JSON.stringify({
+                modules: modules,
+                moduleOptions: moduleOptions,
+                portal: moduleOptions.portal || {},
+                integrations: integrations,
+                secrets: {}
+            }));
+            return fetch(clean + "/admin/settings", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
+                body: standalone.toString()
+            }).then(parse);
         }
         var body = new URLSearchParams();
         body.set("modules", JSON.stringify(modules));
         body.set("moduleOptions", JSON.stringify(moduleOptions));
         body.set("integrations", JSON.stringify(integrations));
         body.set("secrets", "{}");
-        return fetch(apiUrl("save-settings"), { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" }, body: body.toString() }).then(parse);
+        return fetch(apiUrl("save-settings"), {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
+            body: body.toString()
+        }).then(parse);
     }
 
     function setActive(root, button) {
         var secondary = root.querySelector(":scope > .sirk-column-secondary");
-        Array.prototype.forEach.call(secondary.querySelectorAll(".sirk-nav-item.active,.sirk-nav-item.is-active"), function (item) { item.classList.remove("active", "is-active"); });
+        Array.prototype.forEach.call(secondary.querySelectorAll(".sirk-nav-item.active,.sirk-nav-item.is-active"), function (item) {
+            item.classList.remove("active", "is-active");
+        });
         button.classList.add("active");
         var group = button.closest("details.sirk-settings-nav-group");
-        if (group) { group.open = true; group.setAttribute("data-sirk-independent-open", "1"); }
+        if (group) {
+            group.open = true;
+            group.setAttribute("data-sirk-independent-open", "1");
+        }
     }
 
     function booleanField(label, checked, description) {
@@ -89,7 +113,11 @@
         var strong = document.createElement("strong");
         strong.textContent = label;
         copy.appendChild(strong);
-        if (description) { var small = document.createElement("small"); small.textContent = description; copy.appendChild(small); }
+        if (description) {
+            var small = document.createElement("small");
+            small.textContent = description;
+            copy.appendChild(small);
+        }
         var input = document.createElement("input");
         input.type = "checkbox";
         input.checked = checked === true;
@@ -161,7 +189,13 @@
             list.appendChild(row);
         });
         card.appendChild(list);
-        return { card: card, values: function () { return Array.prototype.filter.call(list.querySelectorAll("input"), function (input) { return input.checked; }).map(function (input) { return input.value; }); } };
+        return {
+            card: card,
+            values: function () {
+                return Array.prototype.filter.call(list.querySelectorAll("input"), function (input) { return input.checked; })
+                    .map(function (input) { return input.value; });
+            }
+        };
     }
 
     function renderMove(root, mode, button) {
@@ -191,26 +225,47 @@
                 form.appendChild(approvals.row);
                 save.onclick = function () {
                     if (saving) return;
-                    saving = true; save.disabled = true; message.textContent = "Zapisywanie…";
+                    saving = true;
+                    save.disabled = true;
+                    message.textContent = "Zapisywanie…";
                     modules.moverequests = enabled.input.checked;
                     move.enabled = enabled.input.checked;
                     provider.enabled = approvals.input.checked;
-                    saveSnapshot(value, modules, moduleOptions, integrations).then(function () { saving = false; renderMove(root, mode, button); }).catch(function (error) { saving = false; save.disabled = false; message.textContent = error.message || String(error); });
+                    saveSnapshot(value, modules, moduleOptions, integrations).then(function () {
+                        saving = false;
+                        renderMove(root, mode, button);
+                    }).catch(function (error) {
+                        saving = false;
+                        save.disabled = false;
+                        message.textContent = error.message || String(error);
+                    });
                 };
             } else {
                 var selector = groupSelector(value.userGroups || [], Array.isArray(move.accessGroupIds) ? move.accessGroupIds.map(String) : []);
                 form.appendChild(selector.card);
                 save.onclick = function () {
                     if (saving) return;
-                    saving = true; save.disabled = true; message.textContent = "Zapisywanie…";
+                    saving = true;
+                    save.disabled = true;
+                    message.textContent = "Zapisywanie…";
                     move.accessGroupIds = selector.values();
-                    saveSnapshot(value, modules, moduleOptions, integrations).then(function () { saving = false; renderMove(root, mode, button); }).catch(function (error) { saving = false; save.disabled = false; message.textContent = error.message || String(error); });
+                    saveSnapshot(value, modules, moduleOptions, integrations).then(function () {
+                        saving = false;
+                        renderMove(root, mode, button);
+                    }).catch(function (error) {
+                        saving = false;
+                        save.disabled = false;
+                        message.textContent = error.message || String(error);
+                    });
                 };
             }
             details.appendChild(form);
             details.appendChild(save);
             details.appendChild(message);
-        }).catch(function (error) { details.innerHTML = '<div class="sirk-card" data-error="1"></div>'; details.firstChild.textContent = error.message || String(error); });
+        }).catch(function (error) {
+            details.innerHTML = '<div class="sirk-card" data-error="1"></div>';
+            details.firstChild.textContent = error.message || String(error);
+        });
     }
 
     function renderIntegration(root, key, button) {
@@ -234,13 +289,41 @@
             var message = document.createElement("span");
             save.onclick = function () {
                 if (saving) return;
-                saving = true; save.disabled = true; message.textContent = "Zapisywanie…";
-                saveSnapshot(value, modules, moduleOptions, integrations).then(function () { saving = false; renderIntegration(root, key, button); }).catch(function (error) { saving = false; save.disabled = false; message.textContent = error.message || String(error); });
+                saving = true;
+                save.disabled = true;
+                message.textContent = "Zapisywanie…";
+                saveSnapshot(value, modules, moduleOptions, integrations).then(function () {
+                    saving = false;
+                    renderIntegration(root, key, button);
+                }).catch(function (error) {
+                    saving = false;
+                    save.disabled = false;
+                    message.textContent = error.message || String(error);
+                });
             };
             details.appendChild(form);
             details.appendChild(save);
             details.appendChild(message);
-        }).catch(function (error) { details.innerHTML = '<div class="sirk-card" data-error="1"></div>'; details.firstChild.textContent = error.message || String(error); });
+        }).catch(function (error) {
+            details.innerHTML = '<div class="sirk-card" data-error="1"></div>';
+            details.firstChild.textContent = error.message || String(error);
+        });
+    }
+
+    function removeApprovalProviders(root) {
+        var secondary = root.querySelector(":scope > .sirk-column-secondary");
+        var details = root.querySelector(":scope > .sirk-column-details");
+        if (!secondary || !details) return;
+        var active = secondary.querySelector(".sirk-settings-nav-leaf.active,.sirk-settings-nav-leaf.is-active,.sirk-nav-item.active,.sirk-nav-item.is-active");
+        if (!active || String(active.textContent || "").trim() !== "Ogólne") return;
+        var group = active.closest("details.sirk-settings-nav-group");
+        var summary = group && group.querySelector(":scope > summary");
+        if (String(summary && summary.textContent || "").trim() !== "Akceptacje") return;
+        var form = details.querySelector("[data-settings-form]") || details;
+        Array.prototype.forEach.call(form.querySelectorAll("details,section"), function (section) {
+            var sectionSummary = section.querySelector(":scope > summary");
+            if (String(sectionSummary && sectionSummary.textContent || "").trim().toLowerCase() === "providers") section.remove();
+        });
     }
 
     function decouple() {
@@ -257,7 +340,11 @@
                 var button = oldButton.cloneNode(true);
                 button.setAttribute("data-independent-move", "1");
                 var mode = String(button.textContent || "").trim() === "Permissions" ? "permissions" : "general";
-                button.onclick = function (event) { event.preventDefault(); event.stopPropagation(); renderMove(root, mode, button); };
+                button.onclick = function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    renderMove(root, mode, button);
+                };
                 oldButton.parentNode.replaceChild(button, oldButton);
             });
         }
@@ -269,10 +356,17 @@
                 var button = oldButton.cloneNode(true);
                 var key = String(oldButton.getAttribute("data-integration-nav") || oldButton.textContent || "").trim().toLowerCase();
                 button.setAttribute("data-independent-integration", "1");
-                button.onclick = function (event) { event.preventDefault(); event.stopPropagation(); integrationsGroup.open = true; integrationsGroup.setAttribute("data-sirk-independent-open", "1"); renderIntegration(root, key, button); };
+                button.onclick = function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    integrationsGroup.open = true;
+                    integrationsGroup.setAttribute("data-sirk-independent-open", "1");
+                    renderIntegration(root, key, button);
+                };
                 oldButton.parentNode.replaceChild(button, oldButton);
             });
         }
+        removeApprovalProviders(root);
     }
 
     var root = document.getElementById("sirkStandaloneContent") || document.documentElement;
@@ -280,7 +374,10 @@
     new MutationObserver(function () {
         if (scheduled) return;
         scheduled = true;
-        window.requestAnimationFrame(function () { scheduled = false; decouple(); });
+        window.requestAnimationFrame(function () {
+            scheduled = false;
+            decouple();
+        });
     }).observe(root, { childList: true, subtree: true });
     window.setInterval(decouple, 500);
     decouple();
