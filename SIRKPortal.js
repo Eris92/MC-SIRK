@@ -177,21 +177,24 @@ function repairGeneratedPortalAssets() {
     }`;
     replaceInFile(settingsFile, oldObjectForm, newObjectForm);
 
-    replaceInFile(settingsFile, '        pluginView: "installed",', '        systemKey: "plugins",\n        pluginView: "installed",');
-    replaceInFile(settingsFile,
-        '        secondary.hidden = overview || state.active === "plugins" || state.active === "server";\n        if (overview) renderOverview(details);\n        else if (state.active === "settings") renderSettings(details, secondary);\n        else if (state.active === "plugins") renderPlugins(details);\n        else if (state.active === "server") renderServer(details);\n        else if (state.active === "debug") renderDebug(details, secondary);\n        else if (window.SirkSystemUpdates) {\n            secondary.hidden = false;\n            [["updates", "Aktualizacje"], ["backups", "Backupy"], ["history", "Historia"], ["channel", "Kanał aktualizacji"]].forEach(function (item, index) {\n                var button = el("button", index === 0 ? "sirk-nav-item active" : "sirk-nav-item", item[1]);\n                button.type = "button";\n                button.onclick = function () {\n                    Array.prototype.forEach.call(secondary.children, function (node) { node.classList.toggle("active", node === button); });\n                    window.SirkSystemUpdates.mount(details, item[0]);\n                };\n                secondary.appendChild(button);\n            });\n            window.SirkSystemUpdates.mount(details, "updates");\n        }',
-        '        secondary.hidden = overview || state.active === "server";\n        if (overview) renderOverview(details);\n        else if (state.active === "settings") renderSettings(details, secondary);\n        else if (state.active === "server") renderServer(details);\n        else if (state.active === "debug") renderDebug(details, secondary);\n        else {\n            secondary.hidden = false;\n            [["plugins", "Wtyczki"], ["updates", "Aktualizacje"], ["backups", "Backupy"], ["history", "Historia"], ["channel", "Kanał aktualizacji"]].forEach(function (item) {\n                var button = el("button", item[0] === state.systemKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);\n                button.type = "button";\n                button.onclick = function () {\n                    state.systemKey = item[0];\n                    Array.prototype.forEach.call(secondary.children, function (node) { node.classList.toggle("active", node === button); });\n                    clear(details);\n                    if (item[0] === "plugins") renderPlugins(details);\n                    else if (window.SirkSystemUpdates) window.SirkSystemUpdates.mount(details, item[0]);\n                };\n                secondary.appendChild(button);\n            });\n            if (state.systemKey === "plugins") renderPlugins(details);\n            else if (window.SirkSystemUpdates) window.SirkSystemUpdates.mount(details, state.systemKey);\n        }');
-    replaceInFile(settingsFile,
-        '[["overview", "Overview"], ["settings", "Settings"], ["plugins", "Wtyczki"], ["server", "Serwer"], ["debug", "Debug"], ["system", "System"]]',
-        '[["overview", "Overview"], ["settings", "Settings"], ["server", "Serwer"], ["debug", "Debug"], ["system", "System"]]');
-    replaceInFile(settingsFile,
-        'var controls = el("div", "sirk-toolbar");\n        var left = el("div", "sirk-toolbar-group sirk-toolbar-left");',
-        'var controls = el("div", "sirk-tabs");\n        var left = el("div", "sirk-toolbar-group sirk-toolbar-left");');
-
     var updatesFile = path.join(__dirname, "public", "portal", "system-updates.js");
     replaceInFile(updatesFile, '    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", installSettingsIntegration);\n    else installSettingsIntegration();', '    // Native settings are mounted by public/portal/settings.js.');
     replaceInFile(updatesFile, "(busy(snapshot) || current.pending ? ' disabled' : '') + '>Zapisz</button>", "(busy(snapshot) ? ' disabled' : '') + '>Zapisz</button>");
-    replaceInFile(path.join(__dirname, "server", "system-update-manager.js"), '        if (state.pending) throw new Error("The update channel cannot be changed while an operation is pending.");\n', "");
+
+    var updateManagerFile = path.join(__dirname, "server", "system-update-manager.js");
+    replaceInFile(updateManagerFile, '        if (state.pending) throw new Error("The update channel cannot be changed while an operation is pending.");\n', "");
+    replaceInFile(updateManagerFile,
+        '        https.get(url, { headers: { "User-Agent": "SIRK-Portal-Updater", Accept: "application/json" } }, function (res) {',
+        '        https.get(url, { headers: { "User-Agent": "SIRK-Portal-Updater", Accept: "application/json", "Cache-Control": "no-cache, no-store, max-age=0", Pragma: "no-cache" } }, function (res) {'
+    );
+    replaceInFile(updateManagerFile,
+        '        var base = "https://raw.githubusercontent.com/Eris92/SIRK-Portal/" + selectedBranch + "/";\n        return Promise.all([request(base + "package.json"), request(base + "config.json")]).then(function (values) {',
+        '        var base = "https://raw.githubusercontent.com/Eris92/SIRK-Portal/" + selectedBranch + "/";\n        var cacheToken = "sirk_refresh=" + Date.now() + "_" + crypto.randomBytes(6).toString("hex");\n        return Promise.all([request(base + "package.json?" + cacheToken), request(base + "config.json?" + cacheToken)]).then(function (values) {'
+    );
+    replaceInFile(updateManagerFile,
+        '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            var installed = current();',
+        '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            if (String(config.version || "") !== String(packageJson.version || "")) throw new Error("Remote release is incomplete: config.json and package.json versions do not match.");\n            var installed = current();'
+    );
     replaceInFile(settingsFile,
         '<div class="sirk-toolbar"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div>',
         '<div class="sirk-toolbar"><div class="sirk-toolbar-group sirk-toolbar-left"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div></div>'
