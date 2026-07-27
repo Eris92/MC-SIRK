@@ -22,7 +22,7 @@ module.exports.createHost = function (options) {
         Object.keys(records).forEach(function (id) {
             var value = records[id];
             if (value.type === "mesh") meshes.push({ id: value._id, name: value.name || value._id });
-            if (value.type === "node") nodes.push({ id: value._id, meshid: value.meshid || "", name: value.name || value.rname || value._id, os: value.osdesc || "", ip: value.ip || value.host || "", agentVersion: value.agent && value.agent.ver || "", lastSeen: value.lastconnect || value.firstconnect || 0, connectivity: 1 });
+            if (value.type === "node") nodes.push({ id: value._id, meshId: value.meshid || "", name: value.name || value.rname || value._id, os: value.osdesc || "", ip: value.ip || value.host || "", agentVersion: value.agent && value.agent.ver || "", lastSeen: value.lastconnect || value.firstconnect || 0, conn: 1 });
         });
         return { meshes: meshes, nodes: nodes };
     }
