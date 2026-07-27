@@ -80,9 +80,29 @@
 
     function normalizeSettingsNavigation() {
         var content = document.getElementById("sirkStandaloneContent");
-        var secondary = content && content.querySelector(".sirk-settings-module-workspace > .sirk-column-secondary");
-        if (!secondary) return;
+        var workspace = content && content.querySelector(".sirk-settings-module-workspace");
+        if (!workspace) return;
 
+        var primary = workspace.querySelector(":scope > .sirk-column-primary");
+        var activateSettings = false;
+        var settingsPrimaryButton = null;
+        if (primary) {
+            Array.prototype.forEach.call(primary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
+                var label = String(button.textContent || "").trim();
+                if (label === "Settings") settingsPrimaryButton = button;
+                if (label !== "Settings" && label !== "Server") {
+                    if (button.classList.contains("active") || button.classList.contains("is-active")) activateSettings = true;
+                    button.remove();
+                }
+            });
+            if (activateSettings && settingsPrimaryButton && !settingsPrimaryButton.classList.contains("active") && !settingsPrimaryButton.classList.contains("is-active")) {
+                settingsPrimaryButton.click();
+                return;
+            }
+        }
+
+        var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
+        if (!secondary) return;
         var moduleButton = null;
         var settingsButton = null;
         Array.prototype.forEach.call(secondary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
