@@ -444,6 +444,7 @@
         var access = portal.access || bootstrap && bootstrap.access || {};
         if (access.siteAdmin !== true) { showError(t("settingsAdminOnly")); return; }
         var host = prepareModuleHost("settings");
+        if (window.SirkPortalSettings && typeof window.SirkPortalSettings.mount === "function") { window.SirkPortalSettings.mount(host); return; }
         var shell = document.createElement("section");
         shell.className = "sirk-standalone-view-scroll sirk-settings-module-shell";
         var toolbar = document.createElement("header");

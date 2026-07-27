@@ -120,6 +120,7 @@
     loadStyle("sirk-platform-system-updates-style", "system-updates.css");
     loadStyle("sirk-platform-settings-style", "settings.css");
     loadScript("sirk-platform-system-updates-script", "system-updates.js");
+    loadScript("sirk-platform-settings-script", "settings.js");
     loadScript("sirk-platform-icon-registry", "shared/icon-registry.js", replacePortalIcons);
     observeDeviceWorkspace();
     loadScript("sirk-platform-portal-terminal-connect", "portal-terminal-connect.js");

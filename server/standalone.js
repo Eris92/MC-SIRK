@@ -41,6 +41,7 @@ var ASSETS = {
     "portal-cleanup.css": "public/portal/standalone/styles/cleanup.css",
     "system-updates.js": "public/portal/system-updates.js",
     "system-updates.css": "public/portal/system-updates.css",
+    "settings.js": "public/portal/settings.js",
     "main.css": "public/shared/styles/main.css",
     "shared/icon-registry.js": "public/shared/icon-registry.js",
     "myscripts.css": "public/modules/automation/style.css",

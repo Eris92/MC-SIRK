@@ -30,6 +30,7 @@
 
     function apiUrl(action, extra) {
         var url = new URL(window.__SIRK_PLATFORM_API_BASE__, window.location.href);
+        if (url.pathname.replace(/\/+$/, "") === "/api" && action === "portal-admin-snapshot") url.pathname = "/api/admin/settings";
         url.searchParams.set("pin", "SIRKPortal");
         if (action) url.searchParams.set("action", action);
         Object.keys(extra || {}).forEach(function (key) { url.searchParams.set(key, extra[key]); });
@@ -51,7 +52,7 @@
             credentials: "same-origin",
             cache: "no-store",
             headers: { Accept: "application/json" }
-        }).then(parse);
+        }).then(parse).then(function (value) { return action === "portal-admin-snapshot" && value.value ? { snapshot: value.value } : value; });
     }
 
     function post(action, payload) {
@@ -66,6 +67,12 @@
     }
 
     function postSettings(payload) {
+        var base = new URL(window.__SIRK_PLATFORM_API_BASE__, window.location.href);
+        if (base.pathname.replace(/\/+$/, "") === "/api") {
+            var standaloneBody = new URLSearchParams();
+            standaloneBody.set("payload", JSON.stringify(payload || {}));
+            return fetch(new URL("/api/admin/settings", window.location.href).href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: standaloneBody.toString() }).then(parse).then(function (value) { return { snapshot: value.value || value.snapshot || value }; });
+        }
         var body = new URLSearchParams();
         ["modules", "moduleOptions", "integrations", "secrets"].forEach(function (key) {
             body.set(key, JSON.stringify(payload[key] || {}));
