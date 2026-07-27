@@ -1,3 +1,7 @@
+## 1.8.36-dev.5
+
+- Reduced the standalone device tabs bar to 46px so it stays only slightly taller than its buttons.
+
 ## 1.8.36-dev.4
 
 - Added a visible service-restart screen with readiness polling, return to the active System section and an up-to-date confirmation after restart.

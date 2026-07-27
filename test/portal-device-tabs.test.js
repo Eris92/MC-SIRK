@@ -34,7 +34,7 @@ assert(tabs.indexOf("stopBridge") < 0, "Parent tab manager must not stop a sessi
 assert(tabs.indexOf('tab.addEventListener("click"') < 0, "Tab actions must use the stable parent capture handler");
 [
     ".sirk-device-tabs",
-    "height:54px",
+    "height:46px",
     ".sirk-device-session-layer",
     ".sirk-device-session-pane",
     ".sirk-device-isolated-frame",

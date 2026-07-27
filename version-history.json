@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.5",
+    "date": "2026-07-27",
+    "changes": [
+      "Reduce standalone device tab bar height to keep it proportionate to the tab buttons"
+    ]
+  },
+  {
     "version": "1.8.36-dev.4",
     "date": "2026-07-27",
     "changes": [
