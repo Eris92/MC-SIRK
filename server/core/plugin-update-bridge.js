@@ -21,6 +21,52 @@ function sendFile(res, file, type) {
     });
 }
 
+function reconcileAppliedPending(manager, dataRoot) {
+    var state;
+    var current;
+    try {
+        state = manager.state();
+        current = manager.current();
+    } catch (error) {
+        return;
+    }
+    if (!state.pending || !state.pending.targetVersion) return;
+    if (String(state.pending.targetVersion) !== String(current.version || "")) return;
+
+    var pending = state.pending;
+    state.history = Array.isArray(state.history) ? state.history : [];
+    var alreadyRecorded = state.history.some(function (entry) {
+        return entry && entry.type === "update-applied" && entry.token === pending.token;
+    });
+    if (!alreadyRecorded) {
+        state.history.unshift({
+            type: "update-applied",
+            at: new Date().toISOString(),
+            version: current.version,
+            token: pending.token || "",
+            backupId: pending.backupId || "",
+            channel: state.channel || current.channel || "stable"
+        });
+    }
+
+    state.jobs = state.jobs || {};
+    Object.keys(state.jobs).forEach(function (id) {
+        var job = state.jobs[id];
+        var resultPending = job && job.result && job.result.pending;
+        var target = resultPending && resultPending.targetVersion || job && job.result && job.result.version;
+        if (job && job.type === "update" && job.status === "completed" && String(target || "") === String(current.version || "")) {
+            delete state.jobs[id];
+        }
+    });
+    state.pending = null;
+
+    try {
+        var stateFile = path.join(dataRoot, "updates", "state.json");
+        fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+    } catch (error) {}
+}
+
 module.exports.install = function (plugin, parent, webserver, meshServer) {
     if (!webserver || !webserver.app || webserver.__sirkUpdateLifecycleRoutes) return;
     webserver.__sirkUpdateLifecycleRoutes = true;
@@ -35,6 +81,7 @@ module.exports.install = function (plugin, parent, webserver, meshServer) {
             return { scheduled: true };
         }
     });
+    reconcileAppliedPending(manager, dataRoot);
     var handler = routerFactory.createHandler(manager);
     var domains = meshServer && meshServer.config && meshServer.config.domains || { "": { url: "/" } };
 
@@ -58,6 +105,7 @@ module.exports.install = function (plugin, parent, webserver, meshServer) {
             sendFile(res, path.resolve(__dirname, "..", "..", "public", "portal", "settings.css"), "text/css; charset=utf-8");
         });
         webserver.app.use(prefix, function (req, res) {
+            reconcileAppliedPending(manager, dataRoot);
             var dispatch = function () {
                 var requestUrl = new URL(String(req.originalUrl || req.url || ""), "http://sirk.local");
                 requestUrl.pathname = "/api/system/updates" + requestUrl.pathname.slice(prefix.length);
