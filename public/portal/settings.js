@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    var state = { snapshot: null, active: "overview", settingsKey: "portal", debugKey: "config" };
+    var state = { snapshot: null, active: "overview", settingsKey: "portal", debugKey: "config", search: "" };
     var settingsItems = [
         ["portal", "Portal"], ["approvalcenter", "Approval Center"], ["moverequests", "Move Request"],
         ["mycommands", "Commands"], ["myscripts", "Scripts"], ["folderpermissions", "Uprawnienia folderów"],
@@ -65,6 +65,13 @@
         var node = el("div", error ? "sirk-settings-notice is-error" : "sirk-settings-notice", text);
         host.appendChild(node);
         return node;
+    }
+
+    function applySearch(details) {
+        var query = String(state.search || "").trim().toLowerCase();
+        Array.prototype.forEach.call(details.querySelectorAll(".sirk-settings-card,.sirk-settings-list-item"), function (item) {
+            item.hidden = !!query && String(item.textContent || "").toLowerCase().indexOf(query) < 0;
+        });
     }
 
     function renderOverview(host) {
@@ -158,12 +165,13 @@
                     button.onclick = function () {
                         if (!window.confirm(action[1] + " wtyczkę " + (plugin.name || plugin.shortName) + "?")) return;
                         button.disabled = true; status.textContent = "Wykonywanie operacji…";
-                        post("plugin-operation", { operation: action[0], id: plugin.id }).then(function (result) { draw(result.plugins); status.textContent = "Operacja zakończona"; }).catch(function (error) { status.textContent = error.message; button.disabled = false; });
+                        post("plugin-operation", { operation: action[0], id: plugin.id }).then(function (result) { draw(result.plugins); status.textContent = "Operacja zakończona"; applySearch(host); }).catch(function (error) { status.textContent = error.message; button.disabled = false; });
                     };
                     actions.appendChild(button);
                 });
                 row.appendChild(actions); list.appendChild(row);
             });
+            applySearch(host);
         }
         add.onclick = function () {
             var url = window.prompt("URL pliku config.json wtyczki:");
@@ -192,6 +200,7 @@
                 };
                 card.appendChild(restart); list.appendChild(card);
             });
+            applySearch(host);
         }).catch(function (error) { status.textContent = error.message; status.classList.add("is-error"); });
     }
 
@@ -209,37 +218,51 @@
 
     function renderActive(layout, secondary, details) {
         clear(secondary); clear(details);
-        if (state.active === "overview") renderOverview(details);
+        var overview = state.active === "overview";
+        layout.classList.toggle("sirk-settings-overview", overview);
+        secondary.hidden = overview || state.active === "plugins" || state.active === "server";
+        if (overview) renderOverview(details);
         else if (state.active === "settings") renderSettings(details, secondary);
         else if (state.active === "plugins") renderPlugins(details);
         else if (state.active === "server") renderServer(details);
         else if (state.active === "debug") renderDebug(details, secondary);
         else if (window.SirkSystemUpdates) {
+            secondary.hidden = false;
             [["updates", "Aktualizacje"], ["backups", "Backupy"], ["history", "Historia"], ["channel", "Kanał aktualizacji"]].forEach(function (item, index) {
                 var button = el("button", index === 0 ? "sirk-nav-item is-active" : "sirk-nav-item", item[1]);
                 button.type = "button"; button.onclick = function () { Array.prototype.forEach.call(secondary.children, function (node) { node.classList.toggle("is-active", node === button); }); window.SirkSystemUpdates.mount(details, item[0]); }; secondary.appendChild(button);
             });
             window.SirkSystemUpdates.mount(details, "updates");
         }
+        applySearch(details);
     }
 
     function mount(host) {
         clear(host);
-        host.innerHTML = '<section class="sirk-standalone-view-scroll"><div class="sirk-toolbar-host"><div class="sirk-toolbar"><strong>Ustawienia</strong></div></div><div class="sirk-layout-host"><div class="sirk-layout"><aside class="sirk-column-primary" data-settings-primary></aside><aside class="sirk-column-secondary" data-settings-secondary></aside><div class="sirk-column-details" data-settings-details></div></div></div></section>';
+        host.innerHTML = '<section class="sirk-standalone-view-scroll"><div class="sirk-toolbar"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div><div class="sirk-layout-host"><div class="sirk-layout"><aside class="sirk-column-primary" data-settings-primary></aside><aside class="sirk-column-secondary" data-settings-secondary></aside><div class="sirk-column-details" data-settings-details></div></div></div></section>';
+        var layout = host.querySelector(".sirk-layout");
         var primary = host.querySelector("[data-settings-primary]");
         var secondary = host.querySelector("[data-settings-secondary]");
         var details = host.querySelector("[data-settings-details]");
+        var search = host.querySelector("[data-settings-search]");
+        search.value = state.search;
+        host.querySelector("[data-settings-collapse]").onclick = function () { layout.classList.toggle("sirk-settings-primary-collapsed"); };
+        host.querySelector("[data-settings-refresh]").onclick = function () {
+            details.innerHTML = '<div class="sirk-settings-notice">Odświeżanie…</div>';
+            get("portal-admin-snapshot").then(function (result) { state.snapshot = result.snapshot; renderActive(layout, secondary, details); }).catch(function (error) { clear(details); notice(details, error.message, true); });
+        };
+        search.oninput = function () { state.search = search.value; applySearch(details); };
         [["overview", "Overview"], ["settings", "Settings"], ["plugins", "Wtyczki"], ["server", "Serwer"], ["debug", "Debug"], ["system", "System"]].forEach(function (item) {
             var button = el("button", item[0] === state.active ? "sirk-nav-item is-active" : "sirk-nav-item", item[1]);
             button.type = "button";
             button.onclick = function () {
                 state.active = item[0];
                 Array.prototype.forEach.call(primary.children, function (node) { node.classList.toggle("is-active", node === button); });
-                renderActive(host, secondary, details);
+                renderActive(layout, secondary, details);
             };
             primary.appendChild(button);
         });
-        get("portal-admin-snapshot").then(function (result) { state.snapshot = result.snapshot; renderActive(host, secondary, details); }).catch(function (error) { notice(details, error.message, true); });
+        get("portal-admin-snapshot").then(function (result) { state.snapshot = result.snapshot; renderActive(layout, secondary, details); }).catch(function (error) { notice(details, error.message, true); });
     }
 
     window.SirkPortalSettings = { mount: mount };
