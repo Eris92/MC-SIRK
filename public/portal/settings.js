@@ -289,6 +289,7 @@
                 Object.keys(labels).forEach(function (key) {
                     field(section, labels[key], portal.views[key] ? portal.views[key].enabled !== false : true, function (next) { portal.views[key] = Object.assign({}, portal.views[key] || {}, { enabled: next }); }, { type: "boolean" });
                 });
+                field(section, "Commands", payload.modules.mycommands === true, function (next) { payload.modules.mycommands = next; }, { type: "boolean", description: "Włącza moduł poleceń urządzeń." });
             }
             else if (definition.type === "module") {
                 var value = values[definition.key] = clone(payload.moduleOptions[definition.key] || {});

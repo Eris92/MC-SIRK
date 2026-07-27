@@ -1,3 +1,7 @@
+## 1.8.36-dev.26
+
+- Add the Commands module enable switch to Settings → Moduły.
+
 ## 1.8.36-dev.25
 
 - Fix Portal view visibility persistence when the new UI submits settings through module options.
