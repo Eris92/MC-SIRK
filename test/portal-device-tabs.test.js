@@ -49,8 +49,8 @@ assert(css.indexOf('#sirkPortalRoot [data-view="devices"]') < 0, "Device workspa
     "background:color-mix"
 ].forEach(function (value) { assert(css.indexOf(value) < 0, "Device tabs CSS must not style Management: " + value); });
 assert(management.indexOf('tools.toggleEdit(toolbar, module.api.render)') >= 0, "Automation must expose Edit through the shared module shell");
-assert(contractCss.indexOf("--mc-ui-collapsed-width: 56px") >= 0, "Canonical contract must define the collapsed primary width");
-assert(contractCss.indexOf("--mc-ui-secondary-edit-width: 440px") >= 0, "Canonical contract must define the edit secondary width");
+assert(contractCss.indexOf("--sirk-ui-collapsed-width: 56px") >= 0, "Canonical contract must define the collapsed primary width");
+assert(contractCss.indexOf("--sirk-ui-secondary-edit-width: 440px") >= 0, "Canonical contract must define the edit secondary width");
 assert(contractCss.indexOf("background: transparent !important") >= 0, "Canonical primary icon containers must stay transparent");
 assert(main.indexOf('style("sirk-platform-device-tabs-style", "portal-device-tabs.css")') >= 0, "Device tab CSS must load in native browser bootstrap");
 assert(main.indexOf('["sirk-platform-device-tabs", "portal-device-tabs.js"]') >= 0, "Device tab script must load in native browser bootstrap");

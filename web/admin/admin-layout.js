@@ -2,7 +2,7 @@
     "use strict";
 
     var admin = document.getElementById("sirk-platform-admin");
-    var tabs = admin && admin.querySelector(".mc-admin-tabs");
+    var tabs = admin && admin.querySelector(".sirk-admin-tabs");
     var content = document.getElementById("sirk-platform-admin-content");
     if (!admin || !tabs || !content) return;
 
@@ -14,13 +14,13 @@
     var layout = document.createElement("div");
     var middle = document.createElement("div");
 
-    shell.className = "mc-admin-shell mc-admin-management-shell sirk-standalone-view-scroll mc-portal-module-admin";
+    shell.className = "sirk-admin-shell sirk-admin-management-shell sirk-standalone-view-scroll sirk-portal-module-admin";
     toolbarHost.className = "sirk-toolbar-host";
-    toolbar.className = "mc-admin-management-toolbar sirk-toolbar mc-portal-toolbar";
+    toolbar.className = "sirk-admin-management-toolbar sirk-toolbar sirk-portal-toolbar";
     workspace.className = "sirk-layout-host";
-    layout.className = "mc-admin-management-layout sirk-layout";
+    layout.className = "sirk-admin-management-layout sirk-layout";
     tabs.classList.add("sirk-column-primary");
-    middle.className = "mc-admin-middle sirk-column-secondary";
+    middle.className = "sirk-admin-middle sirk-column-secondary";
     content.classList.add("sirk-column-details");
 
     admin.insertBefore(shell, tabs);
@@ -34,8 +34,8 @@
 
     try {
         if (new URL(window.location.href).searchParams.get("portal") === "1") {
-            admin.classList.add("mc-admin-portal-embedded");
-            document.documentElement.classList.add("mc-portal-admin-document");
+            admin.classList.add("sirk-admin-portal-embedded");
+            document.documentElement.classList.add("sirk-portal-admin-document");
         }
     } catch (error) {}
 
@@ -59,14 +59,13 @@
         defendertools: svg('<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z"/><path d="m8.5 12 2.3 2.3 4.7-5"/>'),
         config: svg('<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>'),
         logs: svg('<path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/>'),
-        errors: svg('<path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17h.01"/>'),
-        system: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5M8 17h8"/>')
+        errors: svg('<path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17h.01"/>')
     };
 
     function toolButton(action, title, icon) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "mc-admin-management-tool sirk-toolbar-button";
+        button.className = "sirk-admin-management-tool sirk-toolbar-button";
         button.setAttribute("data-admin-tool", action);
         button.title = title;
         button.setAttribute("aria-label", title);
@@ -79,7 +78,7 @@
     var refresh = toolButton("refresh", "Odśwież", svg('<path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 8A7 7 0 0 1 18 6l2 5M4 13l2 5a7 7 0 0 0 11.9-2"/>'));
     var search = toolButton("search", "Szukaj ustawienia", svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'));
     var searchBox = document.createElement("label");
-    searchBox.className = "mc-admin-management-search sirk-toolbar-search";
+    searchBox.className = "sirk-admin-management-search sirk-toolbar-search";
     searchBox.hidden = true;
     searchBox.innerHTML = '<span class="sr-only">Szukaj ustawienia</span><input class="sirk-filter" type="search" placeholder="Szukaj sekcji…">';
     toolbar.appendChild(searchBox);
@@ -104,13 +103,13 @@
     function decorateButton(button, key) {
         if (!button) return;
         button.classList.add("sirk-nav-item");
-        if (button.querySelector(".mc-admin-management-item-icon")) return;
+        if (button.querySelector(".sirk-admin-management-item-icon")) return;
         var label = document.createElement("span");
-        label.className = "mc-admin-management-item-label mc-portal-nav-label";
+        label.className = "sirk-admin-management-item-label sirk-portal-nav-label";
         label.textContent = button.textContent.trim();
         button.textContent = "";
         var icon = document.createElement("span");
-        icon.className = "mc-admin-management-item-icon sirk-nav-icon";
+        icon.className = "sirk-admin-management-item-icon sirk-nav-icon";
         icon.innerHTML = icons[key] || icons.settings;
         button.appendChild(icon);
         button.appendChild(label);
@@ -130,9 +129,6 @@
         middle.querySelectorAll("[data-server-key]").forEach(function (button) {
             decorateButton(button, "server");
         });
-        middle.querySelectorAll("[data-system-key]").forEach(function (button) {
-            decorateButton(button, "system");
-        });
     }
 
     function activeTab() {
@@ -141,12 +137,12 @@
     }
 
     function cleanApprovalProviderOptions() {
-        var header = content.querySelector(".mc-admin-section-header h3");
+        var header = content.querySelector(".sirk-admin-section-header h3");
         if (!header || header.textContent.trim() !== "Approval Center") return;
-        content.querySelectorAll(".mc-admin-card").forEach(function (card) {
+        content.querySelectorAll(".sirk-admin-card").forEach(function (card) {
             var title = card.querySelector("h3");
             if (!title || ["Move Requests", "My Commands", "Scripts"].indexOf(title.textContent.trim()) < 0) return;
-            card.querySelectorAll(".mc-admin-check").forEach(function (field) {
+            card.querySelectorAll(".sirk-admin-check").forEach(function (field) {
                 var label = field.querySelector("strong");
                 if (label && ["Provider enabled", "Show in Requests", "Show in Overview"].indexOf(label.textContent.trim()) >= 0) field.remove();
             });
@@ -157,7 +153,7 @@
         var query = String(searchBox.querySelector("input").value || "").trim().toLocaleLowerCase();
         [tabs, middle].forEach(function (host) {
             host.querySelectorAll("button").forEach(function (button) {
-                var label = button.querySelector(".mc-admin-management-item-label");
+                var label = button.querySelector(".sirk-admin-management-item-label");
                 button.hidden = !!query && (!label || label.textContent.toLocaleLowerCase().indexOf(query) < 0);
             });
         });
@@ -166,15 +162,14 @@
     function relocateNavigation() {
         var active = activeTab();
         var selector = active === "settings"
-            ? ".mc-admin-settings-nav:not(.mc-admin-debug-nav)"
-            : active === "debug" ? ".mc-admin-debug-nav"
-            : active === "server" ? ".mc-admin-server-nav"
-                : active === "system" ? ".mc-admin-system-nav" : "";
+            ? ".sirk-admin-settings-nav:not(.sirk-admin-debug-nav)"
+            : active === "debug" ? ".sirk-admin-debug-nav"
+            : active === "server" ? ".sirk-admin-server-nav" : "";
         var navigation = selector ? (content.querySelector(selector) || middle.querySelector(selector)) : null;
 
         middle.innerHTML = "";
         if (navigation) {
-            navigation.classList.add("mc-admin-section-nav");
+            navigation.classList.add("sirk-admin-section-nav");
             middle.appendChild(navigation);
         }
         middle.hidden = !navigation;
@@ -182,8 +177,8 @@
         shell.setAttribute("data-admin-view", active);
         shell.style.setProperty("--portal-secondary-width", navigation ? "236px" : "0px");
 
-        var settingsLayout = content.querySelector(".mc-admin-settings-layout");
-        if (settingsLayout) settingsLayout.classList.add("mc-admin-settings-layout-single");
+        var settingsLayout = content.querySelector(".sirk-admin-settings-layout");
+        if (settingsLayout) settingsLayout.classList.add("sirk-admin-settings-layout-single");
         cleanApprovalProviderOptions();
         decorateNavigation();
         applySearch();

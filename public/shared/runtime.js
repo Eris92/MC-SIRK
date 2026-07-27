@@ -36,7 +36,7 @@
                     actions.unshift({
                         key: "credentials",
                         icon: "🔑",
-                        className: "mc-tree-credentials-action",
+                        className: "sirk-tree-credentials-action",
                         title: "Edit script credentials",
                         onClick: function () {
                             if (typeof config.onCredentials === "function") config.onCredentials(script);
@@ -146,7 +146,7 @@
             var devices = window.SharedScriptTools.selectedDevices(currentNode());
             host.innerHTML = "";
             var card = shell.card(language() === "pl" ? "Wykonanie na wielu urządzeniach" : "Multi-device execution", tr(command.label));
-            card.classList.add("mc-multi-editor-card");
+            card.classList.add("sirk-multi-editor-card");
             if (!devices.length) {
                 card.appendChild(document.createTextNode(language() === "pl" ? "Wybierz urządzenia przed użyciem tej akcji." : "Select devices before using this action."));
                 host.appendChild(card); return;
@@ -154,7 +154,7 @@
             var variables = [], variableValues = {};
             (command.variables || []).forEach(function (definition) {
                 var row = document.createElement("label"), label = document.createElement("span"), input;
-                row.className = "mc-script-form-row"; label.className = "mc-script-form-label"; label.textContent = definition.label || definition.name; row.appendChild(label);
+                row.className = "sirk-script-form-row"; label.className = "sirk-script-form-label"; label.textContent = definition.label || definition.name; row.appendChild(label);
                 if (definition.control === "select") {
                     input = document.createElement("select");
                     (definition.options || []).forEach(function (entry) { var option = document.createElement("option"); option.value = entry.value; option.textContent = entry.label || entry.value; input.appendChild(option); });
@@ -163,7 +163,7 @@
                 if (definition.control !== "switch") input.value = definition.defaultValue || "";
                 row.appendChild(input); card.appendChild(row); variables.push({ definition: definition, input: input });
             });
-            var list = document.createElement("div"); list.className = "mc-multi-device-list";
+            var list = document.createElement("div"); list.className = "sirk-multi-device-list";
             devices.forEach(function (device) { var row = document.createElement("label"), box = document.createElement("input"); box.type = "checkbox"; box.checked = true; box.value = device.id; row.appendChild(box); row.appendChild(document.createTextNode(" " + device.name)); list.appendChild(row); });
             card.appendChild(list);
             var run = shell.element("button", "btn btn-primary btn-sm", language() === "pl" ? "Uruchom na wybranych" : "Run on selected devices");
@@ -180,7 +180,7 @@
             card.appendChild(run); host.appendChild(card);
         }
         function actionButton(icon, title, handler, active) {
-            var button = document.createElement("button"); button.type = "button"; button.className = "mc-tree-script-action"; button.textContent = icon; button.title = title; button.setAttribute("aria-label", title); button.classList.toggle("active", active === true);
+            var button = document.createElement("button"); button.type = "button"; button.className = "sirk-tree-script-action"; button.textContent = icon; button.title = title; button.setAttribute("aria-label", title); button.classList.toggle("active", active === true);
             button.onclick = function (event) { event.preventDefault(); event.stopPropagation(); handler(button); };
             return button;
         }
@@ -191,22 +191,22 @@
                 var toolbar = module.api.state.page.toolbar;
                 var editMode = !!(toolbar && toolbar.buttons.manage && toolbar.buttons.manage.classList.contains("active"));
                 var multiMode = !!(toolbar && toolbar.buttons.multi && toolbar.buttons.multi.classList.contains("active"));
-                Array.prototype.forEach.call(page.querySelectorAll(".mc-tree-root .mc-tree-label,.mc-catalog-results .mc-tree-label"), function (label) { label.textContent = tr(label.textContent); });
-                Array.prototype.forEach.call(page.querySelectorAll(".mc-tree-script-row"), function (row) {
-                    var label = row.querySelector(".mc-tree-script .mc-tree-label"); if (!label) return;
+                Array.prototype.forEach.call(page.querySelectorAll(".sirk-tree-root .sirk-tree-label,.sirk-catalog-results .sirk-tree-label"), function (label) { label.textContent = tr(label.textContent); });
+                Array.prototype.forEach.call(page.querySelectorAll(".sirk-tree-script-row"), function (row) {
+                    var label = row.querySelector(".sirk-tree-script .sirk-tree-label"); if (!label) return;
                     var command = commandById[row.getAttribute("data-command-id")] || commandByLabel[label.textContent];
                     if (!command) return;
                     row.setAttribute("data-command-id", command.id); label.textContent = tr(command.label);
-                    var icon = row.querySelector(".mc-tree-script .mc-tree-fallback-icon");
+                    var icon = row.querySelector(".sirk-tree-script .sirk-tree-fallback-icon");
                     if (icon && ICONS[command.id]) { icon.innerHTML = ICONS[command.id]; icon.classList.add("sirk-nav-icon"); }
-                    var old = row.querySelector(".mc-command-extra-actions"); if (old) old.remove();
+                    var old = row.querySelector(".sirk-command-extra-actions"); if (old) old.remove();
                     if (!editMode && !multiMode) return;
-                    var actions = document.createElement("span"); actions.className = "mc-tree-script-actions mc-command-extra-actions";
+                    var actions = document.createElement("span"); actions.className = "sirk-tree-script-actions sirk-command-extra-actions";
                     if (editMode) actions.appendChild(actionButton("★", isFavorite(command.path) ? (language() === "pl" ? "Usuń z ulubionych" : "Remove from favorites") : (language() === "pl" ? "Dodaj do ulubionych" : "Add to favorites"), function (button) { button.classList.toggle("active", toggleFavorite(command.path)); }, isFavorite(command.path)));
                     if (multiMode) actions.appendChild(actionButton("⟳", language() === "pl" ? "Uruchom na wielu urządzeniach" : "Run on selected devices", function () { renderMulti(command); }));
                     row.appendChild(actions);
                 });
-                Array.prototype.forEach.call(page.querySelectorAll(".mc-tree-folder-header .mc-tree-label"), function (label) { label.textContent = tr(label.textContent); });
+                Array.prototype.forEach.call(page.querySelectorAll(".sirk-tree-folder-header .sirk-tree-label"), function (label) { label.textContent = tr(label.textContent); });
                 var details = module.api.state.page.details;
                 if (details && language() === "pl") {
                     Array.prototype.forEach.call(details.querySelectorAll("h3,.sirk-card>strong"), function (node) { if (node.textContent === "Variables") node.textContent = "Zmienne"; if (node.textContent === "Output") node.textContent = "Wynik"; });

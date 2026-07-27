@@ -63,7 +63,7 @@
 
     function createResultHost() {
         var resultHost = document.createElement("div");
-        resultHost.className = "mc-script-live-result mc-script-result-only";
+        resultHost.className = "sirk-script-live-result sirk-script-result-only";
         return resultHost;
     }
 
@@ -86,14 +86,14 @@
 
     function variableEditor(script) {
         var wrapper = document.createElement("div");
-        wrapper.className = "mc-script-run-variables";
+        wrapper.className = "sirk-script-run-variables";
         var controls = [];
 
         (script.variables || []).forEach(function (variable) {
             var row = document.createElement("label");
-            row.className = "mc-script-form-row";
+            row.className = "sirk-script-form-row";
             var label = document.createElement("span");
-            label.className = "mc-script-form-label";
+            label.className = "sirk-script-form-label";
             label.textContent = (variable.label || variable.name) + (variable.required ? " *" : "");
             row.appendChild(label);
 
@@ -117,7 +117,7 @@
                 control.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
                 control.placeholder = variable.label || variable.name;
             }
-            control.classList.add("mc-definition-input");
+            control.classList.add("sirk-definition-input");
             row.appendChild(control);
             wrapper.appendChild(row);
             controls.push({ variable: variable, control: control });
@@ -234,7 +234,7 @@
             }
 
             var card = shell.card(script.label || script.name, script.description || script.path);
-            card.classList.add("mc-script-run-card");
+            card.classList.add("sirk-script-run-card");
             if (hasVariables) card.appendChild(variables.element);
 
             var button = shell.element(
@@ -246,7 +246,7 @@
             card.appendChild(button);
 
             var errorHost = document.createElement("div");
-            errorHost.className = "mc-script-run-error";
+            errorHost.className = "sirk-script-run-error";
             card.appendChild(errorHost);
             detailsHost.appendChild(card);
 

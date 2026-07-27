@@ -22,9 +22,9 @@
             var host = resolve(options.container);
             if (!host) throw new Error("Toolbar container not found.");
             var root = document.createElement("div"); root.className = "sirk-toolbar";
-            var left = document.createElement("div"); left.className = "sirk-toolbar-group sirk-toolbar-left";
-            var center = document.createElement("div"); center.className = "sirk-toolbar-group sirk-toolbar-center";
-            var right = document.createElement("div"); right.className = "sirk-toolbar-group sirk-toolbar-right";
+            var left = document.createElement("div"); left.className = "sirk-group sirk-left";
+            var center = document.createElement("div"); center.className = "sirk-group sirk-center";
+            var right = document.createElement("div"); right.className = "sirk-group sirk-right";
             root.appendChild(left); root.appendChild(center); root.appendChild(right);
             var searchWrap = document.createElement("div"); searchWrap.className = "sirk-toolbar-search"; searchWrap.hidden = true;
             var searchInput = document.createElement("input"); searchInput.type = "search"; searchInput.className = "sirk-filter"; searchInput.placeholder = options.searchPlaceholder || "Search"; searchWrap.appendChild(searchInput);

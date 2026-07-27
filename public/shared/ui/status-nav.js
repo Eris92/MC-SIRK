@@ -27,7 +27,7 @@
                 icon.className = "sirk-nav-icon sirk-result-status-icon";
                 icon.innerHTML = item.icon;
                 var label = document.createElement("span");
-                label.className = "mc-portal-nav-label";
+                label.className = "sirk-portal-nav-label";
                 label.textContent = item.title + (item.badge == null ? "" : " (" + item.badge + ")");
                 button.appendChild(icon);
                 button.appendChild(label);

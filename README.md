@@ -101,7 +101,7 @@ Backend modułów znajduje się w `server/modules/`, a pojedyncze renderery fron
 
 ## Wspólny kontrakt UI Portalu
 
-Wszystkie widoki SIRK Portal korzystają ze wspólnego systemu klas `mc-portal-*` dla powierzchni, kart, toolbarów, przycisków, pól formularzy, statusów, list i typografii.
+Wszystkie widoki SIRK Portal korzystają ze wspólnego systemu klas `sirk-*` dla powierzchni, kart, toolbarów, przycisków, pól formularzy, statusów, list i typografii.
 
 Widok Devices zachowuje własną geometrię listy urządzeń, szczegółów hosta i workspace aktywnej sesji, ale korzysta z tych samych komponentów wizualnych co Overview oraz pozostałe zakładki.
 

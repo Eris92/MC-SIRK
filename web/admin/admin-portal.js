@@ -34,7 +34,7 @@
         return settings.portal || { enabled: false, defaultView: "overview", showLauncher: false, showNativeLink: true, forceNewLogin: false, forcePortalInterface: false, showPasswordReset: true, passwordResetUrl: "https://passwordreset.microsoftonline.com/", siteName: "SirK Portal", siteIconUrl: "", views: {} };
     }
     function checkbox(host, labelText, checked, description) {
-        var label = element("label", "mc-admin-check");
+        var label = element("label", "sirk-admin-check");
         var input = element("input");
         input.type = "checkbox";
         input.checked = checked === true;
@@ -47,9 +47,9 @@
         return input;
     }
     function input(host, labelText, value, type, description) {
-        var wrapper = element("label", "mc-admin-field");
-        wrapper.appendChild(element("span", "mc-admin-field-label", labelText));
-        var field = element("input", "mc-admin-input");
+        var wrapper = element("label", "sirk-admin-field");
+        wrapper.appendChild(element("span", "sirk-admin-field-label", labelText));
+        var field = element("input", "sirk-admin-input");
         field.type = type || "text";
         field.value = value || "";
         wrapper.appendChild(field);
@@ -58,9 +58,9 @@
         return field;
     }
     function select(host, labelText, value) {
-        var wrapper = element("div", "mc-admin-field");
-        wrapper.appendChild(element("label", "mc-admin-field-label", labelText));
-        var field = element("select", "mc-admin-input");
+        var wrapper = element("div", "sirk-admin-field");
+        wrapper.appendChild(element("label", "sirk-admin-field-label", labelText));
+        var field = element("select", "sirk-admin-input");
         PORTAL_VIEWS.forEach(function (entry) {
             var option = element("option", "", entry.label);
             option.value = entry.key;
@@ -73,26 +73,26 @@
     }
     function viewEditor(host, definition, value) {
         value = value && typeof value === "object" ? value : {};
-        var row = element("section", "mc-admin-portal-view");
-        var heading = element("div", "mc-admin-portal-view-heading");
+        var row = element("section", "sirk-admin-portal-view");
+        var heading = element("div", "sirk-admin-portal-view-heading");
         heading.appendChild(element("strong", "", definition.label));
         heading.appendChild(element("code", "", definition.key));
         row.appendChild(heading);
         var enabled = checkbox(row, "Pokaż zakładkę", value.enabled !== false, definition.styleNote || "Ukrycie usuwa pozycję z menu i blokuje bezpośrednie otwarcie widoku.");
         var personalized = checkbox(row, "Włącz personalizację", value.personalized === true, "Pozwala użyć własnej nazwy i koloru akcentu tylko dla tej zakładki.");
-        var controls = element("div", "mc-admin-portal-view-controls");
-        var labelWrapper = element("label", "mc-admin-field");
-        labelWrapper.appendChild(element("span", "mc-admin-field-label", "Własna nazwa"));
-        var label = element("input", "mc-admin-input");
+        var controls = element("div", "sirk-admin-portal-view-controls");
+        var labelWrapper = element("label", "sirk-admin-field");
+        labelWrapper.appendChild(element("span", "sirk-admin-field-label", "Własna nazwa"));
+        var label = element("input", "sirk-admin-input");
         label.type = "text";
         label.maxLength = 40;
         label.placeholder = definition.label;
         label.value = value.label || "";
         labelWrapper.appendChild(label);
         controls.appendChild(labelWrapper);
-        var accentWrapper = element("label", "mc-admin-field mc-admin-portal-color-field");
-        accentWrapper.appendChild(element("span", "mc-admin-field-label", "Kolor akcentu"));
-        var accent = element("input", "mc-admin-input mc-admin-portal-color");
+        var accentWrapper = element("label", "sirk-admin-field sirk-admin-portal-color-field");
+        accentWrapper.appendChild(element("span", "sirk-admin-field-label", "Kolor akcentu"));
+        var accent = element("input", "sirk-admin-input sirk-admin-portal-color");
         accent.type = "color";
         accent.value = /^#[0-9a-f]{6}$/i.test(String(value.accent || "")) ? value.accent : definition.accent;
         accentWrapper.appendChild(accent);
@@ -136,13 +136,13 @@
         var record = moduleRecord();
         var current = moduleSettings();
         panel.innerHTML = "";
-        var header = element("div", "mc-admin-section-header");
+        var header = element("div", "sirk-admin-section-header");
         header.appendChild(element("h3", "", "SirK Portal"));
         header.appendChild(element("p", "", "Niezależny frontend korzystający z sesji, uprawnień i backendu SirkPlatform."));
         panel.appendChild(header);
-        var card = element("section", "mc-admin-card");
+        var card = element("section", "sirk-admin-card");
         card.appendChild(element("h3", "", "Portal interface"));
-        card.appendChild(element("div", "mc-admin-card-description", "Portal działa w osobnym dokumencie i nie ładuje swojego layoutu, CSS ani loginu do natywnego interfejsu MeshCentral."));
+        card.appendChild(element("div", "sirk-admin-card-description", "Portal działa w osobnym dokumencie i nie ładuje swojego layoutu, CSS ani loginu do natywnego interfejsu MeshCentral."));
         var enabled = checkbox(card, "Enable SirK Portal", current.enabled === true || record.enabled === true, "Udostępnia portal pod adresem /sirkportal/. Wyłączenie nie usuwa danych SirkPlatform.");
         var defaultView = select(card, "Default start view", current.defaultView || "overview");
         var showNativeLink = checkbox(card, "Show MeshCentral link in SirK Portal", current.showNativeLink !== false, "Pokazuje link MeshCentral na dole menu SirK Portal.");
@@ -158,21 +158,21 @@
         function updateResetUrl() { passwordResetUrl.disabled = !showPasswordReset.checked; }
         showPasswordReset.addEventListener("change", updateResetUrl);
         updateResetUrl();
-        var viewCard = element("section", "mc-admin-card");
+        var viewCard = element("section", "sirk-admin-card");
         viewCard.appendChild(element("h3", "", "Zakładki i personalizacja"));
-        viewCard.appendChild(element("div", "mc-admin-card-description", "Wszystkie zakładki poza Urządzeniami używają jednego wspólnego stylu. Każdą pozycję można niezależnie pokazać, ukryć i spersonalizować."));
-        var viewList = element("div", "mc-admin-portal-view-list");
+        viewCard.appendChild(element("div", "sirk-admin-card-description", "Wszystkie zakładki poza Urządzeniami używają jednego wspólnego stylu. Każdą pozycję można niezależnie pokazać, ukryć i spersonalizować."));
+        var viewList = element("div", "sirk-admin-portal-view-list");
         var viewInputs = {};
         PORTAL_VIEWS.forEach(function (definition) { viewInputs[definition.key] = viewEditor(viewList, definition, current.views && current.views[definition.key]); });
         viewCard.appendChild(viewList);
         panel.appendChild(viewCard);
-        var actions = element("div", "mc-admin-actions mc-admin-settings-savebar");
-        var save = element("button", "mc-admin-primary", "Save settings");
+        var actions = element("div", "sirk-admin-actions sirk-admin-settings-savebar");
+        var save = element("button", "sirk-admin-primary", "Save settings");
         save.type = "button";
-        var status = element("span", "mc-admin-save-status");
+        var status = element("span", "sirk-admin-save-status");
         save.onclick = function () {
             save.disabled = true;
-            status.className = "mc-admin-save-status";
+            status.className = "sirk-admin-save-status";
             status.textContent = "Saving...";
             var views = {};
             PORTAL_VIEWS.forEach(function (definition) {
@@ -187,7 +187,7 @@
                 status.textContent = result.serviceRestartRequired ? "Saved — restart MeshCentral to apply persistent sessions." : "Saved — reloading MeshCentral UI.";
                 reloadMeshCentral();
             }).catch(function (error) {
-                status.className = "mc-admin-save-status mc-admin-error";
+                status.className = "sirk-admin-save-status sirk-admin-error";
                 status.textContent = error.message || String(error);
                 save.disabled = false;
             });

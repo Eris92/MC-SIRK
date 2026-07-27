@@ -45,7 +45,7 @@
     function skin(shell) {
         var page = shell.state.page;
         if (!page || !page.root || !isStandalone(shell)) return;
-        page.root.classList.add("mc-module-approvalcenter");
+        page.root.classList.add("sirk-module-approvalcenter");
     }
 
     function nav(host, options, shell) {
@@ -58,12 +58,12 @@
         button.title = options.title;
 
         var icon = document.createElement("span");
-        icon.className = portal ? "sirk-nav-icon" : "mc-nav-icon";
+        icon.className = portal ? "sirk-nav-icon" : "sirk-nav-icon";
         icon.setAttribute("aria-hidden", "true");
         icon.innerHTML = options.icon || icons.all;
 
         var label = document.createElement("span");
-        label.className = "mc-approval-label";
+        label.className = "sirk-approval-label";
         label.textContent = options.title + (options.count == null ? "" : " - " + options.count);
 
         button.appendChild(icon);
@@ -78,7 +78,7 @@
             nav(host, {
                 title: titles[provider.type] || provider.tabTitle || provider.title,
                 icon: icons[provider.type] || icons.all,
-                className: "mc-approval-provider",
+                className: "sirk-approval-provider",
                 active: selectedProvider === provider.type,
                 onClick: function () {
                     selectedProvider = provider.type;
@@ -142,7 +142,7 @@
             nav(host, {
                 title: status.title,
                 icon: icons[status.key] || icons.all,
-                className: "mc-approval-status",
+                className: "sirk-approval-status",
                 active: selectedStatus === status.key,
                 onClick: function () { selectedStatus = status.key; shell.render(); }
             }, shell);
@@ -153,7 +153,7 @@
         if (!request.canDecide) return;
         var portal = isStandalone(shell);
         var actions = document.createElement("div");
-        actions.className = portal ? "sirk-actions" : "mc-approval-request-actions";
+        actions.className = portal ? "sirk-actions" : "sirk-approval-request-actions";
 
         [
             { title: "Approve", approved: true, danger: false },
@@ -185,28 +185,28 @@
         host.innerHTML = "";
         rows = rows || requests;
 
-        if (title) host.appendChild(shell.element("h2", "mc-approval-details-title", title));
+        if (title) host.appendChild(shell.element("h2", "sirk-approval-details-title", title));
         if (!rows.length) {
             host.appendChild(shell.card("No requests", empty || "No requests match the selected provider and status."));
             return;
         }
 
         var grid = document.createElement("div");
-        grid.className = portal ? "sirk-card-grid" : "mc-approval-card-grid";
+        grid.className = portal ? "sirk-card-grid" : "sirk-approval-card-grid";
         host.appendChild(grid);
 
         rows.forEach(function (request) {
             var card = shell.card(request.title || request.type, "");
-            card.classList.add(portal ? "sirk-card" : "mc-approval-request-card");
+            card.classList.add(portal ? "sirk-card" : "sirk-approval-request-card");
 
-            var meta = shell.element("div", "mc-shared-muted mc-approval-request-meta");
+            var meta = shell.element("div", "sirk-shared-muted sirk-approval-request-meta");
             meta.textContent = (request.requester && request.requester.name || "—") + " · " + (request.status || "—");
             card.appendChild(meta);
 
-            card.appendChild(shell.element("div", "mc-shared-muted", new Date(request.createdAt).toLocaleString()));
-            if (request.summary) card.appendChild(shell.element("p", "mc-approval-request-summary", request.summary));
+            card.appendChild(shell.element("div", "sirk-shared-muted", new Date(request.createdAt).toLocaleString()));
+            if (request.summary) card.appendChild(shell.element("p", "sirk-approval-request-summary", request.summary));
 
-            var provider = shell.element("span", "mc-approval-request-provider", titles[request.type] || request.type);
+            var provider = shell.element("span", "sirk-approval-request-provider", titles[request.type] || request.type);
             card.appendChild(provider);
             decisions(shell, request, card);
             grid.appendChild(card);
@@ -246,7 +246,7 @@
                     return progress.text || ((progress.approved || 0) + "/" + (progress.total || 0));
                 } },
                 { title: "Status", value: function (request) { return request.status || "—"; }, className: function (request) {
-                    return "mc-results-status mc-results-status-" + String(request.status || "unknown").toLowerCase();
+                    return "sirk-results-status sirk-results-status-" + String(request.status || "unknown").toLowerCase();
                 } },
                 { title: "Summary", value: function (request) { return request.summary || "—"; } }
             ],

@@ -7,10 +7,10 @@
     var originalCreate = window.SharedScriptTools.create;
 
     function addCheckbox(host, state) {
-        var card = host && host.querySelector(".mc-script-definition-card");
+        var card = host && host.querySelector(".sirk-script-definition-card");
         if (!card || card.querySelector("[data-confirm-execution-field]")) return false;
 
-        var sections = card.querySelectorAll(".mc-definition-section");
+        var sections = card.querySelectorAll(".sirk-definition-section");
         var execution = null;
         Array.prototype.some.call(sections, function (section) {
             var title = section.querySelector("h4");
@@ -23,7 +23,7 @@
         if (!execution) return false;
 
         var label = document.createElement("label");
-        label.className = "mc-definition-check";
+        label.className = "sirk-definition-check";
         label.setAttribute("data-confirm-execution-field", "1");
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -34,7 +34,7 @@
         execution.appendChild(label);
 
         var note = document.createElement("div");
-        note.className = "mc-shared-muted";
+        note.className = "sirk-shared-muted";
         note.textContent = "When enabled, the user must explicitly confirm execution. The server rejects unconfirmed requests.";
         execution.appendChild(note);
         return true;

@@ -43,12 +43,12 @@
         }).then(parseResponse);
     }
 
-    function statusHost() { return content.querySelector(".mc-admin-save-status"); }
+    function statusHost() { return content.querySelector(".sirk-admin-save-status"); }
 
     function setStatus(text, error) {
         var host = statusHost();
         if (!host) return;
-        host.className = error ? "mc-admin-save-status mc-admin-error" : "mc-admin-save-status";
+        host.className = error ? "sirk-admin-save-status sirk-admin-error" : "sirk-admin-save-status";
         host.textContent = text || "";
     }
 
@@ -61,7 +61,7 @@
 
     function badge(text, kind) {
         var value = document.createElement("span");
-        value.className = "mc-admin-state" + kind;
+        value.className = "sirk-admin-state" + kind;
         value.textContent = text;
         return value;
     }
@@ -71,24 +71,24 @@
         var style = document.createElement("style");
         style.id = "sirk-platform-plugin-update-style";
         style.textContent = [
-            ".mc-admin-plugin-update-button{margin-right:8px;white-space:nowrap}",
-            ".mc-admin-plugin-version-cell small{display:block;margin-top:3px;color:#657187}",
-            ".mc-admin-state.update{background:#dcfce7;color:#166534}",
-            ".mc-admin-state.current{background:#e0f2fe;color:#075985}",
-            ".mc-admin-state.warning{background:#fef3c7;color:#92400e}",
-            ".mc-admin-state.unknown{background:#e5e7eb;color:#374151}"
+            ".sirk-admin-plugin-update-button{margin-right:8px;white-space:nowrap}",
+            ".sirk-admin-plugin-version-cell small{display:block;margin-top:3px;color:#657187}",
+            ".sirk-admin-state.update{background:#dcfce7;color:#166534}",
+            ".sirk-admin-state.current{background:#e0f2fe;color:#075985}",
+            ".sirk-admin-state.warning{background:#fef3c7;color:#92400e}",
+            ".sirk-admin-state.unknown{background:#e5e7eb;color:#374151}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
 
     function ensureToolbarButton() {
-        var heading = content.querySelector(".mc-admin-section-header h3");
+        var heading = content.querySelector(".sirk-admin-section-header h3");
         if (!heading || String(heading.textContent || "").trim() !== "Wtyczki") return;
-        var toolbar = content.querySelector(".mc-admin-toolbar");
+        var toolbar = content.querySelector(".sirk-admin-toolbar");
         if (!toolbar || toolbar.querySelector("[data-plugin-update-check]")) return;
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "mc-admin-secondary";
+        button.className = "sirk-admin-secondary";
         button.setAttribute("data-plugin-update-check", "1");
         button.textContent = "Sprawdź aktualizacje";
         button.onclick = function () { refresh(button); };
@@ -110,11 +110,11 @@
     }
 
     function updateRow(row) {
-        var shortNameNode = row.querySelector(".mc-admin-plugin-name small");
+        var shortNameNode = row.querySelector(".sirk-admin-plugin-name small");
         if (!shortNameNode) return;
         var plugin = pluginByShortName(shortNameNode.textContent);
         if (!plugin) return;
-        var actionCell = row.querySelector(".mc-admin-table-actions");
+        var actionCell = row.querySelector(".sirk-admin-table-actions");
         if (!actionCell) return;
         var signature = [plugin.version, plugin.availableVersion, plugin.updateStatus, plugin.updateError, plugin.updateAvailable, plugin.updateCompatible].join("|");
         if (row.getAttribute("data-plugin-update-signature") === signature) return;
@@ -124,7 +124,7 @@
         var statusCell = row.querySelector("[data-plugin-update-cell=status]");
         if (!versionCell) {
             versionCell = document.createElement("td");
-            versionCell.className = "mc-admin-plugin-version-cell";
+            versionCell.className = "sirk-admin-plugin-version-cell";
             versionCell.setAttribute("data-plugin-update-cell", "version");
             row.insertBefore(versionCell, actionCell);
         }
@@ -150,7 +150,7 @@
         if (plugin.updateAvailable && plugin.updateCompatible) {
             var update = document.createElement("button");
             update.type = "button";
-            update.className = "mc-admin-primary mc-admin-plugin-update-button";
+            update.className = "sirk-admin-primary sirk-admin-plugin-update-button";
             update.setAttribute("data-plugin-update-button", "1");
             update.textContent = "Aktualizuj";
             update.onclick = function () {
@@ -175,7 +175,7 @@
     function enhanceTable() {
         ensureStyle();
         ensureToolbarButton();
-        var table = content.querySelector(".mc-admin-plugin-table");
+        var table = content.querySelector(".sirk-admin-plugin-table");
         if (!table) return;
         ensureHeader(table);
         table.querySelectorAll("tbody tr").forEach(updateRow);
@@ -188,7 +188,7 @@
         setStatus("Sprawdzanie aktualizacji…", false);
         getState().then(function (result) {
             state.plugins = result.plugins || [];
-            content.querySelectorAll(".mc-admin-plugin-table tbody tr").forEach(function (row) { row.removeAttribute("data-plugin-update-signature"); });
+            content.querySelectorAll(".sirk-admin-plugin-table tbody tr").forEach(function (row) { row.removeAttribute("data-plugin-update-signature"); });
             setStatus("Sprawdzanie zakończone.", false);
             enhanceTable();
         }).catch(function (error) {
@@ -202,9 +202,9 @@
     var observer = new MutationObserver(function () {
         ensureToolbarButton();
         if (state.plugins.length) enhanceTable();
-        else if (content.querySelector(".mc-admin-plugin-table") && !state.loading) refresh();
+        else if (content.querySelector(".sirk-admin-plugin-table") && !state.loading) refresh();
     });
     observer.observe(content, { childList: true, subtree: true });
     ensureToolbarButton();
-    if (content.querySelector(".mc-admin-plugin-table")) refresh();
+    if (content.querySelector(".sirk-admin-plugin-table")) refresh();
 }());

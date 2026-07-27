@@ -212,7 +212,7 @@
     core.card = function (title, description) {
         var card = core.element("div", "sirk-card");
         card.appendChild(core.element("strong", "", title));
-        if (description) card.appendChild(core.element("div", "mc-shared-muted", description));
+        if (description) card.appendChild(core.element("div", "sirk-shared-muted", description));
         return card;
     };
     core.flattenScripts = function (node, target) {

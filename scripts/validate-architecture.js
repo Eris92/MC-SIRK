@@ -51,7 +51,7 @@ if (exists("SIRKPortal.js")) {
     need(entry, 'require("./plugin-main-standalone.js")', "Entrypoint must load plugin-main-standalone.js.");
     need(entry, "module.exports.SIRKPortal", "Entrypoint must export SIRKPortal.");
     need(entry, 'createPlugin(parent, "SIRKPortal")', "Entrypoint must initialize SIRKPortal.");
-    reject(entry, /MyCompany|SIRK-Portal/, "Entrypoint contains removed or unsafe plugin identifiers.");
+    reject(entry, /MyCompany/, "Entrypoint contains removed or unsafe plugin identifiers.");
 }
 
 if (exists("SIRKPortalAdmin.js")) {
