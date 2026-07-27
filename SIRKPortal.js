@@ -180,6 +180,7 @@ function repairGeneratedPortalAssets() {
     var updatesFile = path.join(__dirname, "public", "portal", "system-updates.js");
     replaceInFile(updatesFile, '    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", installSettingsIntegration);\n    else installSettingsIntegration();', '    // Native settings are mounted by public/portal/settings.js.');
     replaceInFile(updatesFile, "(busy(snapshot) || current.pending ? ' disabled' : '') + '>Zapisz</button>", "(busy(snapshot) ? ' disabled' : '') + '>Zapisz</button>");
+    replaceInFile(updatesFile, "(busy(snapshot) || current.pending ? ' disabled' : '') + '>Aktualizuj</button>", "(busy(snapshot) || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj</button>");
 
     var updateManagerFile = path.join(__dirname, "server", "system-update-manager.js");
     replaceInFile(updateManagerFile, '        if (state.pending) throw new Error("The update channel cannot be changed while an operation is pending.");\n', "");
@@ -194,6 +195,14 @@ function repairGeneratedPortalAssets() {
     replaceInFile(updateManagerFile,
         '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            var installed = current();',
         '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            if (String(config.version || "") !== String(packageJson.version || "")) throw new Error("Remote release is incomplete: config.json and package.json versions do not match.");\n            var installed = current();'
+    );
+    replaceInFile(updateManagerFile,
+        '        if (busy || state.pending) throw new Error("Another update, backup or restore operation is already running.");',
+        '        if (busy) throw new Error("Another update, backup or restore operation is already running.");'
+    );
+    replaceInFile(updateManagerFile,
+        '    function install(channel) {\n        return startJob("update", async function (progress) {',
+        '    function install(channel) {\n        var state = loadState();\n        if (state.pending) {\n            state.history = state.history || [];\n            state.history.push({ type: "replaced-pending", at: new Date().toISOString(), version: state.pending.targetVersion || "", token: state.pending.token || "" });\n            state.pending = null;\n            saveState(state);\n        }\n        return startJob("update", async function (progress) {'
     );
     replaceInFile(settingsFile,
         '<div class="sirk-toolbar"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div>',
