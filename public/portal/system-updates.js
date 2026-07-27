@@ -77,8 +77,7 @@
             '<progress max="100" value="' + value + '" style="width:100%;height:18px"></progress>' +
             '<div style="margin-top:8px;text-align:right;font-weight:700">' + value + '%</div>' +
             (logs ? '<pre style="max-height:260px;overflow:auto;margin:20px 0 0;padding:14px;border:1px solid var(--sirk-border,#dce3ec);border-radius:8px;white-space:pre-wrap;background:var(--sirk-bg,#f3f6fb)">' + escapeHtml(logs) + '</pre>' : '') +
-            (failed ? '<button type="button" class="sirk-button" data-update-close style="margin-top:18px">Wróć do ustawień</button>' : '') +
-            '</div>';
+            (failed ? '<button type="button" class="sirk-button" data-update-close style="margin-top:18px">Wróć do ustawień</button>' : '') + '</div>';
         var close = overlay.querySelector("[data-update-close]");
         if (close) close.onclick = function () { overlay.remove(); };
     }
@@ -93,10 +92,7 @@
         fullScreen("Ponowne uruchamianie MeshCentral…", "Usługa jest restartowana. Portal czeka na jej powrót, a następnie otworzy panel logowania.", 100, "Aktualizacja zakończona.\nRestart usługi MeshCentral…", false);
         var started = Date.now();
         function poll() {
-            if (Date.now() - started < 4500) {
-                state.timer = setTimeout(poll, 800);
-                return;
-            }
+            if (Date.now() - started < 4500) { state.timer = setTimeout(poll, 800); return; }
             api("status").then(function (snapshot) {
                 if (!snapshot || !snapshot.current) throw new Error("Usługa nie jest jeszcze gotowa.");
                 loginRedirect();
@@ -111,7 +107,7 @@
         poll();
     }
 
-    function runUpdate(host) {
+    function runUpdate() {
         var channel = state.snapshot && state.snapshot.current && state.snapshot.current.channel || "stable";
         fullScreen("Przygotowanie aktualizacji…", "Tworzenie backupu i przygotowanie plików aktualizacji.", 2, "Rozpoczynanie zadania aktualizacji…", false);
         api("update", "POST", { channel: channel }).then(function () {
@@ -119,19 +115,13 @@
                 api("status").then(function (snapshot) {
                     state.snapshot = snapshot;
                     var job = latestJob(snapshot);
-                    if (!job) {
-                        fullScreen("Oczekiwanie na zadanie…", "Aktualizacja została zlecona.", 5, "Oczekiwanie na informacje z menedżera aktualizacji…", false);
-                        state.timer = setTimeout(monitor, 1000);
-                        return;
-                    }
+                    if (!job) { state.timer = setTimeout(monitor, 1000); return; }
                     var message = job.status === "queued" ? "Aktualizacja oczekuje…" : job.status === "running" ? "Aktualizowanie systemu…" : job.status === "failed" ? "Aktualizacja nie powiodła się" : "Aktualizacja przygotowana";
-                    var details = job.message || (job.status === "running" ? "Trwa pobieranie, weryfikacja i przygotowanie plików." : "Operacja aktualizacji zakończyła się.");
                     var log = ["Typ: " + (job.type || "update"), "Status: " + (job.status || "—"), job.message || "", job.error || ""].filter(Boolean).join("\n");
-                    fullScreen(message, details, job.progress || (job.status === "completed" ? 100 : 0), log, job.status === "failed");
+                    fullScreen(message, job.message || "", job.progress || (job.status === "completed" ? 100 : 0), log, job.status === "failed");
                     if (job.status === "failed") return;
                     if (job.status === "completed") {
                         saveRestartState({ pending: true, section: "updates", startedAt: Date.now() });
-                        fullScreen("Aktualizacja zakończona", "Uruchamianie ponowne usługi MeshCentral…", 100, log + "\nRestart usługi…", false);
                         api("restart", "POST", {}).then(waitForRestart).catch(function (error) {
                             clearRestartState();
                             fullScreen("Nie udało się zrestartować usługi", error.message, 100, log, true);
@@ -159,18 +149,16 @@
     function renderUpdates(host, snapshot) {
         var remote = snapshot.remote || {};
         var current = snapshot.current || {};
-        host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions">' +
-            '<button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button>' +
-            '<button type="button" class="sirk-button" data-update-action="install"' + (busy(snapshot) || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj system</button></div>' +
-            '<div class="sirk-update-summary"><p>Aktualna wersja: <strong>' + escapeHtml(current.version || "—") + '</strong></p>' +
-            '<p>Dostępna wersja: <strong>' + escapeHtml(remote.availableVersion || remote.error || "—") + '</strong></p>' +
-            '<p>Aktywny kanał: <strong>' + escapeHtml(current.channel || "—") + '</strong> · <code>' + escapeHtml(current.branch || "—") + '</code></p></div>' + stateMarkup(remote, current) + '</div>';
+        host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions"><button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button><button type="button" class="sirk-button" data-update-action="install"' + (busy(snapshot) || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj system</button></div><div class="sirk-update-summary"><p>Aktualna wersja: <strong>' + escapeHtml(current.version || "—") + '</strong></p><p>Dostępna wersja: <strong>' + escapeHtml(remote.availableVersion || remote.error || "—") + '</strong></p><p>Aktywny kanał: <strong>' + escapeHtml(current.channel || "—") + '</strong> · <code>' + escapeHtml(current.branch || "—") + '</code></p></div>' + stateMarkup(remote, current) + '</div>';
     }
 
     function renderBackups(host, snapshot) {
         var items = snapshot.backups || [];
-        host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions"><button type="button" class="sirk-button" data-update-action="backup"' + (busy(snapshot) ? ' disabled' : '') + '>Utwórz backup</button></div><div class="sirk-update-list">' +
-            (items.length ? items.map(function (backup) { return '<article><div><strong>' + escapeHtml(backup.version || backup.id) + '</strong><small>' + escapeHtml(backup.createdAt || "") + '</small><small>' + escapeHtml(backup.reason || "") + '</small></div><button type="button" class="sirk-button" data-restore-id="' + escapeHtml(backup.id) + '">Przywróć</button></article>'; }).join("") : '<p>Brak backupów.</p>') + '</div></div>';
+        var disabled = busy(snapshot) ? " disabled" : "";
+        host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions"><button type="button" class="sirk-button" data-update-action="backup"' + disabled + '>Utwórz backup</button></div><div class="sirk-update-list">' +
+            (items.length ? items.map(function (backup) {
+                return '<article><div><strong>' + escapeHtml(backup.version || backup.id) + '</strong><small>' + escapeHtml(backup.createdAt || "") + '</small><small>' + escapeHtml(backup.reason || "") + '</small></div><div class="sirk-update-backup-actions"><button type="button" class="sirk-button" data-restore-id="' + escapeHtml(backup.id) + '"' + disabled + '>Przywróć</button><button type="button" class="sirk-button sirk-button-danger" data-delete-backup-id="' + escapeHtml(backup.id) + '"' + disabled + '>Usuń</button></div></article>';
+            }).join("") : '<p>Brak backupów.</p>') + '</div></div>';
     }
 
     function renderHistory(host, snapshot) {
@@ -208,17 +196,22 @@
         host.onclick = function (event) {
             var actionNode = event.target.closest("[data-update-action]");
             var restoreNode = event.target.closest("[data-restore-id]");
+            var deleteNode = event.target.closest("[data-delete-backup-id]");
             if (actionNode) {
                 var action = actionNode.getAttribute("data-update-action");
                 if (action === "check") api("check", "POST", { channel: state.snapshot.current.channel }).then(function () { load(host, section); }).catch(function (error) { window.alert(error.message); });
                 if (action === "backup") startJob(host, section, "backup", { reason: "manual" });
-                if (action === "install" && window.confirm("Utworzyć backup, zaktualizować system i automatycznie zrestartować MeshCentral?")) runUpdate(host);
+                if (action === "install" && window.confirm("Utworzyć backup, zaktualizować system i automatycznie zrestartować MeshCentral?")) runUpdate();
                 if (action === "save-channel") {
                     var channel = host.querySelector("[data-update-channel]");
                     api("channel", "POST", { channel: channel.value }).then(function () { return load(host, section); }).catch(function (error) { window.alert(error.message); });
                 }
             }
             if (restoreNode && window.confirm("Przywrócić wybrany backup?")) startJob(host, section, "restore", { backupId: restoreNode.getAttribute("data-restore-id") });
+            if (deleteNode && window.confirm("Trwale usunąć wybrany backup? Tej operacji nie można cofnąć.")) {
+                deleteNode.disabled = true;
+                api("delete-backup", "POST", { backupId: deleteNode.getAttribute("data-delete-backup-id") }).then(function () { return load(host, section); }).catch(function (error) { window.alert(error.message); return load(host, section); });
+            }
         };
         load(host, section);
     }
