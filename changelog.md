@@ -1,3 +1,7 @@
+## 1.8.36-dev.25
+
+- Fix Portal view visibility persistence when the new UI submits settings through module options.
+
 ## 1.8.36-dev.24
 
 - Keep the standalone device tab rail compact at 44px so it is only slightly taller than its buttons.

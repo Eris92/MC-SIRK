@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.25",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix Portal view visibility persistence from the new UI settings form"
+    ]
+  },
+  {
     "version": "1.8.36-dev.24",
     "date": "2026-07-27",
     "changes": [
