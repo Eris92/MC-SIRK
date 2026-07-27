@@ -123,6 +123,22 @@
     border-bottom: 0;
 }
 
+/* Top-level General/Permissions content is always visible. The selected module name
+   already exists in navigation, so do not repeat it as an accordion header. */
+[data-portal-settings] [data-settings-form] > [data-settings-section] {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+}
+
+[data-portal-settings] [data-settings-form] > [data-settings-section] > summary {
+    display: none;
+}
+
+[data-portal-settings] [data-settings-form] > [data-settings-section] > [data-settings-section-body] {
+    padding: 0;
+}
+
 [data-portal-settings] [data-settings-search] {
     min-width: 220px;
     width: min(420px, 34vw);
