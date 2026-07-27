@@ -82,6 +82,12 @@ function repairGeneratedPortalAssets() {
         '        if (state.pending) throw new Error("The update channel cannot be changed while an operation is pending.");\n',
         ""
     );
+
+    replaceInFile(
+        path.join(__dirname, "public", "portal", "settings.js"),
+        '<div class="sirk-toolbar"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div>',
+        '<div class="sirk-toolbar"><div class="sirk-toolbar-group sirk-toolbar-left"><button type="button" class="sirk-button" data-settings-collapse aria-label="Zwiń menu">☰</button><button type="button" class="sirk-button" data-settings-refresh>Odśwież</button><input type="search" class="sirk-settings-search" data-settings-search placeholder="Szukaj…" aria-label="Szukaj"></div></div>'
+    );
 }
 
 module.exports.SIRKPortal = function (parent) {
