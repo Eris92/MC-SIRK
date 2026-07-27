@@ -78,8 +78,19 @@
         if (bind() || attempts > 120) window.clearInterval(timer);
     }, 100);
 
+    var nativeSetAttribute = window.Element && Element.prototype.setAttribute;
+    if (nativeSetAttribute && !nativeSetAttribute.__sirkSameValueGuard) {
+        var guardedSetAttribute = function (name, value) {
+            var textValue = String(value);
+            if (/^(title|aria-label|placeholder)$/i.test(String(name)) && this.getAttribute(name) === textValue) return;
+            return nativeSetAttribute.call(this, name, value);
+        };
+        guardedSetAttribute.__sirkSameValueGuard = true;
+        Element.prototype.setAttribute = guardedSetAttribute;
+    }
+
     var i18nStyle = document.createElement("style");
     i18nStyle.id = "sirkSettingsI18nVisibilityFix";
-    i18nStyle.textContent = "html body #sirkPortalRoot .sirk-i18n-visual:after,html body .mc-portal-settings-document .sirk-i18n-visual:after{font-size:14px!important;line-height:1.35!important}";
+    i18nStyle.textContent = "html body #sirkPortalRoot .sirk-i18n-visual:after,html.mc-portal-settings-document body .sirk-i18n-visual:after{font-size:14px!important;line-height:1.35!important}";
     (document.head || document.documentElement).appendChild(i18nStyle);
 }());
