@@ -276,7 +276,11 @@
 
     function loadDevices(force) {
         if (deviceInventory && force !== true) return Promise.resolve(deviceInventory);
-        return fetch("/api/devices", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok || value.ok === false) throw new Error(value.error || "Device inventory unavailable."); return value.value || value; }); }).then(function (value) {
+        var apiBase = new URL(String(window.__SIRK_PLATFORM_API_BASE__ || ""), window.location.href);
+        var request = apiBase.pathname.replace(/\/+$/, "") === "/api"
+            ? fetch("/api/devices", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok || value.ok === false) throw new Error(value.error || "Device inventory unavailable."); return value.value || value; }); })
+            : core.api("portal", "devices");
+        return request.then(function (value) {
             deviceInventory = {
                 nodes: Array.isArray(value.nodes) ? value.nodes : [],
                 meshes: Array.isArray(value.meshes) ? value.meshes : []

@@ -1,3 +1,7 @@
+## 1.8.36-dev.1
+
+- Fixed device inventory transport selection between standalone `/api/devices` and the MeshCentral `portal/devices` provider.
+
 ## 1.8.3-dev.1
 
 - Added the `Usługa` subcategory under `Serwer` for MeshCentral service status and restart controls.
