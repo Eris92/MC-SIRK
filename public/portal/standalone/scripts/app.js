@@ -327,12 +327,32 @@
         return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(language() === "pl" ? "pl-PL" : "en-US");
     }
 
+    function loadUpdateOverview(sequence) {
+        var path = String(window.location.pathname || "/");
+        var portal = path.match(/^(.*?\/sirkportal)(?:\/.*)?$/i);
+        var endpoint = (portal ? portal[1] : "") + "/api/system/updates/status";
+        fetch(endpoint, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } })
+            .then(function (response) { return response.json().then(function (value) { if (!response.ok || value.ok === false) throw new Error(value.error || "Update status unavailable."); return value.value || value; }); })
+            .then(function (snapshot) {
+                if (!isCurrent(sequence) || activeView !== "overview") return;
+                var current = snapshot.current || {}, remote = snapshot.remote || {};
+                var badge = document.getElementById("sirkOverviewSystemStatus");
+                var version = document.getElementById("sirkOverviewSystemVersion");
+                var available = document.getElementById("sirkOverviewSystemAvailable");
+                if (version) version.textContent = current.version || "—";
+                if (available) available.textContent = remote.availableVersion || remote.error || "—";
+                if (badge) { badge.textContent = remote.updateAvailable ? "Dostępna aktualizacja" : remote.error ? "Nie udało się sprawdzić" : "Aktualny"; badge.className = "sirk-health-badge is-" + (remote.updateAvailable ? "warning" : remote.error ? "critical" : "ok"); }
+            }).catch(function () { var badge = document.getElementById("sirkOverviewSystemStatus"); if (badge) { badge.textContent = "Nie udało się sprawdzić"; badge.className = "sirk-health-badge is-critical"; } });
+    }
+
     function overview(sequence) {
         var cards = [];
         if (viewEnabled("devices")) cards.push('<button type="button" class="sirk-standalone-card sirk-overview-link" data-open-view="devices"><h2>' + escapeHtml(viewName("devices")) + '</h2><p><strong id="sirkOverviewDeviceCount">…</strong> <span id="sirkOverviewDeviceSuffix">' + escapeHtml(t("overviewDevicesLoading")) + '</span></p></button>');
         if (viewEnabled("approvals")) cards.push('<button type="button" class="sirk-standalone-card sirk-overview-link" data-open-view="approvals"><h2>' + escapeHtml(viewName("approvals")) + '</h2><p><strong id="sirkOverviewApprovalCount">…</strong> <span id="sirkOverviewApprovalSuffix">' + escapeHtml(t("overviewApprovalsLoading")) + '</span></p></button>');
+        cards.push('<section class="sirk-standalone-card sirk-overview-system"><h2>Stan systemu</h2><p><span id="sirkOverviewSystemStatus" class="sirk-health-badge is-unknown">Sprawdzanie…</span></p><p>Aktualna wersja: <strong id="sirkOverviewSystemVersion">—</strong></p><p>Dostępna wersja: <strong id="sirkOverviewSystemAvailable">—</strong></p></section>');
         cards.push('<section class="sirk-standalone-card sirk-overview-health"><h2>' + escapeHtml(t("overviewIntegrationsTitle")) + '</h2><p><span id="sirkOverviewHealthBadge" class="sirk-health-badge is-unknown">' + escapeHtml(t("healthUnknown")) + '</span> <span id="sirkOverviewHealthText">' + escapeHtml(t("healthLoading")) + '</span></p><ul id="sirkOverviewHealthIssues" hidden></ul></section>');
         content.innerHTML = '<div class="sirk-standalone-view-scroll"><div class="sirk-standalone-grid">' + cards.join("") + '</div></div>';
+        loadUpdateOverview(sequence);
 
         if (viewEnabled("devices")) loadDevices(false).then(function (inventory) {
             if (!isCurrent(sequence) || activeView !== "overview") return;

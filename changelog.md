@@ -1,3 +1,7 @@
+## 1.8.36-dev.15
+
+- Add current and available system version status to the Overview page.
+
 ## 1.8.36-dev.14
 
 - Keep the current update section visible while checking for updates instead of replacing it with a loading screen.
