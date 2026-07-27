@@ -9,6 +9,16 @@
     var LANGUAGE_STORAGE = "sirkPortal.language";
     var THEME_STORAGE = "sirkPortal.theme";
     var restoreTimer = 0;
+    var integrationMode = "";
+    var forwardingIntegrationClick = false;
+    var INTEGRATIONS = [
+        { key: "ad", label: "AD" },
+        { key: "defender", label: "Defender" },
+        { key: "entra", label: "Entra" },
+        { key: "jira", label: "Jira" },
+        { key: "zabbix", label: "Zabbix" },
+        { key: "sms", label: "SMS" }
+    ];
 
     function workspaceChild() {
         try { return new URL(window.location.href).searchParams.get("sirkWorkspaceChild") === "1"; }
@@ -180,6 +190,155 @@
         }
     }
 
+    function groupByLabel(host, label) {
+        var result = null;
+        if (!host) return result;
+        Array.prototype.some.call(host.querySelectorAll(":scope > .sirk-settings-nav-group"), function (group) {
+            var summary = group.querySelector(":scope > summary");
+            if (String(summary && summary.textContent || "").trim() !== label) return false;
+            result = group;
+            return true;
+        });
+        return result;
+    }
+
+    function findLeaf(group, label) {
+        var body = group && group.querySelector(":scope > .sirk-settings-nav-group-body");
+        var result = null;
+        if (!body) return result;
+        Array.prototype.some.call(body.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
+            if (String(button.textContent || "").trim() !== label) return false;
+            result = button;
+            return true;
+        });
+        return result;
+    }
+
+    function selectMonitoringGeneral(secondary) {
+        var modules = groupByLabel(secondary, "Moduły");
+        var modulesBody = modules && modules.querySelector(":scope > .sirk-settings-nav-group-body");
+        var monitoring = groupByLabel(modulesBody, "Monitoring");
+        var general = findLeaf(monitoring, "Ogólne");
+        if (!general) return false;
+        forwardingIntegrationClick = true;
+        general.click();
+        forwardingIntegrationClick = false;
+        return true;
+    }
+
+    function ensureIntegrationNavigation(workspace) {
+        var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
+        if (!secondary) return;
+        var modules = groupByLabel(secondary, "Moduły");
+        var portal = groupByLabel(secondary, "Portal");
+        if (!modules || !portal) return;
+
+        Array.prototype.forEach.call(secondary.querySelectorAll(".sirk-nav-item"), function (button) {
+            if (button.getAttribute("data-integration-nav") === "1" || button.getAttribute("data-integration-reset-bound") === "1") return;
+            button.setAttribute("data-integration-reset-bound", "1");
+            button.addEventListener("click", function () {
+                if (!forwardingIntegrationClick) integrationMode = "";
+            });
+        });
+
+        var group = groupByLabel(secondary, "Integracje");
+        if (!group) {
+            group = document.createElement("details");
+            group.className = "sirk-settings-nav-group";
+            var summary = document.createElement("summary");
+            summary.textContent = "Integracje";
+            group.appendChild(summary);
+            var body = document.createElement("div");
+            body.className = "sirk-settings-nav-group-body";
+            group.appendChild(body);
+            portal.parentNode.insertBefore(group, portal.nextSibling);
+
+            INTEGRATIONS.forEach(function (item) {
+                var button = document.createElement("button");
+                button.type = "button";
+                button.className = "sirk-nav-item sirk-settings-nav-leaf";
+                button.textContent = item.label;
+                button.setAttribute("data-integration-nav", item.key);
+                button.addEventListener("click", function () {
+                    integrationMode = item.key;
+                    selectMonitoringGeneral(secondary);
+                });
+                body.appendChild(button);
+            });
+        }
+        group.open = !!integrationMode;
+        Array.prototype.forEach.call(group.querySelectorAll("[data-integration-nav]"), function (button) {
+            button.classList.toggle("active", button.getAttribute("data-integration-nav") === integrationMode);
+        });
+    }
+
+    function directSummary(section) {
+        var summary = section && section.querySelector(":scope > summary");
+        return String(summary && summary.textContent || "").trim().toLowerCase();
+    }
+
+    function filterIntegrationSettings(workspace) {
+        var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
+        var form = workspace.querySelector("[data-settings-form]");
+        if (!secondary || !form) return;
+        var modules = groupByLabel(secondary, "Moduły");
+        var modulesBody = modules && modules.querySelector(":scope > .sirk-settings-nav-group-body");
+        var monitoring = groupByLabel(modulesBody, "Monitoring");
+        var monitoringActive = !!(monitoring && monitoring.querySelector(".sirk-nav-item.active,.sirk-nav-item.is-active"));
+        if (!monitoringActive && !integrationMode) return;
+
+        var integrationSection = null;
+        Array.prototype.some.call(form.querySelectorAll(":scope > [data-settings-section]"), function (section) {
+            if (directSummary(section) !== "integracje") return false;
+            integrationSection = section;
+            return true;
+        });
+
+        if (!integrationMode) {
+            if (integrationSection) integrationSection.remove();
+            return;
+        }
+
+        Array.prototype.forEach.call(form.querySelectorAll(":scope > [data-settings-field]"), function (field) { field.remove(); });
+        Array.prototype.forEach.call(form.querySelectorAll(":scope > [data-settings-section]"), function (section) {
+            if (section !== integrationSection) section.remove();
+        });
+
+        var selected = null;
+        if (integrationSection) {
+            var body = integrationSection.querySelector(":scope > [data-settings-section-body]");
+            Array.prototype.some.call(body ? body.querySelectorAll(":scope > [data-settings-section]") : [], function (section) {
+                if (directSummary(section) !== integrationMode) return false;
+                selected = section;
+                return true;
+            });
+        }
+
+        if (selected) {
+            selected.open = true;
+            form.insertBefore(selected, integrationSection || form.firstChild);
+        } else {
+            var empty = document.createElement("div");
+            empty.className = "sirk-card";
+            empty.textContent = integrationMode === "sms"
+                ? "Konfiguracja integracji SMS nie została jeszcze zdefiniowana."
+                : "Brak ustawień dla wybranej integracji.";
+            form.insertBefore(empty, integrationSection || form.firstChild);
+        }
+        if (integrationSection) integrationSection.remove();
+    }
+
+    function normalizeIntegrationSettings() {
+        var content = document.getElementById("sirkStandaloneContent");
+        var workspace = content && content.querySelector("[data-portal-settings] .sirk-layout");
+        if (!workspace) return;
+        var primary = workspace.querySelector(":scope > .sirk-column-primary");
+        var active = primary && primary.querySelector(":scope > .sirk-nav-item.active,:scope > .sirk-nav-item.is-active");
+        if (!active || String(active.textContent || "").trim() !== "Settings") return;
+        ensureIntegrationNavigation(workspace);
+        filterIntegrationSettings(workspace);
+    }
+
     function synchronize() {
         applyDocument(document, current);
         var frame = document.getElementById("sirkLoginFrame");
@@ -190,6 +349,7 @@
         applyWorkspaceTheme();
         translateWorkspace();
         restoreDeviceTab();
+        normalizeIntegrationSettings();
     }
 
     function apply(config) {
@@ -221,6 +381,11 @@
         if (event.key === LANGUAGE_STORAGE) translateWorkspace();
         if (event.key === THEME_STORAGE) applyWorkspaceTheme();
     });
+
+    var settingsObserver = new MutationObserver(function () {
+        window.requestAnimationFrame(normalizeIntegrationSettings);
+    });
+    settingsObserver.observe(document.documentElement, { childList: true, subtree: true });
 
     fetch(base + "/portal-branding.json?v=" + encodeURIComponent(String(window.__SIRK_PLATFORM_PORTAL_VERSION__ || Date.now())), {
         credentials: "same-origin",
