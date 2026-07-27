@@ -16,14 +16,15 @@
     var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
     var settingsItems = [
-        ["overview", "Overview"], ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
+        ["overview", "Moduły"], ["devices", "Urządzenia"], ["commands", "Commands"], ["approvals", "Akceptacje"],
         ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
         ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"],
-        ["settings", "Ustawienia"], ["permissions", "Permissions"]
+        ["settings", "Ustawienia"]
     ];
     var settingsSections = {
-        overview: [{ type: "visibility", title: "Widoczność kafelków Overview" }],
+        overview: [{ type: "visibility", title: "Moduły Portalu" }],
         devices: [{ type: "view", key: "devices", title: "Urządzenia", text: "Widoczność zakładki Urządzenia w menu Portalu." }],
+        commands: [{ type: "module", key: "mycommands", title: "Commands" }],
         approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
         automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
         monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
@@ -31,8 +32,7 @@
         management: [{ type: "module", key: "myjira", title: "Jira" }],
         reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
         security: [{ type: "module", key: "defendertools", title: "Defender" }],
-        settings: [{ type: "portal", title: "Portal i sesja" }, { type: "module", key: "mycommands", title: "Commands" }],
-        permissions: [{ type: "folderpermissions", title: "Permissions" }]
+        settings: [{ type: "portal", title: "Portal i sesja" }]
     };
 
     function el(tag, className, text) {
@@ -253,7 +253,7 @@
     function renderSettings(host, secondary) {
         var portalViews = state.snapshot && state.snapshot.moduleSettings && state.snapshot.moduleSettings.portal && state.snapshot.moduleSettings.portal.views || {};
         settingsItems.filter(function (item) {
-            return item[0] === "overview" || item[0] === "settings" || item[0] === "permissions" || !portalViews[item[0]] || portalViews[item[0]].enabled !== false;
+            return item[0] === "overview" || item[0] === "settings" || item[0] === "commands" || !portalViews[item[0]] || portalViews[item[0]].enabled !== false;
         }).forEach(function (item) {
             var button = el("button", item[0] === state.settingsKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
             button.type = "button";
@@ -297,10 +297,20 @@
                 dependent.disabled = !moduleEnabled;
                 field(section, "Enabled", moduleEnabled, function (checked) { payload.modules[definition.key] = checked; dependent.disabled = !checked; }, { type: "boolean" });
                 delete value.enabled;
+                var permissions = value.folderPermissions;
+                delete value.folderPermissions;
                 objectForm(dependent, value, 0);
                 // Module settings are rendered through objectForm(section, value, 0) semantics,
                 // but remain inside a disabled fieldset until the parent Enabled switch is on.
                 section.appendChild(dependent);
+                if (permissions && typeof permissions === "object") {
+                    var permissionDetails = el("details", "sirk-card");
+                    permissionDetails.setAttribute("data-search-item", "1");
+                    permissionDetails.appendChild(el("summary", "", "Permissions"));
+                    objectForm(permissionDetails, permissions, 0);
+                    section.appendChild(permissionDetails);
+                    value.folderPermissions = permissions;
+                }
             } else if (definition.type === "portal") {
                 var portal = values.portal = clone(payload.moduleOptions.portal || {});
                 field(section, "Widok domyślny", portal.defaultView || "overview", function (next) { portal.defaultView = next; }, { choices: [["overview", "Overview"], ["devices", "Devices"], ["approvals", "Approval"], ["automation", "Automation"], ["management", "Management"]] });
@@ -591,6 +601,7 @@
                 renderActive(layout, secondary, details);
             };
             secondary.appendChild(button);
+            if (item[0] === "overview") secondary.appendChild(el("div", "sirk-settings-nav-separator"));
         });
         secondary.hidden = false;
         if (state.serverKey === "service") renderServer(details);

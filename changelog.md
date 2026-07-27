@@ -1,3 +1,7 @@
+## 1.8.36-dev.23
+
+- Organize Settings into Portal Modules, separate Commands, and per-module Permissions with a visual separator.
+
 ## 1.8.36-dev.22
 
 - Persist per-view visibility from the view settings section and remove disabled views from both navigation columns.
