@@ -78,11 +78,42 @@
         header.setAttribute("data-compact-tabs-mounted", "1");
     }
 
+    function normalizeServerNavigation(primary, secondary) {
+        var activePrimary = primary && primary.querySelector(":scope > .sirk-nav-item.active,:scope > .sirk-nav-item.is-active");
+        if (!activePrimary || String(activePrimary.textContent || "").trim() !== "Server") return;
+        if (secondary.querySelector(":scope > .sirk-settings-nav-group")) return;
+
+        var buttons = {};
+        Array.prototype.forEach.call(secondary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
+            buttons[String(button.textContent || "").trim()] = button;
+        });
+        var labels = { "Debug · Config": "Config", "Debug · Logi": "Logi", "Debug · Błędy": "Błędy", "System · Backupy": "Backupy" };
+        Object.keys(labels).forEach(function (source) { if (buttons[source]) buttons[source].textContent = labels[source]; });
+
+        var updateButton = buttons["System · Aktualizacje"];
+        var historyButton = buttons["System · Historia"];
+        var channelButton = buttons["System · Kanał aktualizacji"];
+        if (!updateButton || !historyButton || !channelButton) return;
+        var group = document.createElement("details");
+        group.className = "sirk-settings-nav-group";
+        group.open = updateButton.classList.contains("active") || historyButton.classList.contains("active") || channelButton.classList.contains("active");
+        var summary = document.createElement("summary");
+        summary.textContent = "Aktualizacje";
+        summary.style.cssText = "padding:9px 11px;cursor:pointer;font-weight:600";
+        group.appendChild(summary);
+        updateButton.textContent = "Sprawdź";
+        historyButton.textContent = "Historia";
+        channelButton.textContent = "Kanał";
+        secondary.insertBefore(group, updateButton);
+        group.appendChild(updateButton);
+        group.appendChild(historyButton);
+        group.appendChild(channelButton);
+    }
+
     function normalizeSettingsNavigation() {
         var content = document.getElementById("sirkStandaloneContent");
         var workspace = content && content.querySelector(".sirk-settings-module-workspace");
         if (!workspace) return;
-
         var primary = workspace.querySelector(":scope > .sirk-column-primary");
         var activateSettings = false;
         var settingsPrimaryButton = null;
@@ -100,9 +131,9 @@
                 return;
             }
         }
-
         var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
         if (!secondary) return;
+        normalizeServerNavigation(primary, secondary);
         var moduleButton = null;
         var settingsButton = null;
         Array.prototype.forEach.call(secondary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
@@ -111,7 +142,6 @@
             else if (label === "Ustawienia") settingsButton = button;
         });
         if (!moduleButton || !settingsButton) return;
-
         secondary.insertBefore(settingsButton, moduleButton.nextSibling);
         var divider = secondary.querySelector(":scope > .sirk-settings-nav-divider");
         if (!divider) {
