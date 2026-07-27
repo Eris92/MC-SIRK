@@ -40,7 +40,11 @@ module.exports.createManager = function (context) {
     }
 
     function status(portal) {
-        var config = readConfig();
+        var config;
+        try { config = readConfig(); }
+        catch (error) {
+            return { enabled: false, managedBySirkPlatform: false, managedExternally: false, restartRequired: false, unavailable: true };
+        }
         var value = keyValue(config.settings);
         var managed = portal && portal.sessionKeyManaged === true &&
             typeof portal.sessionKeyHash === "string" && portal.sessionKeyHash === keyHash(value);
