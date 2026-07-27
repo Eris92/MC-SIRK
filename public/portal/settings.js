@@ -16,22 +16,23 @@
     var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
     var settingsItems = [
-        ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
+        ["overview", "Overview"], ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
         ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
         ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"],
-        ["settings", "Ustawienia"]
+        ["settings", "Ustawienia"], ["permissions", "Permissions"]
     ];
     var settingsSections = {
-        overview: [{ type: "overview", title: "Stan Portalu" }],
-        devices: [{ type: "module", key: "mycommands", title: "Polecenia urządzeń" }],
+        overview: [{ type: "visibility", title: "Widoczność kafelków Overview" }],
+        devices: [{ type: "empty", title: "Urządzenia", text: "Ustawienia urządzeń będą dostępne tutaj. Polecenia urządzeń znajdują się w Ustawieniach ogólnych." }],
         approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
         automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
         monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
-        assets: [{ type: "folderpermissions", title: "Uprawnienia folderów" }],
+        assets: [{ type: "empty", title: "Zasoby", text: "Ustawienia zasobów będą dostępne tutaj." }],
         management: [{ type: "module", key: "myjira", title: "Jira" }],
         reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
         security: [{ type: "module", key: "defendertools", title: "Defender" }],
-        settings: [{ type: "portal", title: "Portal i sesja" }]
+        settings: [{ type: "portal", title: "Portal i sesja" }, { type: "module", key: "mycommands", title: "Polecenia urządzeń (ogólne)" }],
+        permissions: [{ type: "folderpermissions", title: "Permissions" }]
     };
 
     function el(tag, className, text) {
@@ -248,7 +249,10 @@
     }
 
     function renderSettings(host, secondary) {
-        settingsItems.forEach(function (item) {
+        var portalViews = state.snapshot && state.snapshot.moduleSettings && state.snapshot.moduleSettings.portal && state.snapshot.moduleSettings.portal.views || {};
+        settingsItems.filter(function (item) {
+            return item[0] === "overview" || item[0] === "settings" || item[0] === "permissions" || !portalViews[item[0]] || portalViews[item[0]].enabled !== false;
+        }).forEach(function (item) {
             var button = el("button", item[0] === state.settingsKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
             button.type = "button";
             button.onclick = function () {
@@ -268,10 +272,25 @@
             section.appendChild(el("summary", "", definition.title));
             if (definition.type === "empty") section.appendChild(el("p", "sirk-shared-muted", definition.text));
             else if (definition.type === "overview") renderOverview(section);
+            else if (definition.type === "visibility") {
+                var portal = values.portal = clone(payload.moduleOptions.portal || {});
+                portal.views = portal.views || {};
+                var labels = { overview: "Overview", devices: "Devices", approvals: "Approval", automation: "Automation", monitoring: "Monitoring", assets: "Assets", management: "Management", reports: "Reports", security: "Security", settings: "Settings" };
+                Object.keys(labels).forEach(function (key) {
+                    field(section, labels[key], portal.views[key] ? portal.views[key].enabled !== false : true, function (next) { portal.views[key] = Object.assign({}, portal.views[key] || {}, { enabled: next }); }, { type: "boolean" });
+                });
+            }
             else if (definition.type === "module") {
                 var value = values[definition.key] = clone(payload.moduleOptions[definition.key] || {});
-                field(section, "Moduł włączony", payload.modules[definition.key] === true, function (checked) { payload.modules[definition.key] = checked; }, { type: "boolean" });
-                objectForm(section, value, 0);
+                var moduleEnabled = payload.modules[definition.key] === true;
+                var dependent = el("fieldset", "sirk-settings-dependent");
+                dependent.disabled = !moduleEnabled;
+                field(section, "Enabled", moduleEnabled, function (checked) { payload.modules[definition.key] = checked; dependent.disabled = !checked; }, { type: "boolean" });
+                delete value.enabled;
+                objectForm(dependent, value, 0);
+                // Module settings are rendered through objectForm(section, value, 0) semantics,
+                // but remain inside a disabled fieldset until the parent Enabled switch is on.
+                section.appendChild(dependent);
             } else if (definition.type === "portal") {
                 var portal = values.portal = clone(payload.moduleOptions.portal || {});
                 field(section, "Widok domyślny", portal.defaultView || "overview", function (next) { portal.defaultView = next; }, { choices: [["overview", "Overview"], ["devices", "Devices"], ["approvals", "Approval"], ["automation", "Automation"], ["management", "Management"]] });
@@ -291,7 +310,7 @@
         var message = el("span");
         save.type = "button";
         save.onclick = function () {
-            if (state.settingsKey === "folderpermissions") {
+            if (state.settingsKey === "permissions") {
                 payload.moduleOptions.portal = payload.moduleOptions.portal || {};
                 payload.moduleOptions.myscripts = payload.moduleOptions.myscripts || {};
                 payload.moduleOptions.mycommands = payload.moduleOptions.mycommands || {};
@@ -315,7 +334,7 @@
             status(message, "Zapisywanie…", false);
             postSettings(payload).then(function (result) {
                 state.snapshot = result.snapshot;
-                status(message, "Zapisano.", false);
+                renderActive(host.parentNode, secondary, host);
             }).catch(function (error) {
                 status(message, error.message, true);
             }).then(function () { save.disabled = false; });

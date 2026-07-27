@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.17",
+    "date": "2026-07-27",
+    "changes": [
+      "Clean up Settings and separate module, Permissions, and device command controls"
+    ]
+  },
+  {
     "version": "1.8.36-dev.16",
     "date": "2026-07-27",
     "changes": [

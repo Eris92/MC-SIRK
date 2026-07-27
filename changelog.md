@@ -1,3 +1,7 @@
+## 1.8.36-dev.17
+
+- Clean up Settings: add Overview visibility controls, hide disabled views, make module Enabled the parent switch, and separate Permissions from device commands.
+
 ## 1.8.36-dev.16
 
 - Add Overview visibility controls to Settings and persist each tile's enabled state.
