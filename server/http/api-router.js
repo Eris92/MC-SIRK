@@ -52,12 +52,14 @@ module.exports.createHandler = function (runtime, host) {
             }
             var match = url.pathname.match(/^\/api\/modules\/([^/]+)\/([^/]+)$/);
             if (!match) { sendJson(res, 404, { ok: false, error: "Endpoint not found." }); return; }
-            runtime.request(req.method, decodeURIComponent(match[1]), decodeURIComponent(match[2]), {
+            Promise.resolve(runtime.request(req.method, decodeURIComponent(match[1]), decodeURIComponent(match[2]), {
                 method: req.method,
                 headers: req.headers,
                 query: Object.fromEntries(url.searchParams.entries()),
                 body: state.body
-            }, responseAdapter(res), user.raw || user);
+            }, responseAdapter(res), user.raw || user)).catch(function (error) {
+                if (!res.writableEnded) sendJson(res, 500, { ok: false, error: String(error && error.message || error) });
+            });
         }).catch(function (error) {
             sendJson(res, 401, { ok: false, error: String(error && error.message || error) });
         });
