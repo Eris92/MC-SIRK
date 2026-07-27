@@ -23,7 +23,7 @@
     ];
     var settingsSections = {
         overview: [{ type: "visibility", title: "Widoczność kafelków Overview" }],
-        devices: [{ type: "empty", title: "Urządzenia", text: "Ustawienia urządzeń będą dostępne tutaj. Polecenia urządzeń znajdują się w Ustawieniach ogólnych." }],
+        devices: [{ type: "view", key: "devices", title: "Urządzenia", text: "Widoczność zakładki Urządzenia w menu Portalu." }],
         approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
         automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
         monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
@@ -274,6 +274,14 @@
             section.appendChild(el("summary", "", definition.title));
             if (definition.type === "empty") section.appendChild(el("p", "sirk-shared-muted", definition.text));
             else if (definition.type === "overview") renderOverview(section);
+            else if (definition.type === "view") {
+                var viewPortal = values.portal = clone(payload.moduleOptions.portal || {});
+                viewPortal.views = viewPortal.views || {};
+                var viewConfig = viewPortal.views[definition.key] || {};
+                field(section, "Enabled", viewConfig.enabled !== false, function (next) {
+                    viewPortal.views[definition.key] = Object.assign({}, viewConfig, { enabled: next });
+                }, { type: "boolean", description: definition.text });
+            }
             else if (definition.type === "visibility") {
                 var portal = values.portal = clone(payload.moduleOptions.portal || {});
                 portal.views = portal.views || {};
@@ -336,6 +344,7 @@
             status(message, "Zapisywanie…", false);
             postSettings(payload).then(function (result) {
                 state.snapshot = result.snapshot;
+                if (state.settingsKey !== "overview" && state.settingsKey !== "settings" && state.settingsKey !== "permissions" && values.portal && values.portal.views && values.portal.views[state.settingsKey] && values.portal.views[state.settingsKey].enabled === false) state.settingsKey = "overview";
                 renderActive(host.parentNode, secondary, host);
             }).catch(function (error) {
                 status(message, error.message, true);

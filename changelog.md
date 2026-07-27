@@ -1,3 +1,7 @@
+## 1.8.36-dev.22
+
+- Persist per-view visibility from the view settings section and remove disabled views from both navigation columns.
+
 ## 1.8.36-dev.21
 
 - Hide disabled module views from the left menu and restore Assets module settings so disabled integrations can be enabled.
