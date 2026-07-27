@@ -5,6 +5,7 @@
         snapshot: null,
         active: "overview",
         settingsKey: "settings",
+        serverKey: "service",
         debugKey: "config",
         pluginView: "installed",
         plugins: [],
@@ -538,16 +539,7 @@
         });
     }
 
-    function renderDebug(host, secondary) {
-        [["config", "Config"], ["logs", "Logi"], ["errors", "Błędy"]].forEach(function (item) {
-            var button = el("button", item[0] === state.debugKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
-            button.type = "button";
-            button.onclick = function () {
-                state.debugKey = item[0];
-                renderActive(host.parentNode, secondary, host);
-            };
-            secondary.appendChild(button);
-        });
+    function renderDebug(host) {
         var snapshot = state.snapshot || {};
         var value = state.debugKey === "logs"
             ? snapshot.diagnostics && snapshot.diagnostics.logs || "Brak logów."
@@ -559,30 +551,38 @@
         host.appendChild(pre);
     }
 
+    function renderServerSections(layout, secondary, details) {
+        var items = [["service", "Usługa"], ["debug:config", "Debug · Config"], ["debug:logs", "Debug · Logi"], ["debug:errors", "Debug · Błędy"], ["system:updates", "System · Aktualizacje"], ["system:backups", "System · Backupy"], ["system:history", "System · Historia"], ["system:channel", "System · Kanał aktualizacji"], ["plugins", "Wtyczki"]];
+        items.forEach(function (item) {
+            var button = el("button", item[0] === state.serverKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
+            button.type = "button";
+            button.onclick = function () {
+                state.serverKey = item[0];
+                renderActive(layout, secondary, details);
+            };
+            secondary.appendChild(button);
+        });
+        secondary.hidden = false;
+        if (state.serverKey === "service") renderServer(details);
+        else if (state.serverKey.indexOf("debug:") === 0) {
+            state.debugKey = state.serverKey.slice(6);
+            renderDebug(details);
+        }
+        else if (state.serverKey === "plugins") renderPlugins(details);
+        else if (window.SirkSystemUpdates) {
+            window.SirkSystemUpdates.mount(details, state.serverKey.slice(7));
+        }
+    }
+
     function renderActive(layout, secondary, details) {
         clear(secondary);
         clear(details);
         var overview = state.active === "overview";
         layout.classList.toggle("sirk-settings-overview", overview);
-        secondary.hidden = overview || state.active === "plugins" || state.active === "server";
+        secondary.hidden = overview;
         if (overview) renderOverview(details);
         else if (state.active === "settings") renderSettings(details, secondary);
-        else if (state.active === "plugins") renderPlugins(details);
-        else if (state.active === "server") renderServer(details);
-        else if (state.active === "debug") renderDebug(details, secondary);
-        else if (window.SirkSystemUpdates) {
-            secondary.hidden = false;
-            [["updates", "Aktualizacje"], ["backups", "Backupy"], ["history", "Historia"], ["channel", "Kanał aktualizacji"]].forEach(function (item, index) {
-                var button = el("button", index === 0 ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
-                button.type = "button";
-                button.onclick = function () {
-                    Array.prototype.forEach.call(secondary.children, function (node) { node.classList.toggle("active", node === button); });
-                    window.SirkSystemUpdates.mount(details, item[0]);
-                };
-                secondary.appendChild(button);
-            });
-            window.SirkSystemUpdates.mount(details, "updates");
-        }
+        else if (state.active === "server") renderServerSections(layout, secondary, details);
         applySearch(details);
     }
 
@@ -624,7 +624,7 @@
             });
         };
 
-        [["overview", "Overview"], ["settings", "Settings"], ["plugins", "Wtyczki"], ["server", "Serwer"], ["debug", "Debug"], ["system", "System"]].forEach(function (item) {
+        [["overview", "Overview"], ["settings", "Settings"], ["server", "Serwer"]].forEach(function (item) {
             var button = el("button", item[0] === state.active ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
             button.type = "button";
             button.onclick = function () {

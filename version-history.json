@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.9",
+    "date": "2026-07-27",
+    "changes": [
+      "Merge Service, Debug and System settings under the Server area"
+    ]
+  },
+  {
     "version": "1.8.36-dev.8",
     "date": "2026-07-27",
     "changes": [

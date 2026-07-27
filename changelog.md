@@ -1,3 +1,7 @@
+## 1.8.36-dev.9
+
+- Merge Service, Debug and System settings under one Server area and expose Plugins in its secondary column.
+
 ## 1.8.36-dev.8
 
 - Use the MeshCentral login session for the new Portal login instead of a separate local credential form.
