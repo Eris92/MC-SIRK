@@ -24,6 +24,11 @@ var ASSETS = {
     "portal-terminal-connect.js": "public/portal/standalone/scripts/terminal-connect.js",
     "portal-branding.js": "public/portal/standalone/scripts/branding.js",
     "portal-branding.json": "public/portal/standalone/branding.json",
+    "portal-login.js": "public/portal/standalone/scripts/login.js",
+    "portal-branding.js": "public/portal/standalone/scripts/branding.js",
+    "portal-login.css": "public/portal/standalone/styles/login.css",
+    "sirk-native-login.css": "public/portal/standalone/styles/native-login.css",
+    "sirk-native-login.js": "public/portal/standalone/scripts/native-login.js",
     "portal-standalone.css": "public/portal/standalone/styles/base.css",
     "portal.css": "public/portal/portal.css",
     "settings.css": "public/portal/settings.css",
@@ -86,6 +91,17 @@ function portalHtml() {
     return html.replace("</body>", '<script src="/assets/standalone-core-rest.js?v=' + VERSION + '"></script><script src="/assets/system-updates.js?v=' + VERSION + '"></script></body>');
 }
 
+function loginHtml() {
+    return fs.readFileSync(path.join(ROOT, "public/portal/standalone/login.html"), "utf8")
+        .replace(/__ASSET_BASE_JSON__/g, JSON.stringify("/assets"))
+        .replace(/__PORTAL_URL_JSON__/g, JSON.stringify("/"))
+        .replace(/__NATIVE_URL_JSON__/g, JSON.stringify(process.env.SIRK_NATIVE_LOGIN_URL || "/meshcentral/login"))
+        .replace(/__FORCE_PORTAL_JSON__/g, JSON.stringify(true))
+        .replace(/__ASSET_BASE__/g, "/assets")
+        .replace(/__VERSION_JSON__/g, JSON.stringify(VERSION))
+        .replace(/__VERSION__/g, VERSION);
+}
+
 function start(options) {
     options = options || {};
     var host = adapter.createHost(options);
@@ -98,6 +114,11 @@ function start(options) {
             var url = new URL(req.url, "http://sirk.local");
             if (url.pathname.indexOf("/api/system/updates/") === 0) { updateApi(req, res, url); return; }
             if (url.pathname.indexOf("/api/") === 0) { api(req, res); return; }
+            if (url.pathname === "/login") {
+                res.setHeader("Content-Type", "text/html; charset=utf-8");
+                res.end(loginHtml());
+                return;
+            }
             if (url.pathname === "/" || url.pathname === "/sirkportal/") {
                 res.setHeader("Content-Type", "text/html; charset=utf-8");
                 res.end(portalHtml());
