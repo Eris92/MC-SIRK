@@ -262,6 +262,9 @@ module.exports.createRuntime = function (options) {
                 });
             }
             Object.keys(modules).forEach(function (key) {
+                if (key !== "portal" && moduleOptions[key] && typeof moduleOptions[key] === "object" && !Array.isArray(moduleOptions[key])) {
+                    current.modules[key] = Object.assign({}, current.modules[key] || {}, shared.copy(moduleOptions[key]));
+                }
                 if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
                     current.modules[key].enabled = moduleValues[key] === true;
                 }

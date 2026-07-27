@@ -70,7 +70,9 @@
         var base = new URL(window.__SIRK_PLATFORM_API_BASE__, window.location.href);
         if (base.pathname.replace(/\/+$/, "") === "/api") {
             var standaloneBody = new URLSearchParams();
-            standaloneBody.set("payload", JSON.stringify(payload || {}));
+            var standalonePayload = clone(payload || {});
+            standalonePayload.portal = clone(standalonePayload.moduleOptions && standalonePayload.moduleOptions.portal || {});
+            standaloneBody.set("payload", JSON.stringify(standalonePayload));
             return fetch(new URL("/api/admin/settings", window.location.href).href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: standaloneBody.toString() }).then(parse).then(function (value) { return { snapshot: value.value || value.snapshot || value }; });
         }
         var body = new URLSearchParams();
