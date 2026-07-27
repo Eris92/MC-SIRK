@@ -141,58 +141,51 @@
         var form = workspace.querySelector("[data-settings-form]");
         if (!form) return;
         var fields = Array.prototype.slice.call(form.querySelectorAll("[data-settings-field]"));
-        var visibility = null;
-        var enabled = [];
+        var candidates = [];
         var technical = [];
 
         fields.forEach(function (field) {
             var label = field.querySelector("[data-settings-field-copy] strong");
             var text = String(label && label.textContent || "").trim();
-            if (text === "Widoczność zakładki") visibility = field;
-            else if (text === "Enabled") enabled.push(field);
+            if (["Widoczność zakładki", "Enabled", "Włącz i pokaż"].indexOf(text) >= 0) candidates.push(field);
             else if (["Show In Menu", "Show On Device", "Host Button Enabled", "Menu Enabled"].indexOf(text) >= 0) technical.push(field);
         });
 
-        var primary = visibility || enabled[0];
-        if (!primary) {
-            technical.forEach(function (field) { field.hidden = true; });
-            return;
-        }
+        technical.forEach(function (field) { field.hidden = true; });
+        if (!candidates.length) return;
 
-        var label = primary.querySelector("[data-settings-field-copy] strong");
+        var primary = candidates[0];
+        var primaryLabel = primary.querySelector("[data-settings-field-copy] strong");
+        var primaryCopy = primary.querySelector("[data-settings-field-copy]");
         var description = primary.querySelector("[data-settings-field-copy] small");
         var primaryInput = primary.querySelector('input[type="checkbox"]');
         var linked = [];
 
-        if (label) label.textContent = "Włącz i pokaż";
+        if (primaryLabel) primaryLabel.textContent = "Włącz i pokaż";
+        if (!description && primaryCopy) {
+            description = document.createElement("small");
+            primaryCopy.appendChild(description);
+        }
         if (description) description.textContent = "Jednocześnie włącza funkcję modułu i pokazuje jego zakładkę w Portalu.";
+        primary.hidden = false;
         primary.setAttribute("data-unified-module-toggle", "1");
 
-        enabled.forEach(function (field) {
-            if (field === primary) return;
+        candidates.slice(1).forEach(function (field) {
             var input = field.querySelector('input[type="checkbox"]');
             if (input) linked.push(input);
             field.hidden = true;
+            field.removeAttribute("data-unified-module-toggle");
         });
-        if (visibility && visibility !== primary) {
-            var visibilityInput = visibility.querySelector('input[type="checkbox"]');
-            if (visibilityInput) linked.push(visibilityInput);
-            visibility.hidden = true;
-        }
-        technical.forEach(function (field) { field.hidden = true; });
 
-        if (!primaryInput || primaryInput.getAttribute("data-unified-toggle-bound") === "1") return;
-        primaryInput.setAttribute("data-unified-toggle-bound", "1");
-        if (linked.length) {
-            primaryInput.checked = [primaryInput].concat(linked).every(function (input) { return input.checked; });
-        }
-        primaryInput.addEventListener("change", function () {
+        if (!primaryInput) return;
+        primaryInput.checked = [primaryInput].concat(linked).every(function (input) { return input.checked; });
+        primaryInput.onchange = function () {
             linked.forEach(function (input) {
                 if (input.checked === primaryInput.checked) return;
                 input.checked = primaryInput.checked;
                 input.dispatchEvent(new Event("change", { bubbles: true }));
             });
-        });
+        };
     }
 
     function normalizeSettingsNavigation() {
