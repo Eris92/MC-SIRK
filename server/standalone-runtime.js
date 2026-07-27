@@ -2,6 +2,7 @@
 
 var path = require("path");
 var runtimeFactory = require("./core/runtime-portal.js");
+var experience = require("./core/portal-experience-runtime.js");
 
 module.exports.createRuntime = function (host, pluginRoot) {
     var syntheticParent = {
@@ -15,6 +16,7 @@ module.exports.createRuntime = function (host, pluginRoot) {
         pluginRoot: pluginRoot,
         source: { shortName: "SIRKPortalStandalone" }
     });
+    experience.extend(runtime, pluginRoot);
     var originalBootstrap = runtime.bootstrap;
     runtime.bootstrap = function (user) {
         var value = originalBootstrap(user && user.raw || user);
