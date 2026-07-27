@@ -1,3 +1,7 @@
+## 1.8.36-dev.7
+
+- Keep the mounted Portal details panel visible behind a loading overlay during view refreshes to prevent flicker.
+
 ## 1.8.36-dev.6
 
 - Reorganized Portal settings by the main menu areas and made every nested settings section collapsed by default.

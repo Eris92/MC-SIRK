@@ -324,6 +324,7 @@ body {
 .sirk-standalone-content {
     display: flex;
     flex-direction: column;
+    position: relative;
     width: 100%;
     height: 100%;
     min-width: 0;
@@ -331,6 +332,38 @@ body {
     padding: 12px;
     background: var(--sirk-bg, #f3f6fb);
     overflow: hidden;
+}
+
+/* Keep the mounted view visible while a refresh prepares its replacement. */
+.sirk-standalone-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    color: var(--sirk-muted, #687386);
+    background: rgba(243, 246, 251, .72);
+    pointer-events: all;
+}
+
+.sirk-standalone-loading-overlay span,
+.sirk-standalone-loading span {
+    width: 22px;
+    height: 22px;
+    border: 3px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: sirk-spin .8s linear infinite;
+}
+
+.sirk-standalone-loading-overlay p {
+    margin: 0;
+}
+
+#sirkPortalRoot.sirk-theme-dark .sirk-standalone-loading-overlay {
+    background: rgba(15, 23, 42, .72);
 }
 
 .sirk-standalone-content > * {

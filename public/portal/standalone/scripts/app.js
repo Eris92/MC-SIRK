@@ -162,7 +162,14 @@
         root.style.setProperty("--sirk-active-accent", viewAccent(view));
     }
 
+    function clearLoadingOverlay() {
+        var overlay = content.querySelector(".sirk-standalone-loading-overlay");
+        if (overlay) overlay.remove();
+        content.classList.remove("is-refreshing");
+    }
+
     function prepareModuleHost(view) {
+        clearLoadingOverlay();
         content.innerHTML = "";
         content.removeAttribute("style");
         content.setAttribute("data-module-view", view);
@@ -256,6 +263,18 @@
     function isCurrent(sequence) { return sequence === renderSequence; }
 
     function loading(message) {
+        if (content.getAttribute("data-module-view") && content.firstElementChild) {
+            var overlay = content.querySelector(".sirk-standalone-loading-overlay");
+            if (!overlay) {
+                overlay = document.createElement("div");
+                overlay.className = "sirk-standalone-loading-overlay";
+                overlay.setAttribute("role", "status");
+                content.appendChild(overlay);
+            }
+            overlay.innerHTML = '<span></span><p>' + escapeHtml(message || t("loading")) + '</p>';
+            content.classList.add("is-refreshing");
+            return;
+        }
         content.innerHTML = '<div class="sirk-standalone-loading"><span></span><p>' + escapeHtml(message || t("loading")) + '</p></div>';
     }
 

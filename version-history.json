@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.7",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep mounted Portal views visible behind a loading overlay during refreshes"
+    ]
+  },
+  {
     "version": "1.8.36-dev.6",
     "date": "2026-07-27",
     "changes": [
