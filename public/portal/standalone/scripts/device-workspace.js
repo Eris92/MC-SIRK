@@ -123,8 +123,7 @@
 
     function getInventory() {
         if (inventory) return Promise.resolve(inventory);
-        if (!core || typeof core.api !== "function") return Promise.reject(new Error("SirkPlatform API is unavailable."));
-        return core.api("portal", "devices").then(function (value) {
+        return fetch("/api/devices", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok || value.ok === false) throw new Error(value.error || "Device inventory unavailable."); return value.value || value; }); }).then(function (value) {
             inventory = {
                 nodes: Array.isArray(value && value.nodes) ? value.nodes : [],
                 meshes: Array.isArray(value && value.meshes) ? value.meshes : []
