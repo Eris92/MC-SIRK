@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.13",
+    "date": "2026-07-27",
+    "changes": [
+      "Separate device Commands from the Automation menu and prepare the SIRK scheduler area"
+    ]
+  },
+  {
     "version": "1.8.36-dev.12",
     "date": "2026-07-27",
     "changes": [

@@ -89,7 +89,7 @@
         }
     };
 
-    var moduleViews = { automation: "mycommands", assets: "myjira", security: "defendertools" };
+    var moduleViews = { assets: "myjira", security: "defendertools" };
     var VIEW_KEYS = ["overview", "devices", "approvals", "automation", "monitoring", "assets", "management", "reports", "security", "settings"];
     var THEME_ICONS = {
         moon: '<svg class="sirk-theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.1A8.5 8.5 0 0 1 8.9 3.4a8.7 8.7 0 1 0 11.8 11.7Z"/><path class="sirk-theme-star" d="m17.5 3 .55 1.45L19.5 5l-1.45.55L17.5 7l-.55-1.45L15.5 5l1.45-.55Z"/></svg>',
@@ -653,6 +653,11 @@
         content.innerHTML = '<section class="sirk-standalone-view-scroll"><div class="sirk-content"><h2>' + escapeHtml(viewName(view)) + '</h2><p class="sirk-muted">' + escapeHtml(description) + '</p></div></section>';
     }
 
+    function automation(sequence) {
+        if (!isCurrent(sequence)) return;
+        content.innerHTML = '<section class="sirk-standalone-view-scroll"><div class="sirk-content"><h2>' + escapeHtml(viewName("automation")) + '</h2><div class="sirk-card"><h3>Harmonogram serwera</h3><p class="sirk-muted">Automatyzacje będą zarządzać zadaniami serwera w katalogu harmonogramu <strong>SIRK</strong>. Polecenia urządzeń są dostępne wyłącznie w widoku Urządzenia.</p><p class="sirk-muted">Katalogi automatyzacji i zadania zostaną utworzone przez Portal po udostępnieniu usługi harmonogramu.</p></div></div></section>';
+    }
+
     function render(view) {
         view = VIEW_KEYS.indexOf(view) >= 0 && viewEnabled(view) ? view : firstEnabledView();
         activeView = view;
@@ -670,6 +675,7 @@
         else if (view === "approvals") approvals(sequence);
         else if (view === "settings") settings();
         else if (view === "devices") devices(sequence, false);
+        else if (view === "automation") automation(sequence);
         else if (moduleViews[view]) mountModule(view, moduleViews[view], sequence);
         else if (view === "monitoring") placeholder(view, t("monitoringPlaceholder"));
         else if (view === "reports") placeholder(view, t("reportsPlaceholder"));

@@ -23,9 +23,9 @@
     ];
     var settingsSections = {
         overview: [{ type: "overview", title: "Stan Portalu" }],
-        devices: [{ type: "empty", title: "Urządzenia", text: "Połączenia urządzeń i sesje są dostępne w widoku Urządzenia." }],
+        devices: [{ type: "module", key: "mycommands", title: "Polecenia urządzeń" }],
         approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
-        automation: [{ type: "module", key: "mycommands", title: "Polecenia" }, { type: "module", key: "myscripts", title: "Skrypty" }],
+        automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
         monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
         assets: [{ type: "folderpermissions", title: "Uprawnienia folderów" }],
         management: [{ type: "module", key: "myjira", title: "Jira" }],

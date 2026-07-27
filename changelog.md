@@ -1,3 +1,7 @@
+## 1.8.36-dev.13
+
+- Separate device Commands from the Automation menu and prepare the server SIRK scheduler area.
+
 ## 1.8.36-dev.12
 
 - Combine update history and jobs into one status table with success, pending and failure information.
