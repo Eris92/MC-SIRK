@@ -34,7 +34,7 @@
     function appendIcon(host, node, className) {
         if (!node || !node.iconData) return null;
         var image = document.createElement("img");
-        image.className = className || "mc-tree-icon";
+        image.className = className || "sirk-tree-icon";
         image.alt = "";
         image.src = node.iconData;
         host.appendChild(image);
@@ -49,13 +49,13 @@
 
         if (!appendIcon(button, options.node, options.iconClass)) {
             var fallback = document.createElement("span");
-            fallback.className = "mc-tree-fallback-icon";
+            fallback.className = "sirk-tree-fallback-icon";
             fallback.textContent = options.fallbackIcon || options.node && options.node.icon || "";
             button.appendChild(fallback);
         }
 
         var label = document.createElement("span");
-        label.className = "mc-tree-label";
+        label.className = "sirk-tree-label";
         label.textContent = options.title || "";
         button.appendChild(label);
         button.onclick = options.onClick;
@@ -87,12 +87,12 @@
         var definitions = typeof options.scriptActions === "function" ? options.scriptActions(script) || [] : [];
         if (!definitions.length) return;
         var actions = document.createElement("span");
-        actions.className = "mc-tree-script-actions";
+        actions.className = "sirk-tree-script-actions";
         definitions.forEach(function (definition) {
             if (!definition || definition.hidden === true) return;
             var action = document.createElement("button");
             action.type = "button";
-            action.className = "mc-tree-script-action";
+            action.className = "sirk-tree-script-action";
             if (definition.className) action.classList.add(definition.className);
             action.classList.toggle("active", definition.active === true);
             action.title = definition.title || definition.key || "Action";
@@ -110,11 +110,11 @@
 
     function renderScript(host, script, options) {
         var row = document.createElement("div");
-        row.className = "mc-tree-script-row";
+        row.className = "sirk-tree-script-row";
         row.classList.toggle("active", text(options.selectedScript) === text(script.path));
 
         var button = createButton({
-            className: "sirk-nav-item mc-tree-script",
+            className: "sirk-nav-item sirk-tree-script",
             node: script,
             title: script.label || script.name || script.path,
             fallbackIcon: script.icon || "▶",
@@ -124,7 +124,7 @@
 
         if (script.requiresApproval) {
             var indicator = document.createElement("span");
-            indicator.className = "mc-tree-approval";
+            indicator.className = "sirk-tree-approval";
             indicator.textContent = "⌛";
             indicator.title = "Requires approval";
             button.appendChild(indicator);
@@ -143,27 +143,27 @@
             return item.type === "directory" && hasMatch(item, query, options);
         }).forEach(function (folder) {
             var section = document.createElement("section");
-            section.className = "mc-tree-folder";
-            section.style.setProperty("--mc-tree-depth", String(depth));
+            section.className = "sirk-tree-folder";
+            section.style.setProperty("--sirk-tree-depth", String(depth));
 
             var header = document.createElement("button");
             header.type = "button";
-            header.className = "mc-tree-folder-header";
-            var graphic = appendIcon(header, folder, "mc-tree-folder-icon");
+            header.className = "sirk-tree-folder-header";
+            var graphic = appendIcon(header, folder, "sirk-tree-folder-icon");
             var arrow = null;
             if (!graphic) {
                 arrow = document.createElement("span");
-                arrow.className = "mc-tree-folder-arrow";
+                arrow.className = "sirk-tree-folder-arrow";
                 header.appendChild(arrow);
             }
 
             var title = document.createElement("span");
-            title.className = "mc-tree-label";
+            title.className = "sirk-tree-label";
             title.textContent = folder.name;
             header.appendChild(title);
 
             var body = document.createElement("div");
-            body.className = "mc-tree-folder-body";
+            body.className = "sirk-tree-folder-body";
             var expanded = !!query || options.expanded[folder.path] === true;
             body.hidden = !expanded;
             if (arrow) arrow.textContent = expanded ? "▼" : "▶";
@@ -212,7 +212,7 @@
 
             visibleRoots.forEach(function (root) {
                 rootsHost.appendChild(createButton({
-                    className: "sirk-nav-item mc-tree-root",
+                    className: "sirk-nav-item sirk-tree-root",
                     node: root,
                     title: root.name,
                     fallbackIcon: root.icon || "▣",

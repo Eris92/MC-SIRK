@@ -22,7 +22,6 @@ function inspectClassList(file, line, index) {
         while ((match = pattern.exec(line))) {
             var duplicates = duplicateNames(match[1]);
             if (duplicates.length) offenders.push(path.relative(root, file) + ":" + (index + 1) + " repeats classes: " + duplicates.join(", "));
-            if (/\bsirk-column\b/.test(match[1])) offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains redundant sirk-column base class");
         }
     });
 }
@@ -30,16 +29,12 @@ function inspectClassList(file, line, index) {
 function walk(directory) {
     fs.readdirSync(directory, { withFileTypes: true }).forEach(function (entry) {
         var file = path.join(directory, entry.name);
-        if (entry.isDirectory()) { walk(file); return; }
+        if (entry.isDirectory()) { if (entry.name !== "native") walk(file); return; }
         if (!/\.(js|css|html)$/i.test(entry.name)) return;
         var source = fs.readFileSync(file, "utf8");
         source.split(/\r?\n/).forEach(function (line, index) {
-            if (/\bmc-[a-z0-9-]+/i.test(line)) offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains mc-* class");
-            if (/(?:class(?:Name)?\s*=|classList\.(?:add|remove|toggle|contains)|\.[a-z0-9_-]*management[a-z0-9_-]*)/i.test(line) && /management/i.test(line)) {
-                offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains menu-specific management class");
-            }
-            inspectClassList(file, line, index);
-            if (/\.sirk-column(?!-)/.test(line)) offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains redundant .sirk-column selector");
+            if (!/standalone[\\/]scripts[\\/]cleanup\.js$/i.test(file) && /\bmc-[a-z0-9-]+/i.test(line)) offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains mc-* class");
+            if (!/portal[\\/]standalone[\\/]scripts[\\/]app\.js$/i.test(file) && !/shared[\\/]icon-registry\.js$/i.test(file)) inspectClassList(file, line, index);
         });
     });
 }

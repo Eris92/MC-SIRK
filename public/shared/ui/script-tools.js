@@ -54,9 +54,9 @@
 
     function formRow(labelText, control) {
         var row = document.createElement("label");
-        row.className = "mc-script-form-row";
+        row.className = "sirk-script-form-row";
         var label = document.createElement("span");
-        label.className = "mc-script-form-label";
+        label.className = "sirk-script-form-label";
         label.textContent = labelText;
         row.appendChild(label); row.appendChild(control);
         return row;
@@ -203,10 +203,10 @@
                     var value = response.definition || {}, host = shell.state.page.details;
                     host.innerHTML = "";
                     var card = shell.card("Edit script definition", value.path || script.path);
-                    card.classList.add("mc-script-definition-card");
+                    card.classList.add("sirk-script-definition-card");
                     var label = document.createElement("input"); label.type = "text"; label.value = value.label || script.label || script.name;
                     var description = document.createElement("textarea"); description.rows = 3; description.value = value.description || "";
-                    var approvals = document.createElement("div"); approvals.className = "mc-script-approval-levels";
+                    var approvals = document.createElement("div"); approvals.className = "sirk-script-approval-levels";
                     [1, 2, 3].forEach(function (level) {
                         var item = document.createElement("label"), box = document.createElement("input");
                         box.type = "checkbox"; box.value = String(level); box.checked = (value.approvalLevels || []).indexOf(level) >= 0;
@@ -225,7 +225,7 @@
                     card.appendChild(formRow("Credential directives (SaveSecret: value)", secrets));
                     card.appendChild(formRow("Run as", runAs));
                     card.appendChild(formRow("Allow multi-device execution", multi));
-                    var actions = document.createElement("div"); actions.className = "mc-script-manage-actions";
+                    var actions = document.createElement("div"); actions.className = "sirk-script-manage-actions";
                     var save = shell.element("button", "btn btn-primary btn-sm", "Save");
                     var cancel = shell.element("button", "btn btn-secondary btn-sm", "Cancel");
                     save.type = cancel.type = "button";
@@ -254,15 +254,15 @@
                     var value = response.secrets || {}, host = shell.state.page.details;
                     host.innerHTML = "";
                     var card = shell.card("Script credentials", script.label || script.name);
-                    card.classList.add("mc-script-credentials-card");
+                    card.classList.add("sirk-script-credentials-card");
                     var controls = [];
                     (value.variables || []).forEach(function (variable) {
-                        var group = document.createElement("div"); group.className = "mc-script-secret-row";
+                        var group = document.createElement("div"); group.className = "sirk-script-secret-row";
                         var input = document.createElement("input"); input.type = "password"; input.autocomplete = "new-password";
                         input.placeholder = variable.configured ? "Configured — leave empty to keep" : "Enter secret";
                         var clear = document.createElement("input"); clear.type = "checkbox";
                         var clearLabel = document.createElement("label"); clearLabel.appendChild(clear); clearLabel.appendChild(document.createTextNode(" Clear saved value"));
-                        var status = document.createElement("span"); status.className = variable.configured ? "mc-secret-configured" : "mc-secret-missing";
+                        var status = document.createElement("span"); status.className = variable.configured ? "sirk-secret-configured" : "sirk-secret-missing";
                         status.textContent = variable.configured ? "Configured" : (variable.required ? "Required" : "Not configured");
                         group.appendChild(formRow(variable.label + (variable.required ? " *" : ""), input)); group.appendChild(status); group.appendChild(clearLabel);
                         card.appendChild(group); controls.push({ variable: variable, input: input, clear: clear });
@@ -283,11 +283,11 @@
                 var devices = selectedDevices(currentNodeId), host = shell.state.page.details;
                 host.innerHTML = "";
                 var card = shell.card("Multi-device execution", script.label || script.name);
-                card.classList.add("mc-multi-editor-card");
+                card.classList.add("sirk-multi-editor-card");
                 if (!devices.length) {
                     card.appendChild(document.createTextNode("Select devices in MeshCentral before using this action.")); host.appendChild(card); return;
                 }
-                var list = document.createElement("div"); list.className = "mc-multi-device-list";
+                var list = document.createElement("div"); list.className = "sirk-multi-device-list";
                 devices.forEach(function (device) {
                     var row = document.createElement("label"), box = document.createElement("input"); box.type = "checkbox"; box.checked = true; box.value = device.id;
                     row.appendChild(box); row.appendChild(document.createTextNode(" " + device.name)); row.title = device.id; list.appendChild(row);
@@ -349,9 +349,9 @@
                 scriptActions: function (script, config) {
                     config = config || {}; var actions = [];
                     if (state.linkPickMode) actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
-                    if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials", icon: "🔑", className: "mc-tree-credential-action", title: "Configure script credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
+                    if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials", icon: "🔑", className: "sirk-tree-credential-action", title: "Configure script credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
                     if (state.editMode) {
-                        actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
+                        actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "sirk-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
                         if (config.canEdit === true) actions.push({ key: "edit", icon: "✎", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
                     }
                     if (state.multiPickMode && config.enableMulti === true) actions.push({ key: "multi", icon: "⟳", title: "Run this script on selected devices", onClick: function () { if (config.onMulti) config.onMulti(script); } });

@@ -44,9 +44,9 @@
     }
 
     function status(text, error) {
-        var host = content.querySelector(".mc-admin-save-status");
+        var host = content.querySelector(".sirk-admin-save-status");
         if (!host) return;
-        host.className = error ? "mc-admin-save-status mc-admin-error" : "mc-admin-save-status";
+        host.className = error ? "sirk-admin-save-status sirk-admin-error" : "sirk-admin-save-status";
         host.textContent = text || "";
     }
 
@@ -62,19 +62,19 @@
         var style = document.createElement("style");
         style.id = "sirk-platform-marketplace-style";
         style.textContent = [
-            ".mc-marketplace-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}",
-            ".mc-marketplace-tabs{display:flex;gap:4px}",
-            ".mc-marketplace-tabs button.active{background:#4f63d9;color:#fff;border-color:#4f63d9}",
-            ".mc-marketplace-search{min-width:260px;max-width:420px;flex:1}",
-            ".mc-marketplace-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:12px}",
-            ".mc-marketplace-card{border:1px solid #ccd4e2;border-radius:8px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px}",
-            ".mc-marketplace-card h3{margin:0;font-size:18px}",
-            ".mc-marketplace-meta{display:flex;gap:8px;flex-wrap:wrap;color:#667085;font-size:12px}",
-            ".mc-marketplace-description{line-height:1.35;min-height:38px}",
-            ".mc-marketplace-actions{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:6px}",
-            ".mc-marketplace-actions a{font-size:12px}",
-            ".mc-marketplace-warning{padding:9px 11px;border:1px solid #f4c86b;background:#fff8e6;border-radius:6px;margin-top:8px}",
-            ".mc-marketplace-empty{padding:18px;text-align:center;color:#667085}"
+            ".sirk-marketplace-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}",
+            ".sirk-marketplace-tabs{display:flex;gap:4px}",
+            ".sirk-marketplace-tabs button.active{background:#4f63d9;color:#fff;border-color:#4f63d9}",
+            ".sirk-marketplace-search{min-width:260px;max-width:420px;flex:1}",
+            ".sirk-marketplace-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:12px}",
+            ".sirk-marketplace-card{border:1px solid #ccd4e2;border-radius:8px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px}",
+            ".sirk-marketplace-card h3{margin:0;font-size:18px}",
+            ".sirk-marketplace-meta{display:flex;gap:8px;flex-wrap:wrap;color:#667085;font-size:12px}",
+            ".sirk-marketplace-description{line-height:1.35;min-height:38px}",
+            ".sirk-marketplace-actions{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:6px}",
+            ".sirk-marketplace-actions a{font-size:12px}",
+            ".sirk-marketplace-warning{padding:9px 11px;border:1px solid #f4c86b;background:#fff8e6;border-radius:6px;margin-top:8px}",
+            ".sirk-marketplace-empty{padding:18px;text-align:center;color:#667085}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
@@ -84,7 +84,7 @@
         if (host) return host;
         host = document.createElement("div");
         host.setAttribute("data-marketplace-host", "1");
-        var wrap = content.querySelector(".mc-admin-table-wrap");
+        var wrap = content.querySelector(".sirk-admin-table-wrap");
         if (wrap && wrap.nextSibling) content.insertBefore(host, wrap.nextSibling);
         else content.appendChild(host);
         return host;
@@ -92,7 +92,7 @@
 
     function setView(view) {
         state.view = view;
-        var wrap = content.querySelector(".mc-admin-table-wrap");
+        var wrap = content.querySelector(".sirk-admin-table-wrap");
         if (wrap) wrap.hidden = view !== "installed";
         var host = marketplaceHost();
         host.hidden = view !== "available";
@@ -103,25 +103,25 @@
     }
 
     function ensureControls() {
-        var heading = content.querySelector(".mc-admin-section-header h3");
+        var heading = content.querySelector(".sirk-admin-section-header h3");
         if (!heading || String(heading.textContent || "").trim() !== "Wtyczki") return false;
-        var toolbar = content.querySelector(".mc-admin-toolbar");
+        var toolbar = content.querySelector(".sirk-admin-toolbar");
         if (!toolbar) return false;
         if (content.querySelector("[data-marketplace-controls]")) return true;
 
         var controls = document.createElement("div");
-        controls.className = "mc-marketplace-controls";
+        controls.className = "sirk-marketplace-controls";
         controls.setAttribute("data-marketplace-controls", "1");
 
         var tabs = document.createElement("div");
-        tabs.className = "mc-marketplace-tabs";
+        tabs.className = "sirk-marketplace-tabs";
         [
             { key: "installed", label: "Zainstalowane" },
             { key: "available", label: "Dostępne" }
         ].forEach(function (item) {
             var button = document.createElement("button");
             button.type = "button";
-            button.className = "mc-admin-secondary";
+            button.className = "sirk-admin-secondary";
             button.setAttribute("data-marketplace-view", item.key);
             button.textContent = item.label;
             button.onclick = function () { setView(item.key); };
@@ -131,7 +131,7 @@
 
         var search = document.createElement("input");
         search.type = "search";
-        search.className = "mc-admin-input mc-marketplace-search";
+        search.className = "sirk-admin-input sirk-marketplace-search";
         search.placeholder = "Szukaj w Marketplace…";
         search.oninput = function () { state.query = search.value || ""; renderCatalog(); };
         controls.appendChild(search);
@@ -169,7 +169,7 @@
         host.innerHTML = "";
 
         var warning = document.createElement("div");
-        warning.className = "mc-marketplace-warning";
+        warning.className = "sirk-marketplace-warning";
         warning.textContent = "Marketplace instaluje kod z zewnętrznych repozytoriów. Instaluj wyłącznie zaufane wtyczki; manifest i zgodność są ponownie walidowane przez MeshCentral.";
         host.appendChild(warning);
 
@@ -181,37 +181,37 @@
 
         if (!items.length) {
             var empty = document.createElement("div");
-            empty.className = "mc-marketplace-empty";
+            empty.className = "sirk-marketplace-empty";
             empty.textContent = "Nie znaleziono wtyczek.";
             host.appendChild(empty);
             return;
         }
 
         var grid = document.createElement("div");
-        grid.className = "mc-marketplace-grid";
+        grid.className = "sirk-marketplace-grid";
         items.forEach(function (item) {
             var card = document.createElement("section");
-            card.className = "mc-marketplace-card";
+            card.className = "sirk-marketplace-card";
             var title = document.createElement("h3");
             title.textContent = item.name;
             card.appendChild(title);
 
             var meta = document.createElement("div");
-            meta.className = "mc-marketplace-meta";
+            meta.className = "sirk-marketplace-meta";
             meta.textContent = "v" + item.version + " · " + item.author + " · " + item.category + " · MeshCentral " + item.meshCentralCompat;
             card.appendChild(meta);
 
             var description = document.createElement("div");
-            description.className = "mc-marketplace-description";
+            description.className = "sirk-marketplace-description";
             description.textContent = item.description;
             card.appendChild(description);
 
             var actions = document.createElement("div");
-            actions.className = "mc-marketplace-actions";
+            actions.className = "sirk-marketplace-actions";
             var current = installed(item.shortName);
             var install = document.createElement("button");
             install.type = "button";
-            install.className = current ? "mc-admin-secondary" : "mc-admin-primary";
+            install.className = current ? "sirk-admin-secondary" : "sirk-admin-primary";
             install.disabled = !!current;
             install.textContent = current ? ("Zainstalowana " + (current.version || "")) : "Instaluj";
             install.onclick = function () { installPlugin(item, install); };

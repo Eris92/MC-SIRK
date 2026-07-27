@@ -18,82 +18,82 @@
         var style = document.createElement("style");
         style.id = "sirk-platform-portal-view-contract-style";
         style.textContent = [
-            "#sirkPortalRoot .sirk-standalone-view-scroll{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;min-height:0;margin:0;border:1px solid var(--mc-ui-border,var(--sirk-border,#dce3ec));border-radius:10px;background:var(--mc-ui-panel,var(--sirk-panel,#fff));color:var(--mc-ui-text,var(--sirk-text,#172033));overflow:hidden;box-sizing:border-box}",
-            "#sirkPortalRoot .mc-portal-view-scroll{flex:1 1 auto;width:100%;min-width:0;min-height:0;padding:14px;overflow:auto;box-sizing:border-box}",
-            "#sirkPortalRoot .mc-portal-view-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;width:100%;min-height:48px;margin:0 0 14px;padding:0}",
-            "#sirkPortalRoot .sirk-card{border-color:var(--mc-ui-border,var(--sirk-border,#dce3ec))!important;border-radius:var(--mc-ui-radius,8px)!important;background:var(--mc-ui-panel,var(--sirk-panel,#fff))!important;color:var(--mc-ui-text,var(--sirk-text,#172033))!important;box-shadow:none!important}",
-            "#sirkPortalRoot .sirk-button-secondary{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin:0;padding:7px 13px;border:1px solid var(--mc-ui-border,var(--sirk-border,#dce3ec));border-radius:7px;background:var(--mc-ui-panel,var(--sirk-panel,#fff));color:var(--mc-ui-text,var(--sirk-text,#172033));font:500 14px Segoe UI,Arial,sans-serif;text-decoration:none;box-shadow:none;cursor:pointer}",
-            "#sirkPortalRoot .sirk-button-secondary:hover,#sirkPortalRoot .sirk-button-secondary:focus-visible{border-color:rgba(96,165,250,.35);background:var(--mc-ui-hover,rgba(96,165,250,.09));outline:0}",
-            "#sirkPortalRoot .mc-portal-status{width:100%;padding:18px;border:1px dashed var(--mc-ui-border,var(--sirk-border,#dce3ec));border-radius:var(--mc-ui-radius,8px);background:var(--mc-ui-panel,var(--sirk-panel,#fff));color:var(--mc-ui-muted,var(--sirk-muted,#657187));box-sizing:border-box}",
-            "#sirkPortalRoot .mc-portal-list{display:grid;width:100%;min-width:0;border-top:1px solid var(--mc-ui-border,var(--sirk-border,#dce3ec))}",
-            "#sirkPortalRoot .mc-portal-list-row{border-bottom-color:var(--mc-ui-border,var(--sirk-row-border,#edf1f6))!important;background:var(--mc-ui-panel,var(--sirk-panel,#fff))!important;color:var(--mc-ui-text,var(--sirk-text,#172033))!important}",
-            "#sirkPortalRoot .mc-portal-list-row:hover,#sirkPortalRoot .mc-portal-list-row:focus-visible{background:var(--mc-ui-hover,var(--sirk-hover,#f7faff))!important}",
-            "#sirkPortalRoot .mc-portal-badge{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 10px;border:1px solid var(--mc-ui-border,var(--sirk-border,#dce3ec));border-radius:7px;background:var(--mc-ui-panel,var(--sirk-panel,#fff));color:var(--mc-ui-muted,var(--sirk-muted,#657187));box-sizing:border-box}",
-            "#sirkPortalRoot .sirk-device-content{--mc-ui-accent:var(--sirk-active-accent,#3867d6)}",
-            "#sirkPortalRoot .sirk-device-content .sirk-device-group,#sirkPortalRoot .sirk-device-content .sirk-device-hero,#sirkPortalRoot .sirk-device-content .sirk-device-detail-item,#sirkPortalRoot .sirk-device-content .sirk-device-native-card{border-radius:var(--mc-ui-radius,8px);box-shadow:none}",
-            "#sirkPortalRoot .sirk-device-content .sirk-device-input,#sirkPortalRoot .sirk-device-content .sirk-device-select{min-height:34px;border-radius:7px;background:var(--mc-ui-input,var(--sirk-input,#fff));color:var(--mc-ui-text,var(--sirk-text,#172033))}",
-            "#sirkPortalRoot .sirk-device-content .sirk-device-native-button{border-color:transparent;background:var(--mc-ui-accent,#3867d6);color:#fff}",
-            "#sirkPortalRoot .sirk-overview-link:hover,#sirkPortalRoot .sirk-overview-link:focus-visible{border-color:rgba(96,165,250,.45)!important;background:var(--mc-ui-hover,rgba(96,165,250,.09))!important;transform:none;box-shadow:none!important}",
-            "@media(max-width:800px){#sirkPortalRoot .mc-portal-view-scroll{padding:10px}}"
+            "#sirkPortalRoot .sirk-standalone-view-scroll{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;min-height:0;margin:0;border:1px solid var(--sirk-ui-border,var(--sirk-border,#dce3ec));border-radius:10px;background:var(--sirk-ui-panel,var(--sirk-panel,#fff));color:var(--sirk-ui-text,var(--sirk-text,#172033));overflow:hidden;box-sizing:border-box}",
+            "#sirkPortalRoot .sirk-portal-view-scroll{flex:1 1 auto;width:100%;min-width:0;min-height:0;padding:14px;overflow:auto;box-sizing:border-box}",
+            "#sirkPortalRoot .sirk-portal-view-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;width:100%;min-height:48px;margin:0 0 14px;padding:0}",
+            "#sirkPortalRoot .sirk-card{border-color:var(--sirk-ui-border,var(--sirk-border,#dce3ec))!important;border-radius:var(--sirk-ui-radius,8px)!important;background:var(--sirk-ui-panel,var(--sirk-panel,#fff))!important;color:var(--sirk-ui-text,var(--sirk-text,#172033))!important;box-shadow:none!important}",
+            "#sirkPortalRoot .sirk-button-secondary{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin:0;padding:7px 13px;border:1px solid var(--sirk-ui-border,var(--sirk-border,#dce3ec));border-radius:7px;background:var(--sirk-ui-panel,var(--sirk-panel,#fff));color:var(--sirk-ui-text,var(--sirk-text,#172033));font:500 14px Segoe UI,Arial,sans-serif;text-decoration:none;box-shadow:none;cursor:pointer}",
+            "#sirkPortalRoot .sirk-button-secondary:hover,#sirkPortalRoot .sirk-button-secondary:focus-visible{border-color:rgba(96,165,250,.35);background:var(--sirk-ui-hover,rgba(96,165,250,.09));outline:0}",
+            "#sirkPortalRoot .sirk-portal-status{width:100%;padding:18px;border:1px dashed var(--sirk-ui-border,var(--sirk-border,#dce3ec));border-radius:var(--sirk-ui-radius,8px);background:var(--sirk-ui-panel,var(--sirk-panel,#fff));color:var(--sirk-ui-muted,var(--sirk-muted,#657187));box-sizing:border-box}",
+            "#sirkPortalRoot .sirk-portal-list{display:grid;width:100%;min-width:0;border-top:1px solid var(--sirk-ui-border,var(--sirk-border,#dce3ec))}",
+            "#sirkPortalRoot .sirk-portal-list-row{border-bottom-color:var(--sirk-ui-border,var(--sirk-row-border,#edf1f6))!important;background:var(--sirk-ui-panel,var(--sirk-panel,#fff))!important;color:var(--sirk-ui-text,var(--sirk-text,#172033))!important}",
+            "#sirkPortalRoot .sirk-portal-list-row:hover,#sirkPortalRoot .sirk-portal-list-row:focus-visible{background:var(--sirk-ui-hover,var(--sirk-hover,#f7faff))!important}",
+            "#sirkPortalRoot .sirk-portal-badge{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 10px;border:1px solid var(--sirk-ui-border,var(--sirk-border,#dce3ec));border-radius:7px;background:var(--sirk-ui-panel,var(--sirk-panel,#fff));color:var(--sirk-ui-muted,var(--sirk-muted,#657187));box-sizing:border-box}",
+            "#sirkPortalRoot .sirk-device-content{--sirk-ui-accent:var(--sirk-active-accent,#3867d6)}",
+            "#sirkPortalRoot .sirk-device-content .sirk-device-group,#sirkPortalRoot .sirk-device-content .sirk-device-hero,#sirkPortalRoot .sirk-device-content .sirk-device-detail-item,#sirkPortalRoot .sirk-device-content .sirk-device-native-card{border-radius:var(--sirk-ui-radius,8px);box-shadow:none}",
+            "#sirkPortalRoot .sirk-device-content .sirk-device-input,#sirkPortalRoot .sirk-device-content .sirk-device-select{min-height:34px;border-radius:7px;background:var(--sirk-ui-input,var(--sirk-input,#fff));color:var(--sirk-ui-text,var(--sirk-text,#172033))}",
+            "#sirkPortalRoot .sirk-device-content .sirk-device-native-button{border-color:transparent;background:var(--sirk-ui-accent,#3867d6);color:#fff}",
+            "#sirkPortalRoot .sirk-overview-link:hover,#sirkPortalRoot .sirk-overview-link:focus-visible{border-color:rgba(96,165,250,.45)!important;background:var(--sirk-ui-hover,rgba(96,165,250,.09))!important;transform:none;box-shadow:none!important}",
+            "@media(max-width:800px){#sirkPortalRoot .sirk-portal-view-scroll{padding:10px}}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
 
     function decorateNavigation(scope) {
         addClass(scope.querySelectorAll(
-            ".sirk-nav-item,.sirk-nav-item,.mc-approval-nav-item," +
-            ".mc-admin-tabs>[data-tab],.mc-admin-section-nav [data-settings-key],.mc-admin-section-nav [data-debug-key]"
+            ".sirk-nav-item,.sirk-nav-item,.sirk-approval-nav-item," +
+            ".sirk-admin-tabs>[data-tab],.sirk-admin-section-nav [data-settings-key],.sirk-admin-section-nav [data-debug-key]"
         ), "sirk-nav-item");
         addClass(scope.querySelectorAll(
-            ".mc-tree-fallback-icon,.mc-tree-icon,.mc-tree-root img,.sirk-nav-icon," +
-            ".mc-approval-nav-icon,.mc-admin-management-item-icon"
+            ".sirk-tree-fallback-icon,.sirk-tree-icon,.sirk-tree-root img,.sirk-nav-icon," +
+            ".sirk-approval-nav-icon,.sirk-admin-management-item-icon"
         ), "sirk-nav-icon");
         addClass(scope.querySelectorAll(
-            ".mc-tree-label,.sirk-script-label,.mc-approval-nav-label,.mc-admin-management-item-label"
-        ), "mc-portal-nav-label");
+            ".sirk-tree-label,.sirk-script-label,.sirk-approval-nav-label,.sirk-admin-management-item-label"
+        ), "sirk-portal-nav-label");
     }
 
     function decorateTables(scope) {
-        addClass(scope.querySelectorAll(".mc-results-table-wrap,.sirk-approval-table-wrap,.mc-admin-table-wrap"), "mc-portal-table-wrap");
-        addClass(scope.querySelectorAll(".mc-results-table,.sirk-approval-table,.mc-admin-table"), "mc-portal-table");
-        addClass(scope.querySelectorAll(".mc-results-filter,.sirk-approval-search,.mc-admin-management-search input"), "sirk-filter");
+        addClass(scope.querySelectorAll(".sirk-results-table-wrap,.sirk-approval-table-wrap,.sirk-admin-table-wrap"), "sirk-portal-table-wrap");
+        addClass(scope.querySelectorAll(".sirk-results-table,.sirk-approval-table,.sirk-admin-table"), "sirk-portal-table");
+        addClass(scope.querySelectorAll(".sirk-results-filter,.sirk-approval-search,.sirk-admin-management-search input"), "sirk-filter");
     }
 
     function decorateActions(scope) {
         addClass(scope.querySelectorAll(
-            ".mc-results-view-button,.mc-results-copy-button,.sirk-primary-button," +
-            ".mc-admin-primary,.mc-admin-secondary,.mc-script-run-card button," +
+            ".sirk-results-view-button,.sirk-results-copy-button,.sirk-primary-button," +
+            ".sirk-admin-primary,.sirk-admin-secondary,.sirk-script-run-card button," +
             ".sirk-column sirk-column-details button.btn:not(.sirk-toolbar-button)"
         ), "sirk-button");
-        addClass(scope.querySelectorAll(".sirk-card,.sirk-card,.mc-admin-card"), "sirk-card");
+        addClass(scope.querySelectorAll(".sirk-card,.sirk-card,.sirk-admin-card"), "sirk-card");
     }
 
     function decorateToolbar(scope) {
-        addClass(scope.querySelectorAll(".sirk-toolbar,.sirk-toolbar,.mc-admin-management-toolbar"), "mc-portal-toolbar");
-        addClass(scope.querySelectorAll(".sirk-toolbar-button,.sirk-toolbar-button,.mc-admin-management-tool"), "sirk-toolbar-button");
-        addClass(scope.querySelectorAll(".sirk-toolbar-icon,.sirk-toolbar-button>svg,.mc-admin-management-tool>svg"), "sirk-toolbar-icon");
+        addClass(scope.querySelectorAll(".sirk-toolbar,.sirk-toolbar,.sirk-admin-management-toolbar"), "sirk-portal-toolbar");
+        addClass(scope.querySelectorAll(".sirk-toolbar-button,.sirk-toolbar-button,.sirk-admin-management-tool"), "sirk-toolbar-button");
+        addClass(scope.querySelectorAll(".sirk-toolbar-icon,.sirk-toolbar-button>svg,.sirk-admin-management-tool>svg"), "sirk-toolbar-icon");
     }
 
     function decoratePortalViews(scope) {
         addClass(scope.querySelectorAll(".sirk-standalone-view-scroll"), "sirk-standalone-view-scroll");
-        addClass(scope.querySelectorAll(".sirk-standalone-view-scroll"), "mc-portal-view-scroll");
-        addClass(scope.querySelectorAll(".sirk-device-toolbar"), "mc-portal-view-toolbar");
+        addClass(scope.querySelectorAll(".sirk-standalone-view-scroll"), "sirk-portal-view-scroll");
+        addClass(scope.querySelectorAll(".sirk-device-toolbar"), "sirk-portal-view-toolbar");
         addClass(scope.querySelectorAll(".sirk-standalone-card,.sirk-device-group,.sirk-device-hero,.sirk-device-detail-item,.sirk-device-native-card"), "sirk-card");
         addClass(scope.querySelectorAll(".sirk-device-input,.sirk-device-select"), "sirk-filter");
         addClass(scope.querySelectorAll(".sirk-device-native-button"), "sirk-button");
         addClass(scope.querySelectorAll(".sirk-device-refresh,.sirk-device-back"), "sirk-button-secondary");
-        addClass(scope.querySelectorAll(".sirk-device-status"), "mc-portal-status");
-        addClass(scope.querySelectorAll(".sirk-device-summary span"), "mc-portal-badge");
-        addClass(scope.querySelectorAll(".sirk-device-list"), "mc-portal-list");
-        addClass(scope.querySelectorAll(".sirk-device-row"), "mc-portal-list-row");
+        addClass(scope.querySelectorAll(".sirk-device-status"), "sirk-portal-status");
+        addClass(scope.querySelectorAll(".sirk-device-summary span"), "sirk-portal-badge");
+        addClass(scope.querySelectorAll(".sirk-device-list"), "sirk-portal-list");
+        addClass(scope.querySelectorAll(".sirk-device-row"), "sirk-portal-list-row");
     }
 
     function decorateShell(shell) {
         if (!shell || !shell.classList) return;
         shell.classList.add("sirk-standalone-view-scroll");
-        var toolbar = shell.querySelector(":scope > .sirk-toolbar-host,:scope > .sirk-toolbar,:scope > .mc-admin-management-toolbar");
+        var toolbar = shell.querySelector(":scope > .sirk-toolbar-host,:scope > .sirk-toolbar,:scope > .sirk-admin-management-toolbar");
         if (toolbar) toolbar.classList.add("sirk-toolbar-host");
-        var workspace = shell.querySelector(":scope > .sirk-layout-host,:scope > .sirk-layout,:scope > .mc-admin-management-layout");
+        var workspace = shell.querySelector(":scope > .sirk-layout-host,:scope > .sirk-layout,:scope > .sirk-admin-management-layout");
         if (workspace) {
             workspace.classList.add("sirk-layout-host", "sirk-layout");
             var columns = workspace.children || [];
@@ -102,7 +102,7 @@
             if (columns[2]) columns[2].classList.add("sirk-column-details");
         }
         var managementHost = shell.closest(".");
-        var editMode = !!(managementHost && managementHost.classList.contains("is-management-edit-mode") || shell.querySelector(".mc-tree-script-actions:not(:empty),.sirk-script-actions:not(:empty)"));
+        var editMode = !!(managementHost && managementHost.classList.contains("is-management-edit-mode") || shell.querySelector(".sirk-tree-script-actions:not(:empty),.sirk-script-actions:not(:empty)"));
         var collapsed = !!(managementHost && managementHost.classList.contains("is-collapsed") || shell.classList.contains("is-collapsed") || workspace && workspace.classList.contains("is-collapsed"));
         shell.classList.toggle("is-edit-mode", editMode);
         if (workspace) {
@@ -113,8 +113,8 @@
 
     function decorate(scope) {
         scope = scope || root;
-        addClass(scope.querySelectorAll(".sirk-standalone-view-scroll.sirk-standalone-view-scroll,.sirk-standalone-view-scroll,.mc-admin-management-shell"), "sirk-standalone-view-scroll");
-        Array.prototype.forEach.call(scope.querySelectorAll(".sirk-standalone-view-scroll,.sirk-standalone-view-scroll,.mc-admin-management-shell"), decorateShell);
+        addClass(scope.querySelectorAll(".sirk-standalone-view-scroll.sirk-standalone-view-scroll,.sirk-standalone-view-scroll,.sirk-admin-management-shell"), "sirk-standalone-view-scroll");
+        Array.prototype.forEach.call(scope.querySelectorAll(".sirk-standalone-view-scroll,.sirk-standalone-view-scroll,.sirk-admin-management-shell"), decorateShell);
         decorateToolbar(scope);
         decorateNavigation(scope);
         decorateTables(scope);
@@ -156,8 +156,8 @@
                 if (!admin || !doc.body) return;
                 var adminRoot = doc.getElementById("sirkPortalRoot") || doc.body;
                 if (!adminRoot.id) adminRoot.id = "sirkPortalRoot";
-                admin.classList.add("mc-admin-portal-embedded");
-                doc.documentElement.classList.add("mc-portal-admin-document");
+                admin.classList.add("sirk-admin-portal-embedded");
+                doc.documentElement.classList.add("sirk-portal-admin-document");
                 ensureFrameStyle(doc);
                 syncFrameEnvironment(doc, adminRoot);
                 decorate(adminRoot);

@@ -53,7 +53,7 @@
 
 #sirkPortalRoot .sirk-standalone-view-scroll,
 #sirkPortalRoot .sirk-standalone-view-scroll,
-#sirkPortalRoot .mc-admin-management-shell {
+#sirkPortalRoot .sirk-admin-management-shell {
     width: 100% !important;
     max-width: none !important;
     height: 100% !important;
@@ -67,7 +67,7 @@
 
 #sirkPortalRoot .sirk-layout,
 #sirkPortalRoot .sirk-layout,
-#sirkPortalRoot .mc-admin-management-layout {
+#sirkPortalRoot .sirk-admin-management-layout {
     display: grid !important;
     grid-template-columns: var(--portal-primary-width) var(--portal-secondary-width) minmax(0, 1fr) !important;
     width: 100% !important;
@@ -82,8 +82,8 @@
 #sirkPortalRoot .is-edit-mode.sirk-layout,
 #sirkPortalRoot .is-management-edit-mode .sirk-layout,
 #sirkPortalRoot .is-management-edit-mode .sirk-layout,
-#sirkPortalRoot .sirk-layout:has(.mc-tree-script-actions:not(:empty)),
-#sirkPortalRoot .sirk-layout:has(.mc-tree-script-actions:not(:empty)) {
+#sirkPortalRoot .sirk-layout:has(.sirk-tree-script-actions:not(:empty)),
+#sirkPortalRoot .sirk-layout:has(.sirk-tree-script-actions:not(:empty)) {
     grid-template-columns: var(--portal-primary-width) var(--portal-secondary-edit-width) minmax(0, 1fr) !important;
 }
 
@@ -103,7 +103,7 @@
 #sirkPortalRoot :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-secondary,
 #sirkPortalRoot :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-details,
 #sirkPortalRoot :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details),
-#sirkPortalRoot .mc-admin-management-column {
+#sirkPortalRoot .sirk-admin-management-column {
     min-width: 0 !important;
     max-width: none !important;
     height: 100% !important;
@@ -242,7 +242,7 @@
     }
     #sirkPortalRoot .sirk-layout,
     #sirkPortalRoot .sirk-layout,
-    #sirkPortalRoot .mc-admin-management-layout {
+    #sirkPortalRoot .sirk-admin-management-layout {
         grid-template-columns: minmax(0, 1fr) !important;
         overflow: auto !important;
     }

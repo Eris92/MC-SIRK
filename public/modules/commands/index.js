@@ -86,11 +86,11 @@
     function valueControls(item, card) {
         var variables = Array.isArray(item.variables) ? item.variables : [], controls = [];
         if (!variables.length) return function () { return {}; };
-        var section = document.createElement("div"); section.className = "mc-script-runtime-variables";
+        var section = document.createElement("div"); section.className = "sirk-script-runtime-variables";
         var heading = document.createElement("h3"); heading.textContent = msg("Zmienne", "Variables"); section.appendChild(heading);
         variables.forEach(function (variable) {
-            var row = document.createElement("label"); row.className = "mc-script-form-row";
-            var label = document.createElement("span"); label.className = "mc-script-form-label"; label.textContent = tr(variable.label || variable.name) + (variable.required ? " *" : ""); row.appendChild(label);
+            var row = document.createElement("label"); row.className = "sirk-script-form-row";
+            var label = document.createElement("span"); label.className = "sirk-script-form-label"; label.textContent = tr(variable.label || variable.name) + (variable.required ? " *" : ""); row.appendChild(label);
             var input;
             if (variable.control === "switch") { input = document.createElement("input"); input.type = "checkbox"; input.checked = /^(1|true|yes|tak|on)$/i.test(String(variable.defaultValue || "")); }
             else if (variable.control === "select") { input = document.createElement("select"); (variable.options || []).forEach(function (entry) { var option = document.createElement("option"); option.value = String(entry.value == null ? entry : entry.value); option.textContent = tr(String(entry.label || entry.value || entry)); input.appendChild(option); }); input.value = String(variable.defaultValue || ""); }
@@ -132,7 +132,7 @@
         var host = shell.state.page.details; host.innerHTML = "";
         var card = shell.card(item.label || item.name, item.description || item.path); var collectValues = valueControls(item, card);
         var button = shell.element("button", "btn btn-primary", item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
-        var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
+        var outputHost = document.createElement("div"); outputHost.className = "sirk-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
         card.appendChild(outputHost); button.onclick = function () { execute(shell, item, button, collectValues(), outputHost); }; host.appendChild(card); sync(shell);
         if (autoExecute === true && (!Array.isArray(item.variables) || item.variables.length === 0)) window.setTimeout(function () { button.click(); }, 0);
@@ -180,7 +180,7 @@
             onRootSelect: function () { mode = "commands"; treeState.selectedScript = ""; tools.saveTreeState(treeState); window.setTimeout(shell.render, 0); },
             onScript: function (item) { mode = "commands"; show(shell, item, true); }
         });
-        var resultsLabel = shell.state.page.primary.querySelector(".mc-catalog-results .mc-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
+        var resultsLabel = shell.state.page.primary.querySelector(".sirk-catalog-results .sirk-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
     }
 
     function results(shell) {

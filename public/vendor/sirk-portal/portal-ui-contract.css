@@ -51,15 +51,15 @@
     box-sizing: border-box;
 }
 
-#sirkPortalRoot .sirk-toolbar-group {
+#sirkPortalRoot .sirk-group {
     display: flex;
     align-items: center;
     gap: 6px;
     min-width: 0;
 }
 
-#sirkPortalRoot .sirk-toolbar-center { margin-inline: auto; }
-#sirkPortalRoot .sirk-toolbar-right { margin-left: auto; }
+#sirkPortalRoot .sirk-center { margin-inline: auto; }
+#sirkPortalRoot .sirk-right { margin-left: auto; }
 
 #sirkPortalRoot .sirk-toolbar-button {
     appearance: none;

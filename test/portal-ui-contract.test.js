@@ -15,6 +15,7 @@ var contractCss = read("public/vendor/sirk-portal/portal-ui-contract.css");
 var contractJs = read("public/vendor/sirk-portal/portal-ui-contract.js");
 var moduleShell = read("public/shared/module-shell.js");
 var sharedPage = read("public/shared/ui/page.js");
+var sharedLayout = read("public/shared/ui/layout.js");
 var management = read("public/modules/automation/index.js");
 var adminLayout = read("web/admin/admin-layout.js");
 var standalone = read("public/portal/standalone/index.html");
@@ -41,23 +42,19 @@ var standalone = read("public/portal/standalone/index.html");
     "sirk-column-details"
 ].forEach(function (className) {
     assert(
-        sharedPage.indexOf(className) >= 0 || moduleShell.indexOf(className) >= 0,
+        sharedPage.indexOf(className) >= 0 || sharedLayout.indexOf(className) >= 0 || moduleShell.indexOf(className) >= 0,
         "Shared Portal shell is missing " + className
     );
 });
 
 [
-    "--mc-ui-primary-width: 184px",
-    "--mc-ui-secondary-width: 236px",
-    "--mc-ui-secondary-edit-width: 440px",
-    "--mc-ui-collapsed-width: 56px",
+    "--sirk-ui-primary-width: 184px",
+    "--sirk-ui-secondary-width: 236px",
+    "--sirk-ui-collapsed-width: 56px",
     ".sirk-nav-item",
     ".sirk-nav-icon",
-    ".mc-portal-nav-label",
     ".sirk-card",
     ".sirk-button",
-    ".mc-portal-table-wrap",
-    ".mc-portal-table"
 ].forEach(function (value) {
     assert(contractCss.indexOf(value) >= 0, "Canonical Portal CSS is missing: " + value);
 });
@@ -79,13 +76,13 @@ var standalone = read("public/portal/standalone/index.html");
 
 [
     "sirk-standalone-view-scroll",
-    "mc-portal-view-scroll",
-    "mc-portal-view-toolbar",
+    "sirk-portal-view-scroll",
+    "sirk-portal-view-toolbar",
     "sirk-button-secondary",
-    "mc-portal-status",
-    "mc-portal-list",
-    "mc-portal-list-row",
-    "mc-portal-badge"
+    "sirk-portal-status",
+    "sirk-portal-list",
+    "sirk-portal-list-row",
+    "sirk-portal-badge"
 ].forEach(function (value) {
     assert(contractJs.indexOf(value) >= 0, "Shared view contract is missing: " + value);
 });

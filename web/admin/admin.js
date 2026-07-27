@@ -103,27 +103,27 @@
     }
 
     function card(title, description) {
-        var value = element("section", "mc-admin-card");
+        var value = element("section", "sirk-admin-card");
         value.appendChild(element("h3", "", title));
         if (description) {
-            value.appendChild(element("div", "mc-admin-card-description", description));
+            value.appendChild(element("div", "sirk-admin-card-description", description));
         }
         return value;
     }
 
     function sectionHeader(host, title, description) {
-        var header = element("div", "mc-admin-section-header");
+        var header = element("div", "sirk-admin-section-header");
         header.appendChild(element("h3", "", title));
         if (description) header.appendChild(element("p", "", description));
         host.appendChild(header);
     }
 
     function row(host, label, description) {
-        var wrapper = element("div", "mc-admin-field");
-        var labelElement = element("label", "mc-admin-field-label", label);
+        var wrapper = element("div", "sirk-admin-field");
+        var labelElement = element("label", "sirk-admin-field-label", label);
         wrapper.appendChild(labelElement);
         if (description) {
-            wrapper.appendChild(element("div", "mc-admin-field-description", description));
+            wrapper.appendChild(element("div", "sirk-admin-field-description", description));
         }
         host.appendChild(wrapper);
         return wrapper;
@@ -132,7 +132,7 @@
     function textField(host, label, value, onChange, options) {
         options = options || {};
         var wrapper = row(host, label, options.description);
-        var input = element(options.multiline ? "textarea" : "input", "mc-admin-input");
+        var input = element(options.multiline ? "textarea" : "input", "sirk-admin-input");
         if (!options.multiline) input.type = options.type || "text";
         if (options.multiline) input.rows = options.rows || 4;
         if (options.placeholder) input.placeholder = options.placeholder;
@@ -157,7 +157,7 @@
     }
 
     function checkboxField(host, label, checked, onChange, description) {
-        var wrapper = element("label", "mc-admin-check");
+        var wrapper = element("label", "sirk-admin-check");
         var input = element("input");
         input.type = "checkbox";
         input.checked = checked === true;
@@ -175,7 +175,7 @@
 
     function selectField(host, label, value, choices, onChange, description) {
         var wrapper = row(host, label, description);
-        var select = element("select", "mc-admin-input");
+        var select = element("select", "sirk-admin-input");
         (choices || []).forEach(function (choice) {
             var option = element("option", "", choice.title);
             option.value = choice.value;
@@ -193,14 +193,14 @@
         var health = ensureObject(integration, "health");
         if (["ok", "warning", "critical"].indexOf(health.status) < 0) health.status = "ok";
         var wrapper = row(host, "Stan integracji", "Status i komunikat wyświetlane na stronie Przegląd / Overview.");
-        var switcher = element("div", "mc-admin-health-switch");
-        var messages = element("div", "mc-admin-health-messages");
+        var switcher = element("div", "sirk-admin-health-switch");
+        var messages = element("div", "sirk-admin-health-messages");
         [
             { value: "ok", title: "OK" },
             { value: "warning", title: "Warning" },
             { value: "critical", title: "Critical" }
         ].forEach(function (choice) {
-            var button = element("button", "mc-admin-health-option is-" + choice.value, choice.title);
+            var button = element("button", "sirk-admin-health-option is-" + choice.value, choice.title);
             button.type = "button";
             button.setAttribute("aria-pressed", String(health.status === choice.value));
             if (health.status === choice.value) button.classList.add("active");
@@ -224,7 +224,7 @@
 
     function groupField(host, label, selected, onChange, description) {
         var wrapper = row(host, label, description);
-        var select = element("select", "mc-admin-input mc-admin-groups");
+        var select = element("select", "sirk-admin-input sirk-admin-groups");
         select.multiple = true;
         select.size = 7;
         selected = Array.isArray(selected) ? selected.map(String) : [];
@@ -341,7 +341,7 @@
 
     function saveAll(button, status) {
         button.disabled = true;
-        status.className = "mc-admin-save-status";
+        status.className = "sirk-admin-save-status";
         status.textContent = "Saving...";
 
         draft.moduleOptions.mycommands.showInMenu = false;
@@ -391,7 +391,7 @@
             status.textContent = "Saved";
             render();
         }).catch(function (error) {
-            status.className = "mc-admin-save-status mc-admin-error";
+            status.className = "sirk-admin-save-status sirk-admin-error";
             status.textContent = error.message;
         }).then(function () {
             button.disabled = false;
@@ -399,14 +399,14 @@
     }
 
     function renderSaveBar(host) {
-        var actions = element("div", "mc-admin-actions mc-admin-settings-savebar");
-        var save = element("button", "mc-admin-primary", "Save settings");
+        var actions = element("div", "sirk-admin-actions sirk-admin-settings-savebar");
+        var save = element("button", "sirk-admin-primary", "Save settings");
         save.type = "button";
-        var status = element("span", "mc-admin-save-status", "");
+        var status = element("span", "sirk-admin-save-status", "");
         save.onclick = function () { saveAll(save, status); };
         actions.appendChild(save);
         actions.appendChild(status);
-        var header = host.querySelector(":scope > .mc-admin-section-header");
+        var header = host.querySelector(":scope > .sirk-admin-section-header");
         if (header && header.nextSibling) host.insertBefore(actions, header.nextSibling);
         else host.appendChild(actions);
     }
@@ -417,7 +417,7 @@
             "Overview",
             "Tylko do odczytu: ogólny stan wszystkich modułów SirkPlatform."
         );
-        var grid = element("div", "mc-admin-grid");
+        var grid = element("div", "sirk-admin-grid");
         (data.modules || []).forEach(function (module) {
             var value = card(
                 module.name,
@@ -425,36 +425,36 @@
             );
             var badge = element(
                 "div",
-                module.ready ? "mc-admin-state ready" : "mc-admin-state error",
+                module.ready ? "sirk-admin-state ready" : "sirk-admin-state error",
                 module.ready ? "Ready" : "Error"
             );
             value.appendChild(badge);
             value.appendChild(element(
                 "div",
-                "mc-admin-summary-row",
+                "sirk-admin-summary-row",
                 "Module: " + (module.enabled ? "Enabled" : "Disabled")
             ));
 
             if (module.key === "mycommands") {
                 value.appendChild(element(
                     "div",
-                    "mc-admin-summary-row",
+                    "sirk-admin-summary-row",
                     "Host tab: " + ((data.moduleSettings.mycommands || {}).showOnDevice !== false ? "Visible" : "Hidden")
                 ));
                 value.appendChild(element(
                     "div",
-                    "mc-admin-summary-row",
+                    "sirk-admin-summary-row",
                     "Global menu: Disabled"
                 ));
             } else if (module.key === "moverequests") {
                 value.appendChild(element(
                     "div",
-                    "mc-admin-summary-row",
+                    "sirk-admin-summary-row",
                     "Host button: " + ((data.moduleSettings.moverequests || {}).hostButtonEnabled !== false ? "Visible" : "Hidden")
                 ));
                 value.appendChild(element(
                     "div",
-                    "mc-admin-summary-row",
+                    "sirk-admin-summary-row",
                     "Global menu: Disabled"
                 ));
             }
@@ -554,7 +554,7 @@
         );
         value.appendChild(element(
             "div",
-            "mc-admin-notice",
+            "sirk-admin-notice",
             "A separate Move Requests menu entry is permanently disabled. Approvers and provider visibility are configured under Approval Center."
         ));
         host.appendChild(value);
@@ -754,11 +754,11 @@
             var allowAll = checkboxField(item, "Dostęp dla wszystkich użytkowników", value.allowAll === true, function (checked) {
                 value.allowAll = checked;
                 groups.disabled = checked;
-                groups.closest(".mc-admin-field").classList.toggle("is-disabled", checked);
+                groups.closest(".sirk-admin-field").classList.toggle("is-disabled", checked);
             }, "Włączenie tej opcji pomija wybór grup.");
             var groups = groupField(item, "Grupy z dostępem", value.groupIds, function (selected) { value.groupIds = selected; }, "Bez zaznaczenia dostępu dla wszystkich należy wybrać co najmniej jedną grupę. Site Admin zawsze omija wybór grup.");
             groups.disabled = allowAll.checked;
-            groups.closest(".mc-admin-field").classList.toggle("is-disabled", allowAll.checked);
+            groups.closest(".sirk-admin-field").classList.toggle("is-disabled", allowAll.checked);
         }
 
         var portalViews = [
@@ -780,13 +780,13 @@
             var value = ensureObject(portalPermissions, view.key);
             if (value.enabled == null) value.enabled = true;
             if (!Array.isArray(value.groupIds)) value.groupIds = [];
-            var item = element("section", "mc-admin-folder-permission mc-admin-menu-permission");
-            var heading = element("div", "mc-admin-folder-permission-header");
-            var identity = element("div", "mc-admin-folder-permission-name");
+            var item = element("section", "sirk-admin-folder-permission sirk-admin-menu-permission");
+            var heading = element("div", "sirk-admin-folder-permission-header");
+            var identity = element("div", "sirk-admin-folder-permission-name");
             identity.appendChild(element("strong", "", view.label));
             identity.appendChild(element("small", "", view.key));
             heading.appendChild(identity);
-            var enabledLabel = element("label", "mc-admin-folder-permission-toggle");
+            var enabledLabel = element("label", "sirk-admin-folder-permission-toggle");
             var enabled = element("input");
             enabled.type = "checkbox";
             enabled.checked = value.enabled !== false;
@@ -806,7 +806,7 @@
             var folders = data.folderPermissions && data.folderPermissions[moduleKey] || [];
             var permissions = ensureObject(draft.moduleOptions[moduleKey], "folderPermissions");
             if (!folders.length) {
-                moduleCard.appendChild(element("div", "mc-admin-notice", "Brak zdefiniowanych folderów."));
+                moduleCard.appendChild(element("div", "sirk-admin-notice", "Brak zdefiniowanych folderów."));
                 host.appendChild(moduleCard);
                 return;
             }
@@ -815,13 +815,13 @@
                 var value = ensureObject(permissions, key);
                 if (value.enabled == null) value.enabled = folder.enabled !== false;
                 if (!Array.isArray(value.groupIds)) value.groupIds = Array.isArray(folder.groupIds) ? folder.groupIds.slice() : [];
-                var item = element("section", "mc-admin-folder-permission");
-                var heading = element("div", "mc-admin-folder-permission-header");
-                var identity = element("div", "mc-admin-folder-permission-name");
+                var item = element("section", "sirk-admin-folder-permission");
+                var heading = element("div", "sirk-admin-folder-permission-header");
+                var identity = element("div", "sirk-admin-folder-permission-name");
                 identity.appendChild(element("strong", "", folder.locales && folder.locales.pl && folder.locales.pl.label || folder.label || key));
                 identity.appendChild(element("small", "", key));
                 heading.appendChild(identity);
-                var enabledLabel = element("label", "mc-admin-folder-permission-toggle");
+                var enabledLabel = element("label", "sirk-admin-folder-permission-toggle");
                 var enabled = element("input");
                 enabled.type = "checkbox";
                 enabled.checked = value.enabled !== false;
@@ -842,9 +842,9 @@
     }
 
     function settings() {
-        var layout = element("div", "mc-admin-settings-layout");
-        var navigation = element("nav", "mc-admin-settings-nav");
-        var panel = element("div", "mc-admin-settings-panel");
+        var layout = element("div", "sirk-admin-settings-layout");
+        var navigation = element("nav", "sirk-admin-settings-nav");
+        var panel = element("div", "sirk-admin-settings-panel");
 
         settingsItems.forEach(function (item) {
             var button = element("button", "", item.title);
@@ -881,7 +881,7 @@
     }
 
     function pluginTable(host, plugins, status) {
-        var table = element("table", "mc-admin-table mc-admin-plugin-table");
+        var table = element("table", "sirk-admin-table sirk-admin-plugin-table");
         var head = element("thead");
         var headRow = element("tr");
         ["Nazwa", "Wersja", "Stan", "Opis", "Akcje"].forEach(function (title) {
@@ -892,17 +892,17 @@
         var body = element("tbody");
         (plugins || []).forEach(function (plugin) {
             var row = element("tr");
-            var nameCell = element("td", "mc-admin-plugin-name");
+            var nameCell = element("td", "sirk-admin-plugin-name");
             nameCell.appendChild(element("strong", "", plugin.name || plugin.shortName));
-            nameCell.appendChild(element("small", "mc-admin-table-secondary", plugin.shortName || ""));
+            nameCell.appendChild(element("small", "sirk-admin-table-secondary", plugin.shortName || ""));
             row.appendChild(nameCell);
             row.appendChild(element("td", "", plugin.version || "—"));
             var stateCell = element("td");
-            stateCell.appendChild(element("span", plugin.status === 1 ? "mc-admin-state ready" : "mc-admin-state error", plugin.status === 1 ? "Włączona" : "Wyłączona"));
+            stateCell.appendChild(element("span", plugin.status === 1 ? "sirk-admin-state ready" : "sirk-admin-state error", plugin.status === 1 ? "Włączona" : "Wyłączona"));
             row.appendChild(stateCell);
-            row.appendChild(element("td", "mc-admin-plugin-description", plugin.description || "—"));
-            var actionCell = element("td", "mc-admin-table-actions");
-            var select = element("select", "mc-admin-input mc-admin-action-select");
+            row.appendChild(element("td", "sirk-admin-plugin-description", plugin.description || "—"));
+            var actionCell = element("td", "sirk-admin-table-actions");
+            var select = element("select", "sirk-admin-input sirk-admin-action-select");
             var placeholder = element("option", "", "Wybierz…");
             placeholder.value = "";
             select.appendChild(placeholder);
@@ -928,13 +928,13 @@
                 select.disabled = true;
                 status.textContent = "Wykonywanie operacji…";
                 postAdminAction("plugin-operation", { operation: operation, id: plugin.id }).then(function (result) {
-                    status.className = "mc-admin-save-status";
+                    status.className = "sirk-admin-save-status";
                     status.textContent = destructive && result.result && result.result.backupPath
                         ? "Wtyczka usunięta. Backup: " + result.result.backupPath
                         : "Operacja zakończona.";
                     pluginTable(host, result.plugins || [], status);
                 }).catch(function (error) {
-                    status.className = "mc-admin-save-status mc-admin-error";
+                    status.className = "sirk-admin-save-status sirk-admin-error";
                     status.textContent = error.message;
                     select.disabled = false;
                 });
@@ -944,32 +944,32 @@
             body.appendChild(row);
         });
         table.appendChild(body);
-        var old = host.querySelector(".mc-admin-table-wrap");
-        var wrap = element("div", "mc-admin-table-wrap");
+        var old = host.querySelector(".sirk-admin-table-wrap");
+        var wrap = element("div", "sirk-admin-table-wrap");
         wrap.appendChild(table);
         if (old) old.replaceWith(wrap); else host.appendChild(wrap);
     }
 
     function pluginsView() {
         sectionHeader(content, "Wtyczki", "Zarządzanie wtyczkami zarejestrowanymi w MeshCentral.");
-        var toolbar = element("div", "mc-admin-toolbar");
-        var add = element("button", "mc-admin-primary", "Dodaj wtyczkę");
+        var toolbar = element("div", "sirk-admin-toolbar");
+        var add = element("button", "sirk-admin-primary", "Dodaj wtyczkę");
         add.type = "button";
         toolbar.appendChild(add);
         content.appendChild(toolbar);
         var form = card("Dodaj wtyczkę", "Podaj adres HTTPS pliku konfiguracyjnego wtyczki.");
         form.hidden = true;
         var input = textField(form, "URL konfiguracji", "", function () {}, { placeholder: "https://…/config.json" });
-        var formActions = element("div", "mc-admin-inline-actions");
-        var confirmAdd = element("button", "mc-admin-primary", "Dodaj");
+        var formActions = element("div", "sirk-admin-inline-actions");
+        var confirmAdd = element("button", "sirk-admin-primary", "Dodaj");
         confirmAdd.type = "button";
-        var cancel = element("button", "mc-admin-secondary", "Anuluj");
+        var cancel = element("button", "sirk-admin-secondary", "Anuluj");
         cancel.type = "button";
         formActions.appendChild(confirmAdd);
         formActions.appendChild(cancel);
         form.appendChild(formActions);
         content.appendChild(form);
-        var status = element("div", "mc-admin-save-status", "Ładowanie listy wtyczek…");
+        var status = element("div", "sirk-admin-save-status", "Ładowanie listy wtyczek…");
         content.appendChild(status);
         add.onclick = function () { form.hidden = false; input.focus(); };
         cancel.onclick = function () { form.hidden = true; input.value = ""; };
@@ -978,13 +978,13 @@
             confirmAdd.disabled = true;
             status.textContent = "Dodawanie wtyczki…";
             postAdminAction("plugin-operation", { operation: "add", configUrl: input.value.trim() }).then(function (result) {
-                status.className = "mc-admin-save-status";
+                status.className = "sirk-admin-save-status";
                 form.hidden = true;
                 input.value = "";
                 status.textContent = "Wtyczka została dodana. Wybierz Włącz z menu akcji, aby ją zainstalować.";
                 pluginTable(content, result.plugins || [], status);
             }).catch(function (error) {
-                status.className = "mc-admin-save-status mc-admin-error";
+                status.className = "sirk-admin-save-status sirk-admin-error";
                 status.textContent = error.message;
             }).then(function () { confirmAdd.disabled = false; });
         };
@@ -992,16 +992,16 @@
             status.textContent = "";
             pluginTable(content, result.plugins || [], status);
         }).catch(function (error) {
-            status.className = "mc-admin-save-status mc-admin-error";
+            status.className = "sirk-admin-save-status sirk-admin-error";
             status.textContent = error.message;
         });
     }
 
     function serviceSettings(host) {
         sectionHeader(host, "Usługa", "Stan usług Windows należących do bieżącej instalacji MeshCentral.");
-        var status = element("div", "mc-admin-save-status", "Ładowanie stanu usług…");
+        var status = element("div", "sirk-admin-save-status", "Ładowanie stanu usług…");
         host.appendChild(status);
-        var serviceHost = element("div", "mc-admin-service-list");
+        var serviceHost = element("div", "sirk-admin-service-list");
         host.appendChild(serviceHost);
         getAdminAction("server-state").then(function (result) {
             status.textContent = "";
@@ -1011,10 +1011,10 @@
             }
             result.services.forEach(function (service) {
                 var value = card(service.displayName || service.name, "Nazwa usługi: " + service.name);
-                value.appendChild(element("div", "mc-admin-summary-row", "Stan: " + service.state));
-                value.appendChild(element("div", "mc-admin-summary-row", "Tryb uruchomienia: " + service.startMode));
-                value.appendChild(element("div", "mc-admin-summary-row", "PID: " + (service.processId || "—")));
-                var restart = element("button", "mc-admin-primary", "Restartuj usługę");
+                value.appendChild(element("div", "sirk-admin-summary-row", "Stan: " + service.state));
+                value.appendChild(element("div", "sirk-admin-summary-row", "Tryb uruchomienia: " + service.startMode));
+                value.appendChild(element("div", "sirk-admin-summary-row", "PID: " + (service.processId || "—")));
+                var restart = element("button", "sirk-admin-primary", "Restartuj usługę");
                 restart.type = "button";
                 restart.onclick = function () {
                     if (!window.confirm("Zrestartować usługę " + (service.displayName || service.name) + "? Bieżące połączenia zostaną przerwane.")) return;
@@ -1023,7 +1023,7 @@
                     postAdminAction("server-restart", { serviceName: service.name }).then(function () {
                         window.setTimeout(function () { window.location.reload(); }, 8000);
                     }).catch(function (error) {
-                        status.className = "mc-admin-save-status mc-admin-error";
+                        status.className = "sirk-admin-save-status sirk-admin-error";
                         status.textContent = error.message;
                         restart.disabled = false;
                     });
@@ -1032,15 +1032,15 @@
                 serviceHost.appendChild(value);
             });
         }).catch(function (error) {
-            status.className = "mc-admin-save-status mc-admin-error";
+            status.className = "sirk-admin-save-status sirk-admin-error";
             status.textContent = error.message;
         });
     }
 
     function serverView() {
-        var layout = element("div", "mc-admin-settings-layout mc-admin-server-layout");
-        var navigation = element("nav", "mc-admin-settings-nav mc-admin-server-nav");
-        var panel = element("div", "mc-admin-settings-panel mc-admin-server-panel");
+        var layout = element("div", "sirk-admin-settings-layout sirk-admin-server-layout");
+        var navigation = element("nav", "sirk-admin-settings-nav sirk-admin-server-nav");
+        var panel = element("div", "sirk-admin-settings-panel sirk-admin-server-panel");
         serverItems.forEach(function (item) {
             var button = element("button", "", item.title);
             button.type = "button";
@@ -1079,9 +1079,9 @@
     }
 
     function debug() {
-        var layout = element("div", "mc-admin-settings-layout mc-admin-debug-layout");
-        var navigation = element("nav", "mc-admin-settings-nav mc-admin-debug-nav");
-        var panel = element("div", "mc-admin-settings-panel mc-admin-debug-panel");
+        var layout = element("div", "sirk-admin-settings-layout sirk-admin-debug-layout");
+        var navigation = element("nav", "sirk-admin-settings-nav sirk-admin-debug-nav");
+        var panel = element("div", "sirk-admin-settings-panel sirk-admin-debug-panel");
         debugItems.forEach(function (item) {
             var button = element("button", "", item.title);
             button.type = "button";
@@ -1095,7 +1095,7 @@
         });
         panel.appendChild(element(
             "pre",
-            "mc-admin-debug",
+            "sirk-admin-debug",
             typeof debugValue() === "string" ? debugValue() : JSON.stringify(debugValue(), null, 2)
         ));
         layout.appendChild(navigation);

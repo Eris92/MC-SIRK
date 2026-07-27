@@ -111,10 +111,10 @@
 
         module.api.api("meshes", { nodeId: nodeId }).then(function (result) {
             var overlay = document.createElement("div");
-            overlay.className = "mc-move-dialog-overlay";
+            overlay.className = "sirk-move-dialog-overlay";
 
             var dialog = document.createElement("div");
-            dialog.className = "mc-move-dialog";
+            dialog.className = "sirk-move-dialog";
             overlay.appendChild(dialog);
 
             var title = document.createElement("h3");
@@ -122,7 +122,7 @@
             dialog.appendChild(title);
 
             var device = document.createElement("div");
-            device.className = "mc-move-dialog-device";
+            device.className = "sirk-move-dialog-device";
             device.textContent = nodeName(nodeId);
             dialog.appendChild(device);
 
@@ -131,7 +131,7 @@
             dialog.appendChild(groupLabel);
 
             var select = document.createElement("select");
-            select.className = "mc-move-dialog-input";
+            select.className = "sirk-move-dialog-input";
             var sourceMeshId = currentMeshId(nodeId);
 
             (result.meshes || [])
@@ -152,12 +152,12 @@
             dialog.appendChild(noteLabel);
 
             var note = document.createElement("textarea");
-            note.className = "mc-move-dialog-input";
+            note.className = "sirk-move-dialog-input";
             note.rows = 4;
             dialog.appendChild(note);
 
             var status = document.createElement("div");
-            status.className = "mc-move-dialog-status";
+            status.className = "sirk-move-dialog-status";
             dialog.appendChild(status);
 
             if (!select.options.length) {
@@ -166,7 +166,7 @@
             }
 
             var actions = document.createElement("div");
-            actions.className = "mc-move-dialog-actions";
+            actions.className = "sirk-move-dialog-actions";
             dialog.appendChild(actions);
 
             var cancel = document.createElement("button");
