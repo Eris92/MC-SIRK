@@ -6,6 +6,19 @@
 
     var pendingOptions = null;
     var closeHandlerInstalled = false;
+    var permissionSaving = false;
+    var PERMISSION_TARGETS = {
+        "Urządzenia": { view: "devices" },
+        "Commands": { module: "mycommands" },
+        "Akceptacje": { module: "approvalcenter", view: "approvals" },
+        "Przenoszenie urządzeń": { module: "moverequests" },
+        "Automatyzacja": { module: "myscripts", view: "automation" },
+        "Monitoring": { view: "monitoring" },
+        "Zasoby": { module: "myjira", view: "assets" },
+        "Zarządzanie": { view: "management" },
+        "Raporty": { view: "reports" },
+        "Bezpieczeństwo": { module: "defendertools", view: "security" }
+    };
 
     function language() {
         try { return localStorage.getItem("sirkPortal.language") === "en" ? "en" : "pl"; }
@@ -195,11 +208,136 @@
         });
     }
 
+    function settingsWorkspace() {
+        var content = document.getElementById("sirkStandaloneContent");
+        return content && content.querySelector("[data-portal-settings] .sirk-layout");
+    }
+
+    function permissionTarget(workspace) {
+        var active = workspace && workspace.querySelector(".sirk-column-secondary .sirk-settings-nav-leaf.active,.sirk-column-secondary .sirk-settings-nav-leaf.is-active");
+        if (!active || String(active.textContent || "").trim() !== "Permissions") return null;
+        var group = active.closest("details.sirk-settings-nav-group");
+        var summary = group && group.querySelector(":scope > summary");
+        var label = String(summary && summary.textContent || "").replace(/^\s*[▸▼]?\s*/, "").trim();
+        var target = PERMISSION_TARGETS[label];
+        return target ? { label: label, module: target.module, view: target.view } : null;
+    }
+
+    function settingsApiUrl(action) {
+        var url = new URL(window.__SIRK_PLATFORM_API_BASE__ || "/api", window.location.href);
+        if (url.pathname.replace(/\/+$/, "") === "/api" && action === "snapshot") {
+            url.pathname = "/api/admin/settings";
+            return url.href;
+        }
+        url.searchParams.set("pin", "SIRKPortal");
+        if (action && action !== "snapshot") url.searchParams.set("action", action);
+        return url.href;
+    }
+
+    function parseSettingsResponse(response) {
+        return response.text().then(function (body) {
+            var value = JSON.parse(body || "{}");
+            if (!response.ok || value.ok === false) throw new Error(value.error || ("HTTP " + response.status));
+            return value.value || value.snapshot || value;
+        });
+    }
+
+    function selectedPermissionGroups(workspace) {
+        var card = workspace.querySelector("[data-mesh-group-permissions]");
+        if (!card) return null;
+        return Array.prototype.filter.call(card.querySelectorAll('input[type="checkbox"]'), function (input) {
+            return input.checked;
+        }).map(function (input) { return String(input.value); });
+    }
+
+    function savePermissions(workspace, target, groupIds, button) {
+        if (permissionSaving) return;
+        permissionSaving = true;
+        button.disabled = true;
+        fetch(settingsApiUrl("snapshot"), {
+            credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" }
+        }).then(parseSettingsResponse).then(function (snapshot) {
+            var moduleOptions = JSON.parse(JSON.stringify(snapshot.moduleSettings || {}));
+            var modules = {};
+            (snapshot.modules || []).forEach(function (module) { modules[module.key] = module.enabled === true; });
+            if (target.module) {
+                moduleOptions[target.module] = moduleOptions[target.module] || {};
+                moduleOptions[target.module].accessGroupIds = groupIds;
+            }
+            if (target.view) {
+                moduleOptions.portal = moduleOptions.portal || {};
+                moduleOptions.portal.views = moduleOptions.portal.views || {};
+                moduleOptions.portal.views[target.view] = moduleOptions.portal.views[target.view] || {};
+                moduleOptions.portal.views[target.view].accessGroupIds = groupIds;
+            }
+            var apiBase = new URL(window.__SIRK_PLATFORM_API_BASE__ || "/api", window.location.href);
+            if (apiBase.pathname.replace(/\/+$/, "") === "/api") {
+                var standalone = new URLSearchParams();
+                standalone.set("payload", JSON.stringify({
+                    modules: modules,
+                    moduleOptions: moduleOptions,
+                    portal: moduleOptions.portal || {},
+                    integrations: snapshot.integrations && snapshot.integrations.values || {},
+                    secrets: {}
+                }));
+                return fetch(new URL("/api/admin/settings", window.location.href).href, {
+                    method: "POST", credentials: "same-origin",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                    body: standalone.toString()
+                }).then(parseSettingsResponse);
+            }
+            var form = new URLSearchParams();
+            form.set("modules", JSON.stringify(modules));
+            form.set("moduleOptions", JSON.stringify(moduleOptions));
+            form.set("integrations", JSON.stringify(snapshot.integrations && snapshot.integrations.values || {}));
+            form.set("secrets", "{}");
+            return fetch(settingsApiUrl("save-settings"), {
+                method: "POST", credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: form.toString()
+            }).then(parseSettingsResponse);
+        }).then(function () {
+            var refreshButton = workspace.querySelector("[data-settings-refresh]");
+            if (refreshButton) refreshButton.click();
+        }).catch(function (error) {
+            button.disabled = false;
+            window.alert("Nie udało się zapisać uprawnień: " + error.message);
+        }).then(function () { permissionSaving = false; });
+    }
+
+    function bindPermissionSave() {
+        if (document.documentElement.getAttribute("data-permission-save-fixed") === "1") return;
+        document.documentElement.setAttribute("data-permission-save-fixed", "1");
+        document.addEventListener("click", function (event) {
+            var button = event.target && event.target.closest("button");
+            if (!button || String(button.textContent || "").trim() !== "Zapisz") return;
+            var workspace = settingsWorkspace();
+            var target = permissionTarget(workspace);
+            var groupIds = selectedPermissionGroups(workspace);
+            if (!workspace || !target || groupIds === null) return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === "function") event.stopImmediatePropagation();
+            savePermissions(workspace, target, groupIds, button);
+        }, true);
+    }
+
+    function removeEmptySettingsNotices() {
+        var workspace = settingsWorkspace();
+        if (!workspace) return;
+        Array.prototype.forEach.call(workspace.querySelectorAll(".sirk-card"), function (node) {
+            var value = String(node.textContent || "").trim();
+            if (value === "Ten moduł nie ma osobnej konfiguracji Permissions." || value === "Brak ustawień w tej sekcji.") node.remove();
+        });
+    }
+
     function refresh() {
         installMenuStyle();
         enhanceTerminal();
         fixDesktopDropdown();
         patchNativeFrame();
+        bindPermissionSave();
+        removeEmptySettingsNotices();
     }
 
     if (!closeHandlerInstalled) {
