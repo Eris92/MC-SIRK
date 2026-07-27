@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.2",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep the Portal shell visible throughout refresh and workspace restoration"
+    ]
+  },
+  {
     "version": "1.8.36-dev.1",
     "date": "2026-07-27",
     "changes": [

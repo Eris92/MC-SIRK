@@ -57,7 +57,7 @@ assert(main.indexOf('["sirk-platform-device-tabs", "portal-device-tabs.js"]') >=
 assert(standalone.indexOf('__ASSET_BASE__/portal-device-tabs.css?v=__VERSION__') >= 0, "Standalone Portal must load device tab CSS");
 assert(standalone.indexOf('__ASSET_BASE__/portal-device-tabs.js?v=__VERSION__') >= 0, "Standalone Portal must load device tab script");
 assert(admin.indexOf('"portal-device-tabs.js"') >= 0 && admin.indexOf('"portal-device-tabs.css"') >= 0, "Admin asset server must expose device tab assets");
-assert(standaloneCore.indexOf('root.style.visibility = "hidden"') >= 0, "Portal must stay hidden until permissions and the requested workspace are ready");
+assert(standaloneCore.indexOf('root.style.visibility = "hidden"') < 0, "Portal shell must remain visible while permissions and the requested workspace are restored");
 assert(standaloneCore.indexOf('content.style.visibility = "hidden"') < 0, "Startup must not independently blank the Devices content surface");
 assert(standaloneCore.indexOf("new MutationObserver") < 0, "Portal startup must not observe and react to the complete DOM tree");
 assert(standaloneCore.indexOf("15000") < 0, "Portal startup must not use the old 15 second timeout");

@@ -1,3 +1,7 @@
+## 1.8.36-dev.2
+
+- Kept the complete Portal shell visible during refresh while permissions and device workspaces are restored.
+
 ## 1.8.36-dev.1
 
 - Fixed device inventory transport selection between standalone `/api/devices` and the MeshCentral `portal/devices` provider.

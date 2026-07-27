@@ -16,8 +16,6 @@
 
         if (root) {
             document.documentElement.classList.add("sirk-portal-boot-pending");
-            root.style.visibility = "hidden";
-            root.style.pointerEvents = "none";
             root.setAttribute("aria-busy", "true");
         }
 
