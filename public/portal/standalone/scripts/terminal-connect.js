@@ -225,18 +225,27 @@
 
     function settingsApiUrl(action) {
         var url = new URL(window.__SIRK_PLATFORM_API_BASE__ || "/api", window.location.href);
-        if (url.pathname.replace(/\/+$/, "") === "/api" && action === "snapshot") {
-            url.pathname = "/api/admin/settings";
+        var pathname = url.pathname.replace(/\/+$/, "");
+        if (/\/api$/i.test(pathname)) {
+            if (action === "snapshot") {
+                url.pathname = pathname + "/admin/settings";
+                url.search = "";
+            }
             return url.href;
         }
         url.searchParams.set("pin", "SIRKPortal");
-        if (action && action !== "snapshot") url.searchParams.set("action", action);
+        if (action === "snapshot") url.searchParams.set("action", "portal-admin-snapshot");
+        else if (action) url.searchParams.set("action", action);
         return url.href;
     }
 
     function parseSettingsResponse(response) {
         return response.text().then(function (body) {
-            var value = JSON.parse(body || "{}");
+            var value;
+            try { value = JSON.parse(body || "{}"); }
+            catch (error) {
+                throw new Error("Endpoint ustawień zwrócił odpowiedź inną niż JSON (HTTP " + response.status + ").");
+            }
             if (!response.ok || value.ok === false) throw new Error(value.error || ("HTTP " + response.status));
             return value.value || value.snapshot || value;
         });
@@ -271,7 +280,8 @@
                 moduleOptions.portal.views[target.view].accessGroupIds = groupIds;
             }
             var apiBase = new URL(window.__SIRK_PLATFORM_API_BASE__ || "/api", window.location.href);
-            if (apiBase.pathname.replace(/\/+$/, "") === "/api") {
+            var apiPath = apiBase.pathname.replace(/\/+$/, "");
+            if (/\/api$/i.test(apiPath)) {
                 var standalone = new URLSearchParams();
                 standalone.set("payload", JSON.stringify({
                     modules: modules,
@@ -280,9 +290,11 @@
                     integrations: snapshot.integrations && snapshot.integrations.values || {},
                     secrets: {}
                 }));
-                return fetch(new URL("/api/admin/settings", window.location.href).href, {
+                apiBase.pathname = apiPath + "/admin/settings";
+                apiBase.search = "";
+                return fetch(apiBase.href, {
                     method: "POST", credentials: "same-origin",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
                     body: standalone.toString()
                 }).then(parseSettingsResponse);
             }
@@ -293,7 +305,7 @@
             form.set("secrets", "{}");
             return fetch(settingsApiUrl("save-settings"), {
                 method: "POST", credentials: "same-origin",
-                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
                 body: form.toString()
             }).then(parseSettingsResponse);
         }).then(function () {
