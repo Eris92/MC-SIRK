@@ -181,13 +181,16 @@
     }
 
     function load(host, section) {
-        host.innerHTML = '<div class="sirk-update-loading">Ładowanie…</div>';
+        if (!host.firstElementChild) host.innerHTML = '<div class="sirk-update-loading">Ładowanie…</div>';
+        host.setAttribute("aria-busy", "true");
         return api("status").then(function (snapshot) {
             state.snapshot = snapshot;
             render(host, section);
+            host.removeAttribute("aria-busy");
             if (busy(snapshot)) schedule(host, section);
         }).catch(function (error) {
-            host.innerHTML = '<div class="sirk-error">' + escapeHtml(error.message) + '</div>';
+            host.removeAttribute("aria-busy");
+            if (!host.firstElementChild) host.innerHTML = '<div class="sirk-error">' + escapeHtml(error.message) + '</div>';
         });
     }
 

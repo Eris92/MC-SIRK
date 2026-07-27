@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.14",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep the update section visible while checking for updates"
+    ]
+  },
+  {
     "version": "1.8.36-dev.13",
     "date": "2026-07-27",
     "changes": [

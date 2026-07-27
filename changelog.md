@@ -1,3 +1,7 @@
+## 1.8.36-dev.14
+
+- Keep the current update section visible while checking for updates instead of replacing it with a loading screen.
+
 ## 1.8.36-dev.13
 
 - Separate device Commands from the Automation menu and prepare the server SIRK scheduler area.
