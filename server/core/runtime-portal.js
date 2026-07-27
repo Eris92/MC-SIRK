@@ -1,5 +1,7 @@
 "use strict";
 
+var fs = require("fs");
+var path = require("path");
 var shared = require("./shared.js");
 var baseFactory = require("./runtime.js");
 var portalFactory = require("../modules/portal/safe.js");
@@ -18,6 +20,18 @@ var VIEW_DEFAULTS = {
     settings: { enabled: true, personalized: false, label: "", accent: "#94a3b8", accessGroupIds: [] }
 };
 
+var BANNER_DEFAULTS = {
+    enabled: false,
+    showOnPortal: true,
+    showOnLogin: false,
+    activeTemplate: "success",
+    templates: {
+        success: { name: "Aktualizacja", text: "System został pomyślnie zaktualizowany.", backgroundColor: "#dcfce7", textColor: "#166534", fontSize: 16, durationMinutes: 60, noEnd: false },
+        warning: { name: "Ostrzeżenie", text: "W systemie występują drobne problemy. Trwają prace nad ich usunięciem.", backgroundColor: "#fef3c7", textColor: "#92400e", fontSize: 16, durationMinutes: 60, noEnd: false },
+        critical: { name: "Awaria", text: "Część funkcji systemu jest obecnie niedostępna.", backgroundColor: "#fee2e2", textColor: "#991b1b", fontSize: 16, durationMinutes: 60, noEnd: true }
+    }
+};
+
 var PORTAL_DEFAULTS = {
     enabled: true,
     defaultView: "overview",
@@ -30,16 +44,38 @@ var PORTAL_DEFAULTS = {
     passwordResetUrl: "https://passwordreset.microsoftonline.com/",
     siteName: "SIRK Platform",
     siteIconUrl: "",
+    banner: BANNER_DEFAULTS,
     views: VIEW_DEFAULTS
 };
 
 module.exports.createRuntime = function (options) {
     var runtime = baseFactory.createRuntime(options);
     var context = runtime.context;
+    var pluginRoot = options && options.pluginRoot || path.resolve(__dirname, "..", "..");
+    var publicBrandingPath = path.join(pluginRoot, "public", "portal", "standalone", "branding.json");
 
     context.settings.defaults.modules = context.settings.defaults.modules || {};
     context.settings.defaults.modules.portal = shared.copy(PORTAL_DEFAULTS);
     runtime.modules.portal = portalFactory.createModule(context);
+
+    function publicPortalConfig(portal) {
+        portal = portal && typeof portal === "object" ? portal : {};
+        return {
+            siteName: String(portal.siteName || PORTAL_DEFAULTS.siteName),
+            siteIconUrl: String(portal.siteIconUrl || ""),
+            showPasswordReset: portal.showPasswordReset !== false,
+            passwordResetUrl: String(portal.passwordResetUrl || PORTAL_DEFAULTS.passwordResetUrl),
+            banner: shared.copy(portal.banner || BANNER_DEFAULTS)
+        };
+    }
+
+    function syncPublicPortalConfig(portal) {
+        try {
+            fs.writeFileSync(publicBrandingPath, JSON.stringify(publicPortalConfig(portal), null, 2) + "\n", "utf8");
+        } catch (error) {
+            if (console && console.warn) console.warn("Unable to synchronize public Portal banner configuration", error.message || error);
+        }
+    }
 
     function knownGroups() {
         return shared.getUserGroups(context.parent);
@@ -122,6 +158,10 @@ module.exports.createRuntime = function (options) {
                 });
                 return current;
             }).then(function () { return runtime.adminSnapshot(user); });
+        }).then(function (snapshot) {
+            var current = context.settings.read();
+            syncPublicPortalConfig(current.modules && current.modules.portal);
+            return snapshot;
         });
     };
 
@@ -181,6 +221,8 @@ module.exports.createRuntime = function (options) {
         return baseRequest(method, moduleName, asset, req, res, user);
     };
 
+    var initial = context.settings.read();
+    syncPublicPortalConfig(initial.modules && initial.modules.portal);
     runtime.version = VERSION;
     return runtime;
 };
