@@ -134,6 +134,7 @@ function loginHtml() {
         .replace(/__ASSET_BASE_JSON__/g, JSON.stringify("/assets"))
         .replace(/__PORTAL_URL_JSON__/g, JSON.stringify("/"))
         .replace(/__NATIVE_URL_JSON__/g, JSON.stringify("/"))
+        .replace(/__NATIVE_LOGIN_URL__/g, "/")
         .replace(/__FORCE_PORTAL_JSON__/g, JSON.stringify(true))
         .replace(/__ASSET_BASE__/g, "/assets")
         .replace(/__VERSION_JSON__/g, JSON.stringify(build.version))

@@ -1,3 +1,7 @@
+## 1.8.36-dev.8
+
+- Use the MeshCentral login session for the new Portal login instead of a separate local credential form.
+
 ## 1.8.36-dev.7
 
 - Keep the mounted Portal details panel visible behind a loading overlay during view refreshes to prevent flicker.

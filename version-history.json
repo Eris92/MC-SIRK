@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.8",
+    "date": "2026-07-27",
+    "changes": [
+      "Use the MeshCentral login session for the new Portal login"
+    ]
+  },
+  {
     "version": "1.8.36-dev.7",
     "date": "2026-07-27",
     "changes": [
