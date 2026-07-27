@@ -12,6 +12,7 @@ var VERSION = require("../config.json").version;
 var ROOT = path.resolve(__dirname, "..");
 
 var ASSETS = {
+    "icons/sirk-ui.svg": "assets/icons/sirk-ui.svg",
     "standalone-core.js": "public/portal/standalone/scripts/core.js",
     "standalone-core-rest.js": "public/portal/standalone/scripts/core-standalone.js",
     "portal-standalone.js": "public/portal/standalone/scripts/app.js",
