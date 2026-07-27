@@ -1,6 +1,6 @@
 [
   {
-    "version": "1.8.24",
+    "version": "1.8.25",
     "date": "2026-07-27",
     "changes": [
       "Serve the canonical SIRK icon sprite from the standalone asset manifest"

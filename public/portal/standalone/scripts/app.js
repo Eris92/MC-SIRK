@@ -450,7 +450,12 @@
         toolbar.className = "sirk-toolbar sirk-toolbar-host sirk-settings-module-toolbar";
         toolbar.innerHTML = '<strong>' + escapeHtml(viewName("settings")) + '</strong>';
         var workspace = document.createElement("div");
-        workspace.className = "sirk-layout-host sirk-settings-module-workspace";
+        workspace.className = "sirk-layout sirk-settings-module-workspace";
+        var primary = document.createElement("aside"); primary.className = "sirk-column-primary";
+        var secondary = document.createElement("aside"); secondary.className = "sirk-column-secondary";
+        var details = document.createElement("div"); details.className = "sirk-column-details";
+        workspace.appendChild(primary); workspace.appendChild(secondary); workspace.appendChild(details);
+        ["Overview", "Settings", "Plugins", "Server", "Debug", "System"].forEach(function (name, index) { var button = document.createElement("button"); button.type = "button"; button.className = "sirk-nav-item" + (index === 1 ? " active" : ""); button.textContent = name; button.onclick = function () { Array.prototype.forEach.call(primary.children, function (node) { node.classList.remove("active"); }); button.classList.add("active"); status.textContent = index === 1 ? "" : name + " jest zarządzane przez hosta MeshCentral."; if (index !== 1) details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = true; }); else details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = false; }); }; primary.appendChild(button); });
         var panel = document.createElement("section"); panel.className = "sirk-card";
         var title = document.createElement("h2"); title.textContent = "Portal settings"; panel.appendChild(title);
         var tabs = document.createElement("nav"); tabs.className = "sirk-settings-tabs";
@@ -460,7 +465,7 @@
         var form = document.createElement("form"); form.className = "sirk-shared-settings-form"; form.hidden = true;
         var modules = document.createElement("div"); modules.className = "sirk-admin-grid";
         var save = document.createElement("button"); save.type = "submit"; save.className = "sirk-admin-primary"; save.textContent = "Save settings";
-        form.appendChild(modules); form.appendChild(save); panel.appendChild(form); workspace.appendChild(panel);
+        form.appendChild(modules); form.appendChild(save); panel.appendChild(form); details.appendChild(panel);
         var base = "/api";
         fetch(base + "/admin/settings", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok) throw new Error(value.error || "Settings unavailable."); return value.value; }); }).then(function (snapshot) {
             var portalSettings = snapshot.moduleSettings && snapshot.moduleSettings.portal || {};
