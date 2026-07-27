@@ -1,3 +1,7 @@
+## 1.8.36-dev.12
+
+- Combine update history and jobs into one status table with success, pending and failure information.
+
 ## 1.8.36-dev.11
 
 - Remove the duplicate Overview entry from the Settings secondary navigation.

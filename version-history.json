@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.12",
+    "date": "2026-07-27",
+    "changes": [
+      "Combine update history and jobs into one status table"
+    ]
+  },
+  {
     "version": "1.8.36-dev.11",
     "date": "2026-07-27",
     "changes": [

@@ -144,13 +144,23 @@
     }
 
     function renderHistory(host, snapshot) {
-        var history = (snapshot.history || []).slice().reverse();
-        var jobs = Object.keys(snapshot.jobs || {}).map(function (id) { return snapshot.jobs[id]; }).sort(function (a, b) {
-            return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+        var history = (snapshot.history || []).map(function (entry) {
+            var failed = String(entry.type || "").indexOf("failed") >= 0 || !!entry.error;
+            return { type: entry.type || "operacja", at: entry.at, version: entry.to || entry.version || "—", status: failed ? "Nieudana" : "Zakończona", message: entry.error || "" };
         });
-        host.innerHTML = '<div class="sirk-update-section"><h3>Historia zakończonych operacji</h3>' +
-            (history.length ? history.map(function (entry) { return '<p><strong>' + escapeHtml(entry.type || "operacja") + '</strong> · ' + escapeHtml(entry.at || "") + ' · ' + escapeHtml(entry.to || entry.version || "") + '</p>'; }).join("") : '<p>Brak zakończonych operacji.</p>') +
-            '<h3>Zadania</h3>' + (jobs.length ? jobs.map(jobMarkup).join("") : '<p>Brak zadań.</p>') + '</div>';
+        var knownVersions = Object.create(null);
+        history.forEach(function (entry) { if (entry.version && entry.version !== "—") knownVersions[entry.version] = true; });
+        var jobs = Object.keys(snapshot.jobs || {}).map(function (id) { return snapshot.jobs[id]; }).filter(function (job) {
+            var version = job && job.result && job.result.version || "";
+            return job && (job.status !== "completed" || !knownVersions[version]);
+        }).map(function (job) {
+            return { type: job.type || "operacja", at: job.updatedAt || job.createdAt, version: job.result && job.result.version || "—", status: job.status === "failed" ? "Nieudana" : job.status === "running" ? "W toku" : job.status === "queued" ? "Oczekuje" : "Zakończona", message: job.error || job.message || "" };
+        });
+        var rows = history.concat(jobs).sort(function (a, b) { return String(b.at || "").localeCompare(String(a.at || "")); });
+        host.innerHTML = '<div class="sirk-update-section"><h3>Historia aktualizacji i zadań</h3>' +
+            (rows.length ? '<div class="sirk-update-history-table-wrap"><table class="sirk-update-history-table"><thead><tr><th>Operacja</th><th>Data</th><th>Wersja</th><th>Status</th><th>Informacja</th></tr></thead><tbody>' + rows.map(function (row) {
+                return '<tr><td>' + escapeHtml(row.type) + '</td><td>' + escapeHtml(row.at || "—") + '</td><td>' + escapeHtml(row.version) + '</td><td><span class="sirk-update-status" data-status="' + escapeHtml(row.status) + '">' + escapeHtml(row.status) + '</span></td><td>' + escapeHtml(row.message || "—") + '</td></tr>';
+            }).join("") + '</tbody></table></div>' : '<p>Brak operacji.</p>') + '</div>';
     }
 
     function renderChannel(host, snapshot) {
