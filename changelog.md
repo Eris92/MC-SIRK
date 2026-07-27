@@ -1,3 +1,7 @@
+## 1.8.3-dev.1
+
+- Added the `Usługa` subcategory under `Serwer` for MeshCentral service status and restart controls.
+
 ## 1.8.1
 
 - Fixed JavaScript syntax damaged by the global class migration.

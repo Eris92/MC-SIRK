@@ -126,6 +126,9 @@
         middle.querySelectorAll("[data-debug-key]").forEach(function (button) {
             decorateButton(button, button.getAttribute("data-debug-key"));
         });
+        middle.querySelectorAll("[data-server-key]").forEach(function (button) {
+            decorateButton(button, "server");
+        });
     }
 
     function activeTab() {
@@ -160,7 +163,8 @@
         var active = activeTab();
         var selector = active === "settings"
             ? ".mc-admin-settings-nav:not(.mc-admin-debug-nav)"
-            : active === "debug" ? ".mc-admin-debug-nav" : "";
+            : active === "debug" ? ".mc-admin-debug-nav"
+            : active === "server" ? ".mc-admin-server-nav" : "";
         var navigation = selector ? (content.querySelector(selector) || middle.querySelector(selector)) : null;
 
         middle.innerHTML = "";

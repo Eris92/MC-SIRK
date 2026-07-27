@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.3-dev.1",
+    "date": "2026-07-27",
+    "changes": [
+      "Add the Usługa subcategory under Serwer for MeshCentral service status and restart controls"
+    ]
+  },
+  {
     "version": "1.8.1",
     "date": "2026-07-24",
     "changes": [

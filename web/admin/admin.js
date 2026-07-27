@@ -8,6 +8,7 @@
     var content = document.getElementById("sirk-platform-admin-content");
     var active = "overview";
     var settingsSection = "portal";
+    var serverSection = "service";
     var debugSection = "config";
     var draft = null;
 
@@ -26,6 +27,10 @@
         { key: "config", title: "Config" },
         { key: "logs", title: "Logi" },
         { key: "errors", title: "Błędy" }
+    ];
+
+    var serverItems = [
+        { key: "service", title: "Usługa" }
     ];
 
     function element(tag, className, text) {
@@ -992,12 +997,12 @@
         });
     }
 
-    function serverView() {
-        sectionHeader(content, "Serwer", "Stan usług Windows należących do bieżącej instalacji MeshCentral.");
+    function serviceSettings(host) {
+        sectionHeader(host, "Usługa", "Stan usług Windows należących do bieżącej instalacji MeshCentral.");
         var status = element("div", "mc-admin-save-status", "Ładowanie stanu usług…");
-        content.appendChild(status);
-        var host = element("div", "mc-admin-service-list");
-        content.appendChild(host);
+        host.appendChild(status);
+        var serviceHost = element("div", "mc-admin-service-list");
+        host.appendChild(serviceHost);
         getAdminAction("server-state").then(function (result) {
             status.textContent = "";
             if (!result.services || !result.services.length) {
@@ -1024,12 +1029,33 @@
                     });
                 };
                 value.appendChild(restart);
-                host.appendChild(value);
+                serviceHost.appendChild(value);
             });
         }).catch(function (error) {
             status.className = "mc-admin-save-status mc-admin-error";
             status.textContent = error.message;
         });
+    }
+
+    function serverView() {
+        var layout = element("div", "mc-admin-settings-layout mc-admin-server-layout");
+        var navigation = element("nav", "mc-admin-settings-nav mc-admin-server-nav");
+        var panel = element("div", "mc-admin-settings-panel mc-admin-server-panel");
+        serverItems.forEach(function (item) {
+            var button = element("button", "", item.title);
+            button.type = "button";
+            button.setAttribute("data-server-key", item.key);
+            button.classList.toggle("active", item.key === serverSection);
+            button.onclick = function () {
+                serverSection = item.key;
+                render();
+            };
+            navigation.appendChild(button);
+        });
+        layout.appendChild(navigation);
+        layout.appendChild(panel);
+        content.appendChild(layout);
+        if (serverSection === "service") serviceSettings(panel);
     }
 
     function debugValue() {
