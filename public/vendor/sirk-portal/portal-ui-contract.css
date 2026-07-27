@@ -2,6 +2,7 @@
 #sirkPortalRoot {
     --sirk-ui-primary-width: 184px;
     --sirk-ui-secondary-width: 236px;
+    --sirk-ui-secondary-edit-width: 440px;
     --sirk-ui-collapsed-width: 56px;
     --sirk-ui-toolbar-height: 48px;
     --sirk-ui-row-height: 42px;
@@ -196,6 +197,10 @@
     width: 24px;
     height: 24px;
     color: var(--sirk-ui-accent);
+}
+#sirkPortalRoot .sirk-column-primary .sirk-nav-icon,
+#sirkPortalRoot .sirk-column-primary .sirk-nav-item > span {
+    background: transparent !important;
 }
 
 #sirkPortalRoot .sirk-nav-icon svg {
