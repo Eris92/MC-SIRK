@@ -1,3 +1,7 @@
+## 1.8.36-dev.24
+
+- Keep the standalone device tab rail compact at 44px so it is only slightly taller than its buttons.
+
 ## 1.8.36-dev.23
 
 - Organize Settings into Portal Modules, separate Commands, and per-module Permissions with a visual separator.
