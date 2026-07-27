@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.18",
+    "date": "2026-07-27",
+    "changes": [
+      "Use the standalone API from the first Portal bootstrap request"
+    ]
+  },
+  {
     "version": "1.8.17",
     "date": "2026-07-27",
     "changes": [
