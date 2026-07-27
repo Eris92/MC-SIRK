@@ -91,7 +91,8 @@
         var job = latestJob(snapshot);
         if (!job) return null;
         if (job.status === "queued" || job.status === "running") return job;
-        if (snapshot.current && snapshot.current.pending && job.type === "update") return job;
+        if (snapshot.current && snapshot.current.pending && job.type === "update" && job.status === "completed" &&
+            job.result && job.result.pending && String(job.result.pending.token || "") === String(snapshot.current.pending.token || "")) return job;
         return null;
     }
 
@@ -120,7 +121,8 @@
         var isBusy = busy(snapshot);
         var resumeMessage = state.resumeMessage;
         state.resumeMessage = "";
-        var restartButton = current.pending ? '<button type="button" class="sirk-button" data-update-action="restart">Uruchom ponownie MeshCentral</button>' : '';
+        var pendingJob = activeJob(snapshot);
+        var restartButton = current.pending && pendingJob && pendingJob.status === "completed" ? '<button type="button" class="sirk-button" data-update-action="restart">Uruchom ponownie MeshCentral</button>' : '';
         host.innerHTML = '<div class="sirk-update-section">' + (resumeMessage ? '<div class="sirk-card sirk-update-success" role="status">' + escapeHtml(resumeMessage) + '</div>' : '') + '<div class="sirk-update-actions">' +
             '<button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button>' +
             '<button type="button" class="sirk-button" data-update-action="install"' + (isBusy || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj system</button></div>' +
@@ -129,7 +131,7 @@
             '<p>Aktywny kanał: <strong>' + escapeHtml(current.channel || "—") + '</strong> · <code>' + escapeHtml(current.branch || "—") + '</code></p>' +
             '<p>Status: <strong>' + (remote.updateAvailable ? 'Dostępna aktualizacja' : 'Aktualne') + '</strong></p></div>' +
             stateMarkup(remote, current) + jobMarkup(job) +
-            (current.pending ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.<br>' + restartButton + '</p>' : '') + '</div>';
+            (restartButton ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.<br>' + restartButton + '</p>' : '') + '</div>';
     }
 
     function renderBackups(host, snapshot) {

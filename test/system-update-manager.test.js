@@ -48,6 +48,15 @@ function waitForJob(manager, jobId) {
     assert.strictEqual(manager.backups().length, 1);
     assert.ok(fs.existsSync(path.join(dataRoot, "updates", "backups", job.result.id, "manifest.json")));
     assert.ok(fs.existsSync(path.join(dataRoot, "updates", "backups", job.result.id, "app", "package.json")));
+    fs.writeFileSync(path.join(dataRoot, "updates", "state.json"), JSON.stringify({
+        channel: "dev",
+        pending: { token: "missing-operation", targetVersion: "9.9.9" },
+        history: [],
+        jobs: { interrupted: { id: "interrupted", type: "update", status: "running", progress: 45 } }
+    }));
+    var recovered = managerFactory.create({ appRoot: root, dataRoot: dataRoot });
+    assert.strictEqual(recovered.job("interrupted").status, "failed");
+    assert.strictEqual(recovered.current().pending, null);
     console.log("system-update-manager.test.js: OK");
 }()).catch(function (error) {
     console.error(error.stack || error);

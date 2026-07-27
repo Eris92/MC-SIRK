@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.10",
+    "date": "2026-07-27",
+    "changes": [
+      "Stop interrupted update jobs from being retried after restart"
+    ]
+  },
+  {
     "version": "1.8.36-dev.9",
     "date": "2026-07-27",
     "changes": [

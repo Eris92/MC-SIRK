@@ -57,6 +57,35 @@ function create(options) {
         fs.writeFileSync(stateFile, JSON.stringify(value, null, 2));
     }
 
+    function recoverInterruptedOperations() {
+        var state = loadState();
+        var changed = false;
+        state.jobs = state.jobs || {};
+        Object.keys(state.jobs).forEach(function (id) {
+            var job = state.jobs[id];
+            if (job && (job.status === "queued" || job.status === "running")) {
+                state.jobs[id] = Object.assign({}, job, {
+                    status: "failed",
+                    progress: 100,
+                    message: "Operation interrupted by service restart.",
+                    error: "Operation interrupted by service restart.",
+                    updatedAt: new Date().toISOString()
+                });
+                changed = true;
+            }
+        });
+        if (state.pending) {
+            var operationManifest = path.join(workRoot, String(state.pending.token || ""), "operation", "pending.json");
+            if (!state.pending.token || !fs.existsSync(operationManifest)) {
+                state.history = Array.isArray(state.history) ? state.history : [];
+                state.history.unshift({ type: "update-failed", at: new Date().toISOString(), version: state.pending.targetVersion || "", error: "Pending update manifest is missing after service restart.", channel: state.channel || "stable" });
+                state.pending = null;
+                changed = true;
+            }
+        }
+        if (changed) saveState(state);
+    }
+
     function branch(channel) {
         channel = String(channel || loadState().channel || "stable").toLowerCase();
         if (!CHANNELS[channel]) throw new Error("Unknown update channel.");
@@ -277,6 +306,8 @@ function create(options) {
         if (typeof options.restart === "function") return Promise.resolve(options.restart());
         return { scheduled: false, reason: "Restart is managed by the host service." };
     }
+
+    recoverInterruptedOperations();
 
     function job(jobId) {
         return (loadState().jobs || {})[String(jobId || "")] || null;

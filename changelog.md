@@ -1,3 +1,7 @@
+## 1.8.36-dev.10
+
+- Stop interrupted update jobs from being retried after restart and require a valid staged job before offering a restart.
+
 ## 1.8.36-dev.9
 
 - Merge Service, Debug and System settings under one Server area and expose Plugins in its secondary column.
