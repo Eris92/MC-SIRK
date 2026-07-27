@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.16",
+    "date": "2026-07-27",
+    "changes": [
+      "Add Overview visibility controls to Settings and persist each tile's enabled state"
+    ]
+  },
+  {
     "version": "1.8.36-dev.15",
     "date": "2026-07-27",
     "changes": [

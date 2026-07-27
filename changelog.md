@@ -1,3 +1,7 @@
+## 1.8.36-dev.16
+
+- Add Overview visibility controls to Settings and persist each tile's enabled state.
+
 ## 1.8.36-dev.15
 
 - Add current and available system version status to the Overview page.

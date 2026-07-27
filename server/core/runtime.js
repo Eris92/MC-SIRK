@@ -260,6 +260,12 @@ module.exports.createRuntime = function (options) {
                 ["defaultView", "passwordResetUrl", "siteName", "siteIconUrl"].forEach(function (key) {
                     if (Object.prototype.hasOwnProperty.call(portal, key)) current.modules.portal[key] = String(portal[key] || "");
                 });
+                if (portal.views && typeof portal.views === "object" && !Array.isArray(portal.views)) {
+                    current.modules.portal.views = Object.keys(portal.views).reduce(function (result, key) {
+                        if (current.modules.portal.views[key]) result[key] = Object.assign({}, current.modules.portal.views[key], { enabled: portal.views[key] && portal.views[key].enabled === true });
+                        return result;
+                    }, Object.assign({}, current.modules.portal.views || {}));
+                }
             }
             Object.keys(modules).forEach(function (key) {
                 if (key !== "portal" && moduleOptions[key] && typeof moduleOptions[key] === "object" && !Array.isArray(moduleOptions[key])) {
