@@ -21,7 +21,23 @@ function responseAdapter(res) {
 module.exports.createHandler = function (runtime, host) {
     return function (req, res) {
         var url = new URL(req.url, "http://sirk.local");
-        host.currentUser(req).then(function (user) {
+        function readBody() {
+            if (req.method === "GET" || req.method === "HEAD") return Promise.resolve({});
+            return new Promise(function (resolve, reject) {
+                var chunks = [];
+                req.on("data", function (chunk) { chunks.push(chunk); if (Buffer.concat(chunks).length > 1024 * 1024) reject(new Error("Request body is too large.")); });
+                req.on("end", function () {
+                    var raw = Buffer.concat(chunks).toString("utf8");
+                    var values = new URLSearchParams(raw);
+                    var payload = values.get("payload");
+                    if (!payload) return resolve({});
+                    try { resolve(JSON.parse(payload)); } catch (error) { reject(new Error("Invalid JSON payload.")); }
+                });
+                req.on("error", reject);
+            });
+        }
+        readBody().then(function (body) { return host.currentUser(req).then(function (user) { return { body: body, user: user }; }); }).then(function (state) {
+            var user = state.user;
             if (req.method === "GET" && url.pathname === "/api/bootstrap") {
                 sendJson(res, 200, runtime.bootstrap(user));
                 return;
@@ -40,7 +56,7 @@ module.exports.createHandler = function (runtime, host) {
                 method: req.method,
                 headers: req.headers,
                 query: Object.fromEntries(url.searchParams.entries()),
-                body: {}
+                body: state.body
             }, responseAdapter(res), user.raw || user);
         }).catch(function (error) {
             sendJson(res, 401, { ok: false, error: String(error && error.message || error) });
