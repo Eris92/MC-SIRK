@@ -110,6 +110,16 @@
         group.appendChild(channelButton);
     }
 
+    function removeModuleCardWrappers(workspace) {
+        var primary = workspace.querySelector(":scope > .sirk-column-primary");
+        var activePrimary = primary && primary.querySelector(":scope > .sirk-nav-item.active,:scope > .sirk-nav-item.is-active");
+        if (!activePrimary || String(activePrimary.textContent || "").trim() !== "Settings") return;
+        Array.prototype.forEach.call(workspace.querySelectorAll("[data-settings-form] [data-settings-section].sirk-card"), function (section) {
+            section.classList.remove("sirk-card");
+            section.classList.add("sirk-settings-section-plain");
+        });
+    }
+
     function normalizeSettingsNavigation() {
         var content = document.getElementById("sirkStandaloneContent");
         var workspace = content && (content.querySelector("[data-portal-settings] .sirk-layout") || content.querySelector(".sirk-settings-module-workspace"));
@@ -134,25 +144,7 @@
         var secondary = workspace.querySelector(":scope > .sirk-column-secondary");
         if (!secondary) return;
         normalizeServerNavigation(primary, secondary);
-        var moduleButton = null;
-        var settingsButton = null;
-        Array.prototype.forEach.call(secondary.querySelectorAll(":scope > .sirk-nav-item"), function (button) {
-            var label = String(button.textContent || "").trim();
-            if (label === "Moduły") moduleButton = button;
-            else if (label === "Ustawienia") settingsButton = button;
-        });
-        if (!moduleButton || !settingsButton) return;
-        secondary.insertBefore(settingsButton, moduleButton.nextSibling);
-        var divider = secondary.querySelector(":scope > .sirk-settings-nav-divider");
-        if (!divider) {
-            divider = document.createElement("div");
-            divider.className = "sirk-settings-nav-divider";
-            divider.setAttribute("aria-hidden", "true");
-            divider.style.height = "1px";
-            divider.style.margin = "8px 4px";
-            divider.style.background = "var(--sirk-border,#dce3ec)";
-        }
-        secondary.insertBefore(divider, settingsButton.nextSibling);
+        removeModuleCardWrappers(workspace);
     }
 
     function observeDeviceWorkspace() {
