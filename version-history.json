@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.11",
+    "date": "2026-07-27",
+    "changes": [
+      "Remove the duplicate Overview entry from Settings navigation"
+    ]
+  },
+  {
     "version": "1.8.36-dev.10",
     "date": "2026-07-27",
     "changes": [

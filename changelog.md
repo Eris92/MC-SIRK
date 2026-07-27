@@ -1,3 +1,7 @@
+## 1.8.36-dev.11
+
+- Remove the duplicate Overview entry from the Settings secondary navigation.
+
 ## 1.8.36-dev.10
 
 - Stop interrupted update jobs from being retried after restart and require a valid staged job before offering a restart.

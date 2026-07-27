@@ -16,7 +16,7 @@
     var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
     var settingsItems = [
-        ["overview", "Przegląd"], ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
+        ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
         ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
         ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"],
         ["settings", "Ustawienia"]

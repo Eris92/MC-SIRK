@@ -6,7 +6,7 @@ var path = require("path");
 var source = fs.readFileSync(path.join(__dirname, "../public/portal/settings.js"), "utf8");
 
 [
-    '["overview", "Przegląd"]', '["devices", "Urządzenia"]', '["approvals", "Akceptacje"]',
+    '["devices", "Urządzenia"]', '["approvals", "Akceptacje"]',
     '["automation", "Automatyzacja"]', '["monitoring", "Monitoring"]', '["assets", "Zasoby"]',
     '["management", "Zarządzanie"]', '["reports", "Raporty"]', '["security", "Bezpieczeństwo"]',
     '["settings", "Ustawienia"]'
