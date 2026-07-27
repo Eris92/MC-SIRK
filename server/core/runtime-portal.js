@@ -82,25 +82,47 @@ module.exports.createRuntime = function (options) {
         if (!payload.portal && payload.moduleOptions.portal && typeof payload.moduleOptions.portal === "object") {
             payload.portal = shared.copy(payload.moduleOptions.portal);
         }
+
+        var moduleAccess = {};
         Object.keys(payload.moduleOptions).forEach(function (key) {
             var value = payload.moduleOptions[key];
             if (!value || typeof value !== "object" || Array.isArray(value)) return;
             if (Object.prototype.hasOwnProperty.call(value, "accessGroupIds")) {
                 value.accessGroupIds = normalizeGroupIds(value.accessGroupIds);
+                moduleAccess[key] = value.accessGroupIds.slice();
             }
         });
+
+        var viewAccess = {};
         var portal = payload.portal || payload.moduleOptions.portal;
         if (portal && portal.views && typeof portal.views === "object") {
             Object.keys(portal.views).forEach(function (key) {
                 var view = portal.views[key];
                 if (view && typeof view === "object" && Object.prototype.hasOwnProperty.call(view, "accessGroupIds")) {
                     view.accessGroupIds = normalizeGroupIds(view.accessGroupIds);
+                    viewAccess[key] = view.accessGroupIds.slice();
                 }
             });
             payload.portal = portal;
             payload.moduleOptions.portal = shared.copy(portal);
         }
-        return baseSaveAdminSettings(user, payload);
+
+        return baseSaveAdminSettings(user, payload).then(function () {
+            if (!Object.keys(moduleAccess).length && !Object.keys(viewAccess).length) return runtime.adminSnapshot(user);
+            return context.settings.update(function (current) {
+                Object.keys(moduleAccess).forEach(function (key) {
+                    current.modules[key] = current.modules[key] || {};
+                    current.modules[key].accessGroupIds = moduleAccess[key].slice();
+                });
+                current.modules.portal = current.modules.portal || shared.copy(PORTAL_DEFAULTS);
+                current.modules.portal.views = current.modules.portal.views || {};
+                Object.keys(viewAccess).forEach(function (key) {
+                    current.modules.portal.views[key] = current.modules.portal.views[key] || {};
+                    current.modules.portal.views[key].accessGroupIds = viewAccess[key].slice();
+                });
+                return current;
+            }).then(function () { return runtime.adminSnapshot(user); });
+        });
     };
 
     var baseSnapshot = runtime.adminSnapshot;
