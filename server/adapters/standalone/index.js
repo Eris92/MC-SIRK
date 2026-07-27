@@ -23,7 +23,8 @@ module.exports.createHost = function (options) {
                     tenantId: process.env.SIRK_TENANT_ID || "local",
                     roles: ["admin"],
                     groups: [],
-                    isAdmin: true
+                    isAdmin: true,
+                    siteadmin: true
                 };
             }
         },

@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.16",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix standalone administrator permissions for independent Settings API"
+    ]
+  },
+  {
     "version": "1.8.15",
     "date": "2026-07-27",
     "changes": [
