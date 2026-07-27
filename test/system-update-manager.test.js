@@ -50,10 +50,16 @@ function waitForJob(manager, jobId) {
     var backupDirectory = path.join(dataRoot, "updates", "backups", job.result.id);
     assert.ok(fs.existsSync(path.join(backupDirectory, "manifest.json")));
     assert.ok(fs.existsSync(path.join(backupDirectory, "app", "package.json")));
+
+    await assert.rejects(function () { return manager.deleteBackup("../outside"); }, /Invalid backup identifier/);
+
     var deleted = await manager.deleteBackup(job.result.id);
     assert.deepStrictEqual(deleted, { deleted: true, backupId: job.result.id });
     assert.strictEqual(manager.backups().length, 0);
     assert.strictEqual(fs.existsSync(backupDirectory), false);
+    assert.strictEqual(manager.state().history[0].type, "backup-deleted");
+    assert.strictEqual(manager.state().history[0].backupId, job.result.id);
+    await assert.rejects(function () { return manager.deleteBackup(job.result.id); }, /Backup was not found/);
 
     fs.writeFileSync(path.join(dataRoot, "updates", "state.json"), JSON.stringify({
         channel: "dev",
