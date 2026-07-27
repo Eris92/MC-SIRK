@@ -193,10 +193,6 @@ function repairGeneratedPortalAssets() {
         '        var base = "https://raw.githubusercontent.com/Eris92/SIRK-Portal/" + selectedBranch + "/";\n        var cacheToken = "sirk_refresh=" + Date.now() + "_" + crypto.randomBytes(6).toString("hex");\n        return Promise.all([request(base + "package.json?" + cacheToken), request(base + "config.json?" + cacheToken)]).then(function (values) {'
     );
     replaceInFile(updateManagerFile,
-        '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            var installed = current();',
-        '            if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");\n            if (String(config.version || "") !== String(packageJson.version || "")) throw new Error("Remote release is incomplete: config.json and package.json versions do not match.");\n            var installed = current();'
-    );
-    replaceInFile(updateManagerFile,
         '        if (busy || state.pending) throw new Error("Another update, backup or restore operation is already running.");',
         '        if (busy) throw new Error("Another update, backup or restore operation is already running.");'
     );

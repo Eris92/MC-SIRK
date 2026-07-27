@@ -20,7 +20,7 @@ function safeName(value) {
 
 function request(url) {
     return new Promise(function (resolve, reject) {
-        https.get(url, { headers: { "User-Agent": "SIRK-Portal-Updater", Accept: "application/json" } }, function (res) {
+        https.get(url, { headers: { "User-Agent": "SIRK-Portal-Updater", Accept: "application/json", "Cache-Control": "no-cache, no-store, max-age=0", Pragma: "no-cache" } }, function (res) {
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 request(res.headers.location).then(resolve, reject);
                 return;
@@ -167,7 +167,8 @@ function create(options) {
     function check(channel) {
         var selectedBranch = branch(channel);
         var base = "https://raw.githubusercontent.com/Eris92/SIRK-Portal/" + selectedBranch + "/";
-        return Promise.all([request(base + "package.json"), request(base + "config.json")]).then(function (values) {
+        var cacheToken = "sirk_refresh=" + Date.now() + "_" + crypto.randomBytes(6).toString("hex");
+        return Promise.all([request(base + "package.json?" + cacheToken), request(base + "config.json?" + cacheToken)]).then(function (values) {
             var packageJson = JSON.parse(values[0].toString("utf8"));
             var config = JSON.parse(values[1].toString("utf8"));
             if (config.shortName !== "SIRKPortal") throw new Error("Remote package identity mismatch.");
