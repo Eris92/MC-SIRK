@@ -1,3 +1,7 @@
+## 1.8.36-dev.19
+
+- Fix standalone Settings save so Commands module enablement and options are persisted.
+
 ## 1.8.36-dev.18
 
 - Force uncached update status requests so newly published versions are visible immediately.

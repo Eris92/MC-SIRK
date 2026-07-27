@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.19",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix standalone Settings save so Commands module enablement and options are persisted"
+    ]
+  },
+  {
     "version": "1.8.36-dev.18",
     "date": "2026-07-27",
     "changes": [

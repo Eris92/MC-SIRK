@@ -126,6 +126,8 @@
         if (base.pathname.replace(/\/+$/, "") === "/api") {
             var standaloneBody = new URLSearchParams();
             var standalonePayload = clone(payload || {});
+            standalonePayload.modules = clone(payload && payload.modules || {});
+            standalonePayload.moduleOptions = clone(payload && payload.moduleOptions || {});
             standalonePayload.portal = clone(standalonePayload.moduleOptions && standalonePayload.moduleOptions.portal || {});
             standaloneBody.set("payload", JSON.stringify(standalonePayload));
             return fetch(new URL("/api/admin/settings", window.location.href).href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: standaloneBody.toString() }).then(parse).then(function (value) { return { snapshot: value.value || value.snapshot || value }; });
