@@ -449,6 +449,14 @@
 
     function renderNativeTab(host, node, type) {
         stopBridge(true);
+        var nativeBase = new URL(String(window.__SIRK_PLATFORM_NATIVE_URL__ || "/meshcentral/"), window.location.href);
+        if (nativeBase.origin !== window.location.origin) {
+            var externalUrl = new URL(nativeDeviceUrl(node));
+            externalUrl.searchParams.set("viewmode", String(VIEWMODES[type] || 10));
+            externalUrl.searchParams.set("gotonode", String(node.id || node._id || ""));
+            host.innerHTML = '<div class="sirk-native-bridge-shell"><div class="sirk-native-bridge-toolbar"><a class="sirk-native-bridge-button" target="_blank" rel="noopener noreferrer" href="' + esc(externalUrl.href) + '">' + esc(t("openMesh")) + '</a><span class="sirk-native-bridge-status">' + esc(t(type)) + '</span></div><div class="sirk-native-bridge-stage"><iframe class="sirk-native-bridge-frame is-session-visible" title="MeshCentral ' + esc(t(type)) + '" allow="clipboard-read; clipboard-write; fullscreen" src="' + esc(externalUrl.href) + '"></iframe></div></div>';
+            return;
+        }
         var interactive = type === "desktop" || type === "terminal" || type === "files";
         var selector = type === "desktop"
             ? '<div class="sirk-native-bridge-button-group">' +

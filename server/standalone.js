@@ -78,16 +78,17 @@ function contentType(name) {
 }
 
 function portalHtml() {
+    var nativeUrl = String(process.env.SIRK_MESHCENTRAL_URL || "https://mc.sir-k.local/");
     var html = fs.readFileSync(path.join(ROOT, "public/portal/standalone/index.html"), "utf8")
         .replace(/__API_BASE_JSON__/g, JSON.stringify("/api"))
         .replace(/__ASSET_BASE_JSON__/g, JSON.stringify("/assets"))
-        .replace(/__NATIVE_URL_JSON__/g, JSON.stringify(""))
+        .replace(/__NATIVE_URL_JSON__/g, JSON.stringify(nativeUrl))
         .replace(/__LOGOUT_URL_JSON__/g, JSON.stringify("/auth/logout"))
         .replace(/__USER_IMAGE_URL_JSON__/g, JSON.stringify("/api/user/image"))
         .replace(/__DEFAULT_USER_IMAGE_URL_JSON__/g, JSON.stringify("/assets/icons/sirk-ui.svg"))
         .replace(/__VERSION_JSON__/g, JSON.stringify(VERSION))
         .replace(/__ASSET_BASE__/g, "/assets")
-        .replace(/__NATIVE_URL__/g, "")
+        .replace(/__NATIVE_URL__/g, nativeUrl)
         .replace(/__VERSION__/g, VERSION);
     html = html.replace("</head>", '<link rel="stylesheet" href="/assets/portal-management-frame.css?v=' + VERSION + '"><link rel="stylesheet" href="/assets/system-updates.css?v=' + VERSION + '"></head>');
     return html.replace("</body>", '<script src="/assets/standalone-core-rest.js?v=' + VERSION + '"></script><script src="/assets/system-updates.js?v=' + VERSION + '"></script></body>');
