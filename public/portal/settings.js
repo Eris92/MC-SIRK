@@ -3,8 +3,8 @@
 
     var state = {
         snapshot: null,
-        active: "overview",
-        settingsKey: "settings",
+        active: "settings",
+        settingsKey: "module:devices:general",
         serverKey: "service",
         debugKey: "config",
         pluginView: "installed",
@@ -15,25 +15,23 @@
     };
     var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
-    var settingsItems = [
-        ["overview", "Moduły"], ["devices", "Urządzenia"], ["commands", "Commands"], ["approvals", "Akceptacje"],
-        ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
-        ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"],
-        ["settings", "Ustawienia"]
+    var MODULES = [
+        { key: "devices", label: "Urządzenia", view: "devices" },
+        { key: "commands", label: "Commands", modules: ["mycommands"] },
+        { key: "approvals", label: "Akceptacje", view: "approvals", modules: ["approvalcenter", "moverequests"] },
+        { key: "automation", label: "Automatyzacja", view: "automation", modules: ["myscripts"] },
+        { key: "monitoring", label: "Monitoring", view: "monitoring", integrations: true },
+        { key: "assets", label: "Zasoby", view: "assets", modules: ["myjira"] },
+        { key: "management", label: "Zarządzanie", view: "management" },
+        { key: "reports", label: "Raporty", view: "reports" },
+        { key: "security", label: "Bezpieczeństwo", view: "security", modules: ["defendertools"] }
     ];
-    var settingsSections = {
-        overview: [{ type: "visibility", title: "Moduły Portalu" }],
-        devices: [{ type: "view", key: "devices", title: "Urządzenia", text: "Widoczność zakładki Urządzenia w menu Portalu." }],
-        commands: [{ type: "module", key: "mycommands", title: "Commands" }],
-        approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
-        automation: [{ type: "empty", title: "Harmonogram serwera", text: "Automatyzacje będą tworzyć i zarządzać zadaniami w katalogu SIRK harmonogramu serwera. Polecenia urządzeń są dostępne w ustawieniach Urządzenia." }],
-        monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
-        assets: [{ type: "module", key: "myjira", title: "Zasoby" }],
-        management: [{ type: "module", key: "myjira", title: "Jira" }],
-        reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
-        security: [{ type: "module", key: "defendertools", title: "Defender" }],
-        settings: [{ type: "portal", title: "Portal i sesja" }]
-    };
+
+    var DEFAULT_VIEW_CHOICES = [
+        ["overview", "Overview"], ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
+        ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
+        ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"]
+    ];
 
     function el(tag, className, text) {
         var node = document.createElement(tag);
@@ -61,7 +59,7 @@
     }
 
     function restartScreen(host) {
-        host.innerHTML = '<div class="sirk-restart-screen" role="status" aria-live="polite"><div class="sirk-restart-spinner" aria-hidden="true"></div><h2>Ładowanie usługi…</h2><p>Portal czeka na powrót usługi. Po zakończeniu wrócisz do ustawień serwera.</p></div>';
+        host.innerHTML = '<div class="sirk-restart-screen" role="status" aria-live="polite"><div class="sirk-restart-spinner" aria-hidden="true"></div><h2>Ładowanie usługi…</h2><p>Portal czeka na powrót usługi.</p></div>';
     }
 
     function waitForService(host, marker) {
@@ -107,7 +105,9 @@
             credentials: "same-origin",
             cache: "no-store",
             headers: { Accept: "application/json" }
-        }).then(parse).then(function (value) { return action === "portal-admin-snapshot" && value.value ? { snapshot: value.value } : value; });
+        }).then(parse).then(function (value) {
+            return action === "portal-admin-snapshot" && value.value ? { snapshot: value.value } : value;
+        });
     }
 
     function post(action, payload) {
@@ -128,9 +128,14 @@
             var standalonePayload = clone(payload || {});
             standalonePayload.modules = clone(payload && payload.modules || {});
             standalonePayload.moduleOptions = clone(payload && payload.moduleOptions || {});
-            standalonePayload.portal = clone(standalonePayload.moduleOptions && standalonePayload.moduleOptions.portal || {});
+            standalonePayload.portal = clone(standalonePayload.moduleOptions.portal || {});
             standaloneBody.set("payload", JSON.stringify(standalonePayload));
-            return fetch(new URL("/api/admin/settings", window.location.href).href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: standaloneBody.toString() }).then(parse).then(function (value) { return { snapshot: value.value || value.snapshot || value }; });
+            return fetch(new URL("/api/admin/settings", window.location.href).href, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: standaloneBody.toString()
+            }).then(parse).then(function (value) { return { snapshot: value.value || value.snapshot || value }; });
         }
         var body = new URLSearchParams();
         ["modules", "moduleOptions", "integrations", "secrets"].forEach(function (key) {
@@ -172,8 +177,12 @@
         options = options || {};
         var wrapper = el("label", "sirk-card");
         wrapper.setAttribute("data-search-item", "1");
-        wrapper.appendChild(el("strong", "", label));
-        if (options.description) wrapper.appendChild(el("small", "", options.description));
+        wrapper.setAttribute("data-settings-field", options.type === "boolean" ? "boolean" : "value");
+        var copy = el("span");
+        copy.setAttribute("data-settings-field-copy", "1");
+        copy.appendChild(el("strong", "", label));
+        if (options.description) copy.appendChild(el("small", "", options.description));
+        wrapper.appendChild(copy);
         var input;
         if (options.type === "boolean") {
             input = el("input");
@@ -193,9 +202,7 @@
             input = el(options.multiline ? "textarea" : "input");
             if (!options.multiline) input.type = options.type || (typeof value === "number" ? "number" : "text");
             input.value = value == null ? "" : value;
-            input.oninput = function () {
-                onChange(input.type === "number" ? Number(input.value) : input.value);
-            };
+            input.oninput = function () { onChange(input.type === "number" ? Number(input.value) : input.value); };
         }
         input.setAttribute("data-settings-input", "1");
         wrapper.appendChild(input);
@@ -210,9 +217,13 @@
             var title = key.replace(/([A-Z])/g, " $1").replace(/^./, function (c) { return c.toUpperCase(); });
             if (value && typeof value === "object" && !Array.isArray(value)) {
                 var section = el("details", "sirk-card");
+                section.setAttribute("data-settings-section", "1");
                 section.setAttribute("data-search-item", "1");
                 section.appendChild(el("summary", "", title));
-                objectForm(section, value, depth + 1);
+                var body = el("div");
+                body.setAttribute("data-settings-section-body", "1");
+                objectForm(body, value, depth + 1);
+                section.appendChild(body);
                 host.appendChild(section);
             } else if (Array.isArray(value)) {
                 field(host, title, value.join(", "), function (next) {
@@ -225,141 +236,162 @@
         if (!Object.keys(object).length && depth === 0) host.appendChild(el("div", "sirk-card", "Brak ustawień w tej sekcji."));
     }
 
-    function renderOverview(host) {
-        var grid = el("div");
-        grid.setAttribute("data-card-grid", "1");
-        (state.snapshot && state.snapshot.modules || []).forEach(function (module) {
-            var card = el("article", "sirk-card");
-            card.setAttribute("data-search-item", "1");
-            card.appendChild(el("h3", "", module.name || module.key));
-            card.appendChild(el("p", "", module.ready ? "Ready" : (module.error || "Not ready")));
-            card.appendChild(el("strong", "", module.enabled ? "Włączony" : "Wyłączony"));
-            grid.appendChild(card);
-        });
-        host.appendChild(grid);
+    function navButton(host, key, label, activeKey, onSelect, className) {
+        var button = el("button", (className || "sirk-nav-item") + (key === activeKey ? " active" : ""), label);
+        button.type = "button";
+        button.onclick = function () { onSelect(key); };
+        host.appendChild(button);
+        return button;
     }
 
-    function settingsValue(key, payload) {
-        if (key === "folderpermissions") {
-            return {
-                portalViews: (payload.moduleOptions.portal || {}).views || {},
-                scripts: (payload.moduleOptions.myscripts || {}).folderPermissions || {},
-                commands: (payload.moduleOptions.mycommands || {}).folderPermissions || {}
-            };
+    function navGroup(host, label, open) {
+        var group = el("details", "sirk-settings-nav-group");
+        group.open = open === true;
+        group.appendChild(el("summary", "", label));
+        var body = el("div", "sirk-settings-nav-group-body");
+        group.appendChild(body);
+        host.appendChild(group);
+        return body;
+    }
+
+    function findModule(key) {
+        return MODULES.find(function (item) { return item.key === key; }) || MODULES[0];
+    }
+
+    function selectedSettingsParts() {
+        var parts = String(state.settingsKey || "module:devices:general").split(":");
+        return { kind: parts[0], key: parts[1] || "devices", section: parts[2] || "general" };
+    }
+
+    function renderSettingsNavigation(layout, secondary, details) {
+        var selected = selectedSettingsParts();
+        var modulesBody = navGroup(secondary, "Moduły", selected.kind === "module");
+        MODULES.forEach(function (definition) {
+            var moduleOpen = selected.kind === "module" && selected.key === definition.key;
+            var moduleBody = navGroup(modulesBody, definition.label, moduleOpen);
+            navButton(moduleBody, "module:" + definition.key + ":general", "Ogólne", state.settingsKey, function (key) {
+                state.settingsKey = key;
+                renderActive(layout, secondary, details);
+            }, "sirk-nav-item sirk-settings-nav-leaf");
+            navButton(moduleBody, "module:" + definition.key + ":permissions", "Permissions", state.settingsKey, function (key) {
+                state.settingsKey = key;
+                renderActive(layout, secondary, details);
+            }, "sirk-nav-item sirk-settings-nav-leaf");
+        });
+        var portalBody = navGroup(secondary, "Portal", selected.kind === "portal");
+        navButton(portalBody, "portal:visibility", "Widoczność", state.settingsKey, function (key) {
+            state.settingsKey = key;
+            renderActive(layout, secondary, details);
+        }, "sirk-nav-item sirk-settings-nav-leaf");
+    }
+
+    function moduleCard(host, payload, moduleKey, title) {
+        var section = el("details", "sirk-card");
+        section.open = true;
+        section.setAttribute("data-settings-section", "1");
+        section.setAttribute("data-search-item", "1");
+        section.appendChild(el("summary", "", title || moduleKey));
+        var body = el("div");
+        body.setAttribute("data-settings-section-body", "1");
+        var value = clone(payload.moduleOptions[moduleKey] || {});
+        var permissions = value.folderPermissions;
+        var enabled = payload.modules[moduleKey] === true;
+        field(body, "Enabled", enabled, function (next) { payload.modules[moduleKey] = next; }, { type: "boolean" });
+        delete value.enabled;
+        delete value.folderPermissions;
+        payload.moduleOptions[moduleKey] = value;
+        objectForm(body, value, 0);
+        if (permissions !== undefined) value.folderPermissions = permissions;
+        section.appendChild(body);
+        host.appendChild(section);
+    }
+
+    function renderModuleGeneral(host, payload, definition) {
+        var portal = payload.moduleOptions.portal = clone(payload.moduleOptions.portal || {});
+        portal.views = portal.views || {};
+        if (definition.view) {
+            var view = portal.views[definition.view] || {};
+            field(host, "Widoczność zakładki", view.enabled !== false, function (next) {
+                portal.views[definition.view] = Object.assign({}, view, { enabled: next });
+            }, { type: "boolean", description: "Pokazuje lub ukrywa zakładkę " + definition.label + " w Portalu." });
         }
-        return payload.moduleOptions[key] || {};
+        (definition.modules || []).forEach(function (moduleKey) {
+            moduleCard(host, payload, moduleKey, moduleKey);
+        });
+        if (definition.integrations) {
+            var integrationSection = el("details", "sirk-card");
+            integrationSection.open = true;
+            integrationSection.setAttribute("data-settings-section", "1");
+            integrationSection.setAttribute("data-search-item", "1");
+            integrationSection.appendChild(el("summary", "", "Integracje"));
+            var integrationBody = el("div");
+            integrationBody.setAttribute("data-settings-section-body", "1");
+            objectForm(integrationBody, payload.integrations, 0);
+            integrationSection.appendChild(integrationBody);
+            host.appendChild(integrationSection);
+        }
+        if (!(definition.modules || []).length && !definition.integrations && !definition.view) {
+            host.appendChild(el("div", "sirk-card", "Brak ustawień ogólnych dla tego modułu."));
+        }
     }
 
-    function renderSettings(host, secondary) {
-        var portalViews = state.snapshot && state.snapshot.moduleSettings && state.snapshot.moduleSettings.portal && state.snapshot.moduleSettings.portal.views || {};
-        settingsItems.filter(function (item) {
-            return item[0] === "overview" || item[0] === "settings" || item[0] === "commands" || !portalViews[item[0]] || portalViews[item[0]].enabled !== false;
-        }).forEach(function (item) {
-            var button = el("button", item[0] === state.settingsKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
-            button.type = "button";
-            button.onclick = function () {
-                state.settingsKey = item[0];
-                renderActive(host.parentNode, secondary, host);
-            };
-            secondary.appendChild(button);
+    function renderModulePermissions(host, payload, definition) {
+        var rendered = false;
+        (definition.modules || []).forEach(function (moduleKey) {
+            var value = payload.moduleOptions[moduleKey] = clone(payload.moduleOptions[moduleKey] || {});
+            if (!value.folderPermissions || typeof value.folderPermissions !== "object") value.folderPermissions = {};
+            var section = el("details", "sirk-card");
+            section.open = true;
+            section.setAttribute("data-settings-section", "1");
+            section.setAttribute("data-search-item", "1");
+            section.appendChild(el("summary", "", moduleKey + " — Permissions"));
+            var body = el("div");
+            body.setAttribute("data-settings-section-body", "1");
+            objectForm(body, value.folderPermissions, 0);
+            section.appendChild(body);
+            host.appendChild(section);
+            rendered = true;
         });
+        if (!rendered) host.appendChild(el("div", "sirk-card", "Ten moduł nie ma osobnej konfiguracji Permissions."));
+    }
 
+    function renderPortalVisibility(host, payload) {
+        var portal = payload.moduleOptions.portal = clone(payload.moduleOptions.portal || {});
+        field(host, "Widok domyślny", portal.defaultView || "overview", function (next) { portal.defaultView = next; }, { choices: DEFAULT_VIEW_CHOICES });
+        ["showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart"].forEach(function (key) {
+            var checked = key === "showNativeLink" ? portal[key] !== false : portal[key] === true;
+            field(host, key, checked, function (next) { portal[key] = next; }, { type: "boolean" });
+        });
+    }
+
+    function renderSettings(layout, host, secondary) {
+        renderSettingsNavigation(layout, secondary, host);
         var payload = draftPayload();
-        var values = {};
+        var selected = selectedSettingsParts();
         var form = el("div");
         form.setAttribute("data-settings-form", "1");
-        (settingsSections[state.settingsKey] || []).forEach(function (definition) {
-            var section = el("details", "sirk-card");
-            section.setAttribute("data-search-item", "1");
-            section.appendChild(el("summary", "", definition.title));
-            if (definition.type === "empty") section.appendChild(el("p", "sirk-shared-muted", definition.text));
-            else if (definition.type === "overview") renderOverview(section);
-            else if (definition.type === "view") {
-                var viewPortal = values.portal = clone(payload.moduleOptions.portal || {});
-                viewPortal.views = viewPortal.views || {};
-                var viewConfig = viewPortal.views[definition.key] || {};
-                field(section, "Enabled", viewConfig.enabled !== false, function (next) {
-                    viewPortal.views[definition.key] = Object.assign({}, viewConfig, { enabled: next });
-                }, { type: "boolean", description: definition.text });
-            }
-            else if (definition.type === "visibility") {
-                var portal = values.portal = clone(payload.moduleOptions.portal || {});
-                portal.views = portal.views || {};
-                var labels = { overview: "Overview", devices: "Devices", approvals: "Approval", automation: "Automation", monitoring: "Monitoring", assets: "Assets", management: "Management", reports: "Reports", security: "Security", settings: "Settings" };
-                Object.keys(labels).forEach(function (key) {
-                    field(section, labels[key], portal.views[key] ? portal.views[key].enabled !== false : true, function (next) { portal.views[key] = Object.assign({}, portal.views[key] || {}, { enabled: next }); }, { type: "boolean" });
-                });
-                field(section, "Commands", payload.modules.mycommands === true, function (next) { payload.modules.mycommands = next; }, { type: "boolean", description: "Włącza moduł poleceń urządzeń." });
-            }
-            else if (definition.type === "module") {
-                var value = values[definition.key] = clone(payload.moduleOptions[definition.key] || {});
-                var moduleEnabled = payload.modules[definition.key] === true;
-                var dependent = el("fieldset", "sirk-settings-dependent");
-                dependent.disabled = !moduleEnabled;
-                field(section, "Enabled", moduleEnabled, function (checked) { payload.modules[definition.key] = checked; dependent.disabled = !checked; }, { type: "boolean" });
-                delete value.enabled;
-                var permissions = value.folderPermissions;
-                delete value.folderPermissions;
-                objectForm(dependent, value, 0);
-                // Module settings are rendered through objectForm(section, value, 0) semantics,
-                // but remain inside a disabled fieldset until the parent Enabled switch is on.
-                section.appendChild(dependent);
-                if (permissions && typeof permissions === "object") {
-                    var permissionDetails = el("details", "sirk-card");
-                    permissionDetails.setAttribute("data-search-item", "1");
-                    permissionDetails.appendChild(el("summary", "", "Permissions"));
-                    objectForm(permissionDetails, permissions, 0);
-                    section.appendChild(permissionDetails);
-                    value.folderPermissions = permissions;
-                }
-            } else if (definition.type === "portal") {
-                var portal = values.portal = clone(payload.moduleOptions.portal || {});
-                field(section, "Widok domyślny", portal.defaultView || "overview", function (next) { portal.defaultView = next; }, { choices: [["overview", "Overview"], ["devices", "Devices"], ["approvals", "Approval"], ["automation", "Automation"], ["management", "Management"]] });
-                ["showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart"].forEach(function (key) { field(section, key, portal[key] === true, function (next) { portal[key] = next; }, { type: "boolean" }); });
-                if (portal.views) { section.appendChild(el("h3", "", "Widoczność pozycji Portalu")); objectForm(section, portal.views, 0); }
-            } else if (definition.type === "folderpermissions") {
-                var folder = values.folderpermissions = settingsValue("folderpermissions", payload);
-                objectForm(section, folder, 0);
-            } else if (definition.type === "integrations") {
-                values.integrations = clone(payload.integrations || {});
-                objectForm(section, values.integrations, 0);
-            }
-            form.appendChild(section);
-        });
+        if (selected.kind === "portal") {
+            renderPortalVisibility(form, payload);
+        } else {
+            var definition = findModule(selected.key);
+            if (selected.section === "permissions") renderModulePermissions(form, payload, definition);
+            else renderModuleGeneral(form, payload, definition);
+        }
         var actions = el("div", "sirk-toolbar-group sirk-toolbar-left");
         var save = el("button", "sirk-button", "Zapisz");
         var message = el("span");
         save.type = "button";
         save.onclick = function () {
-            if (state.settingsKey === "permissions") {
-                payload.moduleOptions.portal = payload.moduleOptions.portal || {};
-                payload.moduleOptions.myscripts = payload.moduleOptions.myscripts || {};
-                payload.moduleOptions.mycommands = payload.moduleOptions.mycommands || {};
-                payload.moduleOptions.portal.views = values.folderpermissions && values.folderpermissions.portalViews || {};
-                payload.moduleOptions.myscripts.folderPermissions = values.folderpermissions && values.folderpermissions.scripts || {};
-                payload.moduleOptions.mycommands.folderPermissions = values.folderpermissions && values.folderpermissions.commands || {};
-            } else if (values.folderpermissions) {
-                payload.moduleOptions.portal = payload.moduleOptions.portal || {};
-                payload.moduleOptions.myscripts = payload.moduleOptions.myscripts || {};
-                payload.moduleOptions.mycommands = payload.moduleOptions.mycommands || {};
-                payload.moduleOptions.portal.views = values.folderpermissions.portalViews || {};
-                payload.moduleOptions.myscripts.folderPermissions = values.folderpermissions.scripts || {};
-                payload.moduleOptions.mycommands.folderPermissions = values.folderpermissions.commands || {};
-            } else {
-                Object.keys(values).forEach(function (key) {
-                    if (key === "integrations") payload.integrations = values.integrations;
-                    else payload.moduleOptions[key] = values[key];
-                });
-            }
             save.disabled = true;
             status(message, "Zapisywanie…", false);
             postSettings(payload).then(function (result) {
                 state.snapshot = result.snapshot;
-                if (state.settingsKey !== "overview" && state.settingsKey !== "settings" && state.settingsKey !== "permissions" && values.portal && values.portal.views && values.portal.views[state.settingsKey] && values.portal.views[state.settingsKey].enabled === false) state.settingsKey = "overview";
-                renderActive(host.parentNode, secondary, host);
+                status(message, "Zapisano.", false);
+                renderActive(layout, secondary, host);
             }).catch(function (error) {
                 status(message, error.message, true);
-            }).then(function () { save.disabled = false; });
+                save.disabled = false;
+            });
         };
         actions.appendChild(save);
         actions.appendChild(message);
@@ -407,16 +439,14 @@
                 button.type = "button";
                 button.disabled = plugin.protected === true;
                 button.onclick = function () {
-                    var question = action[0] === "update"
-                        ? "Zaktualizować " + (plugin.name || plugin.shortName) + "? Przed aktualizacją zostanie utworzony backup."
-                        : action[1] + " wtyczkę " + (plugin.name || plugin.shortName) + "?";
+                    var question = action[0] === "update" ? "Zaktualizować " + (plugin.name || plugin.shortName) + "?" : action[1] + " wtyczkę " + (plugin.name || plugin.shortName) + "?";
                     if (!window.confirm(question)) return;
                     button.disabled = true;
                     status(message, "Wykonywanie operacji…", false);
                     post("plugin-operation", { operation: action[0], id: plugin.id }).then(function (result) {
                         state.plugins = result.plugins || [];
                         renderInstalledPlugins(host, message);
-                        status(message, result.result && result.result.backupPath ? "Operacja zakończona. Backup: " + result.result.backupPath : "Operacja zakończona.", false);
+                        status(message, "Operacja zakończona.", false);
                     }).catch(function (error) {
                         status(message, error.message, true);
                         button.disabled = false;
@@ -448,14 +478,12 @@
             install.type = "button";
             install.disabled = installed;
             install.onclick = function () {
-                if (!window.confirm("Zainstalować " + item.name + "? Kod wtyczki działa z uprawnieniami serwera MeshCentral.")) return;
+                if (!window.confirm("Zainstalować " + item.name + "?")) return;
                 install.disabled = true;
-                status(message, "Dodawanie wtyczki…", false);
+                status(message, "Dodawanie…", false);
                 post("plugin-operation", { operation: "add", configUrl: item.configUrl }).then(function (result) {
                     state.plugins = result.plugins || [];
-                    var added = state.plugins.find(function (plugin) {
-                        return String(plugin.shortName || "").toLowerCase() === String(item.shortName || "").toLowerCase();
-                    });
+                    var added = state.plugins.find(function (plugin) { return String(plugin.shortName || "").toLowerCase() === String(item.shortName || "").toLowerCase(); });
                     if (!added || added.status === 1) return result;
                     return post("plugin-operation", { operation: "enable", id: added.id });
                 }).then(function (result) {
@@ -468,13 +496,6 @@
                 });
             };
             card.appendChild(install);
-            if (item.homepage) {
-                var link = el("a", "", "Repozytorium");
-                link.href = item.homepage;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                card.appendChild(link);
-            }
             grid.appendChild(card);
         });
         host.appendChild(grid);
@@ -495,14 +516,12 @@
         host.appendChild(controls);
         var content = el("div");
         host.appendChild(content);
-
         function draw() {
             installed.classList.toggle("active", state.pluginView === "installed");
             available.classList.toggle("active", state.pluginView === "available");
             if (state.pluginView === "installed") renderInstalledPlugins(content, message);
             else renderMarketplace(content, message);
         }
-
         installed.onclick = function () { state.pluginView = "installed"; draw(); };
         available.onclick = function () { state.pluginView = "available"; draw(); };
         add.onclick = function () {
@@ -522,19 +541,14 @@
                 state.plugins = result.plugins || [];
                 draw();
                 status(message, "Sprawdzanie zakończone.", false);
-            }).catch(function (error) {
-                status(message, error.message, true);
-            }).then(function () { check.disabled = false; });
+            }).catch(function (error) { status(message, error.message, true); }).then(function () { check.disabled = false; });
         };
-
         Promise.all([get("plugin-state"), get("", { asset: "marketplace.json" })]).then(function (values) {
             state.plugins = values[0].plugins || [];
             state.marketplace = values[1].plugins || [];
             draw();
             status(message, "", false);
-        }).catch(function (error) {
-            status(message, error.message, true);
-        });
+        }).catch(function (error) { status(message, error.message, true); });
     }
 
     function renderServer(host) {
@@ -562,9 +576,7 @@
                     restart.disabled = true;
                     var marker = { pending: true, active: "server", startedAt: Date.now() };
                     saveServiceRestartState(marker);
-                    post("server-restart", { serviceName: service.name }).then(function () {
-                        waitForService(host, marker);
-                    }).catch(function (error) {
+                    post("server-restart", { serviceName: service.name }).then(function () { waitForService(host, marker); }).catch(function (error) {
                         clearServiceRestartState();
                         card.appendChild(el("div", "sirk-card", error.message));
                         restart.disabled = false;
@@ -582,10 +594,8 @@
 
     function renderDebug(host) {
         var snapshot = state.snapshot || {};
-        var value = state.debugKey === "logs"
-            ? snapshot.diagnostics && snapshot.diagnostics.logs || "Brak logów."
-            : state.debugKey === "errors"
-                ? snapshot.diagnostics && snapshot.diagnostics.errors || snapshot.moduleLoadErrors || "Brak błędów."
+        var value = state.debugKey === "logs" ? snapshot.diagnostics && snapshot.diagnostics.logs || "Brak logów."
+            : state.debugKey === "errors" ? snapshot.diagnostics && snapshot.diagnostics.errors || snapshot.moduleLoadErrors || "Brak błędów."
                 : { plugin: snapshot.plugin, modules: snapshot.modules, moduleSettings: snapshot.moduleSettings, integrations: snapshot.integrations, migration: snapshot.migration, generatedAt: snapshot.generatedAt };
         var pre = el("pre", "sirk-card", typeof value === "string" ? value : JSON.stringify(value, null, 2));
         pre.setAttribute("data-debug-output", "1");
@@ -593,38 +603,33 @@
     }
 
     function renderServerSections(layout, secondary, details) {
-        var items = [["service", "Usługa"], ["debug:config", "Debug · Config"], ["debug:logs", "Debug · Logi"], ["debug:errors", "Debug · Błędy"], ["system:updates", "System · Aktualizacje"], ["system:backups", "System · Backupy"], ["system:history", "System · Historia"], ["system:channel", "System · Kanał aktualizacji"], ["plugins", "Wtyczki"]];
-        items.forEach(function (item) {
-            var button = el("button", item[0] === state.serverKey ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
-            button.type = "button";
-            button.onclick = function () {
-                state.serverKey = item[0];
-                renderActive(layout, secondary, details);
-            };
-            secondary.appendChild(button);
-            if (item[0] === "overview") secondary.appendChild(el("div", "sirk-settings-nav-separator"));
+        navButton(secondary, "service", "Usługa", state.serverKey, function (key) { state.serverKey = key; renderActive(layout, secondary, details); });
+        var debugBody = navGroup(secondary, "Debug", state.serverKey.indexOf("debug:") === 0);
+        [["debug:config", "Config"], ["debug:logs", "Logi"], ["debug:errors", "Błędy"]].forEach(function (item) {
+            navButton(debugBody, item[0], item[1], state.serverKey, function (key) { state.serverKey = key; renderActive(layout, secondary, details); }, "sirk-nav-item sirk-settings-nav-leaf");
         });
+        var updatesBody = navGroup(secondary, "Aktualizacje", state.serverKey.indexOf("system:") === 0 && state.serverKey !== "system:backups");
+        [["system:updates", "Sprawdź"], ["system:history", "Historia"], ["system:channel", "Kanał"]].forEach(function (item) {
+            navButton(updatesBody, item[0], item[1], state.serverKey, function (key) { state.serverKey = key; renderActive(layout, secondary, details); }, "sirk-nav-item sirk-settings-nav-leaf");
+        });
+        navButton(secondary, "system:backups", "Backupy", state.serverKey, function (key) { state.serverKey = key; renderActive(layout, secondary, details); });
+        navButton(secondary, "plugins", "Wtyczki", state.serverKey, function (key) { state.serverKey = key; renderActive(layout, secondary, details); });
         secondary.hidden = false;
         if (state.serverKey === "service") renderServer(details);
         else if (state.serverKey.indexOf("debug:") === 0) {
             state.debugKey = state.serverKey.slice(6);
             renderDebug(details);
-        }
-        else if (state.serverKey === "plugins") renderPlugins(details);
-        else if (window.SirkSystemUpdates) {
-            window.SirkSystemUpdates.mount(details, state.serverKey.slice(7));
-        }
+        } else if (state.serverKey === "plugins") renderPlugins(details);
+        else if (window.SirkSystemUpdates) window.SirkSystemUpdates.mount(details, state.serverKey.slice(7));
     }
 
     function renderActive(layout, secondary, details) {
         clear(secondary);
         clear(details);
-        var overview = state.active === "overview";
-        layout.classList.toggle("sirk-settings-overview", overview);
-        secondary.hidden = overview;
-        if (overview) renderOverview(details);
-        else if (state.active === "settings") renderSettings(details, secondary);
-        else if (state.active === "server") renderServerSections(layout, secondary, details);
+        secondary.hidden = false;
+        layout.classList.remove("sirk-settings-overview");
+        if (state.active === "server") renderServerSections(layout, secondary, details);
+        else renderSettings(layout, details, secondary);
         applySearch(details);
     }
 
@@ -666,7 +671,7 @@
             });
         };
 
-        [["overview", "Overview"], ["settings", "Settings"], ["server", "Serwer"]].forEach(function (item) {
+        [["settings", "Settings"], ["server", "Server"]].forEach(function (item) {
             var button = el("button", item[0] === state.active ? "sirk-nav-item active" : "sirk-nav-item", item[1]);
             button.type = "button";
             button.onclick = function () {
