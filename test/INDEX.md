@@ -18,6 +18,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | trwałe zakładki urządzeń | `portal-device-tabs.test.js` |
 | wspólny kontrakt UI | `portal-ui-contract.test.js` |
 | cache i rewizja assetów Portalu | `portal-cache-invalidation.test.js`, `portal-runtime-assets.test.js` |
+| restart usługi i powrót do strony | `portal-restart-flow.test.js` |
 | cleanup Portalu | `portal-cleanup.test.js` |
 | izolacja GUI | `portal-gui-isolation-script.test.js` |
 

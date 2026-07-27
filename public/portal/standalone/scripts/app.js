@@ -461,8 +461,29 @@
         var details = document.createElement("div"); details.className = "sirk-column-details";
         workspace.appendChild(primary); workspace.appendChild(secondary); workspace.appendChild(details);
         function renderSecondary(items, selected, onSelect) { secondary.innerHTML = ""; items.forEach(function (name, index) { var button = document.createElement("button"); button.type = "button"; button.className = "sirk-nav-item" + (name === selected || (!selected && index === 0) ? " active" : ""); button.textContent = name; button.onclick = function () { Array.prototype.forEach.call(secondary.children, function (node) { node.classList.remove("active"); }); button.classList.add("active"); onSelect(name); }; secondary.appendChild(button); }); }
-        function selectSettingsPane(name) { title.textContent = name; status.textContent = ""; output.hidden = true; form.hidden = false; Array.prototype.forEach.call(form.children, function (node) { node.hidden = node.getAttribute("data-settings-pane") !== name && node !== save; }); details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = node.getAttribute("data-settings-pane") !== name; }); }
-        function renderAdminPane(name, sub) { title.textContent = name + " / " + sub; form.hidden = true; details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = true; }); output.hidden = false; var source = settingsSnapshot || {}; if (name === "Overview") source = { plugin: source.plugin, modules: source.modules, generatedAt: source.generatedAt }; else if (name === "Debug") source = sub === "Błędy" ? (source.diagnostics && source.diagnostics.errors || source.moduleLoadErrors || {}) : sub === "Logi" ? (source.diagnostics && source.diagnostics.logs || "Brak logów.") : source; else if (name === "System") source = { version: window.__SIRK_PLATFORM_PORTAL_VERSION__, diagnostics: source.diagnostics || {}, generatedAt: source.generatedAt }; else if (name === "Server") source = { standalone: true, meshDatabase: "local", devices: deviceInventory && deviceInventory.nodes.length || 0 }; output.textContent = typeof source === "string" ? source : JSON.stringify(source, null, 2); status.textContent = ""; }
+        var systemUpdatesHost = null;
+        function selectSettingsPane(name) { title.textContent = name; status.textContent = ""; output.hidden = true; form.hidden = false; if (systemUpdatesHost) systemUpdatesHost.hidden = true; Array.prototype.forEach.call(form.children, function (node) { node.hidden = node.getAttribute("data-settings-pane") !== name && node !== save; }); details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = node.getAttribute("data-settings-pane") !== name; }); }
+        function renderAdminPane(name, sub) {
+            title.textContent = name + " / " + sub;
+            form.hidden = true;
+            details.querySelectorAll(".sirk-settings-section").forEach(function (node) { node.hidden = true; });
+            if (name === "System" && window.SirkSystemUpdates) {
+                output.hidden = true;
+                if (!systemUpdatesHost) { systemUpdatesHost = document.createElement("div"); systemUpdatesHost.className = "sirk-settings-system-updates"; details.appendChild(systemUpdatesHost); }
+                systemUpdatesHost.hidden = false;
+                window.SirkSystemUpdates.mount(systemUpdatesHost, { "Aktualizacje": "updates", "Backupy": "backups", "Historia": "history", "Kanał": "channel" }[sub] || "updates");
+                status.textContent = "";
+                return;
+            }
+            output.hidden = false;
+            var source = settingsSnapshot || {};
+            if (name === "Overview") source = { plugin: source.plugin, modules: source.modules, generatedAt: source.generatedAt };
+            else if (name === "Debug") source = sub === "Błędy" ? (source.diagnostics && source.diagnostics.errors || source.moduleLoadErrors || {}) : sub === "Logi" ? (source.diagnostics && source.diagnostics.logs || "Brak logów.") : source;
+            else if (name === "System") source = { version: window.__SIRK_PLATFORM_PORTAL_VERSION__, diagnostics: source.diagnostics || {}, generatedAt: source.generatedAt };
+            else if (name === "Server") source = { standalone: true, meshDatabase: "local", devices: deviceInventory && deviceInventory.nodes.length || 0 };
+            output.textContent = typeof source === "string" ? source : JSON.stringify(source, null, 2);
+            status.textContent = "";
+        }
         ["Overview", "Settings", "Plugins", "Server", "Debug", "System"].forEach(function (name, index) { var button = document.createElement("button"); button.type = "button"; button.className = "sirk-nav-item" + (index === 1 ? " active" : ""); button.textContent = name; button.onclick = function () { Array.prototype.forEach.call(primary.children, function (node) { node.classList.remove("active"); }); button.classList.add("active"); if (index === 1) { renderSecondary(["Portal", "Moduły", "Integracje", "Uprawnienia", "Diagnostyka", "Aktualizacje"], "Portal", selectSettingsPane); selectSettingsPane("Portal"); return; } var subcategories = name === "Debug" ? ["Config", "Logi", "Błędy"] : name === "System" ? ["Aktualizacje", "Backupy", "Historia", "Kanał"] : name === "Plugins" ? ["Zainstalowane", "Dostępne", "Historia"] : ["Przegląd", "Status", "Historia"]; renderSecondary(subcategories, subcategories[0], function (sub) { renderAdminPane(name, sub); }); renderAdminPane(name, subcategories[0]); }; primary.appendChild(button); });
         renderSecondary(["Portal", "Moduły", "Integracje", "Uprawnienia", "Diagnostyka", "Aktualizacje"], "Portal", selectSettingsPane);
         var panel = document.createElement("section"); panel.className = "sirk-card";
@@ -479,6 +500,9 @@
         modules.setAttribute("data-settings-pane", "Moduły");
         var save = document.createElement("button"); save.type = "submit"; save.className = "sirk-admin-primary"; save.textContent = "Save settings";
         form.appendChild(portalControls); form.appendChild(modules); form.appendChild(save); panel.appendChild(form); details.appendChild(panel);
+        var restartResume = null;
+        try { restartResume = JSON.parse(sessionStorage.getItem("sirkPortal.restartState") || "null"); } catch (error) {}
+        if (restartResume && restartResume.section) primary.children[5].click();
         var base = "/api";
         fetch(base + "/admin/settings", { credentials: "same-origin", cache: "no-store" }).then(function (response) { return response.json().then(function (value) { if (!response.ok) throw new Error(value.error || "Settings unavailable."); return value.value; }); }).then(function (snapshot) {
             settingsSnapshot = snapshot;
@@ -498,7 +522,7 @@
             var updateSection = sections.children[5]; var version = document.createElement("p"); version.textContent = "Wersja: " + String(window.__SIRK_PLATFORM_PORTAL_VERSION__ || "—"); updateSection.appendChild(version);
             panel.appendChild(sections);
             status.textContent = "Settings loaded."; form.hidden = false;
-            selectSettingsPane("Portal");
+            if (!restartResume || !restartResume.section) selectSettingsPane("Portal");
         }).catch(function (error) { status.textContent = error.message || String(error); status.classList.add("sirk-error"); });
         form.addEventListener("submit", function (event) { event.preventDefault(); save.disabled = true; var values = {}, portal = {}; Array.prototype.forEach.call(form.querySelectorAll("input[name]"), function (input) { var parts = input.name.split("."); if (parts[0] === "portal") portal[parts[1]] = input.type === "checkbox" ? input.checked : input.value; else values[parts[1]] = input.checked; }); fetch(base + "/admin/settings", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: "payload=" + encodeURIComponent(JSON.stringify({ modules: values, portal: portal })) }).then(function (response) { return response.json().then(function (value) { if (!response.ok) throw new Error(value.error || "Save failed."); return value; }); }).then(function () { status.textContent = "Settings saved."; }).catch(function (error) { status.textContent = error.message || String(error); }).finally(function () { save.disabled = false; }); });
         shell.appendChild(toolbar);

@@ -9,8 +9,10 @@
         pluginView: "installed",
         plugins: [],
         marketplace: [],
-        search: ""
+        search: "",
+        resumeMessage: ""
     };
+    var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
     var settingsItems = [
         ["portal", "Portal"], ["approvalcenter", "Approval Center"], ["moverequests", "Move Request"],
@@ -27,6 +29,44 @@
 
     function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
     function clone(value) { return JSON.parse(JSON.stringify(value == null ? {} : value)); }
+
+    function serviceRestartState() {
+        try {
+            var value = JSON.parse(sessionStorage.getItem(SERVICE_RESTART_KEY) || "null");
+            return value && typeof value === "object" ? value : null;
+        } catch (error) { return null; }
+    }
+
+    function saveServiceRestartState(value) {
+        try { sessionStorage.setItem(SERVICE_RESTART_KEY, JSON.stringify(value)); } catch (error) {}
+    }
+
+    function clearServiceRestartState() {
+        try { sessionStorage.removeItem(SERVICE_RESTART_KEY); } catch (error) {}
+    }
+
+    function restartScreen(host) {
+        host.innerHTML = '<div class="sirk-restart-screen" role="status" aria-live="polite"><div class="sirk-restart-spinner" aria-hidden="true"></div><h2>Ładowanie usługi…</h2><p>Portal czeka na powrót usługi. Po zakończeniu wrócisz do ustawień serwera.</p></div>';
+    }
+
+    function waitForService(host, marker) {
+        restartScreen(host);
+        var started = Date.now();
+        function poll() {
+            if (Date.now() - started < 4500) { window.setTimeout(poll, 800); return; }
+            get("server-state").then(function () {
+                saveServiceRestartState({ completed: true, active: "server" });
+                window.location.reload();
+            }).catch(function () {
+                if (Date.now() - started > 120000) {
+                    host.innerHTML = '<div class="sirk-card" data-error="1">Nie udało się potwierdzić powrotu usługi. Odśwież stronę, aby spróbować ponownie.</div>';
+                    return;
+                }
+                window.setTimeout(poll, 1200);
+            });
+        }
+        poll();
+    }
 
     function apiUrl(action, extra) {
         var url = new URL(window.__SIRK_PLATFORM_API_BASE__, window.location.href);
@@ -435,6 +475,10 @@
         host.appendChild(message);
         get("server-state").then(function (result) {
             clear(host);
+            if (state.resumeMessage) {
+                host.appendChild(el("div", "sirk-card sirk-update-success", state.resumeMessage));
+                state.resumeMessage = "";
+            }
             if (!(result.services || []).length) {
                 host.appendChild(el("div", "sirk-card", "Nie znaleziono usługi przypisanej do instalacji."));
                 return;
@@ -449,9 +493,12 @@
                 restart.onclick = function () {
                     if (!window.confirm("Zrestartować usługę " + (service.displayName || service.name) + "?")) return;
                     restart.disabled = true;
+                    var marker = { pending: true, active: "server", startedAt: Date.now() };
+                    saveServiceRestartState(marker);
                     post("server-restart", { serviceName: service.name }).then(function () {
-                        window.setTimeout(function () { window.location.reload(); }, 8000);
+                        waitForService(host, marker);
                     }).catch(function (error) {
+                        clearServiceRestartState();
                         card.appendChild(el("div", "sirk-card", error.message));
                         restart.disabled = false;
                     });
@@ -515,6 +562,12 @@
     }
 
     function mount(host) {
+        var marker = serviceRestartState();
+        if (marker && marker.active) state.active = marker.active;
+        if (marker && marker.completed) {
+            clearServiceRestartState();
+            state.resumeMessage = "Usługa została ponownie uruchomiona. Strona jest aktualna.";
+        }
         clear(host);
         host.innerHTML = '<section class="sirk-standalone-view-scroll" data-portal-settings>' +
             '<div class="sirk-toolbar"><div class="sirk-toolbar-group sirk-toolbar-left">' +

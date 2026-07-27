@@ -1,7 +1,8 @@
 (function () {
     "use strict";
 
-    var state = { snapshot: null, activeJob: "", timer: 0, section: "updates" };
+    var state = { snapshot: null, activeJob: "", timer: 0, section: "updates", resumeMessage: "" };
+    var RESTART_KEY = "sirkPortal.restartState";
 
     function escapeHtml(value) {
         return String(value == null ? "" : value).replace(/[&<>\"]/g, function (character) {
@@ -42,6 +43,50 @@
         })[0] || null;
     }
 
+    function restartState() {
+        try {
+            var value = JSON.parse(sessionStorage.getItem(RESTART_KEY) || "null");
+            return value && typeof value === "object" ? value : null;
+        } catch (error) { return null; }
+    }
+
+    function saveRestartState(value) {
+        try { sessionStorage.setItem(RESTART_KEY, JSON.stringify(value)); } catch (error) {}
+    }
+
+    function clearRestartState() {
+        try { sessionStorage.removeItem(RESTART_KEY); } catch (error) {}
+    }
+
+    function restartMarkup(message, detail) {
+        return '<div class="sirk-restart-screen" role="status" aria-live="polite"><div class="sirk-restart-spinner" aria-hidden="true"></div>' +
+            '<h2>' + escapeHtml(message) + '</h2><p>' + escapeHtml(detail) + '</p></div>';
+    }
+
+    function waitForRestart(host, section, marker) {
+        clearTimeout(state.timer);
+        host.innerHTML = restartMarkup("Ponowne uruchamianie usługi…", "Portal czeka na powrót usługi. Ten ekran pozostanie otwarty, a po zakończeniu wrócisz do tej strony.");
+        var started = Date.now();
+        function poll() {
+            if (Date.now() - started < 4500) {
+                state.timer = setTimeout(poll, 800);
+                return;
+            }
+            api("status").then(function (snapshot) {
+                if (!snapshot || !snapshot.current) throw new Error("Usługa nie jest jeszcze gotowa.");
+                saveRestartState({ completed: true, section: section });
+                window.location.reload();
+            }).catch(function () {
+                if (Date.now() - started > 120000) {
+                    host.innerHTML = restartMarkup("Nie udało się potwierdzić powrotu usługi.", "Sprawdź usługę i kliknij Odśwież, aby spróbować ponownie.");
+                    return;
+                }
+                state.timer = setTimeout(poll, 1200);
+            });
+        }
+        poll();
+    }
+
     function activeJob(snapshot) {
         var job = latestJob(snapshot);
         if (!job) return null;
@@ -73,8 +118,10 @@
         var current = snapshot.current || {};
         var job = activeJob(snapshot);
         var isBusy = busy(snapshot);
+        var resumeMessage = state.resumeMessage;
+        state.resumeMessage = "";
         var restartButton = current.pending ? '<button type="button" class="sirk-button" data-update-action="restart">Uruchom ponownie MeshCentral</button>' : '';
-        host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions">' +
+        host.innerHTML = '<div class="sirk-update-section">' + (resumeMessage ? '<div class="sirk-card sirk-update-success" role="status">' + escapeHtml(resumeMessage) + '</div>' : '') + '<div class="sirk-update-actions">' +
             '<button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button>' +
             '<button type="button" class="sirk-button" data-update-action="install"' + (isBusy || !remote.updateAvailable ? ' disabled' : '') + '>Aktualizuj system</button></div>' +
             '<div class="sirk-update-summary"><p>Aktualna wersja: <strong>' + escapeHtml(current.version || "—") + '</strong></p>' +
@@ -149,8 +196,17 @@
 
     function mount(host, section) {
         section = section || "updates";
+        var marker = restartState();
+        if (marker && marker.section) section = marker.section;
         state.section = section;
         clearTimeout(state.timer);
+        if (marker && marker.completed) {
+            clearRestartState();
+            state.resumeMessage = "Usługa została ponownie uruchomiona. Portal jest aktualny.";
+        } else if (marker && marker.pending) {
+            waitForRestart(host, section, marker);
+            return;
+        }
         host.onclick = function (event) {
             var actionNode = event.target.closest("[data-update-action]");
             var restoreNode = event.target.closest("[data-restore-id]");
@@ -165,7 +221,15 @@
                 }
                 if (action === "restart" && window.confirm("Uruchomić ponownie MeshCentral teraz?")) {
                     actionNode.disabled = true;
-                    api("restart", "POST", {}).catch(function (error) { window.alert(error.message); actionNode.disabled = false; });
+                    var marker = { pending: true, section: section, startedAt: Date.now() };
+                    saveRestartState(marker);
+                    api("restart", "POST", {}).then(function () {
+                        waitForRestart(host, section, marker);
+                    }).catch(function (error) {
+                        clearRestartState();
+                        window.alert(error.message);
+                        actionNode.disabled = false;
+                    });
                 }
             }
             if (restoreNode && window.confirm("Przywrócić wybrany backup?")) startJob(host, section, "restore", { backupId: restoreNode.getAttribute("data-restore-id") });

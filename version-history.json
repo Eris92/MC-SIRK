@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.4",
+    "date": "2026-07-27",
+    "changes": [
+      "Show the restart screen, wait for service readiness and return to the active System page with a current status message"
+    ]
+  },
+  {
     "version": "1.8.36-dev.3",
     "date": "2026-07-27",
     "changes": [

@@ -1,3 +1,7 @@
+## 1.8.36-dev.4
+
+- Added a visible service-restart screen with readiness polling, return to the active System section and an up-to-date confirmation after restart.
+
 ## 1.8.36-dev.3
 
 - Disabled browser caching for Portal HTML, redirects and runtime assets.
