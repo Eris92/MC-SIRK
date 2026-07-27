@@ -58,6 +58,37 @@ module.exports.createRuntime = function (options) {
     context.settings.defaults.modules.portal = shared.copy(PORTAL_DEFAULTS);
     runtime.modules.portal = portalFactory.createModule(context);
 
+    function normalizedTemplate(source, fallback) {
+        source = source && typeof source === "object" && !Array.isArray(source) ? source : {};
+        return {
+            name: String(source.name || fallback.name),
+            text: String(source.text != null ? source.text : fallback.text),
+            backgroundColor: String(source.backgroundColor || fallback.backgroundColor),
+            textColor: String(source.textColor || fallback.textColor),
+            fontSize: Math.max(10, Math.min(48, Number(source.fontSize) || fallback.fontSize)),
+            durationMinutes: Math.max(1, Math.min(525600, Number(source.durationMinutes) || fallback.durationMinutes)),
+            noEnd: source.noEnd === true
+        };
+    }
+
+    function normalizeBanner(source) {
+        source = source && typeof source === "object" && !Array.isArray(source) ? source : {};
+        var active = ["success", "warning", "critical"].indexOf(String(source.activeTemplate)) >= 0
+            ? String(source.activeTemplate) : BANNER_DEFAULTS.activeTemplate;
+        var templates = source.templates && typeof source.templates === "object" ? source.templates : {};
+        return {
+            enabled: source.enabled === true,
+            showOnPortal: source.showOnPortal !== false,
+            showOnLogin: source.showOnLogin === true,
+            activeTemplate: active,
+            templates: {
+                success: normalizedTemplate(templates.success, BANNER_DEFAULTS.templates.success),
+                warning: normalizedTemplate(templates.warning, BANNER_DEFAULTS.templates.warning),
+                critical: normalizedTemplate(templates.critical, BANNER_DEFAULTS.templates.critical)
+            }
+        };
+    }
+
     function publicPortalConfig(portal) {
         portal = portal && typeof portal === "object" ? portal : {};
         return {
@@ -65,7 +96,7 @@ module.exports.createRuntime = function (options) {
             siteIconUrl: String(portal.siteIconUrl || ""),
             showPasswordReset: portal.showPasswordReset !== false,
             passwordResetUrl: String(portal.passwordResetUrl || PORTAL_DEFAULTS.passwordResetUrl),
-            banner: shared.copy(portal.banner || BANNER_DEFAULTS)
+            banner: normalizeBanner(portal.banner)
         };
     }
 
@@ -111,6 +142,46 @@ module.exports.createRuntime = function (options) {
         return config;
     }
 
+    function persistPortalExtras(current, portal) {
+        current.modules.portal = current.modules.portal || shared.copy(PORTAL_DEFAULTS);
+        portal = portal && typeof portal === "object" && !Array.isArray(portal) ? portal : {};
+
+        if (Object.prototype.hasOwnProperty.call(portal, "banner")) {
+            current.modules.portal.banner = normalizeBanner(portal.banner);
+        }
+
+        current.modules.portal.views = current.modules.portal.views || {};
+        if (portal.views && typeof portal.views === "object" && !Array.isArray(portal.views)) {
+            Object.keys(portal.views).forEach(function (key) {
+                if (!current.modules.portal.views[key]) return;
+                var source = portal.views[key] && typeof portal.views[key] === "object" ? portal.views[key] : {};
+                var target = current.modules.portal.views[key];
+
+                if (Object.prototype.hasOwnProperty.call(source, "accessGroupIds")) {
+                    target.accessGroupIds = normalizeGroupIds(source.accessGroupIds);
+                }
+
+                [
+                    "devicesCardAccessGroupIds",
+                    "systemStatusCardAccessGroupIds",
+                    "integrationsCardAccessGroupIds"
+                ].forEach(function (field) {
+                    if (Object.prototype.hasOwnProperty.call(source, field)) {
+                        target[field] = normalizeGroupIds(source[field]);
+                    }
+                });
+
+                ["showDevicesCard", "showSystemStatusCard", "showIntegrationsCard", "personalized"].forEach(function (field) {
+                    if (Object.prototype.hasOwnProperty.call(source, field)) target[field] = source[field] === true;
+                });
+
+                ["label", "accent"].forEach(function (field) {
+                    if (Object.prototype.hasOwnProperty.call(source, field)) target[field] = String(source[field] || "");
+                });
+            });
+        }
+    }
+
     var baseSaveAdminSettings = runtime.saveAdminSettings;
     runtime.saveAdminSettings = function (user, payload) {
         payload = payload && typeof payload === "object" ? shared.copy(payload) : {};
@@ -119,6 +190,7 @@ module.exports.createRuntime = function (options) {
             payload.portal = shared.copy(payload.moduleOptions.portal);
         }
 
+        var portal = payload.portal || payload.moduleOptions.portal || {};
         var moduleAccess = {};
         Object.keys(payload.moduleOptions).forEach(function (key) {
             var value = payload.moduleOptions[key];
@@ -129,14 +201,11 @@ module.exports.createRuntime = function (options) {
             }
         });
 
-        var viewAccess = {};
-        var portal = payload.portal || payload.moduleOptions.portal;
         if (portal && portal.views && typeof portal.views === "object") {
             Object.keys(portal.views).forEach(function (key) {
                 var view = portal.views[key];
                 if (view && typeof view === "object" && Object.prototype.hasOwnProperty.call(view, "accessGroupIds")) {
                     view.accessGroupIds = normalizeGroupIds(view.accessGroupIds);
-                    viewAccess[key] = view.accessGroupIds.slice();
                 }
             });
             payload.portal = portal;
@@ -144,24 +213,18 @@ module.exports.createRuntime = function (options) {
         }
 
         return baseSaveAdminSettings(user, payload).then(function () {
-            if (!Object.keys(moduleAccess).length && !Object.keys(viewAccess).length) return runtime.adminSnapshot(user);
             return context.settings.update(function (current) {
                 Object.keys(moduleAccess).forEach(function (key) {
                     current.modules[key] = current.modules[key] || {};
                     current.modules[key].accessGroupIds = moduleAccess[key].slice();
                 });
-                current.modules.portal = current.modules.portal || shared.copy(PORTAL_DEFAULTS);
-                current.modules.portal.views = current.modules.portal.views || {};
-                Object.keys(viewAccess).forEach(function (key) {
-                    current.modules.portal.views[key] = current.modules.portal.views[key] || {};
-                    current.modules.portal.views[key].accessGroupIds = viewAccess[key].slice();
-                });
+                persistPortalExtras(current, portal);
                 return current;
-            }).then(function () { return runtime.adminSnapshot(user); });
-        }).then(function (snapshot) {
+            });
+        }).then(function () {
             var current = context.settings.read();
             syncPublicPortalConfig(current.modules && current.modules.portal);
-            return snapshot;
+            return runtime.adminSnapshot(user);
         });
     };
 
