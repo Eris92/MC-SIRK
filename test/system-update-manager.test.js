@@ -32,6 +32,7 @@ function waitForJob(manager, jobId) {
     var manager = managerFactory.create({ appRoot: root, dataRoot: dataRoot });
     assert.deepStrictEqual(manager.channels, { stable: "main", beta: "beta", dev: "develop" });
     assert.strictEqual(typeof manager.restart, "function");
+    assert.strictEqual(typeof manager.deleteBackup, "function");
     assert.strictEqual(manager.current().version, "1.0.0");
     assert.strictEqual(manager.current().channel, "stable");
     assert.strictEqual(manager.current().branch, "main");
@@ -46,8 +47,14 @@ function waitForJob(manager, jobId) {
     var job = await waitForJob(manager, queued.jobId);
     assert.strictEqual(job.result.version, "1.0.0");
     assert.strictEqual(manager.backups().length, 1);
-    assert.ok(fs.existsSync(path.join(dataRoot, "updates", "backups", job.result.id, "manifest.json")));
-    assert.ok(fs.existsSync(path.join(dataRoot, "updates", "backups", job.result.id, "app", "package.json")));
+    var backupDirectory = path.join(dataRoot, "updates", "backups", job.result.id);
+    assert.ok(fs.existsSync(path.join(backupDirectory, "manifest.json")));
+    assert.ok(fs.existsSync(path.join(backupDirectory, "app", "package.json")));
+    var deleted = await manager.deleteBackup(job.result.id);
+    assert.deepStrictEqual(deleted, { deleted: true, backupId: job.result.id });
+    assert.strictEqual(manager.backups().length, 0);
+    assert.strictEqual(fs.existsSync(backupDirectory), false);
+
     fs.writeFileSync(path.join(dataRoot, "updates", "state.json"), JSON.stringify({
         channel: "dev",
         pending: { token: "missing-operation", targetVersion: "9.9.9" },
