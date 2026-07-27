@@ -3,6 +3,7 @@
 var http = require("http");
 var fs = require("fs");
 var path = require("path");
+var crypto = require("crypto");
 var adapter = require("./adapters/standalone/index.js");
 var runtimeFactory = require("./standalone-runtime.js");
 var apiFactory = require("./http/api-router.js");
@@ -104,6 +105,18 @@ function loginHtml() {
 
 function start(options) {
     options = options || {};
+    var localSessions = new Map();
+    var loginUser = String(process.env.SIRK_LOGIN_USER || "admin");
+    var loginPassword = String(process.env.SIRK_LOGIN_PASSWORD || "admin");
+    options.auth = options.auth || {
+        currentUser: function (req) {
+            var cookie = String(req && req.headers && req.headers.cookie || "");
+            var match = cookie.match(/(?:^|;\s*)sirk_session=([^;]+)/);
+            var session = match && localSessions.get(decodeURIComponent(match[1]));
+            if (!session) return Promise.reject(new Error("Authentication required."));
+            return session;
+        }
+    };
     var host = adapter.createHost(options);
     var runtime = runtimeFactory.createRuntime(host, ROOT);
     var api = apiFactory.createHandler(runtime, host);
@@ -112,6 +125,26 @@ function start(options) {
     return Promise.resolve(runtime.initialize()).then(function () {
         var server = http.createServer(function (req, res) {
             var url = new URL(req.url, "http://sirk.local");
+            if (url.pathname === "/api/auth/login" && req.method === "POST") {
+                var chunks = [];
+                req.on("data", function (chunk) { chunks.push(chunk); });
+                req.on("end", function () {
+                    var values = new URLSearchParams(Buffer.concat(chunks).toString("utf8"));
+                    if (values.get("username") !== loginUser || values.get("password") !== loginPassword) {
+                        res.statusCode = 401; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: false, error: "Nieprawidłowa nazwa użytkownika lub hasło." })); return;
+                    }
+                    var token = crypto.randomBytes(32).toString("hex");
+                    localSessions.set(token, { id: "local/" + loginUser, displayName: loginUser, tenantId: "local", roles: ["admin"], groups: [], isAdmin: true, siteadmin: true });
+                    res.setHeader("Set-Cookie", "sirk_session=" + token + "; Path=/; HttpOnly; SameSite=Lax");
+                    res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify({ ok: true }));
+                });
+                return;
+            }
+            if (url.pathname === "/auth/logout") {
+                var logoutCookie = String(req.headers.cookie || "").match(/(?:^|;\s*)sirk_session=([^;]+)/);
+                if (logoutCookie) localSessions.delete(decodeURIComponent(logoutCookie[1]));
+                res.statusCode = 302; res.setHeader("Set-Cookie", "sirk_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"); res.setHeader("Location", "/login"); res.end(); return;
+            }
             if (url.pathname.indexOf("/api/system/updates/") === 0) { updateApi(req, res, url); return; }
             if (url.pathname.indexOf("/api/") === 0) { api(req, res); return; }
             if (url.pathname === "/login") {
@@ -125,6 +158,8 @@ function start(options) {
                 return;
             }
             if (url.pathname === "/" || url.pathname === "/sirkportal/") {
+                var portalCookie = String(req.headers.cookie || "").match(/(?:^|;\s*)sirk_session=([^;]+)/);
+                if (!portalCookie || !localSessions.has(decodeURIComponent(portalCookie[1]))) { res.statusCode = 302; res.setHeader("Location", "/login"); res.end(); return; }
                 res.setHeader("Content-Type", "text/html; charset=utf-8");
                 res.end(portalHtml());
                 return;
