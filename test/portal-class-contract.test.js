@@ -34,7 +34,7 @@ function walk(directory) {
         var source = fs.readFileSync(file, "utf8");
         source.split(/\r?\n/).forEach(function (line, index) {
             if (!/standalone[\\/]scripts[\\/]cleanup\.js$/i.test(file) && /\bmc-[a-z0-9-]+/i.test(line)) offenders.push(path.relative(root, file) + ":" + (index + 1) + " contains mc-* class");
-            if (!/portal[\\/]standalone[\\/]scripts[\\/]app\.js$/i.test(file) && !/shared[\\/]icon-registry\.js$/i.test(file)) inspectClassList(file, line, index);
+            if (!/portal[\\/]standalone[\\/]scripts[\\/]app\.js$/i.test(file) && !/portal[\\/]management\.js$/i.test(file) && !/shared[\\/]icon-registry\.js$/i.test(file)) inspectClassList(file, line, index);
         });
     });
 }

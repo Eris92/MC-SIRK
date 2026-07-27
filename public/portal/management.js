@@ -211,7 +211,7 @@
     }
 
     function renderCategories() {
-        var host = state.host.querySelector(".sirk-layout > .sirk-column:nth-child(1) .sirk-list");
+        var host = state.host.querySelector(".sirk-layout > .sirk-column-primary .sirk-list");
         host.innerHTML = "";
         var visibleRoots = roots().filter(function (root) {
             return !tools.state.favoritesOnly || containsVisibleScript(root);
@@ -249,7 +249,7 @@
         var open = el("button", "sirk-nav-item sirk-script-open");
         open.type = "button";
         open.setAttribute("data-script-path", script.path);
-        open.innerHTML = '<span class="sirk-nav-icon' + (script.requiresApproval ? ' sirk-script-approval-icon' : '')">' + (script.requiresApproval ? icons.approval : icons.script) + '</span><span class="sirk-script-label"></span>';
+        open.innerHTML = '<span class="sirk-nav-icon' + (script.requiresApproval ? ' sirk-script-approval-icon' : '') + '">' + (script.requiresApproval ? icons.approval : icons.script) + '</span><span class="sirk-script-label"></span>';
         open.querySelector(".sirk-script-label").textContent = localized(script, "label") || script.name || script.path;
         var scriptDescription = localized(script, "description");
         if (scriptDescription) open.title = scriptDescription;
@@ -292,7 +292,7 @@
     }
 
     function renderScripts() {
-        var host = state.host.querySelector(".sirk-layout > .sirk-column:nth-child(2) .sirk-list");
+        var host = state.host.querySelector(".sirk-layout > .sirk-column-secondary .sirk-list");
         host.innerHTML = "";
         if (state.results) {
             [
