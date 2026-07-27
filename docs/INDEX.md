@@ -13,6 +13,7 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | wybór testu lub analiza regresji | `test/INDEX.md` |
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
+| kontynuacja pracy w nowym czacie | `docs/CONTINUE-IN-NEW-CHAT.md` |
 | integracja Portalu z MeshCentral | `docs/portal-integration.md` |
 | reguły pracy agenta | `docs/agent/11-Agent-SIRK-Portal.md` |
 
