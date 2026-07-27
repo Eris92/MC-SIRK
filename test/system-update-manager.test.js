@@ -31,6 +31,7 @@ function waitForJob(manager, jobId) {
 
     var manager = managerFactory.create({ appRoot: root, dataRoot: dataRoot });
     assert.deepStrictEqual(manager.channels, { stable: "main", beta: "beta", dev: "develop" });
+    assert.strictEqual(typeof manager.restart, "function");
     assert.strictEqual(manager.current().version, "1.0.0");
     assert.strictEqual(manager.current().channel, "stable");
     assert.strictEqual(manager.current().branch, "main");

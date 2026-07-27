@@ -272,11 +272,16 @@ function create(options) {
         return current();
     }
 
+    function restart() {
+        if (typeof options.restart === "function") return Promise.resolve(options.restart());
+        return { scheduled: false, reason: "Restart is managed by the host service." };
+    }
+
     function job(jobId) {
         return (loadState().jobs || {})[String(jobId || "")] || null;
     }
 
-    return { channels: CHANNELS, current: current, state: loadState, setChannel: setChannel, check: check, backup: backup, backups: listBackups, install: install, restore: restore, health: health, job: job };
+    return { channels: CHANNELS, current: current, state: loadState, setChannel: setChannel, check: check, backup: backup, backups: listBackups, install: install, restore: restore, health: health, job: job, restart: restart };
 }
 
 module.exports = { create: create, channels: CHANNELS };

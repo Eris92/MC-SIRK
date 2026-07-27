@@ -27,7 +27,14 @@ module.exports.install = function (plugin, parent, webserver, meshServer) {
 
     var meshRoot = parent && parent.parent;
     var dataRoot = path.join(meshRoot && meshRoot.datapath || path.join(__dirname, "..", ".."), "sirk-platform-data");
-    var manager = managerFactory.create({ appRoot: path.resolve(__dirname, "..", ".."), dataRoot: dataRoot });
+    var manager = managerFactory.create({
+        appRoot: path.resolve(__dirname, "..", ".."),
+        dataRoot: dataRoot,
+        restart: function () {
+            setTimeout(function () { process.exit(0); }, 900);
+            return { scheduled: true };
+        }
+    });
     var handler = routerFactory.createHandler(manager);
     var domains = meshServer && meshServer.config && meshServer.config.domains || { "": { url: "/" } };
 

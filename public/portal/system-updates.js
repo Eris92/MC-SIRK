@@ -53,6 +53,7 @@
         var remote = snapshot.remote || {};
         var current = snapshot.current || {};
         var job = latestJob(snapshot);
+        var restartButton = current.pending ? '<button type="button" class="sirk-button" data-update-action="restart">Uruchom ponownie MeshCentral</button>' : '';
         host.innerHTML = '<div class="sirk-update-section"><div class="sirk-update-actions">' +
             '<button type="button" class="sirk-button" data-update-action="check">Sprawdź aktualizacje</button>' +
             '<button type="button" class="sirk-button" data-update-action="install"' + (busy(snapshot) || current.pending ? ' disabled' : '') + '>Aktualizuj</button></div>' +
@@ -60,7 +61,7 @@
             '<p>Dostępna wersja: <strong>' + escapeHtml(remote.availableVersion || remote.error || "—") + '</strong></p>' +
             '<p>Aktywny kanał: <strong>' + escapeHtml(current.channel || "—") + '</strong> · <code>' + escapeHtml(current.branch || "—") + '</code></p>' +
             '<p>Status: <strong>' + (remote.updateAvailable ? 'Dostępna aktualizacja' : 'Aktualne') + '</strong></p></div>' +
-            jobMarkup(job) + (current.pending ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.</p>' : '') + '</div>';
+            jobMarkup(job) + (current.pending ? '<p class="sirk-update-warning">Operacja została przygotowana. Uruchom ponownie MeshCentral, aby wykonać atomową podmianę plików.<br>' + restartButton + '</p>' : '') + '</div>';
     }
 
     function renderBackups(host, snapshot) {
@@ -140,6 +141,10 @@
                 if (action === "save-channel") {
                     var channel = host.querySelector("[data-update-channel]");
                     api("channel", "POST", { channel: channel.value }).then(function () { return load(host, section); }).catch(function (error) { window.alert(error.message); });
+                }
+                if (action === "restart" && window.confirm("Uruchomić ponownie MeshCentral teraz?")) {
+                    actionNode.disabled = true;
+                    api("restart", "POST", {}).catch(function (error) { window.alert(error.message); actionNode.disabled = false; });
                 }
             }
             if (restoreNode && window.confirm("Przywrócić wybrany backup?")) startJob(host, section, "restore", { backupId: restoreNode.getAttribute("data-restore-id") });
