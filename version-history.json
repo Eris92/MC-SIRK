@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.8.36-dev.6",
+    "date": "2026-07-27",
+    "changes": [
+      "Organize settings by main Portal menu area and collapse nested settings sections by default"
+    ]
+  },
+  {
     "version": "1.8.36-dev.5",
     "date": "2026-07-27",
     "changes": [

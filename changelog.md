@@ -1,3 +1,7 @@
+## 1.8.36-dev.6
+
+- Reorganized Portal settings by the main menu areas and made every nested settings section collapsed by default.
+
 ## 1.8.36-dev.5
 
 - Reduced the standalone device tabs bar to 46px so it stays only slightly taller than its buttons.

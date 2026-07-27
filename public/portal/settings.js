@@ -4,7 +4,7 @@
     var state = {
         snapshot: null,
         active: "overview",
-        settingsKey: "portal",
+        settingsKey: "settings",
         debugKey: "config",
         pluginView: "installed",
         plugins: [],
@@ -15,10 +15,23 @@
     var SERVICE_RESTART_KEY = "sirkPortal.serviceRestartState";
 
     var settingsItems = [
-        ["portal", "Portal"], ["approvalcenter", "Approval Center"], ["moverequests", "Move Request"],
-        ["mycommands", "Commands"], ["myscripts", "Scripts"], ["folderpermissions", "Uprawnienia folderów"],
-        ["myjira", "Jira"], ["defendertools", "Defender"]
+        ["overview", "Przegląd"], ["devices", "Urządzenia"], ["approvals", "Akceptacje"],
+        ["automation", "Automatyzacja"], ["monitoring", "Monitoring"], ["assets", "Zasoby"],
+        ["management", "Zarządzanie"], ["reports", "Raporty"], ["security", "Bezpieczeństwo"],
+        ["settings", "Ustawienia"]
     ];
+    var settingsSections = {
+        overview: [{ type: "overview", title: "Stan Portalu" }],
+        devices: [{ type: "empty", title: "Urządzenia", text: "Połączenia urządzeń i sesje są dostępne w widoku Urządzenia." }],
+        approvals: [{ type: "module", key: "approvalcenter", title: "Akceptacje" }, { type: "module", key: "moverequests", title: "Wnioski o przeniesienie" }],
+        automation: [{ type: "module", key: "mycommands", title: "Polecenia" }, { type: "module", key: "myscripts", title: "Skrypty" }],
+        monitoring: [{ type: "integrations", title: "Integracje monitoringu" }],
+        assets: [{ type: "folderpermissions", title: "Uprawnienia folderów" }],
+        management: [{ type: "module", key: "myjira", title: "Jira" }],
+        reports: [{ type: "empty", title: "Raporty", text: "Raporty są dostępne w widoku Raporty." }],
+        security: [{ type: "module", key: "defendertools", title: "Defender" }],
+        settings: [{ type: "portal", title: "Portal i sesja" }]
+    };
 
     function el(tag, className, text) {
         var node = document.createElement(tag);
@@ -192,9 +205,9 @@
             var value = object[key];
             var title = key.replace(/([A-Z])/g, " $1").replace(/^./, function (c) { return c.toUpperCase(); });
             if (value && typeof value === "object" && !Array.isArray(value)) {
-                var section = el("section", "sirk-card");
+                var section = el("details", "sirk-card");
                 section.setAttribute("data-search-item", "1");
-                section.appendChild(el("h3", "", title));
+                section.appendChild(el("summary", "", title));
                 objectForm(section, value, depth + 1);
                 host.appendChild(section);
             } else if (Array.isArray(value)) {
@@ -245,31 +258,33 @@
         });
 
         var payload = draftPayload();
-        var value = clone(settingsValue(state.settingsKey, payload));
+        var values = {};
         var form = el("div");
         form.setAttribute("data-settings-form", "1");
-        var module = (state.snapshot.modules || []).find(function (item) { return item.key === state.settingsKey; });
-        if (module && state.settingsKey !== "folderpermissions") {
-            field(form, "Moduł włączony", payload.modules[state.settingsKey] === true, function (checked) {
-                payload.modules[state.settingsKey] = checked;
-            }, { type: "boolean" });
-        }
-        if (state.settingsKey === "portal") {
-            field(form, "Widok domyślny", value.defaultView || "overview", function (next) { value.defaultView = next; }, {
-                choices: [["overview", "Overview"], ["devices", "Devices"], ["approvals", "Approval"], ["automation", "Automation"], ["management", "Management"]]
-            });
-            ["showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart"].forEach(function (key) {
-                field(form, key, value[key] === true, function (next) { value[key] = next; }, { type: "boolean" });
-            });
-            if (value.views) {
-                var views = el("section", "sirk-card");
-                views.appendChild(el("h3", "", "Widoczność pozycji Portalu"));
-                objectForm(views, value.views, 0);
-                form.appendChild(views);
+        (settingsSections[state.settingsKey] || []).forEach(function (definition) {
+            var section = el("details", "sirk-card");
+            section.setAttribute("data-search-item", "1");
+            section.appendChild(el("summary", "", definition.title));
+            if (definition.type === "empty") section.appendChild(el("p", "sirk-shared-muted", definition.text));
+            else if (definition.type === "overview") renderOverview(section);
+            else if (definition.type === "module") {
+                var value = values[definition.key] = clone(payload.moduleOptions[definition.key] || {});
+                field(section, "Moduł włączony", payload.modules[definition.key] === true, function (checked) { payload.modules[definition.key] = checked; }, { type: "boolean" });
+                objectForm(section, value, 0);
+            } else if (definition.type === "portal") {
+                var portal = values.portal = clone(payload.moduleOptions.portal || {});
+                field(section, "Widok domyślny", portal.defaultView || "overview", function (next) { portal.defaultView = next; }, { choices: [["overview", "Overview"], ["devices", "Devices"], ["approvals", "Approval"], ["automation", "Automation"], ["management", "Management"]] });
+                ["showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart"].forEach(function (key) { field(section, key, portal[key] === true, function (next) { portal[key] = next; }, { type: "boolean" }); });
+                if (portal.views) { section.appendChild(el("h3", "", "Widoczność pozycji Portalu")); objectForm(section, portal.views, 0); }
+            } else if (definition.type === "folderpermissions") {
+                var folder = values.folderpermissions = settingsValue("folderpermissions", payload);
+                objectForm(section, folder, 0);
+            } else if (definition.type === "integrations") {
+                values.integrations = clone(payload.integrations || {});
+                objectForm(section, values.integrations, 0);
             }
-        } else {
-            objectForm(form, value, 0);
-        }
+            form.appendChild(section);
+        });
         var actions = el("div", "sirk-toolbar-group sirk-toolbar-left");
         var save = el("button", "sirk-button", "Zapisz");
         var message = el("span");
@@ -279,11 +294,21 @@
                 payload.moduleOptions.portal = payload.moduleOptions.portal || {};
                 payload.moduleOptions.myscripts = payload.moduleOptions.myscripts || {};
                 payload.moduleOptions.mycommands = payload.moduleOptions.mycommands || {};
-                payload.moduleOptions.portal.views = value.portalViews || {};
-                payload.moduleOptions.myscripts.folderPermissions = value.scripts || {};
-                payload.moduleOptions.mycommands.folderPermissions = value.commands || {};
+                payload.moduleOptions.portal.views = values.folderpermissions && values.folderpermissions.portalViews || {};
+                payload.moduleOptions.myscripts.folderPermissions = values.folderpermissions && values.folderpermissions.scripts || {};
+                payload.moduleOptions.mycommands.folderPermissions = values.folderpermissions && values.folderpermissions.commands || {};
+            } else if (values.folderpermissions) {
+                payload.moduleOptions.portal = payload.moduleOptions.portal || {};
+                payload.moduleOptions.myscripts = payload.moduleOptions.myscripts || {};
+                payload.moduleOptions.mycommands = payload.moduleOptions.mycommands || {};
+                payload.moduleOptions.portal.views = values.folderpermissions.portalViews || {};
+                payload.moduleOptions.myscripts.folderPermissions = values.folderpermissions.scripts || {};
+                payload.moduleOptions.mycommands.folderPermissions = values.folderpermissions.commands || {};
             } else {
-                payload.moduleOptions[state.settingsKey] = value;
+                Object.keys(values).forEach(function (key) {
+                    if (key === "integrations") payload.integrations = values.integrations;
+                    else payload.moduleOptions[key] = values[key];
+                });
             }
             save.disabled = true;
             status(message, "Zapisywanie…", false);
