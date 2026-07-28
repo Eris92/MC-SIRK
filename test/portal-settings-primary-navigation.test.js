@@ -35,9 +35,17 @@ assert.ok(source.indexOf('attributeFilter: ["class", "open", "hidden"]') < 0,
     "The navigation must not recreate the previous hidden/open mutation loop.");
 assert.ok(source.indexOf("if (button.textContent !== text) button.textContent = text") >= 0,
     "Navigation labels must only be rewritten when the language actually changes.");
+assert.ok(source.indexOf("sirkCollapseIsolationStyle") >= 0,
+    "The Portal must install an explicit collapse-state isolation contract.");
+assert.ok(source.indexOf("#sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed)") >= 0,
+    "Collapsing the main Portal sidebar must restore the normal Management columns.");
+assert.ok(source.indexOf("sirk-management-primary-collapsed") >= 0 && source.indexOf('layout.classList.toggle("is-collapsed", collapsed)') >= 0,
+    "Management must copy only its own local collapse state to its layout.");
+assert.ok(source.indexOf('new MutationObserver(schedule).observe(shellRoot') >= 0,
+    "Main sidebar changes must be observed independently from Management content changes.");
 assert.ok(standaloneLoader.indexOf("settings-primary-navigation.js") >= 0,
     "Standalone Portal must load the shared promoted navigation asset.");
 assert.ok(pluginLoader.indexOf("settings-primary-navigation.js") >= 0,
     "Plugin Portal must load the shared promoted navigation asset.");
 
-console.log("Portal promoted settings navigation: OK");
+console.log("Portal promoted settings navigation and collapse isolation: OK");
