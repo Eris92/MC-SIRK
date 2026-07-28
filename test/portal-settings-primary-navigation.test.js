@@ -23,8 +23,8 @@ assert.ok(source.indexOf('data-settings-root-menu') >= 0,
 });
 assert.ok(source.indexOf("min-height:42px") >= 0 && source.indexOf("pointer-events:auto") >= 0,
     "Promoted navigation rows must expose a large, fully clickable target.");
-assert.ok(source.indexOf('target.click()') >= 0,
-    "Promoted sections must activate their technical renderer buttons.");
+assert.ok(source.indexOf('if (target) target.click()') >= 0,
+    "Promoted sections must always activate their technical renderer buttons.");
 assert.ok(source.indexOf('project(secondary)') >= 0,
     "The second column must be projected from the selected first-column section.");
 assert.ok(source.indexOf('sirk-settings-primary-projected>summary') >= 0,
