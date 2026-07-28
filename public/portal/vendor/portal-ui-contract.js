@@ -68,6 +68,8 @@
         var style = document.createElement("style");
         style.id = "sirkSettingsPrimaryNavigationStyle";
         style.textContent = [
+            ".sirk-settings-root-menu{display:grid;gap:4px;width:100%}",
+            ".sirk-settings-root-menu>.sirk-settings-root-button{width:100%;box-sizing:border-box;text-align:left}",
             ".sirk-settings-root-button.sirk-settings-root-active{background:var(--sirk-active-bg,rgba(77,107,216,.14))!important;color:var(--sirk-text,#172033)!important;font-weight:700!important;box-shadow:inset 3px 0 0 var(--sirk-active-accent,#4d6bd8)!important}",
             ".sirk-settings-primary-projected>summary{display:none!important}",
             ".sirk-settings-primary-projected>.sirk-settings-nav-group-body{display:block!important;padding:0!important}",
@@ -76,8 +78,19 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
-    function rootButton(primary, key, base, server) {
-        var button = primary.querySelector(':scope > [data-settings-root="' + key + '"]');
+    function rootMenu(primary, server) {
+        var menu = primary.querySelector(":scope > [data-settings-root-menu]");
+        if (!menu) {
+            menu = document.createElement("div");
+            menu.className = "sirk-settings-root-menu";
+            menu.setAttribute("data-settings-root-menu", "1");
+            primary.insertBefore(menu, server || null);
+        }
+        return menu;
+    }
+
+    function rootButton(menu, key, base) {
+        var button = menu.querySelector(':scope > [data-settings-root="' + key + '"]');
         if (!button) {
             button = document.createElement("button");
             button.type = "button";
@@ -88,14 +101,13 @@
                 event.stopPropagation();
                 activeRoot = key;
                 needsDefaultSelection = true;
-                if (isActive(base)) {
-                    schedule();
-                } else {
+                if (isActive(base)) schedule();
+                else {
                     base.click();
                     schedule();
                 }
             });
-            primary.insertBefore(button, server || null);
+            menu.appendChild(button);
         }
         button.textContent = label(key);
         return button;
@@ -119,7 +131,7 @@
             .filter(function (entry) { return !!entry.key; });
     }
 
-    function projectSecondary(workspace, secondary) {
+    function projectSecondary(secondary) {
         var groups = settingsGroups(secondary);
         var target = null;
         groups.forEach(function (entry) {
@@ -175,10 +187,11 @@
         base.setAttribute("aria-hidden", "true");
         base.setAttribute("tabindex", "-1");
 
+        var menu = rootMenu(primary, server);
         var buttons = {
-            modules: rootButton(primary, "modules", base, server),
-            portal: rootButton(primary, "portal", base, server),
-            integrations: rootButton(primary, "integrations", base, server)
+            modules: rootButton(menu, "modules", base),
+            portal: rootButton(menu, "portal", base),
+            integrations: rootButton(menu, "integrations", base)
         };
         if (server) primary.appendChild(server);
 
@@ -187,7 +200,7 @@
             buttons[key].setAttribute("aria-current", isActive(base) && key === activeRoot ? "page" : "false");
         });
 
-        if (isActive(base)) projectSecondary(workspace, secondary);
+        if (isActive(base)) projectSecondary(secondary);
         else restoreProjection(secondary);
     }
 
@@ -209,8 +222,6 @@
             attributeFilter: ["class", "open", "hidden"]
         });
     }
-    window.addEventListener("sirkportal:languagechange", function () {
-        schedule();
-    });
+    window.addEventListener("sirkportal:languagechange", schedule);
     schedule();
 }());
