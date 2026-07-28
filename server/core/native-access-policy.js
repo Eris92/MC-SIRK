@@ -99,6 +99,16 @@ function addAuthBypass(req, requestUrl) {
     if (req.originalUrl != null) req.originalUrl = value;
 }
 
+function validLoginFrame(req, policy, requestUrl) {
+    if (requestUrl.searchParams.get("sirkAuth") !== "1") return false;
+    var destination = String(req && req.headers && req.headers["sec-fetch-dest"] || "").toLowerCase();
+    var referer = String(req && req.headers && req.headers.referer || "");
+    var fromLogin = false;
+    try { fromLogin = new URL(referer || "http://invalid.local").pathname === policy.login; }
+    catch (error) {}
+    return destination === "iframe" && fromLogin;
+}
+
 function moveFirst(app, middleware) {
     var router = app && (app._router || app.router);
     var stack = router && router.stack;
@@ -124,7 +134,6 @@ exports.install = function (plugin, parent, webserver, meshServer) {
         var domain = domains[key] || {};
         var base = normalizeBase(domain.url || "/");
         return {
-            base: base,
             root: base === "/" ? "/" : base.replace(/\/$/, ""),
             rootSlash: base,
             native: base + "meshcentral",
@@ -168,7 +177,6 @@ exports.install = function (plugin, parent, webserver, meshServer) {
             return;
         }
 
-        if (requestUrl.searchParams.get("sirkAuth") === "1") { next(); return; }
         if (emergency) { addAuthBypass(req, requestUrl); next(); return; }
         if (explicitNative) {
             if (portal.showNativeLink === false) { redirect(res, policy.portal); return; }
@@ -176,6 +184,8 @@ exports.install = function (plugin, parent, webserver, meshServer) {
             next();
             return;
         }
+        if (validLoginFrame(req, policy, requestUrl)) { next(); return; }
+        if (requestUrl.searchParams.get("sirkAuth") === "1") { redirect(res, policy.login); return; }
         if (portal.forcePortalInterface === true) { redirect(res, policy.portal); return; }
         if (portal.forceNewLogin === true) { redirect(res, policy.login); return; }
         next();
@@ -188,5 +198,6 @@ exports.install = function (plugin, parent, webserver, meshServer) {
 exports._test = {
     normalizeBase: normalizeBase,
     safeEqual: safeEqual,
-    emergencyUrl: emergencyUrl
+    emergencyUrl: emergencyUrl,
+    validLoginFrame: validLoginFrame
 };
