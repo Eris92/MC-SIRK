@@ -15,9 +15,15 @@ assert.ok(fix.indexOf("sirkReleaseOverlay") >= 0 && fix.indexOf("sirkUpdateFulls
     "Both release and update overlays must be themed.");
 assert.ok(fix.indexOf('"--sirk-panel": "#111827"') >= 0 && fix.indexOf("sirk-theme-dark>section") >= 0,
     "Release overlay must have an explicit dark palette fallback.");
+assert.ok(fix.indexOf("makeReleaseBlocking") >= 0 && fix.indexOf('aria-modal", "true') >= 0,
+    "Release information must remain a blocking modal until acknowledged.");
+assert.ok(fix.indexOf("display:grid!important") >= 0 && fix.indexOf("place-items:center!important") >= 0,
+    "Release modal must remain centered on the screen.");
+assert.ok(fix.indexOf("makeReleaseNonBlocking") < 0 && fix.indexOf("sirk-release-close") >= 0,
+    "The compatibility controller may remove old close buttons but must not restore non-blocking mode.");
 assert.ok(settingsLoader.indexOf("update-release-theme-fix.js") >= 0,
     "Settings must retain the overlay controller loader.");
 assert.ok(portalLoader.indexOf("sirk-update-release-theme-fix") >= 0 && portalLoader.indexOf("update-release-theme-fix.js") >= 0,
     "Portal startup must load the overlay controller before Settings is opened.");
 
-console.log("Portal update timer and overlay theme sync: OK");
+console.log("Portal update timer and blocking release theme sync: OK");
