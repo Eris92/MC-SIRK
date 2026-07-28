@@ -1,9 +1,11 @@
 [
   {
-    "version": "1.8.36-dev.73",
-    "date": "2026-07-27",
+    "version": "1.8.36-dev.78",
+    "date": "2026-07-28",
     "changes": [
-      "Add the Commands module enable switch to Settings Modules"
+      "Add authenticated per-device SIRK Agent enrollment and check-in credentials",
+      "Persist only SHA-256 device credential hashes in the Portal registry",
+      "Add a live Windows service enrollment and check-in E2E harness"
     ]
   },
   {

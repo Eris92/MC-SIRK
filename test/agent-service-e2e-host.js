@@ -2,6 +2,8 @@
 
 var path = require("path");
 var fs = require("fs");
+var childProcess = require("child_process");
+var execFile = require("util").promisify(childProcess.execFile);
 var standalone = require("../server/standalone.js");
 
 if (process.argv.indexOf("--live") === -1) {
@@ -12,64 +14,70 @@ var port = Number(process.env.SIRK_AGENT_E2E_PORT || 18080);
 var dataRoot = path.resolve(process.env.SIRK_AGENT_E2E_DATA ||
     path.join(__dirname, "..", ".tmp", "agent-service-e2e"));
 var agentRoot = path.join(process.env.ProgramData || "C:\\ProgramData", "SIRK", "Agent");
-var configPath = path.join(agentRoot, "management.json");
+var credentialPath = path.join(agentRoot, "portal-credential.bin");
 var registryPath = path.join(dataRoot, "agent-registry.json");
-var previousConfig = fs.existsSync(configPath) ? fs.readFileSync(configPath) : null;
-var token = "sirk-local-e2e-only";
+var previousCredential = fs.existsSync(credentialPath) ? fs.readFileSync(credentialPath) : null;
+var enrollmentToken = "sirk-local-enrollment-only";
+var tokenPath = path.join(dataRoot, "enrollment-token.txt");
+var cliPath = process.env.SIRK_AGENT_E2E_CLI ||
+    "C:\\Program Files\\SIRK Agent\\sirkctl.exe";
 
 standalone.start({
     host: "127.0.0.1",
     port: port,
     dataRoot: dataRoot,
-    agentToken: token
-}).then(function (server) {
-    var deadline = Date.now() + 60000;
-    fs.writeFileSync(configPath + ".tmp", JSON.stringify({
-        enabled: false,
-        telemetryEndpoint: null,
-        bearerToken: null,
-        batchSize: 25,
-        timeoutSeconds: 10,
-        portalEnabled: true,
-        portalEndpoint: "http://127.0.0.1:" + port + "/api/agent/v1/checkin",
-        deviceToken: token
-    }, null, 2) + "\n");
-    fs.renameSync(configPath + ".tmp", configPath);
-
+    agentEnrollmentToken: enrollmentToken
+}).then(async function (server) {
+    var deadline = Date.now() + 90000;
+    fs.mkdirSync(dataRoot, { recursive: true });
+    if (fs.existsSync(registryPath)) fs.unlinkSync(registryPath);
+    fs.writeFileSync(tokenPath, enrollmentToken + "\n", { encoding: "utf8", mode: 0o600 });
+    await execFile(cliPath, [
+        "enroll",
+        "--endpoint", "http://127.0.0.1:" + port + "/api/agent/v1/enroll",
+        "--bootstrap-token-file", tokenPath
+    ], { encoding: "utf8", windowsHide: true });
     return new Promise(function (resolve, reject) {
         var timer = setInterval(function () {
             try {
                 var registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
                 var keys = Object.keys(registry.devices || {});
-                if (keys.length) {
+                var checkedIn = keys.map(function (key) { return registry.devices[key]; })
+                    .find(function (device) { return device && device.lastSeenUtc && device.agentVersion; });
+                if (checkedIn) {
                     clearInterval(timer);
                     resolve({
                         ready: true,
                         address: server.address(),
                         dataRoot: dataRoot,
-                        device: registry.devices[keys[0]]
+                        device: checkedIn
                     });
                 } else if (Date.now() >= deadline) {
                     clearInterval(timer);
-                    reject(new Error("Agent did not check in within 60 seconds."));
+                    reject(new Error("Agent did not check in within 90 seconds."));
                 }
             } catch (error) {
                 if (Date.now() >= deadline) {
                     clearInterval(timer);
-                    reject(new Error("Agent registry was not created within 60 seconds."));
+                    reject(new Error("Agent registry was not created within 90 seconds."));
                 }
             }
         }, 1000);
     }).then(function (result) {
         console.log(JSON.stringify(result, null, 2));
     }).finally(function () {
-        if (previousConfig) fs.writeFileSync(configPath, previousConfig);
-        else if (fs.existsSync(configPath)) fs.unlinkSync(configPath);
+        if (previousCredential) fs.writeFileSync(credentialPath, previousCredential);
+        else if (fs.existsSync(credentialPath)) fs.unlinkSync(credentialPath);
+        if (fs.existsSync(tokenPath)) fs.unlinkSync(tokenPath);
+        server.closeAllConnections();
         server.close();
+    }).then(function () {
+        process.exit(0);
     });
 }).catch(function (error) {
-    if (previousConfig) fs.writeFileSync(configPath, previousConfig);
-    else if (fs.existsSync(configPath)) fs.unlinkSync(configPath);
+    if (previousCredential) fs.writeFileSync(credentialPath, previousCredential);
+    else if (fs.existsSync(credentialPath)) fs.unlinkSync(credentialPath);
+    if (fs.existsSync(tokenPath)) fs.unlinkSync(tokenPath);
     console.error(error);
-    process.exitCode = 1;
+    process.exit(1);
 });

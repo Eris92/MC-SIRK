@@ -1,6 +1,8 @@
-## 1.8.36-dev.73
+## 1.8.36-dev.78
 
-- Add the Commands module enable switch to Settings → Moduły.
+- Add authenticated per-device SIRK Agent enrollment and check-in credentials.
+- Persist only SHA-256 device credential hashes in the Portal registry.
+- Add a live Windows service enrollment/check-in E2E harness.
 
 ## 1.8.36-dev.25
 

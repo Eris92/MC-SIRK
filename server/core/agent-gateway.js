@@ -16,13 +16,23 @@ function safeId(value) {
     return /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(value) ? value : "";
 }
 
-function authorized(req, token) {
+function suppliedToken(req) {
     var header = String(req.headers.authorization || "");
-    var supplied = header.indexOf("Bearer ") === 0 ? header.slice(7) : "";
-    if (!token || !supplied) return false;
-    var expectedHash = crypto.createHash("sha256").update(token).digest();
-    var suppliedHash = crypto.createHash("sha256").update(supplied).digest();
-    return crypto.timingSafeEqual(expectedHash, suppliedHash);
+    return header.indexOf("Bearer ") === 0 ? header.slice(7) : "";
+}
+
+function tokenHash(value) {
+    return crypto.createHash("sha256").update(String(value || "")).digest("hex");
+}
+
+function authorizedHash(req, expectedHex) {
+    var supplied = suppliedToken(req);
+    if (!supplied || !/^[a-f0-9]{64}$/i.test(String(expectedHex || ""))) return false;
+    return crypto.timingSafeEqual(Buffer.from(tokenHash(supplied), "hex"), Buffer.from(expectedHex, "hex"));
+}
+
+function authorizedToken(req, token) {
+    return token ? authorizedHash(req, tokenHash(token)) : false;
 }
 
 function writeJsonAtomic(file, value) {
@@ -35,6 +45,7 @@ module.exports.create = function (options) {
     options = options || {};
     var dataRoot = path.resolve(options.dataRoot);
     var token = String(options.token || process.env.SIRK_AGENT_TOKEN || "");
+    var enrollmentToken = String(options.enrollmentToken || process.env.SIRK_AGENT_ENROLLMENT_TOKEN || "");
     var registryPath = path.join(dataRoot, "agent-registry.json");
     var telemetryPath = path.join(dataRoot, "agent-telemetry.jsonl");
     fs.mkdirSync(dataRoot, { recursive: true });
@@ -50,16 +61,11 @@ module.exports.create = function (options) {
 
     function handler(req, res) {
         var url = new URL(req.url, "http://sirk.local");
-        if (url.pathname !== "/api/agent/v1/checkin") return false;
+        if (url.pathname !== "/api/agent/v1/checkin" && url.pathname !== "/api/agent/v1/enroll") return false;
         if (req.method !== "POST") {
             sendJson(res, 405, { ok: false, error: "Method not allowed." });
             return true;
         }
-        if (!authorized(req, token)) {
-            sendJson(res, 401, { ok: false, error: "Agent authentication failed." });
-            return true;
-        }
-
         var chunks = [], size = 0, ended = false;
         req.on("data", function (chunk) {
             if (ended) return;
@@ -84,7 +90,45 @@ module.exports.create = function (options) {
                 }
                 var now = new Date().toISOString();
                 var registry = readRegistry();
-                registry.devices[tenantId + "/" + deviceId] = {
+                var registryKey = tenantId + "/" + deviceId;
+                var existing = registry.devices[registryKey] || {};
+                if (url.pathname === "/api/agent/v1/enroll") {
+                    if (!authorizedToken(req, enrollmentToken)) {
+                        sendJson(res, 401, { ok: false, error: "Agent enrollment authentication failed." });
+                        return;
+                    }
+                    if (existing.credentialHash) {
+                        sendJson(res, 409, { ok: false, error: "Device is already enrolled." });
+                        return;
+                    }
+                    var deviceToken = crypto.randomBytes(32).toString("base64url");
+                    registry.devices[registryKey] = Object.assign({}, existing, {
+                        tenantId: tenantId,
+                        deviceId: deviceId,
+                        machineName: String(body.machineName || deviceId).slice(0, 255),
+                        enrolledAtUtc: now,
+                        credentialHash: tokenHash(deviceToken)
+                    });
+                    registry.updatedAtUtc = now;
+                    writeJsonAtomic(registryPath, registry);
+                    sendJson(res, 201, {
+                        ok: true,
+                        protocolVersion: 1,
+                        tenantId: tenantId,
+                        deviceId: deviceId,
+                        deviceToken: deviceToken,
+                        checkInEndpoint: "/api/agent/v1/checkin",
+                        enrolledAtUtc: now
+                    });
+                    return;
+                }
+                if (!authorizedHash(req, existing.credentialHash) && !authorizedToken(req, token)) {
+                    sendJson(res, 401, { ok: false, error: "Agent authentication failed." });
+                    return;
+                }
+                registry.devices[registryKey] = {
+                    enrolledAtUtc: existing.enrolledAtUtc || null,
+                    credentialHash: existing.credentialHash || null,
                     tenantId: tenantId,
                     deviceId: deviceId,
                     machineName: String(body.machineName || deviceId).slice(0, 255),
