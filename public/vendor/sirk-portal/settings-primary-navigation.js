@@ -50,7 +50,7 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
-    function menu(primary, anchor) { var node = primary.querySelector(":scope > [data-settings-root-menu]"); if (!node) { node = document.createElement("div"); node.className = "sirk-settings-root-menu"; node.setAttribute("data-settings-root-menu", "1"); primary.insertBefore(node, anchor || null); } return node; }
+    function menu(primary) { var node = primary.querySelector(":scope > [data-settings-root-menu]"); if (!node) { node = document.createElement("div"); node.className = "sirk-settings-root-menu"; node.setAttribute("data-settings-root-menu", "1"); primary.appendChild(node); } return node; }
     function rootButton(host, key, target) {
         var button = host.querySelector(':scope > [data-settings-root="' + key + '"]');
         if (!button) {
@@ -63,7 +63,7 @@
                 event.stopPropagation();
                 activeRoot = key;
                 needsDefaultSelection = key !== "server";
-                if (target && !active(target)) target.click();
+                if (target) target.click();
                 schedule();
             });
             host.appendChild(button);
@@ -103,7 +103,7 @@
         if (!base) return;
         hideTechnical(base, "data-settings-base-primary");
         hideTechnical(server, "data-server-base-primary");
-        var host = menu(primary, null);
+        var host = menu(primary);
         var buttons = {
             modules: rootButton(host, "modules", base),
             portal: rootButton(host, "portal", base),
