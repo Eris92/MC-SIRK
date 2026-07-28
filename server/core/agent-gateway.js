@@ -48,6 +48,7 @@ module.exports.create = function (options) {
     var enrollmentToken = String(options.enrollmentToken || process.env.SIRK_AGENT_ENROLLMENT_TOKEN || "");
     var registryPath = path.join(dataRoot, "agent-registry.json");
     var telemetryPath = path.join(dataRoot, "agent-telemetry.jsonl");
+    var policyRoot = path.join(dataRoot, "agent-policy-outbox");
     fs.mkdirSync(dataRoot, { recursive: true });
 
     function readRegistry() {
@@ -57,6 +58,34 @@ module.exports.create = function (options) {
         } catch (error) {
             return { schemaVersion: 1, devices: {} };
         }
+    }
+
+    function pendingPolicies(tenantId, deviceId, acknowledged) {
+        var directory = path.join(policyRoot, tenantId, deviceId);
+        var acknowledgedIds = new Set(Array.isArray(acknowledged)
+            ? acknowledged.filter(function (value) { return typeof value === "string"; })
+            : []);
+        if (!fs.existsSync(directory)) return [];
+        var values = [];
+        fs.readdirSync(directory).filter(function (name) {
+            return name.endsWith(".policy.json");
+        }).sort().slice(0, 20).forEach(function (name) {
+            var file = path.join(directory, name);
+            try {
+                if (fs.statSync(file).size > 256 * 1024) return;
+                var policy = JSON.parse(fs.readFileSync(file, "utf8"));
+                if (!policy || policy.tenantId !== tenantId || policy.deviceId !== deviceId ||
+                    typeof policy.policyId !== "string") return;
+                if (acknowledgedIds.has(policy.policyId)) {
+                    fs.unlinkSync(file);
+                    return;
+                }
+                values.push(policy);
+            } catch (error) {
+                // Malformed operator-supplied files remain in the outbox for inspection.
+            }
+        });
+        return values;
     }
 
     function handler(req, res) {
@@ -148,7 +177,12 @@ module.exports.create = function (options) {
                         event: event
                     }) + "\n", "utf8");
                 });
-                sendJson(res, 200, { ok: true, serverTimeUtc: now, acceptedEvents: Math.min(100, Array.isArray(body.events) ? body.events.length : 0) });
+                sendJson(res, 200, {
+                    ok: true,
+                    serverTimeUtc: now,
+                    acceptedEvents: Math.min(100, Array.isArray(body.events) ? body.events.length : 0),
+                    policies: pendingPolicies(tenantId, deviceId, body.acknowledgedPolicyIds)
+                });
             } catch (error) {
                 sendJson(res, 400, { ok: false, error: "Invalid agent check-in payload." });
             }

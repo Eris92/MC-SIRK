@@ -1,8 +1,10 @@
-## 1.8.36-dev.78
+## 1.8.36-dev.79
 
 - Add authenticated per-device SIRK Agent enrollment and check-in credentials.
 - Persist only SHA-256 device credential hashes in the Portal registry.
 - Add a live Windows service enrollment/check-in E2E harness.
+- Deliver queued signed policies only to their enrolled tenant/device.
+- Retain queued policies until the Agent acknowledges the active policy ID.
 
 ## 1.8.36-dev.25
 

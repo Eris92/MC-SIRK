@@ -21,6 +21,10 @@ var enrollmentToken = "sirk-local-enrollment-only";
 var tokenPath = path.join(dataRoot, "enrollment-token.txt");
 var cliPath = process.env.SIRK_AGENT_E2E_CLI ||
     "C:\\Program Files\\SIRK Agent\\sirkctl.exe";
+var policyFile = process.env.SIRK_AGENT_E2E_POLICY_FILE || "";
+var policy = policyFile ? JSON.parse(fs.readFileSync(policyFile, "utf8")) : null;
+var policyOutboxFile = policy ? path.join(dataRoot, "agent-policy-outbox", policy.tenantId,
+    policy.deviceId, path.basename(policyFile)) : "";
 
 standalone.start({
     host: "127.0.0.1",
@@ -31,6 +35,10 @@ standalone.start({
     var deadline = Date.now() + 90000;
     fs.mkdirSync(dataRoot, { recursive: true });
     if (fs.existsSync(registryPath)) fs.unlinkSync(registryPath);
+    if (policy) {
+        fs.mkdirSync(path.dirname(policyOutboxFile), { recursive: true });
+        fs.copyFileSync(policyFile, policyOutboxFile);
+    }
     fs.writeFileSync(tokenPath, enrollmentToken + "\n", { encoding: "utf8", mode: 0o600 });
     await execFile(cliPath, [
         "enroll",
@@ -43,7 +51,12 @@ standalone.start({
                 var registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
                 var keys = Object.keys(registry.devices || {});
                 var checkedIn = keys.map(function (key) { return registry.devices[key]; })
-                    .find(function (device) { return device && device.lastSeenUtc && device.agentVersion; });
+                    .find(function (device) {
+                        if (!device || !device.lastSeenUtc || !device.agentVersion) return false;
+                        if (!policy) return true;
+                        return device.management && device.management.lastPolicyId === policy.policyId &&
+                            !fs.existsSync(policyOutboxFile);
+                    });
                 if (checkedIn) {
                     clearInterval(timer);
                     resolve({

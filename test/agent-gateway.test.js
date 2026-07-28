@@ -91,6 +91,28 @@ async function invoke(gateway, token, body, url) {
             agentVersion: "1.0.0"
         });
         assert.strictEqual(deviceAccepted.statusCode, 200);
+        var policyDirectory = path.join(root, "agent-policy-outbox", "investa", "device-2");
+        fs.mkdirSync(policyDirectory, { recursive: true });
+        fs.writeFileSync(path.join(policyDirectory, "policy-1.policy.json"), JSON.stringify({
+            tenantId: "investa",
+            deviceId: "device-2",
+            policyId: "policy-1",
+            signature: { algorithm: "ES256", keyId: "test", value: "signed-value" }
+        }));
+        var policyDelivery = await invoke(gateway, enrolled.body.deviceToken, {
+            tenantId: "investa",
+            deviceId: "device-2",
+            agentVersion: "1.0.0"
+        });
+        assert.strictEqual(policyDelivery.body.policies.length, 1);
+        var policyAck = await invoke(gateway, enrolled.body.deviceToken, {
+            tenantId: "investa",
+            deviceId: "device-2",
+            agentVersion: "1.0.0",
+            acknowledgedPolicyIds: ["policy-1"]
+        });
+        assert.strictEqual(policyAck.body.policies.length, 0);
+        assert.strictEqual(fs.existsSync(path.join(policyDirectory, "policy-1.policy.json")), false);
         var crossDeviceDenied = await invoke(gateway, enrolled.body.deviceToken, {
             tenantId: "investa",
             deviceId: "device-1"
