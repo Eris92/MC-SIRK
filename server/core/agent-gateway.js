@@ -35,6 +35,37 @@ function authorizedToken(req, token) {
     return token ? authorizedHash(req, tokenHash(token)) : false;
 }
 
+function validPublicKey(value) {
+    try {
+        var key = crypto.createPublicKey({
+            key: Buffer.from(String(value || ""), "base64"), format: "der", type: "spki"
+        });
+        return key.asymmetricKeyType === "ec" &&
+            (!key.asymmetricKeyDetails || key.asymmetricKeyDetails.namedCurve === "prime256v1") ? key : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function validDeviceSignature(req, bodyBytes, device) {
+    var timestamp = String(req.headers["x-sirk-timestamp"] || "");
+    var nonce = String(req.headers["x-sirk-nonce"] || "");
+    var signatureValue = String(req.headers["x-sirk-signature"] || "");
+    var timestampNumber = Number(timestamp);
+    if (!Number.isInteger(timestampNumber) || Math.abs(Date.now() / 1000 - timestampNumber) > 300 ||
+        !/^[a-f0-9]{32}$/i.test(nonce) || (device.authNonces || []).indexOf(nonce) >= 0)
+        return false;
+    var key = validPublicKey(device.publicKeySpki);
+    if (!key) return false;
+    try {
+        var signed = Buffer.concat([Buffer.from(timestamp + "\n" + nonce + "\n", "utf8"), bodyBytes]);
+        return crypto.verify("sha256", signed, { key: key, dsaEncoding: "ieee-p1363" },
+            Buffer.from(signatureValue, "base64"));
+    } catch (error) {
+        return false;
+    }
+}
+
 function writeJsonAtomic(file, value) {
     var temporary = file + ".tmp";
     fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + "\n", "utf8");
@@ -110,7 +141,8 @@ module.exports.create = function (options) {
         req.on("end", function () {
             if (ended) return;
             try {
-                var body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+                var bodyBytes = Buffer.concat(chunks);
+                var body = JSON.parse(bodyBytes.toString("utf8"));
                 var tenantId = safeId(body.tenantId);
                 var deviceId = safeId(body.deviceId);
                 if (!tenantId || !deviceId) {
@@ -130,13 +162,18 @@ module.exports.create = function (options) {
                         sendJson(res, 409, { ok: false, error: "Device is already enrolled." });
                         return;
                     }
+                    if (!validPublicKey(body.publicKeySpki)) {
+                        sendJson(res, 400, { ok: false, error: "A valid P-256 device public key is required." });
+                        return;
+                    }
                     var deviceToken = crypto.randomBytes(32).toString("base64url");
                     registry.devices[registryKey] = Object.assign({}, existing, {
                         tenantId: tenantId,
                         deviceId: deviceId,
                         machineName: String(body.machineName || deviceId).slice(0, 255),
                         enrolledAtUtc: now,
-                        credentialHash: tokenHash(deviceToken)
+                        credentialHash: tokenHash(deviceToken),
+                        publicKeySpki: String(body.publicKeySpki)
                     });
                     registry.updatedAtUtc = now;
                     writeJsonAtomic(registryPath, registry);
@@ -155,9 +192,17 @@ module.exports.create = function (options) {
                     sendJson(res, 401, { ok: false, error: "Agent authentication failed." });
                     return;
                 }
+                if (existing.credentialHash && !validDeviceSignature(req, bodyBytes, existing)) {
+                    sendJson(res, 401, { ok: false, error: "Agent device proof failed." });
+                    return;
+                }
+                var authNonces = (existing.authNonces || [])
+                    .concat(String(req.headers["x-sirk-nonce"] || "")).slice(-100);
                 registry.devices[registryKey] = {
                     enrolledAtUtc: existing.enrolledAtUtc || null,
                     credentialHash: existing.credentialHash || null,
+                    publicKeySpki: existing.publicKeySpki || null,
+                    authNonces: existing.credentialHash ? authNonces : [],
                     tenantId: tenantId,
                     deviceId: deviceId,
                     machineName: String(body.machineName || deviceId).slice(0, 255),

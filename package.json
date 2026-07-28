@@ -1,6 +1,6 @@
 {
   "name": "sirk-portal",
-  "version": "1.8.36-dev.79",
+  "version": "1.8.36-dev.80",
   "private": true,
   "scripts": {
     "start": "node server/standalone.js",

@@ -1,17 +1,28 @@
 "use strict";
 
 var assert = require("assert");
+var crypto = require("crypto");
 var events = require("events");
 var fs = require("fs");
 var os = require("os");
 var path = require("path");
 var gatewayFactory = require("../server/core/agent-gateway.js");
 
-function request(token, body, url) {
+function request(token, body, url, privateKey) {
     var req = new events.EventEmitter();
     req.method = "POST";
     req.url = url || "/api/agent/v1/checkin";
     req.headers = token ? { authorization: "Bearer " + token } : {};
+    var encoded = Buffer.from(JSON.stringify(body || {}), "utf8");
+    if (privateKey) {
+        var timestamp = String(Math.floor(Date.now() / 1000));
+        var nonce = crypto.randomBytes(16).toString("hex");
+        req.headers["x-sirk-timestamp"] = timestamp;
+        req.headers["x-sirk-nonce"] = nonce;
+        req.headers["x-sirk-signature"] = crypto.sign("sha256",
+            Buffer.concat([Buffer.from(timestamp + "\n" + nonce + "\n"), encoded]),
+            { key: privateKey, dsaEncoding: "ieee-p1363" }).toString("base64");
+    }
     req.destroy = function () {};
     var result = { headers: {} };
     var res = {
@@ -25,14 +36,14 @@ function request(token, body, url) {
     };
     result.promise = new Promise(function (resolve) { result.resolve = resolve; });
     process.nextTick(function () {
-        req.emit("data", Buffer.from(JSON.stringify(body || {}), "utf8"));
+        req.emit("data", encoded);
         req.emit("end");
     });
     return { req: req, res: res, result: result };
 }
 
-async function invoke(gateway, token, body, url) {
-    var value = request(token, body, url);
+async function invoke(gateway, token, body, url, privateKey) {
+    var value = request(token, body, url, privateKey);
     assert.strictEqual(gateway.handle(value.req, value.res), true);
     return value.result.promise;
 }
@@ -67,10 +78,13 @@ async function invoke(gateway, token, body, url) {
         assert.strictEqual(registry.devices["investa/device-1"].machineName, "DELL_K");
         assert.strictEqual(fs.readFileSync(path.join(root, "agent-telemetry.jsonl"), "utf8").trim().split(/\r?\n/).length, 1);
 
+        var deviceKeys = crypto.generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+        var devicePublicKey = deviceKeys.publicKey.export({ format: "der", type: "spki" }).toString("base64");
         var enrolled = await invoke(gateway, "test-enrollment-token", {
             tenantId: "investa",
             deviceId: "device-2",
-            machineName: "LAPTOP-2"
+            machineName: "LAPTOP-2",
+            publicKeySpki: devicePublicKey
         }, "/api/agent/v1/enroll");
         assert.strictEqual(enrolled.statusCode, 201);
         assert.strictEqual(typeof enrolled.body.deviceToken, "string");
@@ -80,16 +94,23 @@ async function invoke(gateway, token, body, url) {
         var duplicateEnrollment = await invoke(gateway, "test-enrollment-token", {
             tenantId: "investa",
             deviceId: "device-2",
-            machineName: "LAPTOP-2"
+            machineName: "LAPTOP-2",
+            publicKeySpki: devicePublicKey
         }, "/api/agent/v1/enroll");
         assert.strictEqual(duplicateEnrollment.statusCode, 409);
 
+        var missingProof = await invoke(gateway, enrolled.body.deviceToken, {
+            tenantId: "investa",
+            deviceId: "device-2",
+            agentVersion: "1.0.0"
+        });
+        assert.strictEqual(missingProof.statusCode, 401);
         var deviceAccepted = await invoke(gateway, enrolled.body.deviceToken, {
             tenantId: "investa",
             deviceId: "device-2",
             machineName: "LAPTOP-2",
             agentVersion: "1.0.0"
-        });
+        }, undefined, deviceKeys.privateKey);
         assert.strictEqual(deviceAccepted.statusCode, 200);
         var policyDirectory = path.join(root, "agent-policy-outbox", "investa", "device-2");
         fs.mkdirSync(policyDirectory, { recursive: true });
@@ -103,20 +124,20 @@ async function invoke(gateway, token, body, url) {
             tenantId: "investa",
             deviceId: "device-2",
             agentVersion: "1.0.0"
-        });
+        }, undefined, deviceKeys.privateKey);
         assert.strictEqual(policyDelivery.body.policies.length, 1);
         var policyAck = await invoke(gateway, enrolled.body.deviceToken, {
             tenantId: "investa",
             deviceId: "device-2",
             agentVersion: "1.0.0",
             acknowledgedPolicyIds: ["policy-1"]
-        });
+        }, undefined, deviceKeys.privateKey);
         assert.strictEqual(policyAck.body.policies.length, 0);
         assert.strictEqual(fs.existsSync(path.join(policyDirectory, "policy-1.policy.json")), false);
         var crossDeviceDenied = await invoke(gateway, enrolled.body.deviceToken, {
             tenantId: "investa",
             deviceId: "device-1"
-        });
+        }, undefined, deviceKeys.privateKey);
         assert.strictEqual(crossDeviceDenied.statusCode, 401);
         console.log("Authenticated SIRK Agent gateway contract: OK");
     } finally {
