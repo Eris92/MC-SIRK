@@ -67,6 +67,37 @@
         (document.head || document.documentElement).appendChild(script);
     }
 
+    function ensureCollapseIsolationStyle() {
+        if (document.getElementById("sirkCollapseIsolationStyle")) return;
+        var style = document.createElement("style");
+        style.id = "sirkCollapseIsolationStyle";
+        style.textContent = [
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-layout{grid-template-columns:var(--sirk-ui-primary-width,184px) var(--sirk-ui-secondary-width,236px) minmax(0,1fr)!important}",
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-column-primary{width:auto!important;min-width:0!important;max-width:none!important;padding:12px!important}",
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-layout>:is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details):first-child{padding:12px!important}",
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-column-primary .sirk-nav-item{justify-content:flex-start!important;gap:10px!important;padding:9px 11px!important;font-size:14px!important}",
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-column-primary .sirk-nav-icon{flex:0 0 24px!important;width:24px!important;height:24px!important}",
+            "#sirkPortalRoot #sirkStandaloneRoot.is-collapsed .sirk-portal-view-management:not(.is-collapsed) .sirk-column-primary .sirk-nav-item>span:not(.sirk-nav-icon){display:inline!important;visibility:visible!important}",
+            "#sirkPortalRoot .sirk-portal-view-management.is-collapsed .sirk-layout,#sirkPortalRoot .sirk-portal-view-management .sirk-layout.sirk-management-primary-collapsed{grid-template-columns:var(--sirk-ui-collapsed-width,56px) var(--sirk-ui-secondary-width,236px) minmax(0,1fr)!important}",
+            "#sirkPortalRoot .sirk-portal-view-management.is-collapsed .sirk-column-primary,#sirkPortalRoot .sirk-portal-view-management .sirk-layout.sirk-management-primary-collapsed .sirk-column-primary{width:var(--sirk-ui-collapsed-width,56px)!important;min-width:var(--sirk-ui-collapsed-width,56px)!important;max-width:var(--sirk-ui-collapsed-width,56px)!important;padding:8px 6px!important}",
+            "#sirkPortalRoot .sirk-portal-view-management.is-collapsed .sirk-column-primary .sirk-nav-item,#sirkPortalRoot .sirk-portal-view-management .sirk-layout.sirk-management-primary-collapsed .sirk-column-primary .sirk-nav-item{justify-content:center!important;gap:0!important;padding:6px 0!important;font-size:0!important}",
+            "#sirkPortalRoot .sirk-portal-view-management.is-collapsed .sirk-column-primary .sirk-nav-item>span:not(.sirk-nav-icon),#sirkPortalRoot .sirk-portal-view-management .sirk-layout.sirk-management-primary-collapsed .sirk-column-primary .sirk-nav-item>span:not(.sirk-nav-icon){display:none!important}"
+        ].join("");
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    function isolateManagementCollapse() {
+        var portal = document.getElementById("sirkPortalRoot");
+        if (!portal) return;
+        Array.prototype.forEach.call(portal.querySelectorAll(".sirk-portal-view-management"), function (host) {
+            var layout = host.querySelector(":scope > .sirk-standalone-view-scroll > .sirk-layout,:scope > .sirk-layout") || host.querySelector(".sirk-layout");
+            if (!layout) return;
+            var collapsed = host.classList.contains("is-collapsed");
+            layout.classList.toggle("sirk-management-primary-collapsed", collapsed);
+            layout.classList.toggle("is-collapsed", collapsed);
+        });
+    }
+
     function ensureStyle() {
         if (document.getElementById("sirkSettingsPrimaryNavigationStyle")) return;
         var style = document.createElement("style");
@@ -196,6 +227,8 @@
     }
 
     function apply() {
+        ensureCollapseIsolationStyle();
+        isolateManagementCollapse();
         var root = workspace();
         if (!root) return;
         var primary = root.querySelector(":scope > .sirk-column-primary");
@@ -238,6 +271,13 @@
         new MutationObserver(schedule).observe(observationRoot, {
             childList: true,
             subtree: true,
+            attributes: true,
+            attributeFilter: ["class"]
+        });
+    }
+    var shellRoot = document.getElementById("sirkStandaloneRoot");
+    if (shellRoot) {
+        new MutationObserver(schedule).observe(shellRoot, {
             attributes: true,
             attributeFilter: ["class"]
         });
