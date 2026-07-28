@@ -25,6 +25,23 @@
     function serverButton(primary) { return directButtons(primary).find(function (button) { var value = normalized(button.textContent); return value === "server" || value === "serwer"; }) || null; }
     function active(button) { return !!(button && (button.classList.contains("active") || button.classList.contains("is-active"))); }
 
+    function asset(name) {
+        var base = String(window.__SIRK_PLATFORM_ASSET_BASE__ || "").replace(/\/$/, "");
+        var version = encodeURIComponent(String(window.__SIRK_PLATFORM_PORTAL_VERSION__ || "1"));
+        return base ? base + "/vendor/sirk-portal/" + name + "?v=" + version : "";
+    }
+
+    function loadOverlayFix() {
+        if (document.getElementById("sirk-update-release-theme-fix")) return;
+        var source = asset("update-release-theme-fix.js");
+        if (!source) return;
+        var script = document.createElement("script");
+        script.id = "sirk-update-release-theme-fix";
+        script.src = source;
+        script.async = false;
+        (document.head || document.documentElement).appendChild(script);
+    }
+
     function ensureStyle() {
         if (document.getElementById("sirkSettingsPrimaryNavigationStyle")) return;
         var style = document.createElement("style");
@@ -60,5 +77,6 @@
     var observationRoot = document.getElementById("sirkStandaloneContent") || document.documentElement;
     if (observationRoot) new MutationObserver(schedule).observe(observationRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "open", "hidden"] });
     window.addEventListener("sirkportal:languagechange", schedule);
+    loadOverlayFix();
     schedule();
 }());
