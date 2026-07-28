@@ -1,18 +1,342 @@
 [
   {
-    "version": "1.8.36-dev.69",
-    "date": "2026-07-28",
-    "changes": [
-      "Restore Server navigation after promoting settings sections to the first column",
-      "Increase click targets for Modules, Portal, Integrations and Server",
-      "Keep active state synchronized with the underlying settings renderer"
-    ]
-  },
-  {
     "version": "1.8.36-dev.26",
     "date": "2026-07-27",
     "changes": [
       "Add the Commands module enable switch to Settings Modules"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.25",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix Portal view visibility persistence from the new UI settings form"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.24",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep the standalone device tab rail compact instead of stretching it"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.23",
+    "date": "2026-07-27",
+    "changes": [
+      "Organize Settings into Portal Modules, separate Commands, and per-module Permissions"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.22",
+    "date": "2026-07-27",
+    "changes": [
+      "Persist per-view visibility and remove disabled views from navigation"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.21",
+    "date": "2026-07-27",
+    "changes": [
+      "Hide disabled module views from the left menu and restore Assets module settings"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.20",
+    "date": "2026-07-27",
+    "changes": [
+      "Rename user-facing My Commands labels to Commands in the new Portal UI"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.19",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix standalone Settings save so Commands module enablement and options are persisted"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.18",
+    "date": "2026-07-27",
+    "changes": [
+      "Force uncached update status requests so newly published versions are visible immediately"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.17",
+    "date": "2026-07-27",
+    "changes": [
+      "Clean up Settings and separate module, Permissions, and device command controls"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.16",
+    "date": "2026-07-27",
+    "changes": [
+      "Add Overview visibility controls to Settings and persist each tile's enabled state"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.15",
+    "date": "2026-07-27",
+    "changes": [
+      "Add current and available system version status to the Overview page"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.14",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep the update section visible while checking for updates"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.13",
+    "date": "2026-07-27",
+    "changes": [
+      "Separate device Commands from the Automation menu and prepare the SIRK scheduler area"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.12",
+    "date": "2026-07-27",
+    "changes": [
+      "Combine update history and jobs into one status table"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.11",
+    "date": "2026-07-27",
+    "changes": [
+      "Remove the duplicate Overview entry from Settings navigation"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.10",
+    "date": "2026-07-27",
+    "changes": [
+      "Stop interrupted update jobs from being retried after restart"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.9",
+    "date": "2026-07-27",
+    "changes": [
+      "Merge Service, Debug and System settings under the Server area"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.8",
+    "date": "2026-07-27",
+    "changes": [
+      "Use the MeshCentral login session for the new Portal login"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.7",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep mounted Portal views visible behind a loading overlay during refreshes"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.6",
+    "date": "2026-07-27",
+    "changes": [
+      "Organize settings by main Portal menu area and collapse nested settings sections by default"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.5",
+    "date": "2026-07-27",
+    "changes": [
+      "Reduce standalone device tab bar height to keep it proportionate to the tab buttons"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.4",
+    "date": "2026-07-27",
+    "changes": [
+      "Show the restart screen, wait for service readiness and return to the active System page with a current status message"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.3",
+    "date": "2026-07-27",
+    "changes": [
+      "Disable Portal response caching and invalidate runtime assets immediately after file updates"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.2",
+    "date": "2026-07-27",
+    "changes": [
+      "Keep the Portal shell visible throughout refresh and workspace restoration"
+    ]
+  },
+  {
+    "version": "1.8.36-dev.1",
+    "date": "2026-07-27",
+    "changes": [
+      "Select the correct device inventory transport for standalone and MeshCentral-hosted Portal sessions"
+    ]
+  },
+  {
+    "version": "1.8.35",
+    "date": "2026-07-27",
+    "changes": [
+      "Serve the canonical SIRK icon sprite from the standalone asset manifest"
+    ]
+  },
+  {
+    "version": "1.8.18",
+    "date": "2026-07-27",
+    "changes": [
+      "Use the standalone API from the first Portal bootstrap request"
+    ]
+  },
+  {
+    "version": "1.8.17",
+    "date": "2026-07-27",
+    "changes": [
+      "Allow independent Settings to load without a MeshCentral config file"
+    ]
+  },
+  {
+    "version": "1.8.16",
+    "date": "2026-07-27",
+    "changes": [
+      "Fix standalone administrator permissions for independent Settings API"
+    ]
+  },
+  {
+    "version": "1.8.15",
+    "date": "2026-07-27",
+    "changes": [
+      "Route standalone Settings through the independent Portal API and add transition controls"
+    ]
+  },
+  {
+    "version": "1.8.3-dev.1",
+    "date": "2026-07-27",
+    "changes": [
+      "Add the Usługa subcategory under Serwer for MeshCentral service status and restart controls"
+    ]
+  },
+  {
+    "version": "1.8.1",
+    "date": "2026-07-24",
+    "changes": [
+      "Fix JavaScript syntax damaged by the global class migration",
+      "Restore Portal startup and icon registry",
+      "Validate critical Portal startup scripts before publishing"
+    ]
+  },
+  {
+    "version": "1.8.0",
+    "date": "2026-07-24",
+    "changes": [
+      "Publish the independent Portal updater on the stable main channel",
+      "Move System updates, backups, history and update-channel settings into Settings",
+      "Run backup, update staging and restore as asynchronous jobs without blocking MeshCentral",
+      "Add an explicit Save action for the selected update channel",
+      "Unify Portal view classes and remove menu-specific frontend class contracts"
+    ]
+  },
+  {
+    "version": "1.7.0-dev.1",
+    "date": "2026-07-24",
+    "changes": [
+      "Add an independent SIRK lifecycle manager owned by the Portal",
+      "Add stable, beta and dev channels mapped to main, beta and develop",
+      "Add backup, staged update, restore, rollback history and health checks",
+      "Run atomic file replacement in a detached helper after host shutdown",
+      "Make develop the mandatory working branch"
+    ]
+  },
+  {
+    "version": "1.6.4",
+    "date": "2026-07-24",
+    "changes": [
+      "Apply the global Portal radius in the final loaded stylesheet",
+      "Remove the legacy Management-only surface override",
+      "Clip Automation, Approval and all module renderers to the shared 10px host"
+    ]
+  },
+  {
+    "version": "1.6.2",
+    "date": "2026-07-24",
+    "changes": [
+      "Fix Portal settings self-conflict detection",
+      "Keep the admin save button usable with long status messages",
+      "Add Portal settings save regression coverage"
+    ]
+  },
+  {
+    "version": "1.5.151",
+    "date": "2026-07-24",
+    "changes": [
+      "Complete standalone Portal asset manifest",
+      "Fix Settings and module runtime URLs",
+      "Normalize disabled module states"
+    ]
+  },
+  {
+    "version": "1.5.150",
+    "date": "2026-07-24",
+    "changes": [
+      "Fix standalone Portal plugin pin",
+      "Serve Portal UI contract stylesheet with CSS MIME type"
+    ]
+  },
+  {
+    "version": "1.5.144",
+    "date": "2026-07-24",
+    "changes": [
+      "Change the MeshCentral technical plugin identifier to JavaScript-safe SIRKPortal",
+      "Add SIRKPortal.js and SIRKPortalAdmin.js canonical entrypoints",
+      "Remove hyphenated entrypoints that broke pluginHandler.prepExports and caused a blank UI",
+      "Update the installer to use meshcentral-data/plugins/SIRKPortal",
+      "Add regression validation for JavaScript-safe shortName values"
+    ]
+  },
+  {
+    "version": "1.5.143",
+    "date": "2026-07-24",
+    "changes": [
+      "Add an admin entrypoint delegating to admin.js",
+      "Superseded by 1.5.144 because the hyphenated plugin identifier was not JavaScript-safe"
+    ]
+  },
+  {
+    "version": "1.5.142",
+    "date": "2026-07-24",
+    "changes": [
+      "Publish the finalized SIRK-Portal repository layout to main",
+      "Include the unified UI contract for Overview, Devices and all module views",
+      "Synchronize release metadata and documentation for installation testing"
+    ]
+  },
+  {
+    "version": "1.5.141",
+    "date": "2026-07-24",
+    "changes": [
+      "Extend the canonical Portal UI contract to Overview and Devices",
+      "Apply shared mc-portal classes to surfaces, cards, controls, statuses, badges and device lists",
+      "Keep only device-specific geometry while sharing the visual system",
+      "Add regression coverage for the unified Portal view contract"
+    ]
+  },
+  {
+    "version": "1.5.140",
+    "date": "2026-07-24",
+    "changes": [
+      "Rename repository metadata and canonical URLs to Eris92/SIRK-Portal",
+      "Remove MyCompany compatibility and migration documentation",
+      "Align documentation with the final server, public and admin layout",
+      "Add hierarchical repository indexes for selective context loading",
+      "Update agent rules and startup prompt for index-first repository reading",
+      "Reset the test-phase version history to the canonical SIRK Management Platform baseline"
     ]
   }
 ]
