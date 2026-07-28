@@ -6,6 +6,7 @@ var shared = require("./server/core/shared.js");
 var updateBridge = require("./server/core/plugin-update-bridge.js");
 var maintenance = require("./server/core/portal-maintenance.js");
 var experience = require("./server/core/portal-experience-runtime.js");
+var nativeAccess = require("./server/core/native-access-policy.js");
 
 module.exports.SIRKPortal = function (parent) {
     var plugin = implementation.createPlugin(parent, "SIRKPortal");
@@ -27,9 +28,11 @@ module.exports.SIRKPortal = function (parent) {
     plugin.hook_setupHttpHandlers = function (webserver, meshServer) {
         updateBridge.install(plugin, parent, webserver, meshServer);
         maintenance.installPlugin(plugin, webserver, meshServer);
-        return routeCompat.withExactPortalRedirect(webserver && webserver.app, function () {
+        var result = routeCompat.withExactPortalRedirect(webserver && webserver.app, function () {
             return setupHttpHandlers.call(plugin, webserver, meshServer);
         });
+        nativeAccess.install(plugin, parent, webserver, meshServer);
+        return result;
     };
 
     return plugin;
