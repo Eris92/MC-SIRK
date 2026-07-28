@@ -22,4 +22,5 @@ function loadAsset(id,name){
 
 loadAsset("sirk-update-release-theme-fix","update-release-theme-fix.js");
 loadAsset("sirk-settings-primary-navigation","settings-primary-navigation.js");
+loadAsset("sirk-overview-navigation","overview-navigation.js");
 })();
