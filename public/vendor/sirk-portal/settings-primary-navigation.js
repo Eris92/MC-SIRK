@@ -19,11 +19,36 @@
 
     function label(key) { return labels[language()][key]; }
     function normalized(value) { return String(value || "").replace(/^\s*[▸▼]?\s*/, "").trim().toLowerCase(); }
-    function workspace() { var content = document.getElementById("sirkStandaloneContent"); return content && (content.querySelector("[data-portal-settings] .sirk-layout") || content.querySelector(".sirk-settings-module-workspace")); }
-    function directButtons(primary) { return primary ? Array.prototype.slice.call(primary.querySelectorAll(":scope > .sirk-nav-item")) : []; }
-    function settingsButton(primary) { var marked = primary && primary.querySelector(":scope > [data-settings-base-primary]"); if (marked) return marked; var found = directButtons(primary).find(function (button) { var value = normalized(button.textContent); return value === "settings" || value === "ustawienia"; }); if (found) found.setAttribute("data-settings-base-primary", "1"); return found || null; }
-    function serverButton(primary) { var marked = primary && primary.querySelector(":scope > [data-server-base-primary]"); if (marked) return marked; var found = directButtons(primary).find(function (button) { var value = normalized(button.textContent); return value === "server" || value === "serwer"; }); if (found) found.setAttribute("data-server-base-primary", "1"); return found || null; }
-    function active(button) { return !!(button && (button.classList.contains("active") || button.classList.contains("is-active"))); }
+    function workspace() {
+        var content = document.getElementById("sirkStandaloneContent");
+        return content && (content.querySelector("[data-portal-settings] .sirk-layout") || content.querySelector(".sirk-settings-module-workspace"));
+    }
+    function directButtons(primary) {
+        return primary ? Array.prototype.slice.call(primary.querySelectorAll(":scope > .sirk-nav-item")) : [];
+    }
+    function settingsButton(primary) {
+        var marked = primary && primary.querySelector(":scope > [data-settings-base-primary]");
+        if (marked) return marked;
+        var found = directButtons(primary).find(function (button) {
+            var value = normalized(button.textContent);
+            return value === "settings" || value === "ustawienia";
+        });
+        if (found) found.setAttribute("data-settings-base-primary", "1");
+        return found || null;
+    }
+    function serverButton(primary) {
+        var marked = primary && primary.querySelector(":scope > [data-server-base-primary]");
+        if (marked) return marked;
+        var found = directButtons(primary).find(function (button) {
+            var value = normalized(button.textContent);
+            return value === "server" || value === "serwer";
+        });
+        if (found) found.setAttribute("data-server-base-primary", "1");
+        return found || null;
+    }
+    function active(button) {
+        return !!(button && (button.classList.contains("active") || button.classList.contains("is-active")));
+    }
 
     function asset(name) {
         var base = String(window.__SIRK_PLATFORM_ASSET_BASE__ || "").replace(/\/$/, "");
@@ -50,8 +75,32 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
-    function menu(primary) { var node = primary.querySelector(":scope > [data-settings-root-menu]"); if (!node) { node = document.createElement("div"); node.className = "sirk-settings-root-menu"; node.setAttribute("data-settings-root-menu", "1"); primary.appendChild(node); } return node; }
-    function rootButton(host, key, target) {
+    function menu(primary) {
+        var node = primary.querySelector(":scope > [data-settings-root-menu]");
+        if (!node) {
+            node = document.createElement("div");
+            node.className = "sirk-settings-root-menu";
+            node.setAttribute("data-settings-root-menu", "1");
+            primary.appendChild(node);
+        }
+        return node;
+    }
+
+    function activateRoot(key) {
+        activeRoot = key;
+        needsDefaultSelection = key !== "server";
+        var root = workspace();
+        var primary = root && root.querySelector(":scope > .sirk-column-primary");
+        var base = settingsButton(primary);
+        var server = serverButton(primary);
+        var target = key === "server" ? server : base;
+        if (target && !active(target)) target.click();
+        schedule();
+        window.setTimeout(schedule, 0);
+        window.setTimeout(schedule, 80);
+    }
+
+    function rootButton(host, key) {
         var button = host.querySelector(':scope > [data-settings-root="' + key + '"]');
         if (!button) {
             button = document.createElement("button");
@@ -61,36 +110,91 @@
             button.addEventListener("click", function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                activeRoot = key;
-                needsDefaultSelection = key !== "server";
-                if (target) target.click();
-                schedule();
+                activateRoot(key);
             });
             host.appendChild(button);
         }
-        button.textContent = label(key);
+        var text = label(key);
+        if (button.textContent !== text) button.textContent = text;
         return button;
     }
-    function groupKey(group) { var marker = group && group.getAttribute("data-source-settings-group"); if (marker === "integrations") return "integrations"; var summary = group && group.querySelector(":scope > summary"); var value = normalized(summary && summary.textContent); if (value === "moduły" || value === "modules") return "modules"; if (value === "portal") return "portal"; if (value === "integracje" || value === "integrations") return "integrations"; return ""; }
-    function groups(secondary) { return Array.prototype.slice.call(secondary.querySelectorAll(":scope > details.sirk-settings-nav-group")).map(function (node) { return { node: node, key: groupKey(node) }; }).filter(function (entry) { return !!entry.key; }); }
+
+    function groupKey(group) {
+        var marker = group && group.getAttribute("data-source-settings-group");
+        if (marker === "integrations") return "integrations";
+        var summary = group && group.querySelector(":scope > summary");
+        var value = normalized(summary && summary.textContent);
+        if (value === "moduły" || value === "modules") return "modules";
+        if (value === "portal") return "portal";
+        if (value === "integracje" || value === "integrations") return "integrations";
+        return "";
+    }
+
+    function groups(secondary) {
+        return Array.prototype.slice.call(secondary.querySelectorAll(":scope > details.sirk-settings-nav-group")).map(function (node) {
+            return { node: node, key: groupKey(node) };
+        }).filter(function (entry) { return !!entry.key; });
+    }
+
+    function setHidden(node, hidden) {
+        if (node && node.hidden !== hidden) node.hidden = hidden;
+    }
 
     function project(secondary) {
         var target = null;
-        groups(secondary).forEach(function (entry) { var selected = entry.key === activeRoot; entry.node.hidden = !selected; entry.node.classList.toggle("sirk-settings-primary-projected", selected); if (selected) { entry.node.open = true; target = entry.node; } });
-        secondary.setAttribute("data-settings-primary-section", activeRoot);
+        groups(secondary).forEach(function (entry) {
+            var selected = entry.key === activeRoot;
+            setHidden(entry.node, !selected);
+            entry.node.classList.toggle("sirk-settings-primary-projected", selected);
+            if (selected) {
+                if (!entry.node.open) entry.node.open = true;
+                target = entry.node;
+            }
+        });
+        if (secondary.getAttribute("data-settings-primary-section") !== activeRoot) {
+            secondary.setAttribute("data-settings-primary-section", activeRoot);
+        }
         if (!target) return;
         var selectedLeaf = target.querySelector(".sirk-nav-item.active,.sirk-nav-item.is-active");
-        if (selectedLeaf) { needsDefaultSelection = false; return; }
+        if (selectedLeaf) {
+            needsDefaultSelection = false;
+            return;
+        }
         if (!needsDefaultSelection) return;
         var firstLeaf = target.querySelector(".sirk-settings-nav-leaf,.sirk-nav-item");
         if (!firstLeaf || firstLeaf.getAttribute("data-settings-default-opening") === "1") return;
         firstLeaf.setAttribute("data-settings-default-opening", "1");
         needsDefaultSelection = false;
-        window.setTimeout(function () { firstLeaf.removeAttribute("data-settings-default-opening"); if (firstLeaf.isConnected) firstLeaf.click(); }, 0);
+        window.setTimeout(function () {
+            firstLeaf.removeAttribute("data-settings-default-opening");
+            if (firstLeaf.isConnected) firstLeaf.click();
+        }, 0);
     }
 
-    function restore(secondary) { groups(secondary).forEach(function (entry) { entry.node.hidden = false; entry.node.classList.remove("sirk-settings-primary-projected"); }); secondary.removeAttribute("data-settings-primary-section"); }
-    function hideTechnical(button, marker) { if (!button) return; button.hidden = true; button.style.display = "none"; button.setAttribute("aria-hidden", "true"); button.setAttribute("tabindex", "-1"); if (marker) button.setAttribute(marker, "1"); }
+    function restore(secondary) {
+        groups(secondary).forEach(function (entry) {
+            setHidden(entry.node, false);
+            entry.node.classList.remove("sirk-settings-primary-projected");
+        });
+        if (secondary.hasAttribute("data-settings-primary-section")) secondary.removeAttribute("data-settings-primary-section");
+    }
+
+    function hideTechnical(button, marker) {
+        if (!button) return;
+        if (!button.hidden) button.hidden = true;
+        if (button.style.display !== "none") button.style.display = "none";
+        if (button.getAttribute("aria-hidden") !== "true") button.setAttribute("aria-hidden", "true");
+        if (button.getAttribute("tabindex") !== "-1") button.setAttribute("tabindex", "-1");
+        if (marker && button.getAttribute(marker) !== "1") button.setAttribute(marker, "1");
+    }
+
+    function setButtonState(button, selected) {
+        if (!button) return;
+        button.classList.toggle("sirk-settings-root-active", selected);
+        var current = selected ? "page" : "false";
+        if (button.getAttribute("aria-current") !== current) button.setAttribute("aria-current", current);
+    }
+
     function apply() {
         var root = workspace();
         if (!root) return;
@@ -105,24 +209,39 @@
         hideTechnical(server, "data-server-base-primary");
         var host = menu(primary);
         var buttons = {
-            modules: rootButton(host, "modules", base),
-            portal: rootButton(host, "portal", base),
-            integrations: rootButton(host, "integrations", base),
-            server: rootButton(host, "server", server)
+            modules: rootButton(host, "modules"),
+            portal: rootButton(host, "portal"),
+            integrations: rootButton(host, "integrations"),
+            server: rootButton(host, "server")
         };
         if (active(server)) activeRoot = "server";
         else if (active(base) && activeRoot === "server") activeRoot = "modules";
         Object.keys(buttons).forEach(function (key) {
             var selected = key === "server" ? active(server) : active(base) && key === activeRoot;
-            buttons[key].classList.toggle("sirk-settings-root-active", selected);
-            buttons[key].setAttribute("aria-current", selected ? "page" : "false");
+            setButtonState(buttons[key], selected);
         });
-        if (active(base)) project(secondary); else restore(secondary);
+        if (active(base)) project(secondary);
+        else restore(secondary);
     }
-    function schedule() { if (scheduled) return; scheduled = true; window.requestAnimationFrame(function () { scheduled = false; apply(); }); }
+
+    function schedule() {
+        if (scheduled) return;
+        scheduled = true;
+        window.requestAnimationFrame(function () {
+            scheduled = false;
+            apply();
+        });
+    }
 
     var observationRoot = document.getElementById("sirkStandaloneContent") || document.documentElement;
-    if (observationRoot) new MutationObserver(schedule).observe(observationRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "open", "hidden"] });
+    if (observationRoot) {
+        new MutationObserver(schedule).observe(observationRoot, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class"]
+        });
+    }
     window.addEventListener("sirkportal:languagechange", schedule);
     loadOverlayFix();
     schedule();
