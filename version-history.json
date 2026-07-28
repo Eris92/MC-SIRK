@@ -1,6 +1,6 @@
 [
   {
-    "version": "1.8.36-dev.26",
+    "version": "1.8.36-dev.73",
     "date": "2026-07-27",
     "changes": [
       "Add the Commands module enable switch to Settings Modules"

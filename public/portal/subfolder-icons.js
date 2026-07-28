@@ -91,6 +91,6 @@
 
     var i18nStyle = document.createElement("style");
     i18nStyle.id = "sirkSettingsI18nVisibilityFix";
-    i18nStyle.textContent = "html body #sirkPortalRoot .sirk-i18n-visual:after,html.mc-portal-settings-document body .sirk-i18n-visual:after{font-size:14px!important;line-height:1.35!important}";
+    i18nStyle.textContent = "html body #sirkPortalRoot .sirk-i18n-visual:after{font-size:14px!important;line-height:1.35!important}";
     (document.head || document.documentElement).appendChild(i18nStyle);
 }());

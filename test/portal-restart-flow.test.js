@@ -14,9 +14,9 @@ var css = read("public/portal/system-updates.css");
 
 [
     'sessionStorage.getItem(RESTART_KEY)',
-    'Ponowne uruchamianie usługi',
-    'window.location.reload()',
-    'sirk-update-success',
+    'Ponowne uruchamianie MeshCentral',
+    'window.location.replace(',
+    'clearRestartState()',
     'api("status").then'
 ].forEach(function (value) {
     assert.ok(updates.indexOf(value) >= 0, "System update restart flow is missing " + value);

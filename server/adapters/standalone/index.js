@@ -12,7 +12,7 @@ module.exports.createHost = function (options) {
     fs.mkdirSync(path.join(dataRoot, "extensions"), { recursive: true });
     function localMeshInventory() {
         var databasePath = process.env.SIRK_MESHCENTRAL_DB || "C:\\Program Files\\Open Source\\MeshCentral\\meshcentral-data\\meshcentral.db";
-        if (!fs.existsSync(databasePath)) return { meshes: [], nodes: [] };
+        if (!fs.existsSync(databasePath)) return { meshes: [], nodes: localAgentInventory() };
         var records = Object.create(null);
         fs.readFileSync(databasePath, "utf8").split(/\r?\n/).forEach(function (line) {
             if (!line.trim()) return;
@@ -24,7 +24,33 @@ module.exports.createHost = function (options) {
             if (value.type === "mesh") meshes.push({ id: value._id, name: value.name || value._id });
             if (value.type === "node") nodes.push({ id: value._id, meshId: value.meshid || "", name: value.name || value.rname || value._id, os: value.osdesc || "", ip: value.ip || value.host || "", agentVersion: value.agent && value.agent.ver || "", lastSeen: value.lastconnect || value.firstconnect || 0, conn: 1 });
         });
-        return { meshes: meshes, nodes: nodes };
+        return { meshes: meshes, nodes: nodes.concat(localAgentInventory()).filter(function (node, index, all) {
+            return all.findIndex(function (candidate) { return candidate.id === node.id; }) === index;
+        }) };
+    }
+    function localAgentInventory() {
+        var registryPath = path.join(dataRoot, "agent-registry.json");
+        try {
+            var registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
+            return Object.keys(registry.devices || {}).map(function (key) {
+                var device = registry.devices[key] || {};
+                return {
+                    id: "sirk/" + device.tenantId + "/" + device.deviceId,
+                    meshId: "sirk/" + device.tenantId,
+                    name: device.machineName || device.deviceId,
+                    os: "Windows",
+                    ip: "",
+                    agentVersion: device.agentVersion || "",
+                    lastSeen: device.lastSeenUtc || 0,
+                    conn: Date.now() - Date.parse(device.lastSeenUtc || 0) < 120000 ? 1 : 0,
+                    source: "sirk-agent",
+                    deviceId: device.deviceId,
+                    tenantId: device.tenantId
+                };
+            });
+        } catch (error) {
+            return [];
+        }
     }
     return contract.createHostContext({
         kind: "standalone",

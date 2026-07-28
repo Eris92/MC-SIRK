@@ -1,4 +1,4 @@
-## 1.8.36-dev.26
+## 1.8.36-dev.73
 
 - Add the Commands module enable switch to Settings → Moduły.
 

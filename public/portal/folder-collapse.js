@@ -300,7 +300,7 @@
     }
 
     function visual(node) {
-        return node && node.nodeType === 1 && node.matches("button,summary,.sirk-nav-item,.mc-admin-tab,.mc-admin-middle button,[data-settings-field-copy] strong,.mc-admin-field-label,.mc-admin-check strong");
+        return node && node.nodeType === 1 && node.matches("button,summary,.sirk-nav-item,[data-settings-field-copy] strong");
     }
 
     function translateVisual(node) {
@@ -328,7 +328,7 @@
         ensureStyle(doc);
         var scope = doc.getElementById("sirkStandaloneContent") || doc.getElementById("sirk-platform-admin") || doc.body;
         if (!scope) return;
-        Array.prototype.forEach.call(scope.querySelectorAll("button,summary,.sirk-nav-item,.mc-admin-tab,[data-settings-field-copy] strong,.mc-admin-field-label,.mc-admin-check strong"), translateVisual);
+        Array.prototype.forEach.call(scope.querySelectorAll("button,summary,.sirk-nav-item,[data-settings-field-copy] strong"), translateVisual);
         Array.prototype.forEach.call(scope.querySelectorAll("input,textarea,select,option,[title],[aria-label]"), function (node) {
             ["placeholder", "title", "aria-label"].forEach(function (attribute) {
                 var value = node.getAttribute(attribute);

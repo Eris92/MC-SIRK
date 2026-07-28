@@ -128,7 +128,7 @@
                 credentials: "same-origin",
                 headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
                 body: standalone.toString()
-            }).then(parse);
+            }).then(parse).then(function () { return load(); });
         }
         var body = new URLSearchParams();
         body.set("modules", JSON.stringify(modules));
@@ -140,7 +140,7 @@
             credentials: "same-origin",
             headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", Accept: "application/json" },
             body: body.toString()
-        }).then(parse);
+        }).then(parse).then(function () { return load(); });
     }
 
     function field(host, label, value, onChange, options) {
