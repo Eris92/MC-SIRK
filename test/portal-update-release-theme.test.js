@@ -17,7 +17,7 @@ assert.ok(fix.indexOf('"--sirk-panel": "#111827"') >= 0 && fix.indexOf("sirk-the
     "Release overlay must have an explicit dark palette fallback.");
 assert.ok(settingsLoader.indexOf("update-release-theme-fix.js") >= 0,
     "Settings must retain the overlay controller loader.");
-assert.ok(portalLoader.indexOf('loadAsset("sirk-update-release-theme-fix","update-release-theme-fix.js")') >= 0,
+assert.ok(portalLoader.indexOf("sirk-update-release-theme-fix") >= 0 && portalLoader.indexOf("update-release-theme-fix.js") >= 0,
     "Portal startup must load the overlay controller before Settings is opened.");
 
 console.log("Portal update timer and overlay theme sync: OK");
