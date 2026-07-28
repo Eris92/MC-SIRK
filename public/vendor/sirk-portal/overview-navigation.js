@@ -94,9 +94,9 @@
         var style = document.createElement("style");
         style.id = "sirkOverviewNavigationStyle";
         style.textContent = [
-            "#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation],#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]{cursor:pointer!important}",
-            "#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation]:hover,#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]:hover{border-color:var(--sirk-active-accent,#4d6bd8)!important;background:var(--sirk-hover,rgba(96,165,250,.08))!important}",
-            "#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation]:focus-visible,#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]:focus-visible{outline:2px solid var(--sirk-active-accent,#4d6bd8)!important;outline-offset:2px!important}"
+            "#sirkPortalRoot .sirk-overview-link,#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation],#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]{cursor:pointer!important;transition:background-color .14s ease,border-color .14s ease!important;transform:none!important;box-shadow:none!important}",
+            "#sirkPortalRoot .sirk-overview-link:hover,#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation]:hover,#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]:hover{border-color:var(--sirk-active-accent,#4d6bd8)!important;background:var(--sirk-hover,rgba(96,165,250,.08))!important;transform:none!important;box-shadow:none!important}",
+            "#sirkPortalRoot .sirk-overview-link:focus-visible,#sirkPortalRoot .sirk-overview-system[data-sirk-overview-navigation]:focus-visible,#sirkPortalRoot .sirk-overview-health[data-sirk-overview-navigation]:focus-visible{outline:2px solid var(--sirk-active-accent,#4d6bd8)!important;outline-offset:2px!important;border-color:var(--sirk-active-accent,#4d6bd8)!important;background:var(--sirk-hover,rgba(96,165,250,.08))!important;transform:none!important;box-shadow:none!important}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
