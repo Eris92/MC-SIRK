@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
-    [string]$Repository = 'https://github.com/Eris92/SIRK-Portal.git',
+    [string]$Repository = 'https://github.com/Eris92/MC-SIRK.git',
     [string]$Branch = 'main',
     [string]$MeshRoot = 'C:\Program Files\Open Source\MeshCentral',
     [string]$ServiceName = 'MeshCentral',
