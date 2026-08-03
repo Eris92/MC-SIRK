@@ -1,18 +1,18 @@
 {
   "name": "SIRK Management Platform",
   "shortName": "SIRKPortal",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "author": "Eris92",
   "description": "SIRK Management Platform extension for the native MeshCentral interface.",
   "hasAdminPanel": true,
-  "homepage": "https://github.com/Eris92/SIRK-Portal",
-  "changelogUrl": "https://raw.githubusercontent.com/Eris92/SIRK-Portal/main/changelog.md",
-  "configUrl": "https://raw.githubusercontent.com/Eris92/SIRK-Portal/main/config.json",
-  "downloadUrl": "https://codeload.github.com/Eris92/SIRK-Portal/zip/refs/heads/main",
-  "versionHistoryUrl": "https://raw.githubusercontent.com/Eris92/SIRK-Portal/main/version-history.json",
+  "homepage": "https://github.com/Eris92/MC-SIRK",
+  "changelogUrl": "https://raw.githubusercontent.com/Eris92/MC-SIRK/main/changelog.md",
+  "configUrl": "https://raw.githubusercontent.com/Eris92/MC-SIRK/main/config.json",
+  "downloadUrl": "https://codeload.github.com/Eris92/MC-SIRK/zip/refs/heads/main",
+  "versionHistoryUrl": "https://raw.githubusercontent.com/Eris92/MC-SIRK/main/version-history.json",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Eris92/SIRK-Portal.git"
+    "url": "https://github.com/Eris92/MC-SIRK.git"
   },
   "meshCentralCompat": ">=1.1.18"
 }

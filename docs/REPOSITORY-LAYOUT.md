@@ -132,7 +132,7 @@ Nie istnieje alias danych `window.MyCompanyAdminData`. Kanoniczny obiekt to `win
 ## Instalacja i repozytorium
 
 ```text
-https://github.com/Eris92/SIRK-Portal
+https://github.com/Eris92/MC-SIRK
 tools/install/Install-SIRK-Portal-FromGit.ps1
 tools/install/Install-SIRK-Portal-FromGit_RUN.ps1
 ```

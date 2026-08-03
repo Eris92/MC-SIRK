@@ -1,3 +1,9 @@
+## 1.6.3
+
+- Reduced the admin navigation to Approval Center, Move Request, My Commands and My Scripts.
+- Restored the Commands quick menu in the native Desktop view.
+- Switched update metadata and installer defaults to the `MC-SIRK` repository.
+
 ## 1.6.2
 
 - Fixed Portal settings save by excluding the current `SIRKPortal` instance from obsolete standalone-plugin conflict detection.

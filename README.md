@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.6.2
+# SIRK Management Platform 1.6.3
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -110,7 +110,7 @@ tools/install/Install-SIRK-Portal-FromGit.ps1
 Repozytorium źródłowe:
 
 ```text
-https://github.com/Eris92/SIRK-Portal
+https://github.com/Eris92/MC-SIRK
 ```
 
 Instalator umieszcza plugin w:

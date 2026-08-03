@@ -1,6 +1,6 @@
 {
   "name": "sirk-portal",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "private": true,
   "scripts": {
     "test": "node scripts/validate-repository-layout.js && node scripts/validate-architecture.js && node test/admin-entrypoint.test.js && node test/runtime-module-load.test.js && node test/browser-hook-serialization.test.js && node test/security.test.js && node test/script-localization.test.js && node test/folder-access.test.js && node test/integration-health.test.js",

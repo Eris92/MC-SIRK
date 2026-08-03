@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.3",
+    "date": "2026-08-03",
+    "changes": [
+      "Limit the admin panel to Approval Center, Move Request, My Commands and My Scripts.",
+      "Restore the Commands quick menu in the native Desktop view.",
+      "Use MC-SIRK as the canonical update repository."
+    ]
+  },
+  {
     "version": "1.6.2",
     "date": "2026-07-24",
     "changes": [

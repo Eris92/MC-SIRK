@@ -45,7 +45,7 @@ if (exists("config.json") && exists("package.json")) {
     if (packageJson.name !== "sirk-portal") errors.push("package.json name must be sirk-portal.");
     if (config.version !== packageJson.version) errors.push("config.json and package.json versions must match.");
     ["homepage", "changelogUrl", "configUrl", "downloadUrl", "versionHistoryUrl"].forEach(function (key) {
-        if (String(config[key] || "").indexOf("Eris92/SIRK-Portal") < 0) errors.push("config.json " + key + " must reference Eris92/SIRK-Portal.");
+        if (String(config[key] || "").indexOf("Eris92/MC-SIRK") < 0) errors.push("config.json " + key + " must reference Eris92/MC-SIRK.");
     });
 }
 
