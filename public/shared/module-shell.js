@@ -53,6 +53,8 @@
         var pageId = options.pageId || ("sirk-platform-" + definition.key + "-device-page");
         var topTabId = options.topTabId || ("MainDevSirkPlatform-" + definition.key);
         var title = options.title || definition.title;
+        var retryTimer = null;
+        var retryCount = 0;
 
         function enabled() {
             if (options.enabled === false) return false;
@@ -126,7 +128,17 @@
         }
         function sync() {
             if (!enabled()) { remove(); return false; }
-            if (!registerPage()) return false;
+            if (!registerPage()) {
+                if (retryTimer == null && retryCount < 20) {
+                    retryCount += 1;
+                    retryTimer = window.setTimeout(function () {
+                        retryTimer = null;
+                        sync();
+                    }, 500);
+                }
+                return false;
+            }
+            retryCount = 0;
             ensureTopTab();
             return true;
         }
