@@ -1,3 +1,9 @@
+## 1.6.38
+
+- Bring newly launched Desktop tools to the foreground automatically.
+- Use a hidden PowerShell launcher and `AppActivate` without displaying another console window.
+- Retry activation while the requested application creates its main window.
+
 ## 1.6.37
 
 - Fall back to `C:\ProgramData\SIRK Management Platform\settings.json` when MeshCentral data settings cannot be written.

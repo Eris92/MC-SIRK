@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.38",
+    "date": "2026-08-03",
+    "changes": [
+      "Bring newly launched Desktop tools to the foreground automatically.",
+      "Use a hidden launcher and AppActivate without displaying another console window.",
+      "Retry activation while the requested application creates its main window."
+    ]
+  },
+  {
     "version": "1.6.37",
     "date": "2026-08-03",
     "changes": [
