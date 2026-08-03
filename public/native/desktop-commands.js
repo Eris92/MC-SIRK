@@ -30,36 +30,38 @@
         if (value != null) result.textContent = value;
         return result;
     }
+    function addIcon(host, iconData, kind) {
+        if (iconData) {
+            var image = document.createElement("img"); image.className = "sirk-quick-command-icon"; image.alt = ""; image.src = iconData; host.appendChild(image); return;
+        }
+        var icon = element("span", "sirk-quick-command-icon");
+        icon.innerHTML = kind === "folder"
+            ? '<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/></svg>'
+            : '<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/></svg>';
+        host.appendChild(icon);
+    }
     function flattenScripts(node, output) {
         (node && node.children || []).forEach(function (child) {
             if (child.type === "script") {
-                output.push({ kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), requiresApproval: child.requiresApproval === true, confirmExecution: child.confirmExecution === true, variables: child.variables || [] });
+                if (child.requiresApproval !== true) output.push({ kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), iconData: child.iconData || "", requiresApproval: false, confirmExecution: child.confirmExecution === true, variables: child.variables || [] });
             } else flattenScripts(child, output);
         });
         return output;
     }
     function categories(data) {
         var result = [];
+        if (data.directExecutionAllowed !== true) return result;
         var scriptGroups = [];
         var looseScripts = [];
         (data.tree && data.tree.children || []).forEach(function (root) {
             if (root.type === "script") looseScripts.push(root);
             else {
                 var items = flattenScripts(root, []);
-                if (items.length) scriptGroups.push({ key: root.path || root.name, label: localized(root, "label") || root.name || root.path, items: items });
+                if (items.length) scriptGroups.push({ key: root.path || root.name, label: localized(root, "label") || root.name || root.path, iconData: root.iconData || "", items: items });
             }
         });
         if (looseScripts.length) scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []) });
         if (scriptGroups.length) result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
-        (data.catalog || []).forEach(function (category) {
-            result.push({
-                key: "catalog:" + category.key,
-                label: localized(category, "title") || category.title || category.key,
-                items: (category.commands || []).map(function (command) {
-                    return { kind: "command", commandId: command.id, label: localized(command, "label") || command.label || command.id, description: localized(command, "description") || command.description || "", requiresApproval: command.requiresApproval === true, confirmExecution: command.confirmExecution === true, variables: command.variables || [] };
-                })
-            });
-        });
         return result.filter(function (category) { return category.items.length; });
     }
 
@@ -107,7 +109,7 @@
         if (!values.ok) { status.textContent = text("required"); status.classList.add("is-error"); return; }
         if (item.confirmExecution && !window.confirm(text("confirm") + ' "' + item.label + '"?')) return;
         var node = currentNode();
-        var payload = { nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values, confirmedExecution: item.confirmExecution === true, note: "" };
+        var payload = { nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values, confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: "" };
         if (!payload.nodeId) { status.textContent = "Device is not ready."; status.classList.add("is-error"); return; }
         if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
         button.disabled = true;
@@ -160,9 +162,9 @@
         var close = element("button", "", "×"); close.type = "button"; close.title = "Close"; header.appendChild(close); panel.appendChild(header);
         var search = document.createElement("input"); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
         var browser = element("div", "sirk-quick-command-browser" + (groups.length ? " has-folders" : "")), nav = element("nav", "sirk-quick-command-categories"), folders = element("nav", "sirk-quick-command-folders"), list = element("section", "sirk-quick-command-items");
-        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : "", category.label); button.type = "button"; button.onclick = function () { state.category = category.key; state.folder = ""; render(panel); }; nav.appendChild(button); });
-        groups.forEach(function (group) { var button = element("button", group.key === state.folder ? "is-active" : "", group.label); button.type = "button"; button.onclick = function () { state.folder = group.key; render(panel); }; folders.appendChild(button); });
-        items.forEach(function (item) { var button = element("button"); button.type = "button"; button.appendChild(element("strong", "", item.label)); if (item.description) button.appendChild(element("small", "", item.description)); button.onclick = function () { selectItem(panel, item); }; list.appendChild(button); });
+        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : ""); button.type = "button"; addIcon(button, category.iconData, "folder"); button.appendChild(element("span", "", category.label)); button.onclick = function () { state.category = category.key; state.folder = ""; render(panel); }; nav.appendChild(button); });
+        groups.forEach(function (group) { var button = element("button", group.key === state.folder ? "is-active" : ""); button.type = "button"; addIcon(button, group.iconData, "folder"); button.appendChild(element("span", "", group.label)); button.onclick = function () { state.folder = group.key; render(panel); }; folders.appendChild(button); });
+        items.forEach(function (item) { var button = element("button"); button.type = "button"; addIcon(button, item.iconData, "script"); var copy = element("span", "sirk-quick-command-copy"); copy.appendChild(element("strong", "", item.label)); if (item.description) copy.appendChild(element("small", "", item.description)); button.appendChild(copy); button.onclick = function () { selectItem(panel, item); }; list.appendChild(button); });
         if (!items.length) list.appendChild(element("p", "", text("empty")));
         browser.appendChild(nav); if (groups.length) browser.appendChild(folders); browser.appendChild(list); panel.appendChild(browser);
         panel.appendChild(element("div", "sirk-quick-command-run"));

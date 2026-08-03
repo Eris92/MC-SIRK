@@ -13,7 +13,8 @@ body.night .sirk-desktop-commands{--sdc-panel:#171b24;--sdc-panel-alt:#222936;--
 .sirk-quick-command-browser.has-folders{grid-template-columns:minmax(110px,145px) minmax(125px,180px) minmax(0,1fr)}
 .sirk-quick-command-browser nav,.sirk-quick-command-browser section{min-height:0;padding:7px;overflow:auto}
 .sirk-quick-command-browser nav{border-right:1px solid var(--sdc-border)}
-.sirk-quick-command-browser button{display:grid;width:100%;min-width:0;margin:0 0 4px;padding:8px 9px;border:0;border-radius:7px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.sirk-quick-command-browser button{display:grid;grid-template-columns:22px minmax(0,1fr);gap:7px;align-items:center;width:100%;min-width:0;margin:0 0 4px;padding:8px 9px;border:0;border-radius:7px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.sirk-quick-command-icon{display:grid;place-items:center;width:18px;height:18px;object-fit:contain;color:#60a5fa}.sirk-quick-command-icon svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sirk-quick-command-copy{display:grid;min-width:0}
 .sirk-quick-command-browser button:hover,.sirk-quick-command-browser button.is-active{background:var(--sdc-hover);box-shadow:inset 3px 0 0 #4f6bed}
 .sirk-quick-command-browser small{margin-top:3px;overflow:hidden;color:var(--sdc-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
 .sirk-quick-command-run{max-height:42vh;padding:10px 12px;overflow:auto}

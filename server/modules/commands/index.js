@@ -237,6 +237,21 @@ module.exports.createModule = function (context) {
         });
     }
 
+    function executeDirect(user, value) {
+        var payload = normalizePayload(value);
+        if (!payload.scriptPath || payload.approvalLevels.length) {
+            return Promise.reject(new Error("This script requires approval."));
+        }
+        var request = {
+            id: "",
+            requester: { id: user && user._id || "", name: shared.userName(user) },
+            executionId: shared.randomId(12)
+        };
+        return execute(payload, request).then(function (result) {
+            return { ok: true, direct: true, request: { status: result.status || "executing", result: result } };
+        });
+    }
+
     function outputForUser(user, id) {
         var row = executionRows().find(function (item) { return String(item.id) === String(id || ""); });
         if (!row) return { ok: true, ready: false, missing: true, output: "", status: "missing" };
@@ -339,7 +354,7 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var query = req && req.query || {};
-            if (asset === "scripts") return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user), scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
+            if (asset === "scripts") return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user), directExecutionAllowed: allowNoApproval(), scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
             if (asset === "catalog") return { ok: true, catalog: visibleCatalog(user) };
             if (asset === "script") { requireScriptAccess(user); var script = library.getScript(query.path, true); if (!script) throw new Error("Script not found."); return { ok: true, script: script }; }
             if (asset === "source") { requireAdmin(user); requireScriptAccess(user); var source = library.getSource(query.path); if (!source) throw new Error("Script not found."); return { ok: true, source: source }; }
@@ -357,6 +372,7 @@ module.exports.createModule = function (context) {
             if (asset === "execute") {
                 if (value.scriptPath) requireScriptAccess(user);
                 if (value.commandId) requireCommandAccess(user, value.commandId);
+                if (value.desktopDirect === true && value.scriptPath) return executeDirect(user, value);
                 return context.approval.submit("mycommands", user, value, value.note).then(function (request) { return { ok: true, request: request }; });
             }
             if (asset === "multi-execute") return multiExecute(user, value);

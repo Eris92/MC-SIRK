@@ -1,3 +1,9 @@
+## 1.6.23
+
+- Limit Desktop Quick commands to file-backed scripts that do not require approval.
+- Execute validated no-approval Desktop scripts directly without writing Approval requests.
+- Add theme-aware folder and script icons, including configured directory SVG artwork.
+
 ## 1.6.22
 
 - Restore the missing Desktop Commands folder column for file-backed scripts.

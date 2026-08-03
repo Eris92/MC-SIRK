@@ -93,6 +93,10 @@ assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), group
     "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-folders') >= 0 && desktopCommands.indexOf('state.folder') >= 0,
     "Desktop Commands must render the missing folder column between categories and scripts.");
+assert.ok(desktopCommands.indexOf('if (child.requiresApproval !== true)') >= 0 && desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0,
+    "Desktop Commands must expose only scripts that can execute without approval.");
+assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
+    "Desktop Commands must request direct execution and render folder/script icons.");
 assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,
     "Desktop Commands must not duplicate script folders alongside built-in command categories.");
 assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
@@ -101,6 +105,9 @@ assert.ok(desktopCommandsCss.indexOf("var(--sdc-panel)") >= 0 && desktopCommands
     "Desktop Commands surfaces must use theme variables instead of fixed colors.");
 assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
     "Desktop Commands script must be exposed by the plugin asset router.");
+var commandsServer = read("server/modules/commands/index.js");
+assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
+    "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
 
 var pluginMain = read("plugin-main.js");
 assert.ok(pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
