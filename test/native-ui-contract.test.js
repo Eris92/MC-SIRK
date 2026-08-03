@@ -103,6 +103,8 @@ assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
     "Desktop Commands must use command-specific icons matching My Commands.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf("sirk-quick-command-submit") < 0,
     "Desktop Commands must execute selected items immediately without a lower Run panel.");
+assert.ok(desktopCommands.indexOf('waitForExecution(result.id') >= 0 && desktopCommands.indexOf('"output"') >= 0,
+    "Desktop Commands must wait for the agent result instead of reporting submission as execution success.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
     "Desktop direct scripts must always display Run and never a Request button.");
 assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,

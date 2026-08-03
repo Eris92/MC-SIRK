@@ -1,3 +1,9 @@
+## 1.6.30
+
+- Wait for the MeshCentral agent response before reporting successful command execution.
+- Show command output, execution errors or a confirmation timeout in Desktop Quick commands.
+- Keep the immediate-click launcher without the obsolete lower Run panel.
+
 ## 1.6.29
 
 - Match every Desktop Quick command icon with its corresponding My Commands icon.

@@ -9,8 +9,8 @@
 
     var state = { data: null, category: "", folder: "", search: "" };
     var TEXT = {
-        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Parametry", run: "Uruchom", request: "Wyślij wniosek", loading: "Ładowanie poleceń…", sent: "Polecenie zostało wysłane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wysłać polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
-        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", request: "Request", loading: "Loading commands…", sent: "Command submitted.", pending: "Command is waiting for approval.", failed: "Command could not be submitted.", confirm: "Run command", required: "Complete the required fields." }
+        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", loading: "Ładowanie poleceń…", sent: "Polecenie wysłano do agenta…", completed: "Polecenie zostało wykonane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.", timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
+        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", loading: "Loading commands…", sent: "Command sent to the agent…", completed: "Command executed.", pending: "Command is waiting for approval.", failed: "Command execution failed.", timeout: "The agent did not confirm command execution.", confirm: "Run command", required: "Complete the required fields." }
     };
 
     function language() {
@@ -125,11 +125,33 @@
         status.textContent = text("loading");
         status.classList.remove("is-error");
         window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
-            status.textContent = response.request && response.request.status === "pending" ? text("pending") : text("sent");
+            var request = response.request || {};
+            var result = request.result || {};
+            if (request.status === "pending") { status.textContent = text("pending"); return; }
+            status.textContent = text("sent");
+            if (result.id) waitForExecution(result.id, status, 0);
         }).catch(function (error) {
             status.textContent = text("failed") + " " + (error.message || String(error));
             status.classList.add("is-error");
         }).then(function () { button.disabled = false; });
+    }
+
+    function waitForExecution(id, status, attempt) {
+        window.setTimeout(function () {
+            window.SirkPlatformCore.api("mycommands", "output", null, { id: id }).then(function (response) {
+                if (response.ready) {
+                    var failed = ["failed", "error"].indexOf(String(response.status || "").toLowerCase()) >= 0;
+                    status.textContent = response.output || text(failed ? "failed" : "completed");
+                    status.classList.toggle("is-error", failed);
+                    return;
+                }
+                if (attempt < 20) waitForExecution(id, status, attempt + 1);
+                else { status.textContent = text("timeout"); status.classList.add("is-error"); }
+            }).catch(function (error) {
+                status.textContent = text("failed") + " " + (error.message || String(error));
+                status.classList.add("is-error");
+            });
+        }, attempt ? 750 : 250);
     }
 
     function selectItem(panel, item, button) {
