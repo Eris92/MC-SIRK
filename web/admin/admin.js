@@ -2,7 +2,7 @@
     "use strict";
     var root = document.getElementById("sirk-platform-admin");
     var content = document.getElementById("sirk-platform-admin-content");
-    var data = window.SirkPlatformAdminData || {};
+    var data = window.SirkPlatformAdminData || { modules: [], moduleSettings: {}, integrations: {} };
     if (!root || !content) return;
 
     function element(tag, className, text) { var value = document.createElement(tag); if (className) value.className = className; if (text != null) value.textContent = text; return value; }

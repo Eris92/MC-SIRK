@@ -103,6 +103,7 @@ module.exports.admin = function (plugin) {
             res.render("SIRK-Portal", {
                 title: "SIRK Management Platform",
                 pluginShortName: String(req && req.query && req.query.pin || plugin.shortName || "SIRKPortal"),
+                version: String(plugin.runtime && plugin.runtime.version || require("./config.json").version),
                 adminDataJson: safeAdminJson(plugin.runtime.adminSnapshot(user))
             });
         } catch (error) {
