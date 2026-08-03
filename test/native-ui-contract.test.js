@@ -15,6 +15,10 @@ assert.ok(sharedCore.indexOf('url.searchParams.delete("viewmode")') >= 0,
     "Leaving a SIRK workspace must remove its custom viewmode from the URL.");
 assert.ok(sharedCore.indexOf('if (url.hash === "#") url.hash = ""') >= 0,
     "Leaving a SIRK workspace must remove an empty trailing hash.");
+assert.ok(sharedCore.indexOf('window.xxcurrentView = Number(viewMode)') >= 0,
+    "A SIRK workspace hosted in p1 must use its logical view number so native go(1) redraws the device list on return.");
+assert.ok(sharedCore.indexOf('if (!core.workspaceState && typeof window.go === "function"') >= 0,
+    "Switching directly between SIRK workspaces must not briefly invoke native go(1) and discard the new custom URL.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);

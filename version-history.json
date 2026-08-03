@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.53",
+    "date": "2026-08-03",
+    "changes": [
+      "Fix returning from SIRK workspaces to the native device list.",
+      "Make MeshCentral go(1) redraw devices instead of returning as a same-page no-op.",
+      "Continue removing custom viewmode and empty URL fragments on native navigation."
+    ]
+  },
+  {
     "version": "1.6.52",
     "date": "2026-08-03",
     "changes": [

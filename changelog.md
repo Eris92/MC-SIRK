@@ -1,3 +1,9 @@
+## 1.6.53
+
+- Mark SIRK workspaces with their logical view number while they reuse MeshCentral page p1.
+- Allow native go(1) to redraw the device list instead of treating the return as a no-op.
+- Preserve removal of custom viewmode and an empty URL fragment when leaving SIRK.
+
 ## 1.6.52
 
 - Prevent the browser runtime decorator from restoring script credential actions outside Edit mode.

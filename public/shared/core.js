@@ -183,7 +183,7 @@
 
     core.showWorkspace = function (title, viewMode, render) {
         core.installNativeRestoreGuard();
-        if (typeof window.go === "function" && Number(window.xxcurrentView) !== 1) {
+        if (!core.workspaceState && typeof window.go === "function" && Number(window.xxcurrentView) !== 1) {
             try { window.go(1); } catch (error) {}
         }
         var page = document.getElementById("p1");
@@ -206,6 +206,9 @@
             }
             core.workspaceState = { heading: heading, headingText: heading.textContent, hidden: hidden, viewMode: viewMode };
         }
+        // SIRK workspaces reuse MeshCentral page p1. Mark the logical view as
+        // custom so a later native go(1) is not discarded as a same-page no-op.
+        if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
         heading.textContent = title;
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
         workspace.style.display = "block";
