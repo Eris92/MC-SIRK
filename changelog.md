@@ -1,3 +1,9 @@
+## 1.6.40
+
+- Show Quick commands only while MeshCentral reports `desktop.State === 3`.
+- Close and hide the launcher immediately after Desktop disconnection.
+- Recheck the active Desktop connection before opening the launcher and before every execution.
+
 ## 1.6.39
 
 - Render folders, nested folders and scripts together in the second Quick commands column.

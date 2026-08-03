@@ -4,13 +4,14 @@
     var desktopVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
     if (window.__sirkDesktopCommandsLoaded === desktopVersion) return;
     window.__sirkDesktopCommandsLoaded = desktopVersion;
+    if (window.__sirkDesktopCommandsTimer) window.clearInterval(window.__sirkDesktopCommandsTimer);
     var previousDesktopCommands = document.getElementById("SirkDesktopCommands");
     if (previousDesktopCommands) previousDesktopCommands.remove();
 
     var state = { data: null, category: "", search: "", expanded: {}, detail: null };
     var TEXT = {
-        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Zmienne", run: "Uruchom", loading: "Ładowanie poleceń…", sent: "Polecenie wysłano do agenta…", completed: "Polecenie zostało wykonane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.", timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
-        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", loading: "Loading commands…", sent: "Command sent to the agent…", completed: "Command executed.", pending: "Command is waiting for approval.", failed: "Command execution failed.", timeout: "The agent did not confirm command execution.", confirm: "Run command", required: "Complete the required fields." }
+        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Zmienne", run: "Uruchom", loading: "Ładowanie poleceń…", sent: "Polecenie wysłano do agenta…", completed: "Polecenie zostało wykonane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.", disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.", timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
+        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", loading: "Loading commands…", sent: "Command sent to the agent…", completed: "Command executed.", pending: "Command is waiting for approval.", failed: "Command execution failed.", disconnected: "Quick commands require an active Desktop connection.", timeout: "The agent did not confirm command execution.", confirm: "Run command", required: "Complete the required fields." }
     };
 
     function language() {
@@ -23,6 +24,7 @@
         return locale && locale[field] || item && item[field] || "";
     }
     function currentNode() { return window.currentNode || window.xxcurrentNode || {}; }
+    function desktopConnected() { return !!(window.desktop && Number(window.desktop.State) === 3); }
     function nodeId() {
         var node = currentNode();
         return String(node._id || node.id || node.nodeid || window.selectedNode || "");
@@ -123,6 +125,7 @@
     }
 
     function submit(item, collect, button, status) {
+        if (!desktopConnected()) { status.textContent = text("disconnected"); status.classList.add("is-error"); return; }
         var values = collect();
         if (values.cancelled) return;
         if (!values.ok) { status.textContent = text("required"); status.classList.add("is-error"); return; }
@@ -235,16 +238,29 @@
 
     function install() {
         var stage = document.getElementById("deskarea3x") || document.getElementById("DeskParent");
-        if (!stage || document.getElementById("SirkDesktopCommands")) return false;
+        var existing = document.getElementById("SirkDesktopCommands");
+        if (existing) { syncAvailability(existing); return true; }
+        if (!stage) return false;
         stage.classList.add("sirk-desktop-commands-host");
         var wrapper = element("div", "sirk-desktop-commands"); wrapper.id = "SirkDesktopCommands";
         var button = element("button", "sirk-desktop-commands-toggle", "›_"); button.id = "SirkDesktopCommandsButton"; button.type = "button"; button.title = text("title"); button.setAttribute("aria-expanded", "false");
         var panel = element("aside", "sirk-desktop-commands-panel"); panel.id = "SirkDesktopCommandsPanel"; panel.hidden = true;
         wrapper.appendChild(button); wrapper.appendChild(panel); stage.appendChild(wrapper);
-        button.onclick = function () { panel.hidden = !panel.hidden; button.setAttribute("aria-expanded", panel.hidden ? "false" : "true"); if (!panel.hidden) load(panel); };
+        button.onclick = function () { if (!desktopConnected()) { syncAvailability(wrapper); return; } panel.hidden = !panel.hidden; button.setAttribute("aria-expanded", panel.hidden ? "false" : "true"); if (!panel.hidden) load(panel); };
+        syncAvailability(wrapper);
         return true;
     }
 
+    function syncAvailability(wrapper) {
+        var connected = desktopConnected();
+        wrapper.hidden = !connected;
+        var panel = wrapper.querySelector(".sirk-desktop-commands-panel");
+        var button = wrapper.querySelector(".sirk-desktop-commands-toggle");
+        if (!connected && panel) panel.hidden = true;
+        if (!connected && button) button.setAttribute("aria-expanded", "false");
+    }
+
     new MutationObserver(install).observe(document.documentElement, { childList: true, subtree: true });
+    window.__sirkDesktopCommandsTimer = window.setInterval(install, 500);
     install();
 }());

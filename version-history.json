@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.40",
+    "date": "2026-08-03",
+    "changes": [
+      "Show Quick commands only during an active MeshCentral Desktop connection.",
+      "Close and hide the launcher immediately after Desktop disconnection.",
+      "Recheck the Desktop state before opening and before every execution."
+    ]
+  },
+  {
     "version": "1.6.39",
     "date": "2026-08-03",
     "changes": [
