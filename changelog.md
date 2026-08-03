@@ -1,3 +1,8 @@
+## 1.6.50
+
+- Store Approval requests in a writable ProgramData fallback when MeshCentral data under Program Files is read-only.
+- Reuse the persisted fallback after restart instead of retrying the blocked plugin directory.
+
 ## 1.6.49
 
 - Fix the My Commands selection race that could remove Run from the third column.

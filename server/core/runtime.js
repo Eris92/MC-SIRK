@@ -117,7 +117,10 @@ module.exports.createRuntime = function (options) {
         parent: parent,
         source: options.source,
         settings: settings,
-        databasePath: nativePath.join(dataRoot, "requests.json")
+        databasePath: nativePath.join(dataRoot, "requests.json"),
+        fallbackDatabasePath: process.env.PROGRAMDATA
+            ? nativePath.join(process.env.PROGRAMDATA, "SIRK Management Platform", "approval-requests.json")
+            : nativePath.join(dataRoot, "approval-requests.json")
     });
     context.isModuleEnabled = settings.isModuleEnabled;
 

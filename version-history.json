@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.50",
+    "date": "2026-08-03",
+    "changes": [
+      "Add a writable ProgramData fallback for Approval request storage.",
+      "Reuse persisted fallback requests after MeshCentral restarts.",
+      "Prevent EPERM from blocking My Scripts execution on Program Files installations."
+    ]
+  },
+  {
     "version": "1.6.49",
     "date": "2026-08-03",
     "changes": [

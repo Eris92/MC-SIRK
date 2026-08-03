@@ -9,8 +9,10 @@ module.exports.createApprovalService = function (options) {
     var parent = options.parent;
     var settings = options.settings;
     var databasePath = options.databasePath;
-    var fallbackDatabasePath = path.join(path.dirname(databasePath), "approval-requests.json");
-    var activeDatabasePath = databasePath;
+    var fallbackDatabasePath = options.fallbackDatabasePath || path.join(path.dirname(databasePath), "approval-requests.json");
+    var activeDatabasePath = fallbackDatabasePath && fallbackDatabasePath !== databasePath && fs.existsSync(fallbackDatabasePath)
+        ? fallbackDatabasePath
+        : databasePath;
     var tokenPath = path.join(path.dirname(databasePath), "approval-api-tokens.json");
     var providers = Object.create(null);
     var queue = Promise.resolve();

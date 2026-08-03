@@ -121,6 +121,7 @@ async function validateApprovalApiSafety() {
 async function validateApprovalDatabaseFallback() {
     var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-approval-fallback-"));
     var blockedPath = path.join(directory, "requests.json");
+    var fallback = path.join(directory, "program-data", "approval-requests.json");
     fs.mkdirSync(blockedPath);
     var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
     var current = { modules: { approvals: { providers: { sample: { enabled: true, levels: { 1: [] } } } } } };
@@ -128,15 +129,25 @@ async function validateApprovalDatabaseFallback() {
         fs: fs, path: path,
         parent: { parent: { webserver: { users: { "user/domain/admin": admin } } } },
         settings: { read: function () { return current; }, isModuleEnabled: function () { return true; } },
-        databasePath: blockedPath
+        databasePath: blockedPath,
+        fallbackDatabasePath: fallback
     });
     service.registerProvider({ type: "sample", title: "Sample", approvalLevels: [1], canSubmit: function () { return true; } });
     try {
         await service.submit("sample", admin, { value: 1 }, "test");
-        var fallback = path.join(directory, "approval-requests.json");
         assert.strictEqual(fs.existsSync(fallback), true,
-            "Approval must use its fallback database when requests.json is not a writable file.");
+            "Approval must use the configured writable fallback database when requests.json is not writable.");
         assert.strictEqual(JSON.parse(fs.readFileSync(fallback, "utf8")).requests.length, 1);
+        var restarted = approvalService.createApprovalService({
+            fs: fs, path: path,
+            parent: { parent: { webserver: { users: { "user/domain/admin": admin } } } },
+            settings: { read: function () { return current; }, isModuleEnabled: function () { return true; } },
+            databasePath: blockedPath,
+            fallbackDatabasePath: fallback
+        });
+        restarted.registerProvider({ type: "sample", title: "Sample", approvalLevels: [1], canSubmit: function () { return true; } });
+        var persisted = await restarted.list(admin, { type: "sample" });
+        assert.strictEqual(persisted.total, 1, "Approval fallback requests must survive a service restart.");
     } finally {
         fs.rmSync(directory, { recursive: true, force: true });
     }
