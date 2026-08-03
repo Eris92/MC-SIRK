@@ -18,11 +18,11 @@ function directoryHasFiles(relative) {
 
 var required = [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "config.json", "package.json",
-    "server/core/runtime.js", "server/core/runtime-portal.js", "server/core/settings-store.js", "server/core/secret-store.js",
+    "server/core/runtime.js", "server/core/settings-store.js", "server/core/secret-store.js",
     "server/core/approval-service.js", "server/core/device-service.js", "server/core/integration-service.js", "server/core/shared.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js", "server/modules/commands/index.js",
-    "server/modules/jira/index.js", "server/modules/move-requests/index.js", "server/modules/portal/index.js",
-    "server/modules/security/index.js", "public/portal/index.js",
+    "server/modules/jira/index.js", "server/modules/move-requests/index.js",
+    "server/modules/security/index.js",
     "public/native/mesh-plugin-core.js", "public/shared/core.js", "public/shared/runtime.js",
     "public/modules/approvals/index.js", "public/modules/automation/index.js", "views/SIRK-Portal.handlebars",
     "docs/INDEX.md", "server/INDEX.md", "public/INDEX.md", "web/INDEX.md", "scripts/INDEX.md", "test/INDEX.md"
@@ -36,7 +36,7 @@ function validateSyntax(relative) {
     catch (error) { errors.push("Syntax error in " + relative + ": " + error.message); }
 }
 
-["SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "server/core/runtime.js", "server/core/runtime-portal.js"].forEach(validateSyntax);
+["SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "server/core/runtime.js"].forEach(validateSyntax);
 
 if (exists("config.json") && exists("package.json")) {
     var config = JSON.parse(read("config.json"));
@@ -67,20 +67,20 @@ if (exists("SIRKPortalAdmin.js")) {
 if (exists("plugin-main.js")) {
     var pluginMain = read("plugin-main.js");
     need(pluginMain, 'require("./admin.js")', "Plugin bootstrap must load admin.js.");
-    need(pluginMain, 'require("./server/core/runtime-portal.js")', "Plugin bootstrap must load server/core/runtime-portal.js.");
+    need(pluginMain, 'require("./server/core/runtime.js")', "Plugin bootstrap must load server/core/runtime.js.");
     need(pluginMain, "__SIRK_PLATFORM_VERSION__", "Browser bootstrap must expose the SIRK Platform version.");
     need(pluginMain, 'path.join(dataBase, "sirk-platform-data")', "Plugin bootstrap must use sirk-platform-data.");
     reject(pluginMain, /MyCompanyRuntime|__MYCOMPANY_VERSION__|mycompany-data|\.\/core\/|\.\/modules\//, "Plugin bootstrap contains removed legacy runtime paths or aliases.");
 }
 
-if (exists("plugin-main-standalone.js") || exists("server/standalone.js") || directoryHasFiles("public/portal/standalone")) errors.push("Standalone Portal files must not exist.");
+if (exists("plugin-main-standalone.js") || exists("server/standalone.js") || directoryHasFiles("public/portal") || directoryHasFiles("public/vendor/sirk-portal") || directoryHasFiles("server/modules/portal")) errors.push("Removed Portal integration files must not exist.");
 
 if (exists("admin.js")) {
     var admin = read("admin.js");
     [
         'require("./server/core/shared.js")', 'require("./server/core/plugin-admin-service-backup-discovery.js")',
         'require("./server/core/server-admin-service.js")', '"core.js": ["public/shared/core.js"',
-        '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"', '"portal.js": ["public/portal/index.js"',
+        '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"',
         '"approvalcenter.js": ["public/modules/approvals/index.js"', '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"',
         'res.render("SIRK-Portal"', 'title: "SIRK Management Platform"'
     ].forEach(function (value) { need(admin, value, "Admin router missing canonical integration: " + value); });

@@ -49,7 +49,7 @@ module.exports.createModule = function (context) {
             }
             if (["email", "trusted", "hunting"].indexOf(asset) >= 0) {
                 if (!tabAllowed(user, asset)) throw new Error("Permission denied.");
-                return { ok: true, rows: [], message: asset + " workflow is available through the embedded Defender scripts." };
+                return { ok: true, rows: [], message: asset + " workflow is available through the configured Defender scripts." };
             }
             throw new Error("Unknown Defender action.");
         },

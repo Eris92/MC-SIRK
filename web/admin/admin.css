@@ -247,52 +247,6 @@
     max-width: 180px;
 }
 
-.mc-admin-portal-view-list {
-    display: grid;
-    gap: 10px;
-}
-
-.mc-admin-portal-view {
-    display: grid;
-    grid-template-columns: minmax(150px, .7fr) minmax(230px, 1fr) minmax(230px, 1fr) minmax(280px, 1.3fr);
-    gap: 12px;
-    align-items: center;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-
-.mc-admin-portal-view-heading {
-    display: grid;
-    gap: 4px;
-}
-
-.mc-admin-portal-view-heading code {
-    color: #666;
-}
-
-.mc-admin-portal-view-controls {
-    display: grid;
-    grid-template-columns: minmax(160px, 1fr) 110px;
-    gap: 10px;
-    align-items: end;
-}
-
-.mc-admin-portal-view-controls.is-disabled {
-    opacity: .55;
-}
-
-.mc-admin-portal-color-field {
-    min-width: 0;
-}
-
-.mc-admin-input.mc-admin-portal-color {
-    width: 100%;
-    min-width: 70px;
-    height: 38px;
-    padding: 3px;
-}
-
 .mc-admin-groups {
     min-height: 130px;
 }
@@ -602,18 +556,6 @@
     }
 }
 
-@media (max-width: 1100px) {
-    .mc-admin-portal-view {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 700px) {
-    .mc-admin-portal-view,
-    .mc-admin-portal-view-controls {
-        grid-template-columns: 1fr;
-    }
-}
 .mc-admin-folder-permission{margin:10px 0;padding:12px;border:1px solid rgba(127,127,127,.32);border-radius:6px;background:rgba(80,120,200,.035)}
 .mc-admin-folder-permission.is-disabled{opacity:.62;background:rgba(127,127,127,.08)}
 .mc-admin-folder-permission-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px}

@@ -118,7 +118,6 @@ function createSerializedStartupHook(version, pin) {
         style("sirk-platform-shared-style", "shared-ui/shared-ui.css");
         style("sirk-platform-toolbar-style", "shared-ui/toolbar.css");
         style("sirk-platform-native-approval-style", "native-approval.css");
-        style("sirk-platform-device-tabs-style", "portal-device-tabs.css");
 
         var scripts = [
             ["sirk-platform-core", "core.js"],
@@ -141,7 +140,6 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-credentials", "shared-ui/system-credentials-form.js"],
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
-            ["sirk-platform-device-tabs", "portal-device-tabs.js"],
             ["sirk-platform-runtime", "runtime.js"]
         ];
 
@@ -172,7 +170,7 @@ function createPlugin(parent, shortName) {
     };
 
     try {
-        obj.runtime = require("./server/core/runtime-portal.js").createRuntime({
+        obj.runtime = require("./server/core/runtime.js").createRuntime({
             parent: parent,
             pluginRoot: __dirname,
             source: obj

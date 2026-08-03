@@ -38,15 +38,4 @@ var normalized = folderAccess.normalizeRules({
 }, ["Public"], ["ugrp/domain/helpdesk"]);
 assert.deepStrictEqual(normalized, { Public: { enabled: false, allowAll: true, groupIds: ["ugrp/domain/helpdesk"] } });
 
-var legacy = {
-    Public: { enabled: true, groupIds: [] },
-    Restricted: { enabled: true, groupIds: ["ugrp/domain/helpdesk"] },
-    ExplicitDenied: { enabled: true, allowAll: false, groupIds: [] }
-};
-assert.strictEqual(folderAccess.migrateLegacyRules(legacy), true);
-assert.strictEqual(legacy.Public.allowAll, true);
-assert.strictEqual(legacy.Restricted.allowAll, false);
-assert.strictEqual(legacy.ExplicitDenied.allowAll, false);
-assert.strictEqual(folderAccess.migrateLegacyRules(legacy), false);
-
 console.log("Folder access checks passed.");

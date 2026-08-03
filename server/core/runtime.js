@@ -290,7 +290,7 @@ module.exports.createRuntime = function (options) {
     function adminSnapshot(user) {
         if (!shared.isSiteAdmin(user)) return null;
         return {
-            plugin: { name: "SIRK Management Platform", shortName: "SIRK-Portal", version: VERSION },
+            plugin: { name: "SIRK Management Platform", shortName: "SIRKPortal", version: VERSION },
             modules: diagnostics(user),
             moduleSettings: settings.read().modules,
             folderPermissions: {

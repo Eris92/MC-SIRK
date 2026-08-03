@@ -7,12 +7,11 @@
     var data = window.SirkPlatformAdminData || {};
     var content = document.getElementById("sirk-platform-admin-content");
     var active = "overview";
-    var settingsSection = "portal";
+    var settingsSection = "approvalcenter";
     var debugSection = "config";
     var draft = null;
 
     var settingsItems = [
-        { key: "portal", title: "SirK Portal" },
         { key: "approvalcenter", title: "Approval Center" },
         { key: "moverequests", title: "Move Request" },
         { key: "mycommands", title: "My Commands" },
@@ -73,8 +72,6 @@
         ensureObject(moduleOptions, "myjira");
         ensureObject(moduleOptions, "defendertools");
         ensureObject(moduleOptions, "myscripts");
-        ensureObject(moduleOptions, "portal");
-        ensureObject(moduleOptions.portal, "views");
         ensureObject(moduleOptions.mycommands, "folderPermissions");
         ensureObject(moduleOptions.myscripts, "folderPermissions");
 
@@ -343,11 +340,6 @@
         draft.moduleOptions.moverequests.menuEnabled = false;
 
         var moduleJobs = [
-            postModule("portal", "settings", {
-                enabled: draft.modules.portal !== false,
-                defaultView: draft.moduleOptions.portal.defaultView || "overview",
-                views: draft.moduleOptions.portal.views || {}
-            }),
             postModule("approvalcenter", "settings", draft.moduleOptions.approvalcenter),
             postModule("moverequests", "settings", {
                 hostButtonEnabled: draft.moduleOptions.moverequests.hostButtonEnabled !== false,
@@ -751,46 +743,6 @@
             groups.closest(".mc-admin-field").classList.toggle("is-disabled", allowAll.checked);
         }
 
-        var portalViews = [
-            { key: "overview", label: "Overview / Przegląd" },
-            { key: "devices", label: "Devices / Urządzenia" },
-            { key: "approvals", label: "Approval / Akceptacje" },
-            { key: "automation", label: "Automation / Automatyzacja" },
-            { key: "monitoring", label: "Monitoring" },
-            { key: "assets", label: "Assets / Zasoby" },
-            { key: "management", label: "Management / Zarządzanie" },
-            { key: "reports", label: "Reports / Raporty" },
-            { key: "security", label: "Security / Bezpieczeństwo" },
-            { key: "settings", label: "Settings / Ustawienia" }
-        ];
-
-        var portalCard = card("SirK Portal — lewe menu", "Każda pozycja ma osobną regułę. Site Admin omija wybór grup, ale nie widzi pozycji wyłączonej.");
-        var portalPermissions = ensureObject(draft.moduleOptions.portal, "views");
-        portalViews.forEach(function (view) {
-            var value = ensureObject(portalPermissions, view.key);
-            if (value.enabled == null) value.enabled = true;
-            if (!Array.isArray(value.groupIds)) value.groupIds = [];
-            var item = element("section", "mc-admin-folder-permission mc-admin-menu-permission");
-            var heading = element("div", "mc-admin-folder-permission-header");
-            var identity = element("div", "mc-admin-folder-permission-name");
-            identity.appendChild(element("strong", "", view.label));
-            identity.appendChild(element("small", "", view.key));
-            heading.appendChild(identity);
-            var enabledLabel = element("label", "mc-admin-folder-permission-toggle");
-            var enabled = element("input");
-            enabled.type = "checkbox";
-            enabled.checked = value.enabled !== false;
-            enabled.onchange = function () { value.enabled = enabled.checked; item.classList.toggle("is-disabled", !enabled.checked); };
-            enabledLabel.appendChild(enabled);
-            enabledLabel.appendChild(document.createTextNode(" Pozycja włączona"));
-            heading.appendChild(enabledLabel);
-            item.appendChild(heading);
-            accessControls(item, value);
-            item.classList.toggle("is-disabled", !enabled.checked);
-            portalCard.appendChild(item);
-        });
-        host.appendChild(portalCard);
-
         function renderModule(moduleKey, title, description) {
             var moduleCard = card(title, description);
             var folders = data.folderPermissions && data.folderPermissions[moduleKey] || [];
@@ -852,13 +804,7 @@
         layout.appendChild(panel);
         content.appendChild(layout);
 
-        if (settingsSection === "portal") {
-            if (window.SirkPlatformPortalAdmin && typeof window.SirkPlatformPortalAdmin.render === "function") {
-                window.SirkPlatformPortalAdmin.render(panel);
-            } else {
-                sectionHeader(panel, "SirK Portal", "Ładowanie ustawień Portalu…");
-            }
-        } else if (settingsSection === "approvalcenter") approvalSettings(panel);
+        if (settingsSection === "approvalcenter") approvalSettings(panel);
         else if (settingsSection === "moverequests") moveRequestsSettings(panel);
         else if (settingsSection === "mycommands") myCommandsSettings(panel);
         else if (settingsSection === "myscripts") myScriptsSettings(panel);
@@ -867,7 +813,7 @@
         else if (settingsSection === "defendertools") defenderSettings(panel);
         else moveRequestsSettings(panel);
 
-        if (settingsSection !== "portal") renderSaveBar(panel);
+        renderSaveBar(panel);
     }
 
     function pluginTable(host, plugins, status) {

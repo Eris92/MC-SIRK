@@ -1,6 +1,6 @@
 # Admin panel index
 
-Panel administracyjny jest odrębną warstwą od standalone Portalu i native UI.
+Panel administracyjny jest odrębną warstwą natywnego interfejsu MeshCentral.
 
 ## Entry pointy
 
@@ -21,7 +21,6 @@ web/admin/admin-layout.js
 | marketplace | `admin-marketplace.js` |
 | przenoszenie urządzeń | `admin-move-mesh-levels.js` |
 | aktualizacje pluginów | `admin-plugin-updates.js` |
-| ustawienia Portalu | `admin-portal.js` |
 | usprawnienia UI | `admin-ui-enhancements.js`, `admin-ui-enhancements.css` |
 
 Przed zmianą assetu potwierdź jego mapowanie w root `admin.js`. Nie przenoś kodu panelu do `public/`.

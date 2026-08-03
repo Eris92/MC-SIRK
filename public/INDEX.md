@@ -6,8 +6,7 @@ Czytaj ten indeks dla zadań dotyczących natywnego interfejsu MeshCentral, wsp�
 
 | Warstwa | Katalog | Główne zastosowanie |
 |---|---|---|
-| native UI MeshCentral | `public/portal/` | widoki, nawigacja i style osadzone w MeshCentral |
-| native adapter | `public/native/` | device tabs i integracja z GUI MeshCentral |
+| native adapter | `public/native/` | integracja z GUI MeshCentral |
 | shared runtime/UI | `public/shared/` | core, runtime, shell, ikony, style i komponenty |
 | renderery modułów | `public/modules/` | pojedynczy renderer każdego modułu |
 
@@ -17,8 +16,6 @@ Zacznij od mapy assetów w `admin.js`, a następnie wybierz:
 
 ```text
 public/native/mesh-plugin-core.js
-public/native/device-tabs.js
-public/native/device-tabs.css
 public/native/approval.css
 ```
 

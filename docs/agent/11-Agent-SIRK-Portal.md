@@ -35,10 +35,10 @@ Repozytorium jest katalogiem roboczym. Katalog pluginu w instalacji MeshCentral 
 
 ## Nazwy
 
-- plugin/repo: `SIRK-Portal`;
+- repozytorium: `SIRK-Portal`; plugin: `SIRKPortal`;
 - produkt: `SIRK Management Platform`;
 - UI: `SIRK Platform`;
-- entrypoint: `SIRK-Portal.js`.
+- entrypoint: `SIRKPortal.js`.
 
 Nie dodawaj aliasów, shimów, fallbacków, widoków ani zmiennych globalnych `MyCompany`.
 
@@ -57,7 +57,6 @@ Nie otwieraj dawnych repozytoriów, starych pluginów ani `mycompany-data`.
 ## Struktura
 
 - backend: `server/core/`, `server/modules/`;
-- standalone Portal: `public/portal/`;
 - native adapter: `public/native/`;
 - shared frontend: `public/shared/`;
 - renderery: `public/modules/`;
@@ -76,7 +75,7 @@ Katalogi `core/`, `modules/` w root, `public/shared-ui/` i płaskie pliki aplika
 - approval workflow: `server/core/approval-service.js`;
 - urządzenia: `server/core/device-service.js`;
 - wykonanie skryptów: `server/core/server-script-executor.js`;
-- runtime: `server/core/runtime.js`, `server/core/runtime-portal.js`.
+- runtime: `server/core/runtime.js`.
 
 ## Kontrakt Portalu
 

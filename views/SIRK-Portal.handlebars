@@ -43,7 +43,7 @@
     var content = document.getElementById("sirk-platform-admin-content");
     if (!root || !content) return;
     var plugins = [];
-    function pin(){return root.getAttribute("data-plugin")||"SIRK-Portal";}
+    function pin(){return root.getAttribute("data-plugin")||"SIRKPortal";}
     function parse(r){return r.text().then(function(t){var v;try{v=JSON.parse(t||"{}");}catch(e){throw new Error(t||("HTTP "+r.status));}if(!r.ok||v.ok===false)throw new Error(v.error||("HTTP "+r.status));return v;});}
     function post(operation,payload){var body=new URLSearchParams();payload=payload||{};payload.operation=operation;body.set("payload",JSON.stringify(payload));var url=new URL("pluginadmin.ashx",window.location.href);url.searchParams.set("pin",pin());url.searchParams.set("action","plugin-operation");return fetch(url.href,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/x-www-form-urlencoded; charset=UTF-8"},body:body.toString()}).then(parse);}
     function status(text,error){var h=content.querySelector(".mc-admin-save-status");if(h){h.className=error?"mc-admin-save-status mc-admin-error":"mc-admin-save-status";h.textContent=text||"";}}
@@ -58,4 +58,3 @@
 }());
 </script>
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin-move-mesh-levels.js"></script>
-<script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin-portal.js"></script>

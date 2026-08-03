@@ -194,7 +194,7 @@
             function open(event) {
                 if (event && ((event.which === 3) || (event.button === 2))) return false;
                 updateUrl();
-                return core.showWorkspace(definition.title, definition.viewMode, function (host) { mountPage(host, "standalone"); });
+                return core.showWorkspace(definition.title, definition.viewMode, function (host) { mountPage(host, "workspace"); });
             }
 
             function menuEnabled() {
@@ -206,7 +206,7 @@
                 definition: definition,
                 state: state,
                 open: open,
-                mount: function (host, mode) { return mountPage(host, mode || "embedded"); },
+                mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: function () {
                     if (!state.page) return;
                     state.page.layout.clear();
@@ -237,7 +237,7 @@
                     return Promise.resolve();
                 },
                 open: open,
-                mount: function (host, mode) { return mountPage(host, mode || "embedded"); },
+                mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: api.render,
                 api: api,
                 onDeviceRefreshEnd: function (nodeId) { state.nodeId = String(nodeId || ""); if (device) device.onDeviceRefreshEnd(nodeId); },

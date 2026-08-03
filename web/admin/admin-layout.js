@@ -32,13 +32,6 @@
     layout.appendChild(middle);
     layout.appendChild(content);
 
-    try {
-        if (new URL(window.location.href).searchParams.get("portal") === "1") {
-            admin.classList.add("mc-admin-portal-embedded");
-            document.documentElement.classList.add("mc-portal-admin-document");
-        }
-    } catch (error) {}
-
     function svg(path) {
         return '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + "</svg>";
     }
@@ -179,9 +172,6 @@
         decorateNavigation();
         applySearch();
 
-        if (window.SirkPlatformPortalUiContract && typeof window.SirkPlatformPortalUiContract.refresh === "function") {
-            window.SirkPlatformPortalUiContract.refresh();
-        }
     }
 
     collapse.onclick = function () { setCollapsed(!layout.classList.contains("is-collapsed")); };

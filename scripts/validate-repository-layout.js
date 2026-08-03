@@ -17,7 +17,7 @@ function files(relative) {
 }
 
 [
-    "server/core", "server/modules", "public/portal", "public/native", "public/shared", "public/modules",
+    "server/core", "server/modules", "public/native", "public/shared", "public/modules",
     "web/admin", "assets/icons", "tools/install", "docs", "scripts", "test"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical directory: " + relative);
@@ -25,9 +25,9 @@ function files(relative) {
 
 [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
-    "views/SIRK-Portal.handlebars", "server/core/runtime.js", "server/core/runtime-portal.js",
+    "views/SIRK-Portal.handlebars", "server/core/runtime.js",
     "server/modules/approval-center/index.js", "public/shared/core.js", "public/shared/runtime.js",
-    "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js", "public/portal/index.js",
+    "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js",
     "public/modules/automation/index.js", "public/modules/approvals/index.js",
     "web/admin/admin.js", "assets/icons/sirk-ui.svg", "tools/install/Install-SIRK-Portal-FromGit.ps1"
 ].forEach(function (relative) {
@@ -38,7 +38,7 @@ function files(relative) {
     "SIRK-Portal.js", "SIRK-PortalAdmin.js", "MyCompany.js", "MyCompanyAdmin.js", "views/MyCompany.handlebars",
     "core", "modules", "public/shared-ui", "public/approvalcenter.js", "Install-MyCompany-FromGit.ps1",
     "Install-MyCompany-FromGit_RUN.ps1", "tools/install/Install-MyCompany-FromGit.ps1",
-    "tools/install/Install-MyCompany-FromGit_RUN.ps1"
+    "tools/install/Install-MyCompany-FromGit_RUN.ps1", "embedded-manifest.json", "docs-MIGRATION-COVERAGE.md"
 ].forEach(function (relative) {
     if (exists(relative)) errors.push("Legacy or unsafe path must not exist: " + relative);
 });
@@ -72,7 +72,7 @@ var adminEntry = read("SIRKPortalAdmin.js");
 if (adminEntry.indexOf('require("./admin.js")') < 0) errors.push("Canonical admin entrypoint must delegate to admin.js.");
 
 var pluginMain = read("plugin-main.js");
-if (pluginMain.indexOf("./server/core/runtime-portal.js") < 0) errors.push("Plugin bootstrap must load server/core/runtime-portal.js.");
+if (pluginMain.indexOf("./server/core/runtime.js") < 0) errors.push("Plugin bootstrap must load server/core/runtime.js.");
 if (/MyCompanyRuntime|__MYCOMPANY_VERSION__|mycompany-data/.test(pluginMain)) errors.push("Plugin bootstrap contains removed MyCompany compatibility code.");
 
 if (/plugin-main-standalone|public\/portal\/standalone|server\/standalone/.test(entry + pluginMain)) errors.push("Standalone Portal loader must not remain.");
@@ -83,14 +83,14 @@ if (adminView.indexOf("SIRK Management Platform") < 0 || adminView.indexOf("Sirk
 var adminSource = read("admin.js");
 [
     '"core.js": ["public/shared/core.js"', '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"',
-    '"portal.js": ["public/portal/index.js"', '"approvalcenter.js": ["public/modules/approvals/index.js"',
+    '"approvalcenter.js": ["public/modules/approvals/index.js"',
     '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"'
 ].forEach(function (fragment) {
     if (adminSource.indexOf(fragment) < 0) errors.push("Asset router is missing canonical mapping: " + fragment);
 });
 if (/\["public\/(?:core|runtime|module-shell|portal-|my|defender|move|main\.)/.test(adminSource) || adminSource.indexOf("public/shared-ui/") >= 0) errors.push("Asset router contains a removed flat public path.");
 
-var moduleDirectories = fs.readdirSync(absolute("server/modules"), { withFileTypes: true }).filter(function (entry) { return entry.isDirectory(); }).map(function (entry) { return entry.name; });
+var moduleDirectories = fs.readdirSync(absolute("server/modules"), { withFileTypes: true }).filter(function (entry) { return entry.isDirectory() && entry.name !== "portal"; }).map(function (entry) { return entry.name; });
 moduleDirectories.forEach(function (name) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) errors.push("Server module directory must use kebab-case: " + name);
     if (!exists("server/modules/" + name + "/index.js")) errors.push("Server module is missing index.js: " + name);
@@ -114,13 +114,21 @@ Object.keys(registrations).forEach(function (key) {
 });
 
 var architecture = read("docs/REPOSITORY-LAYOUT.md");
-["server/core/", "server/modules/", "public/portal/", "public/native/", "public/shared/", "public/modules/", "web/admin/", "sirk-platform-data"].forEach(function (fragment) {
+["server/core/", "server/modules/", "public/native/", "public/shared/", "public/modules/", "web/admin/", "sirk-platform-data"].forEach(function (fragment) {
     if (architecture.indexOf(fragment) < 0) errors.push("Repository layout documentation is incomplete: " + fragment);
 });
 
 fs.readdirSync(root, { withFileTypes: true }).forEach(function (entry) {
     if (!entry.isFile() || !/\.ps1$/i.test(entry.name)) return;
-    if (!["Install-SIRK-Portal-FromGit.ps1", "Install-SIRK-Portal-FromGit_RUN.ps1"].includes(entry.name)) errors.push("Unexpected PowerShell file in repository root: " + entry.name);
+    errors.push("PowerShell installers must live in tools/install/: " + entry.name);
+});
+
+["embedded", ".release"].forEach(function (relative) {
+    if (files(relative).length) errors.push("Removed legacy artifacts must not contain files: " + relative);
+});
+
+["public/portal", "public/vendor/sirk-portal", "server/modules/portal"].forEach(function (relative) {
+    if (files(relative).length) errors.push("Removed Portal integration must not contain files: " + relative);
 });
 
 if (errors.length) {

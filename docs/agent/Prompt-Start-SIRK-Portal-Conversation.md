@@ -28,11 +28,11 @@ Zanim zaczniesz:
 8. Nie wykonuj pull, merge, rebase, commit, push, release, deployment ani restartu bez zakresu wynikającego z mojego polecenia.
 
 Stałe zasady:
-- Kanoniczna nazwa pluginu i repozytorium to SIRK-Portal.
+- Kanoniczna nazwa repozytorium to SIRK-Portal, a identyfikator pluginu to SIRKPortal.
 - Nie utrzymuj kompatybilności, aliasów, shimów ani migracji MyCompany.
 - Nie czytaj ani nie migruj mycompany-data.
 - Backend znajduje się wyłącznie w server/.
-- Frontend znajduje się w public/portal, public/native, public/shared i public/modules.
+- Frontend znajduje się w public/native, public/shared i public/modules.
 - Panel administracyjny znajduje się w web/admin i views/SIRK-Portal.handlebars.
 - Przed zmianą UI potwierdź loader w admin.js.
 - Iframe aktywnej sesji hosta pozostaje stale podłączony do DOM.

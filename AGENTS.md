@@ -55,10 +55,10 @@ Dobieraj tylko moduły potrzebne dla bieżącego zadania:
 
 ## Kanoniczne nazwy i granice
 
-- repozytorium i techniczna nazwa pluginu: `SIRK-Portal`;
+- repozytorium: `SIRK-Portal`; techniczna nazwa pluginu: `SIRKPortal`;
 - nazwa produktu: `SIRK Management Platform`;
 - nazwa skrócona: `SIRK Platform`;
-- entrypoint: `SIRK-Portal.js`;
+- entrypoint: `SIRKPortal.js`;
 - dane runtime: `meshcentral-data/sirk-platform-data`.
 
 Nie utrzymuj aliasów, shimów, migracji ani fallbacków `MyCompany`. Nie czytaj starego repozytorium ani `mycompany-data`, chyba że użytkownik jawnie zleci niezależny audyt historyczny.
@@ -77,7 +77,6 @@ Nie zakładaj, że plik o podobnej nazwie jest używany przez runtime.
 
 ## Kontrakty SIRK Portal
 
-- nie ukrywaj całego `#sirkStandaloneRoot` ani dokumentu podczas `F5`;
 - nie używaj długich timeoutów jako podstawowego mechanizmu gotowości;
 - wyłączone elementy menu nie mogą być widoczne przed zastosowaniem uprawnień;
 - właściwy widok ma być pokazany jednokrotnie;

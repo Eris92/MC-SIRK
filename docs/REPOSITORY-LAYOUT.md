@@ -2,7 +2,7 @@
 
 ## Nazwy produktu
 
-- repozytorium i techniczna nazwa pluginu: `SIRK-Portal`;
+- repozytorium: `SIRK-Portal`; techniczna nazwa pluginu: `SIRKPortal`;
 - nazwa wyświetlana: `SIRK Management Platform`;
 - nazwa skrócona: `SIRK Platform`.
 
@@ -27,7 +27,7 @@ Odczyt repozytorium zaczyna się od indeksów. Po wybraniu warstwy należy czyta
 ```text
 SIRK-Portal/
 ├── AGENTS.md
-├── SIRK-Portal.js
+├── SIRKPortal.js
 ├── plugin-main.js
 ├── admin.js
 ├── config.json
@@ -36,7 +36,6 @@ SIRK-Portal/
 │   ├── INDEX.md
 │   ├── core/
 │   │   ├── runtime.js
-│   │   ├── runtime-portal.js
 │   │   ├── settings-store.js
 │   │   ├── secret-store.js
 │   │   ├── approval-service.js
@@ -48,11 +47,9 @@ SIRK-Portal/
 │       ├── commands/
 │       ├── jira/
 │       ├── move-requests/
-│       ├── portal/
 │       └── security/
 ├── public/
 │   ├── INDEX.md
-│   ├── portal/
 │   ├── native/
 │   ├── shared/
 │   └── modules/
@@ -94,9 +91,8 @@ Plugin nie odczytuje i nie migruje `mycompany-data`.
 
 ## Frontend
 
-`public/` zawiera dokładnie cztery warstwy:
+`public/` zawiera trzy warstwy:
 
-- `public/portal/` — widoki natywnego interfejsu MeshCentral;
 - `public/native/` — integracja z natywnym GUI MeshCentral;
 - `public/shared/` — wspólny runtime, komponenty i style;
 - `public/modules/` — pojedyncze renderery modułów.
@@ -119,9 +115,8 @@ Dla jednego modułu może istnieć tylko jeden renderer.
 ```text
 SIRKPortal.js
   -> plugin-main.js
-    -> server/core/runtime-portal.js
-      -> server/core/runtime.js
-        -> server/modules/*
+    -> server/core/runtime.js
+      -> server/modules/*
 ```
 
 - `admin.js` utrzymuje mapę assetów natywnego UI i panelu administracyjnego;
@@ -141,8 +136,6 @@ Nie istnieje alias danych `window.MyCompanyAdminData`. Kanoniczny obiekt to `win
 
 ```text
 https://github.com/Eris92/SIRK-Portal
-Install-SIRK-Portal-FromGit.ps1
-Install-SIRK-Portal-FromGit_RUN.ps1
 tools/install/Install-SIRK-Portal-FromGit.ps1
 tools/install/Install-SIRK-Portal-FromGit_RUN.ps1
 ```

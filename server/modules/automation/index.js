@@ -94,7 +94,7 @@ module.exports.createModule = function (context) {
             if (!unregister) unregister = context.approval.registerProvider(provider);
             return Promise.resolve();
         },
-        serveIcon: function (req, res) { shared.send(res, 404, "text/plain; charset=utf-8", "Icons are embedded in the script tree."); },
+        serveIcon: function (req, res) { shared.send(res, 404, "text/plain; charset=utf-8", "Icons are included in the script tree."); },
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var q = req && req.query || {};

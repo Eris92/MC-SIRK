@@ -7,12 +7,10 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | security | `security.test.js` |
 | lokalizacja skryptów | `script-localization.test.js` |
 | folder permissions | `folder-access.test.js` |
-| dostęp do widoków w MeshCentral | `portal-view-access.test.js` |
 | integracje i health | `integration-health.test.js` |
 | aktualizacje pluginów | `plugin-update-manager.test.js` |
 | rollback | `plugin-rollback-manager.test.js` |
 | wykrywanie backupów | `plugin-backup-discovery.test.js` |
 | marketplace | `plugin-marketplace.test.js` |
-| trwałe zakładki urządzeń | `native-device-tabs.test.js` |
 
 Po teście celowanym uruchom `npm test`, jeżeli zmiana wpływa na wiele warstw albo wspólny kontrakt.

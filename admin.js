@@ -29,7 +29,6 @@ module.exports.admin = function (plugin) {
         "admin-plugin-updates.js": ["web/admin/admin-plugin-updates.js", "text/javascript; charset=utf-8"],
         "admin-marketplace.js": ["web/admin/admin-marketplace.js", "text/javascript; charset=utf-8"],
         "admin-move-mesh-levels.js": ["web/admin/admin-move-mesh-levels.js", "text/javascript; charset=utf-8"],
-        "admin-portal.js": ["web/admin/admin-portal.js", "text/javascript; charset=utf-8"],
         "marketplace.json": ["marketplace.json", "application/json; charset=utf-8"],
 
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
@@ -40,21 +39,8 @@ module.exports.admin = function (plugin) {
         "icons/sirk-ui.svg": ["assets/icons/sirk-ui.svg", "image/svg+xml; charset=utf-8"],
 
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
-        "portal-device-tabs.js": ["public/native/device-tabs.js", "text/javascript; charset=utf-8"],
-        "portal-device-tabs.css": ["public/native/device-tabs.css", "text/css; charset=utf-8"],
         "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
 
-        "portal.js": ["public/portal/index.js", "text/javascript; charset=utf-8"],
-        "portal-icon-data.js": ["public/portal/icons.js", "text/javascript; charset=utf-8"],
-        "portal-subfolder-icons.js": ["public/portal/subfolder-icons.js", "text/javascript; charset=utf-8"],
-        "portal-collapse-isolation.js": ["public/portal/collapse-isolation.js", "text/javascript; charset=utf-8"],
-        "portal-folder-collapse.js": ["public/portal/folder-collapse.js", "text/javascript; charset=utf-8"],
-        "portal-management.js": ["public/portal/management.js", "text/javascript; charset=utf-8"],
-        "portal-approval.js": ["public/portal/approvals.js", "text/javascript; charset=utf-8"],
-        "portal-approval-hook.js": ["public/portal/approvals-hook.js", "text/javascript; charset=utf-8"],
-        "portal-fix.js": ["public/portal/fixes.js", "text/javascript; charset=utf-8"],
-        "portal-ui-fix.js": ["public/portal/ui-fixes.js", "text/javascript; charset=utf-8"],
-        "portal.css": ["public/portal/portal.css", "text/css; charset=utf-8"],
 
         "myscripts.js": ["public/modules/automation/index.js", "text/javascript; charset=utf-8"],
         "myscripts.css": ["public/modules/automation/style.css", "text/css; charset=utf-8"],
@@ -102,22 +88,6 @@ module.exports.admin = function (plugin) {
         });
     }
 
-    function serveVendorPortal(res, asset) {
-        var prefix = "vendor/sirk-portal/";
-        if (asset.indexOf(prefix) !== 0) return false;
-        var name = asset.slice(prefix.length);
-        if (!/^[a-z0-9._-]+$/i.test(name)) {
-            shared.send(res, 400, "text/plain; charset=utf-8", "Invalid asset name");
-            return true;
-        }
-        var type = /\.css$/i.test(name) ? "text/css; charset=utf-8" : "text/javascript; charset=utf-8";
-        fs.readFile(path.join(root, "public", "vendor", "sirk-portal", name), function (error, data) {
-            if (error) shared.send(res, 404, "text/plain; charset=utf-8", "SIRK Portal vendor asset unavailable");
-            else shared.send(res, 200, type, data);
-        });
-        return true;
-    }
-
     function moduleObject(moduleName) {
         return plugin.runtime && plugin.runtime.modules &&
             plugin.runtime.modules[String(moduleName || "").toLowerCase()];
@@ -144,7 +114,6 @@ module.exports.admin = function (plugin) {
         var moduleName = String(req && req.query && req.query.module || "");
         var action = String(req && req.query && req.query.action || "");
 
-        if (serveVendorPortal(res, asset)) return;
         if (assets[asset]) { sendAsset(res, asset); return; }
         if (asset === "bootstrap") {
             plugin.runtime.request("GET", "_runtime", "bootstrap", req, res, user);
@@ -179,7 +148,7 @@ module.exports.admin = function (plugin) {
         try {
             res.render("SIRK-Portal", {
                 title: "SIRK Management Platform",
-                pluginShortName: String(req && req.query && req.query.pin || plugin.shortName || "SIRK-Portal"),
+                pluginShortName: String(req && req.query && req.query.pin || plugin.shortName || "SIRKPortal"),
                 adminDataJson: safeAdminJson(plugin.runtime.adminSnapshot(user))
             });
         } catch (error) {

@@ -33,7 +33,6 @@ Nie skanuj całego repozytorium, jeżeli indeks wskazuje konkretny entrypoint, m
 
 ```text
 backend Node/MeshCentral       -> server/
-widoki natywnego MeshCentral   -> public/portal/
 adapter natywnego MeshCentral  -> public/native/
 frontend współdzielony         -> public/shared/
 renderery modułów              -> public/modules/
@@ -53,7 +52,6 @@ Szczegółowe mapy znajdują się w lokalnych plikach `INDEX.md` poszczególnych
 - Device Transfers;
 - Jira Integration;
 - Security;
-- Portal.
 
 Backend modułów znajduje się w `server/modules/`, a pojedyncze renderery frontendowe w `public/modules/`.
 
@@ -81,9 +79,8 @@ Identyfikator `SIRKPortal` celowo nie zawiera myślnika. MeshCentral wykorzystuj
 ```text
 SIRKPortal.js
   -> plugin-main.js
-    -> server/core/runtime-portal.js
-      -> server/core/runtime.js
-        -> server/modules/*
+    -> server/core/runtime.js
+      -> server/modules/*
 ```
 
 Mapę assetów natywnego interfejsu utrzymuje `admin.js`.
@@ -103,7 +100,7 @@ Plugin nie odczytuje, nie kopiuje i nie migruje `meshcentral-data/mycompany-data
 Uruchom jako Administrator:
 
 ```powershell
-.\Install-SIRK-Portal-FromGit_RUN.ps1
+.\tools\install\Install-SIRK-Portal-FromGit_RUN.ps1
 ```
 
 Źródłowa implementacja instalatora:

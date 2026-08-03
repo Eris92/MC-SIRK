@@ -20,18 +20,6 @@ function normalizeRules(value, allowedKeys, knownGroups) {
     return result;
 }
 
-function migrateLegacyRules(value) {
-    value = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-    var changed = false;
-    Object.keys(value).forEach(function (key) {
-        var rule = value[key];
-        if (!rule || typeof rule !== "object" || Array.isArray(rule) || Object.prototype.hasOwnProperty.call(rule, "allowAll")) return;
-        rule.allowAll = !Array.isArray(rule.groupIds) || rule.groupIds.length === 0;
-        changed = true;
-    });
-    return changed;
-}
-
 function canAccess(user, rules, key) {
     key = String(key || "");
     var rule = rules && rules[key];
@@ -62,7 +50,6 @@ function requirePath(user, rules, relativePath) {
 module.exports = {
     canAccess: canAccess,
     filterTree: filterTree,
-    migrateLegacyRules: migrateLegacyRules,
     normalizeRules: normalizeRules,
     requirePath: requirePath,
     rootKey: rootKey

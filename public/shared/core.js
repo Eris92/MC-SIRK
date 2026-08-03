@@ -156,7 +156,7 @@
 
     core.isSirkPlatformTarget = function (target) {
         if (!target || !target.closest) return false;
-        return !!target.closest("#SirkPlatformWorkspace,[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-'],#sirkPlatformPortalLauncher");
+        return !!target.closest("#SirkPlatformWorkspace,[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-']");
     };
 
     core.installNativeRestoreGuard = function () {

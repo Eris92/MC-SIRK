@@ -7,7 +7,6 @@ Czytaj ten indeks dla zadań dotyczących Node.js, MeshCentral backend, storage,
 ```text
 SIRKPortal.js
 plugin-main.js
-server/core/runtime-portal.js
 server/core/runtime.js
 ```
 
@@ -15,7 +14,7 @@ server/core/runtime.js
 
 | Obszar | Plik |
 |---|---|
-| runtime i składanie modułów | `runtime.js`, `runtime-portal.js` |
+| runtime i składanie modułów | `runtime.js` |
 | ustawienia | `settings-store.js` |
 | sekrety | `secret-store.js` |
 | approval workflow | `approval-service.js` |
@@ -35,7 +34,6 @@ server/core/runtime.js
 | Commands | `commands/` |
 | Jira Integration | `jira/` |
 | Device Transfers | `move-requests/` |
-| Portal API | `portal/` |
 | Security | `security/` |
 
 Każdy moduł zaczynaj od jego `index.js`. Nie otwieraj pozostałych modułów bez zależności potwierdzonej w runtime.
