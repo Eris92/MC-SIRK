@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.31",
+    "date": "2026-08-03",
+    "changes": [
+      "Preserve the complete nested script directory structure in Desktop Quick commands.",
+      "Expand and collapse folders in the second column like the My Commands tree.",
+      "Show only scripts belonging directly to the selected directory in the third column."
+    ]
+  },
+  {
     "version": "1.6.30",
     "date": "2026-08-03",
     "changes": [

@@ -1,3 +1,9 @@
+## 1.6.31
+
+- Preserve the complete nested script directory structure in Desktop Quick commands.
+- Expand and collapse folders in the second column like the My Commands tree.
+- Show only scripts belonging directly to the selected directory in the third column.
+
 ## 1.6.30
 
 - Wait for the MeshCentral agent response before reporting successful command execution.

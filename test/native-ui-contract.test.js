@@ -93,6 +93,8 @@ assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), group
     "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-folders') >= 0 && desktopCommands.indexOf('state.folder') >= 0,
     "Desktop Commands must render the missing folder column between categories and scripts.");
+assert.ok(desktopCommands.indexOf("function scriptGroup") >= 0 && desktopCommands.indexOf("state.expanded[group.key]") >= 0,
+    "Desktop script folders must preserve nested directories and expand like the My Commands tree.");
 assert.ok(desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0 && desktopCommands.indexOf('requiresApproval: false') >= 0,
     "Desktop Commands must expose file-backed scripts as direct actions without Approval UI.");
 assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
