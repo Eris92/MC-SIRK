@@ -106,6 +106,8 @@ assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
     "Desktop Commands must use command-specific icons matching My Commands.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if ((value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
+assert.ok(desktopCommands.indexOf('state.detail = value;\n            render(panel);\n            submit(value') >= 0 && desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
+    "Selecting a variable-free Quick command must clear the previous details pane before automatic execution.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
 assert.ok(desktopCommands.indexOf('details.appendChild(element("div", "sirk-quick-command-status"))') >= 0 &&

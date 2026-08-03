@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.51",
+    "date": "2026-08-03",
+    "changes": [
+      "Clear the previous Quick command details before automatic execution.",
+      "Show only the selected parameter-free command result in the third column.",
+      "Preserve the correct selected-command highlight while it runs."
+    ]
+  },
+  {
     "version": "1.6.50",
     "date": "2026-08-03",
     "changes": [

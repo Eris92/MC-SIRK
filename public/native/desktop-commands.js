@@ -134,7 +134,7 @@
         var payload = { nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values, confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: "" };
         if (!payload.nodeId) { status.textContent = "Device is not ready."; status.classList.add("is-error"); return; }
         if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
-        button.disabled = true;
+        if (button) button.disabled = true;
         status.textContent = text("loading");
         status.classList.remove("is-error");
         window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
@@ -146,7 +146,7 @@
         }).catch(function (error) {
             status.textContent = text("failed") + " " + (error.message || String(error));
             status.classList.add("is-error");
-        }).then(function () { button.disabled = false; });
+        }).then(function () { if (button) button.disabled = false; });
     }
 
     function waitForExecution(id, status, attempt) {
@@ -171,8 +171,9 @@
         var status = panel.querySelector(".sirk-quick-command-status");
         function use(value) {
             if ((value.variables || []).length) { state.detail = value; render(panel); return; }
-            state.detail = null;
-            submit(value, function () { return { ok: true, values: {} }; }, button, status);
+            state.detail = value;
+            render(panel);
+            submit(value, function () { return { ok: true, values: {} }; }, null, panel.querySelector(".sirk-quick-command-status"));
         }
         status.textContent = "";
         status.classList.remove("is-error");

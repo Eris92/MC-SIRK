@@ -1,3 +1,8 @@
+## 1.6.51
+
+- Clear stale variable controls and output before running a parameter-free Quick command.
+- Keep the newly selected command highlighted and show only its own execution result in the third column.
+
 ## 1.6.50
 
 - Store Approval requests in a writable ProgramData fallback when MeshCentral data under Program Files is read-only.
