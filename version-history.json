@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.36",
+    "date": "2026-08-03",
+    "changes": [
+      "Launch interactive Windows tools directly from the scheduled task.",
+      "Remove the temporary helper cmd.exe window that flashed before the requested application.",
+      "Keep the requested CMD window open with its own /K argument."
+    ]
+  },
+  {
     "version": "1.6.35",
     "date": "2026-08-03",
     "changes": [

@@ -1,3 +1,9 @@
+## 1.6.36
+
+- Launch interactive Windows tools directly from the scheduled task.
+- Remove the temporary helper `cmd.exe` window that flashed before the requested application.
+- Keep the requested CMD window open with its own `/K` argument.
+
 ## 1.6.35
 
 - Always show every built-in command to Site Admin in My Commands.

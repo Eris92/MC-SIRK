@@ -28,7 +28,7 @@ module.exports.createModule = function (context) {
         system: {
             key: "system", title: "System", icon: "⚙", commands: [
                 { id: "powershell", label: "Open PowerShell", description: "Open a PowerShell window for the interactive user.", type: 1, runAsUser: 2, cmd: "start \"\" powershell.exe -NoExit" },
-                { id: "cmd", label: "Open CMD", description: "Open Command Prompt for the interactive user.", type: 1, runAsUser: 2, cmd: "start \"\" cmd.exe" },
+                { id: "cmd", label: "Open CMD", description: "Open Command Prompt for the interactive user.", type: 1, runAsUser: 2, cmd: "start \"\" cmd.exe /K" },
                 { id: "regedit", label: "Registry Editor", description: "Open Registry Editor.", type: 1, runAsUser: 2, cmd: "start \"\" regedit.exe" },
                 { id: "secpol", label: "Local Security Policy", description: "Open secpol.msc.", type: 1, runAsUser: 2, cmd: "start \"\" secpol.msc" },
                 { id: "firewall", label: "Windows Firewall", description: "Open Windows Firewall management.", type: 1, runAsUser: 2, cmd: "start \"\" mmc.exe wf.msc" },
@@ -177,14 +177,22 @@ module.exports.createModule = function (context) {
     }
     function psQuote(value) { return String(value == null ? "" : value).replace(/'/g, "''"); }
     function cmdQuote(value) { return String(value == null ? "" : value).replace(/[\r\n]/g, " ").replace(/%/g, "%%").replace(/\^/g, "^^").replace(/!/g, "^^!").replace(/"/g, "^\""); }
+    function desktopLaunch(commandText) {
+        var match = /^start\s+""\s+(?:"([^"]+)"|(\S+))(?:\s+([\s\S]*))?$/i.exec(String(commandText || "").trim());
+        if (!match) throw new Error("Invalid interactive Desktop command.");
+        var executable = match[1] || match[2];
+        var argumentsText = match[3] || "";
+        if (/\.msc$/i.test(executable)) { argumentsText = '"' + executable + '"' + (argumentsText ? " " + argumentsText : ""); executable = "mmc.exe"; }
+        return { executable: executable, argumentsText: argumentsText };
+    }
     function interactiveDesktopCommand(commandText, label) {
-        var action = "/c " + String(commandText || "");
+        var launch = desktopLaunch(commandText);
         return [
             "$userName=(Get-Process explorer -IncludeUserName -ErrorAction SilentlyContinue|Where-Object{$_.UserName}|Select-Object -First 1 -ExpandProperty UserName)",
             "if([string]::IsNullOrWhiteSpace($userName)){$userName=(Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName}",
             "if([string]::IsNullOrWhiteSpace($userName)){throw 'No interactive Windows user is logged on.'}",
             "$taskName='SIRK-Desktop-'+[guid]::NewGuid().ToString('N')",
-            "$action=New-ScheduledTaskAction -Execute $env:ComSpec -Argument '" + psQuote(action) + "'",
+            "$action=New-ScheduledTaskAction -Execute '" + psQuote(launch.executable) + "'" + (launch.argumentsText ? " -Argument '" + psQuote(launch.argumentsText) + "'" : ""),
             "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
             "try{",
             "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
