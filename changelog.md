@@ -1,3 +1,7 @@
+## 1.6.5
+
+- Restored the native Commands device tab and removed the overlapping Desktop overlay.
+
 ## 1.6.4
 
 - Fixed explicit dark-panel colors for all Approval Center form fields.

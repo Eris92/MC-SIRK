@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.6.5",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore the native Commands device tab and remove the overlapping Desktop overlay."
+    ]
+  },
+  {
     "version": "1.6.4",
     "date": "2026-08-03",
     "changes": [
