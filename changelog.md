@@ -1,3 +1,9 @@
+## 1.6.32
+
+- Launch PowerShell, CMD and Windows management tools on the visible interactive desktop.
+- Use a short-lived Windows scheduled task for GUI commands instead of MeshAgent's hidden terminal session.
+- Return an explicit error when no interactive Windows user is logged on.
+
 ## 1.6.31
 
 - Preserve the complete nested script directory structure in Desktop Quick commands.

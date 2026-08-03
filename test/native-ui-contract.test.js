@@ -120,6 +120,8 @@ assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands
 var commandsServer = read("server/modules/commands/index.js");
 assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
     "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
+assert.ok(commandsServer.indexOf("function interactiveDesktopCommand") >= 0 && commandsServer.indexOf("New-ScheduledTaskPrincipal") >= 0 && commandsServer.indexOf("-LogonType Interactive") >= 0,
+    "GUI commands must launch in the logged-on Windows user's interactive desktop session.");
 assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
     "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
 assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,

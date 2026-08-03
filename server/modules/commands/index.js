@@ -175,6 +175,22 @@ module.exports.createModule = function (context) {
     }
     function psQuote(value) { return String(value == null ? "" : value).replace(/'/g, "''"); }
     function cmdQuote(value) { return String(value == null ? "" : value).replace(/[\r\n]/g, " ").replace(/%/g, "%%").replace(/\^/g, "^^").replace(/!/g, "^^!").replace(/"/g, "^\""); }
+    function interactiveDesktopCommand(commandText, label) {
+        var action = "/c " + String(commandText || "");
+        return [
+            "$userName=(Get-CimInstance Win32_ComputerSystem).UserName",
+            "if([string]::IsNullOrWhiteSpace($userName)){throw 'No interactive Windows user is logged on.'}",
+            "$taskName='SIRK-Desktop-'+[guid]::NewGuid().ToString('N')",
+            "$action=New-ScheduledTaskAction -Execute $env:ComSpec -Argument '" + psQuote(action) + "'",
+            "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
+            "try{",
+            "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
+            "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
+            "Start-Sleep -Milliseconds 750",
+            "Write-Output 'Started on the interactive desktop: " + psQuote(label || "Command") + "'",
+            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue}"
+        ].join(";");
+    }
     function injectVariables(commandText, type, definitions, supplied, secretValues) {
         var values = validateVariables(definitions, supplied);
         Object.keys(secretValues || {}).forEach(function (name) { values[name] = String(secretValues[name] == null ? "" : secretValues[name]); });
@@ -194,7 +210,9 @@ module.exports.createModule = function (context) {
         if (payload.commandId) {
             var found = findCatalogCommand(payload.commandId);
             if (!found) throw new Error("Command preset not found.");
-            return { label: found.command.label, cmd: injectVariables(found.command.cmd, found.command.type, found.command.variables || [], payload.variableValues, null), type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0 };
+            var commandText = injectVariables(found.command.cmd, found.command.type, found.command.variables || [], payload.variableValues, null);
+            if (Number(found.command.runAsUser) === 2) return { label: found.command.label, cmd: interactiveDesktopCommand(commandText, found.command.label), type: 2, runAsUser: 0 };
+            return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0 };
         }
         var custom = String(payload.command || "");
         if (!custom) throw new Error("Command is empty.");

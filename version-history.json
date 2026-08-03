@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.32",
+    "date": "2026-08-03",
+    "changes": [
+      "Launch PowerShell, CMD and Windows management tools on the visible interactive desktop.",
+      "Use a short-lived Windows scheduled task for GUI commands instead of MeshAgent's hidden terminal session.",
+      "Return an explicit error when no interactive Windows user is logged on."
+    ]
+  },
+  {
     "version": "1.6.31",
     "date": "2026-08-03",
     "changes": [
