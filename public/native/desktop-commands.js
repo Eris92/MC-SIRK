@@ -9,11 +9,18 @@
     }
 
     function hide(menu) { if (menu) menu.hidden = true; }
+    function desktopHost() {
+        var desk = document.getElementById("Desk") ||
+            document.querySelector("#p11 canvas, #p11canvas, #p11 .desktop-canvas");
+        if (desk && desk.parentElement) return desk.parentElement;
+        // MeshCentral uses different desktop markup between releases. The page
+        // container is the reliable fallback and keeps the command button visible.
+        return document.getElementById("p11") || document.querySelector("[id^='p11']");
+    }
+
     function install() {
-        var desk = document.getElementById("Desk") || document.querySelector("#p11 canvas");
-        if (!desk || document.getElementById("sirk-desktop-commands")) return;
-        var host = desk.parentElement;
-        if (!host) return;
+        var host = desktopHost();
+        if (!host || document.getElementById("sirk-desktop-commands")) return;
         host.classList.add("sirk-desktop-commands-host");
         var wrap = document.createElement("div");
         wrap.id = "sirk-desktop-commands";

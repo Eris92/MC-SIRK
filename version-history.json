@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.4",
+    "date": "2026-08-03",
+    "changes": [
+      "Fix the dark Approval Center form contrast.",
+      "Make the Desktop Commands button attach to both MeshCentral desktop layouts."
+    ]
+  },
+  {
     "version": "1.6.3",
     "date": "2026-08-03",
     "changes": [

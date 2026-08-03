@@ -735,6 +735,37 @@
     background: #17191d;
 }
 
+/* MeshCentral applies a light surface while retaining its light-theme text on
+   some plugin pages. Keep each form element explicit, including inherited text. */
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card h3,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card p,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card label,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card span {
+    color: #f3f4f6 !important;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card {
+    background: #20242b !important;
+    border-color: #3d4552 !important;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card .mc-admin-card-description {
+    color: #cbd5e1 !important;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-input {
+    color: #ffffff !important;
+    background: #101216 !important;
+    border-color: #64748b !important;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-primary {
+    color: #ffffff !important;
+    background: #4b69d6 !important;
+    border-color: #7187e8 !important;
+}
+
 @media (max-width: 760px) {
     #sirk-platform-admin { grid-template-columns: 1fr; }
     #sirk-platform-admin .mc-admin-tabs { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #3d4552; }

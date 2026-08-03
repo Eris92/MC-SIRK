@@ -1,3 +1,8 @@
+## 1.6.4
+
+- Fixed explicit dark-panel colors for all Approval Center form fields.
+- Made the Desktop Commands button work with both supported MeshCentral desktop layouts.
+
 ## 1.6.3
 
 - Reduced the admin navigation to Approval Center, Move Request, My Commands and My Scripts.
