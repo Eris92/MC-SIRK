@@ -87,12 +87,12 @@ assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Desktop Commands must mount on the native desktop stage.");
 assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,
     "Desktop Commands must load the complete command and script tree.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("promptValues") >= 0,
-    "Desktop Commands must retain the category browser and collect required variables before immediate execution.");
+assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
+    "Desktop Commands must retain the category browser and render variables in the third column.");
 assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0,
     "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
-assert.ok(desktopCommands.indexOf('sirk-quick-command-folders') >= 0 && desktopCommands.indexOf('state.folder') >= 0,
-    "Desktop Commands must render the missing folder column between categories and scripts.");
+assert.ok(desktopCommands.indexOf('sirk-quick-command-tree') >= 0 && desktopCommands.indexOf('appendItem(item, depth + 1)') >= 0,
+    "Desktop Commands must render folders and their scripts together in the second-column tree.");
 assert.ok(desktopCommands.indexOf("function scriptGroup") >= 0 && desktopCommands.indexOf("state.expanded[group.key]") >= 0,
     "Desktop script folders must preserve nested directories and expand like the My Commands tree.");
 assert.ok(desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0 && desktopCommands.indexOf('requiresApproval: false') >= 0,
@@ -103,8 +103,10 @@ assert.ok(desktopCommands.indexOf('(data.catalog || []).forEach') >= 0,
     "Desktop Commands must include Network, System and Other alongside Scripts.");
 assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
     "Desktop Commands must use command-specific icons matching My Commands.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf("sirk-quick-command-submit") < 0,
-    "Desktop Commands must execute selected items immediately without a lower Run panel.");
+assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if ((value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
+    "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
+assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
+    "Desktop Commands must reserve the third column for variable fields and their Run action.");
 assert.ok(desktopCommands.indexOf('waitForExecution(result.id') >= 0 && desktopCommands.indexOf('"output"') >= 0,
     "Desktop Commands must wait for the agent result instead of reporting submission as execution success.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,

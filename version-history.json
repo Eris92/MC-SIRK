@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.39",
+    "date": "2026-08-03",
+    "changes": [
+      "Render folders, nested folders and scripts together in the second Quick commands column.",
+      "Use the third column exclusively for variable fields belonging to the selected item.",
+      "Execute variable-free items immediately and show Run only when variables must be supplied."
+    ]
+  },
+  {
     "version": "1.6.38",
     "date": "2026-08-03",
     "changes": [

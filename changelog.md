@@ -1,3 +1,9 @@
+## 1.6.39
+
+- Render folders, nested folders and scripts together in the second Quick commands column.
+- Use the third column exclusively for variable fields belonging to the selected item.
+- Execute variable-free items immediately and show Run only when variables must be supplied.
+
 ## 1.6.38
 
 - Bring newly launched Desktop tools to the foreground automatically.
