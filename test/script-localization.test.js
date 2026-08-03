@@ -11,6 +11,7 @@ try {
     var folder = path.join(root, "Reports");
     fs.mkdirSync(folder, { recursive: true });
     fs.writeFileSync(path.join(folder, "Reports.menu"), "#PL Raporty | Opis folderu\n#EN Reports | Folder description\n", "utf8");
+    fs.writeFileSync(path.join(folder, "Reports.svg"), '<svg xmlns="http://www.w3.org/2000/svg"><path d="M2 2h20v20H2z"/></svg>', "utf8");
     fs.writeFileSync(path.join(folder, "Users.ps1"), [
         "#PL Użytkownicy | Polski opis",
         "#EN Users | English description",
@@ -30,6 +31,8 @@ try {
     var treeFolder = library.getTree().children[0];
     assert.strictEqual(treeFolder.locales.pl.label, "Raporty");
     assert.strictEqual(treeFolder.locales.en.description, "Folder description");
+    assert.ok(/^data:image\/svg\+xml;base64,/.test(treeFolder.iconData),
+        "Directory tree must expose a same-name SVG file as the folder icon.");
 
     var definition = library.getDefinition("Reports/Users.ps1");
     assert.strictEqual(definition.variables[0].values.pl.indexOf("Liczba rekordów") >= 0, true);

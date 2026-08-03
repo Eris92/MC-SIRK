@@ -73,6 +73,13 @@ assert.ok(admin.indexOf('var action = String(req && req.query && req.query.actio
 
 var desktopCommands = read("public/native/desktop-commands.js");
 var desktopCommandsCss = read("public/native/desktop-commands.css");
+var commandsModule = read("public/modules/commands/index.js");
+['scripts:', 'network:', 'system:', 'other:'].forEach(function (icon) {
+    assert.ok(commandsModule.indexOf(icon) >= 0,
+        "My Commands must provide a distinct SVG menu icon for " + icon);
+});
+assert.ok(commandsModule.indexOf("iconMarkup: ICONS[command.id]") >= 0,
+    "My Commands entries must expose their command-specific SVG artwork to the shared tree.");
 assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Desktop Commands must mount on the native desktop stage.");
 assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,

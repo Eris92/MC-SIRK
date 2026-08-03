@@ -47,13 +47,19 @@
         "netstat-port": '<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/><circle cx="17" cy="16" r="2"/></svg>'
     };
 
+    var MENU_ICONS = {
+        scripts: '<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/><path d="M8 12h8M8 15h6"/></svg>',
+        network: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+        system: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',
+        other: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>'
+    };
+
     function language() {
         try { return localStorage.getItem("sirkPortal.language") === "en" ? "en" : "pl"; }
         catch (error) { return "pl"; }
     }
     function tr(value) { value = String(value == null ? "" : value); return language() === "pl" && PL[value] ? PL[value] : value; }
     function msg(pl, en) { return language() === "pl" ? pl : en; }
-    function svgData(svg) { return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ')); }
     function node(shell) { return shell.state.nodeId || window.SirkPlatformRuntime.state.nodeId || window.selectedNode || ""; }
     function stringValue(value) { if (value == null) return ""; if (typeof value === "string") return value; try { return JSON.stringify(value, null, 2); } catch (error) { return String(value); } }
     function isAdmin(shell) { return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.siteAdmin); }
@@ -64,10 +70,10 @@
     function commandPath(category, command) { return "@command/" + category.key + "/" + command.id; }
 
     function buildTree() {
-        var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", icon: "📁", children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
+        var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", iconMarkup: MENU_ICONS.scripts, children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
         (catalog || []).forEach(function (category) {
             children.push({
-                type: "directory", name: tr(category.title), path: "@menu/" + category.key, icon: category.icon || "▣",
+                type: "directory", name: tr(category.title), path: "@menu/" + category.key, iconMarkup: MENU_ICONS[category.key] || MENU_ICONS.other,
                 children: (category.commands || []).map(function (command) {
                     return {
                         type: "script", kind: "command", name: tr(command.label), label: tr(command.label),
@@ -75,7 +81,7 @@
                         variables: command.variables || [], approvalLevels: command.approvalLevels || [],
                         requiresApproval: command.requiresApproval === true, runAsUser: command.runAsUser,
                         confirmExecution: command.confirmExecution === true, multiHost: true,
-                        iconData: svgData(ICONS[command.id] || ICONS.mmc), icon: ""
+                        iconMarkup: ICONS[command.id] || ICONS.mmc
                     };
                 })
             });

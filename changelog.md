@@ -1,3 +1,9 @@
+## 1.6.17
+
+- Restored same-name SVG folder artwork loaded from the My Scripts and My Commands directory trees.
+- Added distinct SVG icons for Scripts, Network, System and Other in My Commands.
+- Rendered every command with its command-specific SVG instead of a generic menu icon.
+
 ## 1.6.16
 
 - Replaced black filled placeholders with consistent theme-aware line icons.

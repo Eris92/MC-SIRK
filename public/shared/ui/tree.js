@@ -57,7 +57,7 @@
         if (!appendIcon(button, options.node, options.iconClass)) {
             var fallback = document.createElement("span");
             fallback.className = "mc-tree-fallback-icon";
-            fallback.innerHTML = options.fallbackMarkup || lineIcon(options.fallbackKind || "folder");
+            fallback.innerHTML = options.fallbackMarkup || options.node && options.node.iconMarkup || lineIcon(options.fallbackKind || "folder");
             button.appendChild(fallback);
         }
 
@@ -125,6 +125,7 @@
             node: script,
             title: script.label || script.name || script.path,
             fallbackKind: "script",
+            fallbackMarkup: script.iconMarkup || "",
             active: text(options.selectedScript) === text(script.path),
             onClick: function () { options.onScript(script); }
         });
@@ -223,6 +224,7 @@
                     node: root,
                     title: root.name,
                     fallbackKind: "folder",
+                    fallbackMarkup: root.iconMarkup || "",
                     active: root.path === state.selectedRoot,
                     onClick: function () {
                         state.selectedRoot = root.path;
