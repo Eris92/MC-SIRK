@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.16",
+    "date": "2026-08-03",
+    "changes": [
+      "Replace black filled placeholders with consistent theme-aware line icons.",
+      "Unify toolbar, Approval Center, status, catalog, command and script-tree icon rendering.",
+      "Replace the script-tree square fallback with clear folder and document icons."
+    ]
+  },
+  {
     "version": "1.6.15",
     "date": "2026-08-03",
     "changes": [

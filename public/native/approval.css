@@ -122,12 +122,6 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-nav-icon svg
   stroke-linejoin: round;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-icon-overview svg,
-html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-icon-all svg {
-  fill: currentColor;
-  stroke: none;
-}
-
 html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-details-title {
   margin: 0 0 12px;
   font-size: 18px;

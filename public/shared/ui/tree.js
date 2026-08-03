@@ -41,6 +41,13 @@
         return image;
     }
 
+    function lineIcon(kind) {
+        var paths = kind === "script"
+            ? '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>'
+            : '<path d="M3 6h7l2 2h9v11H3V6Z"/>';
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+    }
+
     function createButton(options) {
         var button = document.createElement("button");
         button.type = "button";
@@ -50,7 +57,7 @@
         if (!appendIcon(button, options.node, options.iconClass)) {
             var fallback = document.createElement("span");
             fallback.className = "mc-tree-fallback-icon";
-            fallback.textContent = options.fallbackIcon || options.node && options.node.icon || "";
+            fallback.innerHTML = options.fallbackMarkup || lineIcon(options.fallbackKind || "folder");
             button.appendChild(fallback);
         }
 
@@ -67,7 +74,7 @@
         var roots = children.filter(function (item) { return item.type === "directory"; });
         var scripts = children.filter(function (item) { return item.type === "script"; });
         if (scripts.length) {
-            roots.unshift({ type: "directory", name: "Root", path: "__root__", iconData: "", icon: "▣", children: scripts });
+            roots.unshift({ type: "directory", name: "Root", path: "__root__", iconData: "", children: scripts });
         }
         return roots;
     }
@@ -117,7 +124,7 @@
             className: "mc-shared-nav-item mc-tree-script",
             node: script,
             title: script.label || script.name || script.path,
-            fallbackIcon: script.icon || "▶",
+            fallbackKind: "script",
             active: text(options.selectedScript) === text(script.path),
             onClick: function () { options.onScript(script); }
         });
@@ -215,7 +222,7 @@
                     className: "mc-shared-nav-item mc-tree-root",
                     node: root,
                     title: root.name,
-                    fallbackIcon: root.icon || "▣",
+                    fallbackKind: "folder",
                     active: root.path === state.selectedRoot,
                     onClick: function () {
                         state.selectedRoot = root.path;

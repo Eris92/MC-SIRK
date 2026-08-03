@@ -102,6 +102,9 @@
             indexing: "<svg viewBox='0 0 24 24'><circle cx='10' cy='10' r='6'/><path d='m15 15 5 5M8 8h4M8 11h3'/></svg>",
             cleanup: "<svg viewBox='0 0 24 24'><path d='M7 7h10l-1 14H8zM5 7h14M9 7V4h6v3'/><path d='M11 11v6M14 11v6'/></svg>"
         };
+        Object.keys(ICONS).forEach(function (key) {
+            ICONS[key] = ICONS[key].replace("<svg ", "<svg fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' ");
+        });
 
         function language() {
             try { return localStorage.getItem("sirkPortal.language") === "en" ? "en" : "pl"; }

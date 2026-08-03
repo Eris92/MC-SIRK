@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    function svg(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + path + '</svg>'; }
+    function svg(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>'; }
 
     var definitions = {
         collapse: { title: "Collapse", icon: svg('<path d="m15 18-6-6 6-6"/>'), expandIcon: svg('<path d="m9 18 6-6-6-6"/>'), side: "left", order: 10, handler: "onCollapse" },

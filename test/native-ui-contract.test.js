@@ -25,6 +25,18 @@ assert.ok(topTab.indexOf('document.getElementById("MainDevTerminal")') >= 0,
     "Commands top tab must attach beside the native Terminal tab.");
 
 var browserRuntime = read("public/shared/runtime.js");
+var toolbarIcons = read("public/shared/ui/toolbar-config.js");
+var statusIcons = read("public/shared/ui/status-nav.js");
+var approvalIcons = read("public/modules/approvals/index.js");
+[toolbarIcons, statusIcons, approvalIcons].forEach(function (source) {
+    assert.ok(source.indexOf('fill="none"') >= 0 && source.indexOf('stroke="currentColor"') >= 0,
+        "Native inline icons must use theme-aware line rendering instead of black browser fills.");
+});
+assert.ok(browserRuntime.indexOf("stroke='currentColor'") >= 0,
+    "Decorated command icons must follow the active MeshCentral theme.");
+var directoryTree = read("public/shared/ui/tree.js");
+assert.ok(directoryTree.indexOf('function lineIcon(kind)') >= 0 && directoryTree.indexOf('icon: "▣"') < 0,
+    "Script-tree fallback icons must be proper SVG artwork rather than solid text blocks.");
 assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
     "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
 assert.ok(browserRuntime.indexOf('if (view != null && !isCustomView(view)) core.restoreWorkspace();') >= 0,

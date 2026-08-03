@@ -1,3 +1,9 @@
+## 1.6.16
+
+- Replaced black filled placeholders with consistent theme-aware line icons.
+- Unified toolbar, Approval Center, status, catalog, command and script-tree icon rendering.
+- Replaced the script-tree square fallback with clear folder and document icons.
+
 ## 1.6.15
 
 - Made the Desktop Commands launcher and workspace follow MeshCentral light and night themes.

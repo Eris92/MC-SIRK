@@ -10,7 +10,7 @@
 
         var icon = document.createElement("span");
         icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon";
-        icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
         button.appendChild(icon);
 
         var label = document.createElement("span");
