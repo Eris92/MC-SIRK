@@ -1,7 +1,7 @@
 {
   "name": "SIRK Management Platform",
   "shortName": "SIRKPortal",
-  "version": "1.6.56",
+  "version": "1.6.57",
   "author": "Eris92",
   "description": "SIRK Management Platform extension for the native MeshCentral interface.",
   "hasAdminPanel": true,

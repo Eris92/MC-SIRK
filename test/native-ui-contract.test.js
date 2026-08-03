@@ -9,6 +9,7 @@ function read(relative) { return fs.readFileSync(path.join(root, relative), "utf
 
 var shell = read("public/shared/module-shell.js");
 var adminCss = read("web/admin/admin.css");
+var adminJs = read("web/admin/admin.js");
 var sharedCore = read("public/shared/core.js");
 assert.ok(sharedCore.indexOf("approvalcenter: svgData") >= 0 && sharedCore.indexOf('fill="#7b1fa2"') >= 0,
     "Approval Center must use its original purple clipboard menu icon.");
@@ -24,6 +25,8 @@ assert.ok(adminCss.indexOf("body.night #sirk-platform-admin") >= 0 && adminCss.i
     "The administration panel must react live to MeshCentral light and night theme classes.");
 assert.ok(adminCss.lastIndexOf("html body #sirk-platform-admin") > adminCss.lastIndexOf("color-scheme: dark;"),
     "Final live-theme rules must follow and override the legacy forced-dark compatibility block.");
+assert.ok(adminCss.indexOf('#sirk-platform-admin[data-host-theme="dark"]') >= 0 && adminJs.indexOf('root.setAttribute("data-host-theme", hostIsDark() ? "dark" : "light")') >= 0,
+    "The administration panel must infer the live MeshCentral host theme when the host does not expose body.night.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);

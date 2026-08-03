@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.57",
+    "date": "2026-08-03",
+    "changes": [
+      "Detect the effective MeshCentral host theme from its rendered container colors.",
+      "Update the administration panel immediately when host theme attributes or styles change."
+    ]
+  },
+  {
     "version": "1.6.56",
     "date": "2026-08-03",
     "changes": [

@@ -582,7 +582,8 @@
 
 body.night #sirk-platform-admin,
 body.dark #sirk-platform-admin,
-.night #sirk-platform-admin {
+.night #sirk-platform-admin,
+#sirk-platform-admin[data-host-theme="dark"] {
     --sirk-admin-bg: #17191d;
     --sirk-admin-surface: #20242b;
     --sirk-admin-surface-strong: #282d36;
@@ -904,7 +905,10 @@ html body.night #sirk-platform-admin .mc-admin-tabs,
 html body.night #sirk-platform-admin #sirk-platform-admin-content,
 html body.dark #sirk-platform-admin,
 html body.dark #sirk-platform-admin .mc-admin-tabs,
-html body.dark #sirk-platform-admin #sirk-platform-admin-content {
+html body.dark #sirk-platform-admin #sirk-platform-admin-content,
+html body #sirk-platform-admin[data-host-theme="dark"],
+html body #sirk-platform-admin[data-host-theme="dark"] .mc-admin-tabs,
+html body #sirk-platform-admin[data-host-theme="dark"] #sirk-platform-admin-content {
     color-scheme: dark;
 }
 

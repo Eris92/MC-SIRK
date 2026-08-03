@@ -1,3 +1,8 @@
+## 1.6.57
+
+- Detect the effective MeshCentral host theme even when no `body.night` class is exposed.
+- Resynchronize the administration panel colors whenever the host theme changes.
+
 ## 1.6.56
 
 - Render the selected Commands item immediately in the third column.

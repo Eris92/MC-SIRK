@@ -5,6 +5,42 @@
     var data = window.SirkPlatformAdminData || { modules: [], moduleSettings: {}, integrations: {} };
     if (!root || !content) return;
 
+    function colorParts(value) {
+        var match = String(value || "").match(/rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)(?:\D+([\d.]+))?/i);
+        if (!match || (match[4] != null && Number(match[4]) === 0)) return null;
+        return [Number(match[1]), Number(match[2]), Number(match[3])];
+    }
+    function hostIsDark() {
+        var current = root.parentElement;
+        while (current) {
+            var style = window.getComputedStyle(current);
+            var background = colorParts(style.backgroundColor);
+            if (background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
+            current = current.parentElement;
+        }
+        var bodyStyle = window.getComputedStyle(document.body);
+        var foreground = colorParts(bodyStyle.color);
+        return foreground ? ((foreground[0] * 299 + foreground[1] * 587 + foreground[2] * 114) / 1000) > 160 : false;
+    }
+    function syncHostTheme() {
+        root.setAttribute("data-host-theme", hostIsDark() ? "dark" : "light");
+    }
+    syncHostTheme();
+    var themeSyncPending = false;
+    function scheduleThemeSync() {
+        if (themeSyncPending) return;
+        themeSyncPending = true;
+        window.setTimeout(function () { themeSyncPending = false; syncHostTheme(); }, 0);
+    }
+    if (typeof MutationObserver === "function") {
+        new MutationObserver(scheduleThemeSync).observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ["class", "style", "href"] });
+    }
+    if (window.matchMedia) {
+        var systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+        if (typeof systemTheme.addEventListener === "function") systemTheme.addEventListener("change", scheduleThemeSync);
+        else if (typeof systemTheme.addListener === "function") systemTheme.addListener(scheduleThemeSync);
+    }
+
     function element(tag, className, text) { var value = document.createElement(tag); if (className) value.className = className; if (text != null) value.textContent = text; return value; }
     function settings() { return data.moduleSettings || {}; }
     function checked(host, text, value) { var label = element("label", "mc-admin-check"); var input = document.createElement("input"); input.type = "checkbox"; input.checked = value !== false; label.appendChild(input); label.appendChild(document.createTextNode(text)); host.appendChild(label); return input; }
