@@ -53,7 +53,7 @@
         status.className = "mc-admin-save-status";
         status.textContent = "Saving settings…";
         var body = new URLSearchParams();
-        body.set("modules", JSON.stringify(values.modules)); body.set("moduleOptions", JSON.stringify(values.moduleOptions));
+        body.set("action", "save-settings"); body.set("modules", JSON.stringify(values.modules)); body.set("moduleOptions", JSON.stringify(values.moduleOptions));
         var url = new URL("pluginadmin.ashx", window.location.href); url.searchParams.set("pin", root.getAttribute("data-plugin") || "SIRKPortal"); url.searchParams.set("action", "save-settings");
         var controller = typeof AbortController === "function" ? new AbortController() : null;
         var timer = window.setTimeout(function () { if (controller) controller.abort(); }, 15000);

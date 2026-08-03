@@ -113,7 +113,7 @@ module.exports.admin = function (plugin) {
     function post(req, res, user) {
         var moduleName = String(req && req.query && req.query.module || "");
         var asset = String(req && req.query && req.query.asset || "");
-        var action = String(req && req.query && req.query.action || "");
+        var action = String(req && req.query && req.query.action || req && req.body && req.body.action || "");
 
         if (moduleName) {
             if (req && req.body && typeof req.body.payload === "string") {

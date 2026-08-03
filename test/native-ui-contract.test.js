@@ -68,8 +68,8 @@ assert.ok(adminUi.indexOf("AbortController") >= 0 && adminUi.indexOf("15000") >=
     "Admin saves must time out and restore the Save button instead of hanging indefinitely.");
 
 var admin = read("admin.js");
-assert.ok(admin.indexOf('var action = String(req && req.query && req.query.action || "")') >= 0,
-    "Admin POST routing must read the requested action.");
+assert.ok(admin.indexOf("req.query.action") >= 0 && admin.indexOf("req.body.action") >= 0,
+    "Admin POST routing must read the requested action from both query and form body.");
 
 var desktopCommands = read("public/native/desktop-commands.js");
 var desktopCommandsCss = read("public/native/desktop-commands.css");

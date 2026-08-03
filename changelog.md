@@ -1,3 +1,9 @@
+## 1.6.18
+
+- Made administration saves complete synchronously through MeshCentral's settings file interface.
+- Added body-based action routing for MeshCentral versions that do not preserve the action query parameter.
+- Added an end-to-end admin POST regression test that verifies the JSON response and persisted value.
+
 ## 1.6.17
 
 - Restored same-name SVG folder artwork loaded from the My Scripts and My Commands directory trees.

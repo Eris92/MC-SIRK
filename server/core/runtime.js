@@ -233,7 +233,8 @@ module.exports.createRuntime = function (options) {
         var moduleOptions = payload.moduleOptions || {};
         var knownGroups = shared.getUserGroups(parent).map(function (group) { return group.id; });
 
-        return settings.update(function (current) {
+        try {
+            settings.updateSync(function (current) {
             Object.keys(modules).forEach(function (key) {
                 if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
                     current.modules[key].enabled = moduleValues[key] === true;
@@ -266,8 +267,12 @@ module.exports.createRuntime = function (options) {
             }
             if (moduleOptions.moverequests) current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
             if (moduleOptions.mycommands) current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
-            return current;
-        }).then(function () { return adminSnapshot(user); });
+                return current;
+            });
+            return Promise.resolve(adminSnapshot(user));
+        } catch (error) {
+            return Promise.reject(error);
+        }
     }
 
     function moduleFolders(key) {

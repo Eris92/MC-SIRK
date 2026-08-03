@@ -60,6 +60,14 @@ module.exports.createSettingsStore = function (options) {
         return operation;
     }
 
+    function updateSync(mutator) {
+        var next = mutator(shared.copy(read()));
+        if (!isObject(next)) throw new Error("Settings update must return an object.");
+        var normalized = merge(defaults, next);
+        shared.writeJsonAtomic(fs, path, filePath, normalized);
+        return normalized;
+    }
+
     function isModuleEnabled(key) {
         var settings = read();
         var value = settings.modules && settings.modules[key];
@@ -72,6 +80,7 @@ module.exports.createSettingsStore = function (options) {
         isModuleEnabled: isModuleEnabled,
         read: read,
         update: update,
+        updateSync: updateSync,
         write: write
     };
 };
