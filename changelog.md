@@ -1,3 +1,9 @@
+## 1.6.21
+
+- Synchronize the Desktop Quick commands first column with the main My Commands categories.
+- Group all file-backed command scripts under one Scripts entry.
+- Remove duplicated Network, System and Other entries from the Desktop launcher.
+
 ## 1.6.20
 
 - Recover automatically when `requests.json` is a directory, locked file or has incompatible Windows permissions.

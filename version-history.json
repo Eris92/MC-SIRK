@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.21",
+    "date": "2026-08-03",
+    "changes": [
+      "Synchronize the Desktop Quick commands first column with the main My Commands categories.",
+      "Group all file-backed command scripts under one Scripts entry.",
+      "Remove duplicated Network, System and Other entries from the Desktop launcher."
+    ]
+  },
+  {
     "version": "1.6.20",
     "date": "2026-08-03",
     "changes": [

@@ -6,8 +6,8 @@
 
     var state = { data: null, category: "", search: "" };
     var TEXT = {
-        pl: { title: "Szybkie polecenia", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Parametry", run: "Uruchom", request: "Wyślij wniosek", loading: "Ładowanie poleceń…", sent: "Polecenie zostało wysłane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wysłać polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
-        en: { title: "Quick commands", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", request: "Request", loading: "Loading commands…", sent: "Command submitted.", pending: "Command is waiting for approval.", failed: "Command could not be submitted.", confirm: "Run command", required: "Complete the required fields." }
+        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Parametry", run: "Uruchom", request: "Wyślij wniosek", loading: "Ładowanie poleceń…", sent: "Polecenie zostało wysłane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wysłać polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
+        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", request: "Request", loading: "Loading commands…", sent: "Command submitted.", pending: "Command is waiting for approval.", failed: "Command could not be submitted.", confirm: "Run command", required: "Complete the required fields." }
     };
 
     function language() {
@@ -40,9 +40,8 @@
     }
     function categories(data) {
         var result = [];
-        (data.tree && data.tree.children || []).forEach(function (root) {
-            result.push({ key: "script:" + root.path, label: localized(root, "label") || root.name || root.path, items: flattenScripts(root, []) });
-        });
+        var scripts = flattenScripts(data.tree, []);
+        if (scripts.length) result.push({ key: "scripts", label: text("scripts"), items: scripts });
         (data.catalog || []).forEach(function (category) {
             result.push({
                 key: "catalog:" + category.key,

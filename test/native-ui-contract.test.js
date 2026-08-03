@@ -89,6 +89,10 @@ assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "sc
     "Desktop Commands must load the complete command and script tree.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
     "Desktop Commands must retain the historical category browser and variable form.");
+assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), items: scripts') >= 0,
+    "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
+assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,
+    "Desktop Commands must not duplicate script folders alongside built-in command categories.");
 assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
     "Desktop Commands must follow MeshCentral's native night-mode class.");
 assert.ok(desktopCommandsCss.indexOf("var(--sdc-panel)") >= 0 && desktopCommandsCss.indexOf("var(--sdc-text)") >= 0,
