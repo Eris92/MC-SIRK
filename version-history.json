@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.29",
+    "date": "2026-08-03",
+    "changes": [
+      "Match every Desktop Quick command icon with its corresponding My Commands icon.",
+      "Execute a command immediately when its row is selected.",
+      "Remove the lower command details and Run panel from the Desktop launcher."
+    ]
+  },
+  {
     "version": "1.6.28",
     "date": "2026-08-03",
     "changes": [

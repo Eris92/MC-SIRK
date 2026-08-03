@@ -87,8 +87,8 @@ assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Desktop Commands must mount on the native desktop stage.");
 assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,
     "Desktop Commands must load the complete command and script tree.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
-    "Desktop Commands must retain the historical category browser and variable form.");
+assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("promptValues") >= 0,
+    "Desktop Commands must retain the category browser and collect required variables before immediate execution.");
 assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0,
     "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-folders') >= 0 && desktopCommands.indexOf('state.folder') >= 0,
@@ -99,6 +99,10 @@ assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands
     "Desktop Commands must request direct execution and render folder/script icons.");
 assert.ok(desktopCommands.indexOf('(data.catalog || []).forEach') >= 0,
     "Desktop Commands must include Network, System and Other alongside Scripts.");
+assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
+    "Desktop Commands must use command-specific icons matching My Commands.");
+assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf("sirk-quick-command-submit") < 0,
+    "Desktop Commands must execute selected items immediately without a lower Run panel.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
     "Desktop direct scripts must always display Run and never a Request button.");
 assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,

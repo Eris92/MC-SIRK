@@ -1,3 +1,9 @@
+## 1.6.29
+
+- Match every Desktop Quick command icon with its corresponding My Commands icon.
+- Execute a command immediately when its row is selected.
+- Remove the lower command details and Run panel from the Desktop launcher.
+
 ## 1.6.28
 
 - Restore Network, System and Other next to Scripts in Desktop Quick commands.
