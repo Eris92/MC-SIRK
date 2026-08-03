@@ -263,11 +263,11 @@
     };
 
     runtime.onNativePageStart = function (view) {
-        if (core.workspaceState && !isCustomView(view)) core.restoreWorkspace();
+        if (view != null && !isCustomView(view)) core.restoreWorkspace();
         notify("onNativePageStart", view);
     };
     runtime.onNativePageEnd = function (view) {
-        if (core.workspaceState && !isCustomView(view)) core.restoreWorkspace();
+        if (view != null && !isCustomView(view)) core.restoreWorkspace();
         notify("onNativePageEnd", view);
     };
     runtime.onDeviceRefreshEnd = function (nodeId) { runtime.state.nodeId = String(nodeId || ""); notify("onDeviceRefreshEnd", runtime.state.nodeId); };

@@ -1,3 +1,9 @@
+## 1.6.12
+
+- Remove SIRK `viewmode` parameters when returning to native MeshCentral pages.
+- Prevent Approval Center or another module from reopening over the Devices page.
+- Remove the empty trailing URL hash left by the workspace navigation.
+
 ## 1.6.11
 
 - Restored the original purple Approval Center menu icon with the green approval mark.

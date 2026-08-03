@@ -139,18 +139,28 @@
     };
     core.restoreWorkspace = function () {
         var state = core.workspaceState;
-        if (!state) return;
-        if (state.heading) state.heading.textContent = state.headingText;
-        (state.hidden || []).forEach(function (item) {
-            item.element.style.cssText = item.cssText;
-            item.element.hidden = item.hidden;
-        });
-        var workspace = document.getElementById("SirkPlatformWorkspace");
-        if (workspace) {
-            workspace.innerHTML = "";
-            workspace.style.display = "none";
+        if (state) {
+            if (state.heading) state.heading.textContent = state.headingText;
+            (state.hidden || []).forEach(function (item) {
+                item.element.style.cssText = item.cssText;
+                item.element.hidden = item.hidden;
+            });
+            var workspace = document.getElementById("SirkPlatformWorkspace");
+            if (workspace) {
+                workspace.innerHTML = "";
+                workspace.style.display = "none";
+            }
+            core.workspaceState = null;
         }
-        core.workspaceState = null;
+        try {
+            var url = new URL(window.location.href);
+            var customViewModes = [101, 102, 105, 106];
+            if (customViewModes.indexOf(Number(url.searchParams.get("viewmode"))) >= 0) {
+                url.searchParams.delete("viewmode");
+                if (url.hash === "#") url.hash = "";
+                window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+            }
+        } catch (error) {}
     };
 
     core.isSirkPlatformTarget = function (target) {

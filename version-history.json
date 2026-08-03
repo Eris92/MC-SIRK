@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.12",
+    "date": "2026-08-03",
+    "changes": [
+      "Remove SIRK viewmode parameters when returning to native MeshCentral pages.",
+      "Prevent a plugin workspace from reopening over the Devices page.",
+      "Remove the empty trailing URL hash left by workspace navigation."
+    ]
+  },
+  {
     "version": "1.6.11",
     "date": "2026-08-03",
     "changes": [

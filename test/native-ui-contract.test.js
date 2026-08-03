@@ -11,6 +11,10 @@ var shell = read("public/shared/module-shell.js");
 var sharedCore = read("public/shared/core.js");
 assert.ok(sharedCore.indexOf("approvalcenter: svgData") >= 0 && sharedCore.indexOf('fill="#7b1fa2"') >= 0,
     "Approval Center must use its original purple clipboard menu icon.");
+assert.ok(sharedCore.indexOf('url.searchParams.delete("viewmode")') >= 0,
+    "Leaving a SIRK workspace must remove its custom viewmode from the URL.");
+assert.ok(sharedCore.indexOf('if (url.hash === "#") url.hash = ""') >= 0,
+    "Leaving a SIRK workspace must remove an empty trailing hash.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);
@@ -23,6 +27,8 @@ assert.ok(topTab.indexOf('document.getElementById("MainDevTerminal")') >= 0,
 var browserRuntime = read("public/shared/runtime.js");
 assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
     "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
+assert.ok(browserRuntime.indexOf('if (view != null && !isCustomView(view)) core.restoreWorkspace();') >= 0,
+    "Every transition to a native MeshCentral page must clear the SIRK workspace URL.");
 
 var approvals = read("server/modules/approval-center/index.js");
 assert.ok(approvals.indexOf("current.modules.approvals") >= 0,
