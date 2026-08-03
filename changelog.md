@@ -1,3 +1,8 @@
+## 1.6.15
+
+- Made the Desktop Commands launcher and workspace follow MeshCentral light and night themes.
+- Added theme-aware colors for panels, categories, fields, muted text and errors.
+
 ## 1.6.14
 
 - Fixed administration saves that remained in progress indefinitely.

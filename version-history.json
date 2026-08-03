@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.15",
+    "date": "2026-08-03",
+    "changes": [
+      "Make the Desktop Commands launcher and workspace follow MeshCentral light and night themes.",
+      "Add theme-aware colors for panels, categories, fields, muted text and errors."
+    ]
+  },
+  {
     "version": "1.6.14",
     "date": "2026-08-03",
     "changes": [

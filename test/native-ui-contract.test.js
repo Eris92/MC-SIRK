@@ -60,12 +60,17 @@ assert.ok(admin.indexOf('var action = String(req && req.query && req.query.actio
     "Admin POST routing must read the requested action.");
 
 var desktopCommands = read("public/native/desktop-commands.js");
+var desktopCommandsCss = read("public/native/desktop-commands.css");
 assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Desktop Commands must mount on the native desktop stage.");
 assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,
     "Desktop Commands must load the complete command and script tree.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
     "Desktop Commands must retain the historical category browser and variable form.");
+assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
+    "Desktop Commands must follow MeshCentral's native night-mode class.");
+assert.ok(desktopCommandsCss.indexOf("var(--sdc-panel)") >= 0 && desktopCommandsCss.indexOf("var(--sdc-text)") >= 0,
+    "Desktop Commands surfaces must use theme variables instead of fixed colors.");
 assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
     "Desktop Commands script must be exposed by the plugin asset router.");
 
