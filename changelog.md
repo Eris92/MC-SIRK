@@ -1,3 +1,8 @@
+## 1.6.48
+
+- Move Quick commands execution output from the full-width footer into the third column.
+- Keep long command and script output scrollable together with variable controls and Run.
+
 ## 1.6.47
 
 - Show per-script credential controls only while script edit mode is active.

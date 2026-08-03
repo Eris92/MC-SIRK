@@ -108,6 +108,10 @@ assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopComman
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
+assert.ok(desktopCommands.indexOf('details.appendChild(element("div", "sirk-quick-command-status"))') >= 0 &&
+    desktopCommands.indexOf('panel.appendChild(element("div", "sirk-quick-command-status"))') < 0 &&
+    desktopCommandsCss.indexOf('.sirk-quick-command-details>.sirk-quick-command-status:not(:empty)') >= 0,
+    "Desktop command output must render inside the scrollable third column instead of a full-width footer.");
 assert.ok(desktopCommands.indexOf('"▶ " + text("run")') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details .sirk-quick-command-submit') >= 0,
     "The variable Run action must remain visually distinct from transparent tree buttons.");
 assert.ok(desktopCommands.indexOf("function desktopConnected()") >= 0 && desktopCommands.indexOf("window.desktop.State") >= 0 && desktopCommands.indexOf("syncAvailability(wrapper)") >= 0,

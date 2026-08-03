@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.48",
+    "date": "2026-08-03",
+    "changes": [
+      "Display Quick commands results in the third column.",
+      "Keep variable inputs, Run and scrollable output in one details pane.",
+      "Remove the full-width output footer from Quick commands."
+    ]
+  },
+  {
     "version": "1.6.47",
     "date": "2026-08-03",
     "changes": [
