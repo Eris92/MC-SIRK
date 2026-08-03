@@ -1,3 +1,9 @@
+## 1.6.37
+
+- Fall back to `C:\ProgramData\SIRK Management Platform\settings.json` when MeshCentral data settings cannot be written.
+- Continue reading the fallback settings after service restarts.
+- Add a regression test for `EPERM`/blocked settings storage and command override persistence.
+
 ## 1.6.36
 
 - Launch interactive Windows tools directly from the scheduled task.

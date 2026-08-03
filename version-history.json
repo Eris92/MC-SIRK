@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.37",
+    "date": "2026-08-03",
+    "changes": [
+      "Use ProgramData fallback storage when MeshCentral data settings cannot be written.",
+      "Continue reading fallback settings after service restarts.",
+      "Add regression coverage for blocked settings storage and command override persistence."
+    ]
+  },
+  {
     "version": "1.6.36",
     "date": "2026-08-03",
     "changes": [

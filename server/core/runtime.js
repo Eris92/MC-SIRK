@@ -80,6 +80,7 @@ module.exports.createRuntime = function (options) {
         fs: fs,
         path: nativePath,
         filePath: nativePath.join(dataRoot, "settings.json"),
+        fallbackPath: process.env.PROGRAMDATA ? nativePath.join(process.env.PROGRAMDATA, "SIRK Management Platform", "settings.json") : "",
         defaults: DEFAULTS
     });
     var secrets = secretsFactory.createSecretStore({

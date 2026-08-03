@@ -31,16 +31,26 @@ module.exports.createSettingsStore = function (options) {
     var fs = options.fs;
     var path = options.path;
     var filePath = options.filePath;
+    var fallbackPath = options.fallbackPath || "";
+    var activeFilePath = fallbackPath && fs.existsSync(fallbackPath) ? fallbackPath : filePath;
     var defaults = shared.copy(options.defaults || {});
     var queue = Promise.resolve();
 
     function read() {
-        return merge(defaults, shared.readJson(fs, filePath, {}));
+        return merge(defaults, shared.readJson(fs, activeFilePath, {}));
+    }
+
+    function canFallback(error) {
+        return fallbackPath && activeFilePath !== fallbackPath && ["EACCES", "EBUSY", "EEXIST", "EISDIR", "ENOTEMPTY", "EPERM"].indexOf(String(error && error.code || "")) >= 0;
     }
 
     function write(value) {
         var normalized = merge(defaults, value);
-        return atomicJson.write(fs, path, filePath, normalized)
+        return atomicJson.write(fs, path, activeFilePath, normalized).catch(function (error) {
+            if (!canFallback(error)) throw error;
+            activeFilePath = fallbackPath;
+            return atomicJson.write(fs, path, activeFilePath, normalized);
+        })
             .then(function () {
                 return normalized;
             });
@@ -64,7 +74,12 @@ module.exports.createSettingsStore = function (options) {
         var next = mutator(shared.copy(read()));
         if (!isObject(next)) throw new Error("Settings update must return an object.");
         var normalized = merge(defaults, next);
-        shared.writeJsonAtomic(fs, path, filePath, normalized);
+        try { shared.writeJsonAtomic(fs, path, activeFilePath, normalized); }
+        catch (error) {
+            if (!canFallback(error)) throw error;
+            activeFilePath = fallbackPath;
+            shared.writeJsonAtomic(fs, path, activeFilePath, normalized);
+        }
         return normalized;
     }
 
@@ -77,6 +92,7 @@ module.exports.createSettingsStore = function (options) {
     return {
         defaults: defaults,
         filePath: filePath,
+        fallbackPath: fallbackPath,
         isModuleEnabled: isModuleEnabled,
         read: read,
         update: update,
