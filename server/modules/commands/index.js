@@ -86,7 +86,7 @@ module.exports.createModule = function (context) {
     function requireAdmin(user) { if (!shared.isSiteAdmin(user)) throw new Error("Permission denied."); }
     function allowNoApproval() {
         var current = context.settings.read();
-        var provider = current.modules && current.modules.approvalcenter && current.modules.approvalcenter.providers && current.modules.approvalcenter.providers.mycommands || {};
+        var provider = current.modules && current.modules.approvals && current.modules.approvals.providers && current.modules.approvals.providers.mycommands || {};
         return provider.allowNoApproval === true;
     }
     function approvalLevels(levels) {

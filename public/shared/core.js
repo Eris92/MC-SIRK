@@ -10,8 +10,6 @@
 
     var menuIcons = {
         myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#7b1fa2" d="M12 5h31l9 9v45H12z"/><path fill="#fff" opacity=".9" d="M39 5v13h13z"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20"/></svg>'),
-        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="12" y="9" width="34" height="46" rx="4" fill="#7b1fa2"/><rect x="20" y="4" width="20" height="10" rx="4" fill="#4a148c"/><path fill="#fff" d="M20 23h18v4H20zm0 9h12v4H20z"/><circle cx="45" cy="43" r="13" fill="#2e7d32" stroke="#fff" stroke-width="3"/><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="m39 43 4 4 8-9"/></svg>'),
-        myjira: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="8" width="52" height="48" rx="10" fill="#1868db"/><path d="M18 20h28v6H18zm0 10h20v6H18zm0 10h14v6H18z" fill="#fff"/><circle cx="47" cy="43" r="9" fill="#fff"/><path d="M43 43l3 3 6-7" fill="none" stroke="#1868db" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
         mycommands: "https://raw.githubusercontent.com/Eris92/MeshCentral-MyCommands/main/assets/LeftMenu.png"
     };
 

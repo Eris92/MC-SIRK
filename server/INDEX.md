@@ -22,7 +22,6 @@ server/core/runtime.js
 | folder permissions | `folder-access.js` |
 | HTTP clients i integracje | `http-client.js`, `integration-service.js` |
 | skrypty i wykonanie | `script-admin-service.js`, `server-script-executor.js`, `script-confirmation-library.js` |
-| panel admina i plugin management | `server-admin-service.js`, `plugin-admin-service*.js` |
 | współdzielone helpery | `shared.js` |
 
 ## `server/modules/`

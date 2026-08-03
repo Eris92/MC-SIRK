@@ -36,7 +36,7 @@ function files(relative) {
 
 [
     "SIRK-Portal.js", "SIRK-PortalAdmin.js", "MyCompany.js", "MyCompanyAdmin.js", "views/MyCompany.handlebars",
-    "core", "modules", "public/shared-ui", "public/approvalcenter.js", "Install-MyCompany-FromGit.ps1",
+    "core", "modules", "public/shared-ui", "Install-MyCompany-FromGit.ps1",
     "Install-MyCompany-FromGit_RUN.ps1", "tools/install/Install-MyCompany-FromGit.ps1",
     "tools/install/Install-MyCompany-FromGit_RUN.ps1", "embedded-manifest.json", "docs-MIGRATION-COVERAGE.md"
 ].forEach(function (relative) {

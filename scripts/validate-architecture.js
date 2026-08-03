@@ -76,8 +76,7 @@ if (exists("plugin-main-standalone.js") || exists("server/standalone.js") || dir
 if (exists("admin.js")) {
     var admin = read("admin.js");
     [
-        'require("./server/core/shared.js")', 'require("./server/core/plugin-admin-service-backup-discovery.js")',
-        'require("./server/core/server-admin-service.js")', '"core.js": ["public/shared/core.js"',
+        'require("./server/core/shared.js")', '"core.js": ["public/shared/core.js"',
         '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"',
         '"moverequests.js": ["public/modules/move-requests/index.js"', '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"',
         'res.render("SIRK-Portal"', 'title: "SIRK Management Platform"'
@@ -93,14 +92,6 @@ if (exists("views/SIRK-Portal.handlebars")) {
     reject(view, /MyCompanyAdminData|mycompany-admin/, "Admin view contains removed MyCompany identifiers.");
 }
 
-if (exists("marketplace.json")) {
-    var marketplace = JSON.parse(read("marketplace.json"));
-    if (!marketplace || !Array.isArray(marketplace.plugins)) errors.push("Marketplace catalog must contain a plugins array.");
-    else marketplace.plugins.forEach(function (entry) {
-        if (!entry.name || !entry.shortName || !entry.configUrl) errors.push("Marketplace entry is incomplete.");
-        if (String(entry.configUrl || "").indexOf("https://") !== 0) errors.push("Marketplace configUrl must use HTTPS.");
-    });
-}
 
 if (exists("AGENTS.md")) {
     var agents = read("AGENTS.md");

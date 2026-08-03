@@ -41,7 +41,7 @@ module.exports.createModule = function (context) {
     }
     function allowNoApproval() {
         var current = context.settings.read();
-        var provider = current.modules && current.modules.approvalcenter && current.modules.approvalcenter.providers && current.modules.approvalcenter.providers.myscripts || {};
+        var provider = current.modules && current.modules.approvals && current.modules.approvals.providers && current.modules.approvals.providers.myscripts || {};
         return provider.allowNoApproval === true;
     }
 

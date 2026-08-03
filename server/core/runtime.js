@@ -22,7 +22,8 @@ var DEFAULTS = {
             maxMultiHostNodes: 200,
             multiHostConcurrency: 8
         },
-        moverequests: { enabled: true, hostButtonEnabled: true, menuEnabled: false }
+        moverequests: { enabled: true, hostButtonEnabled: true, menuEnabled: false },
+        approvals: { retentionDays: 365, providers: {} }
     },
     integrations: {
         ad: { domain: "", login: "" },

@@ -39,9 +39,9 @@ module.exports.createApprovalService = function (options) {
 
     function config(type) {
         var current = settings.read();
-        var value = current.modules && current.modules.approvalcenter &&
-            current.modules.approvalcenter.providers &&
-            current.modules.approvalcenter.providers[type] || {};
+        var value = current.modules && current.modules.approvals &&
+            current.modules.approvals.providers &&
+            current.modules.approvals.providers[type] || {};
         function groups(level) {
             var list = value.levels && (value.levels[level] || value.levels[String(level)]);
             return Array.isArray(list) ? list.map(String) : [];
@@ -176,7 +176,6 @@ module.exports.createApprovalService = function (options) {
     function submit(type, user, payload, note, submitOptions) {
         type = String(type || "").toLowerCase();
         var provider = providers[type];
-        if (!settings.isModuleEnabled("approvalcenter")) return Promise.reject(new Error("Approval Center is disabled."));
         if (!provider || !providerEnabled(type)) return Promise.reject(new Error("Approval provider is unavailable."));
         if (typeof provider.canSubmit === "function" && provider.canSubmit(user) !== true) {
             return Promise.reject(new Error("You do not have permission to submit this request."));
@@ -424,7 +423,7 @@ module.exports.createApprovalService = function (options) {
         return {
             groups: shared.getUserGroups(parent),
             providers: listProviders(),
-            retentionDays: Number(current.modules.approvalcenter.retentionDays) || 365,
+            retentionDays: Number(current.modules.approvals.retentionDays) || 365,
             apiTokens: listApiTokens(user)
         };
     }
@@ -441,7 +440,7 @@ module.exports.createApprovalService = function (options) {
             });
         }
         return settings.update(function (current) {
-            var module = current.modules.approvalcenter;
+            var module = current.modules.approvals || (current.modules.approvals = { retentionDays: 365, providers: {} });
             module.providers = module.providers || {};
             module.providers[type] = {
                 enabled: values.enabled !== false,

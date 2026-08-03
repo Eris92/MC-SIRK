@@ -50,8 +50,6 @@ Szczegółowe mapy znajdują się w lokalnych plikach `INDEX.md` poszczególnych
 - Commands;
 - Approvals;
 - Device Transfers;
-- Jira Integration;
-- Security;
 
 Backend modułów znajduje się w `server/modules/`, a pojedyncze renderery frontendowe w `public/modules/`.
 

@@ -8,7 +8,6 @@ var path = require("path");
 var httpClient = require("../server/core/http-client.js");
 var secretStore = require("../server/core/secret-store.js");
 var approvalService = require("../server/core/approval-service.js");
-var pluginAdminService = require("../server/core/plugin-admin-service.js");
 
 function listen(server) {
     return new Promise(function (resolve, reject) {
@@ -70,7 +69,7 @@ async function validateApprovalApiSafety() {
     var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-approval-"));
     var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
     var users = {}; users[admin._id] = admin;
-    var current = { modules: { approvalcenter: { providers: { sample: { enabled: true, levels: { 1: [], 2: [], 3: [] } } } } } };
+    var current = { modules: { approvals: { providers: { sample: { enabled: true, levels: { 1: [], 2: [], 3: [] } } } } } };
     var settings = {
         read: function () { return current; },
         isModuleEnabled: function () { return true; },
@@ -166,7 +165,6 @@ Promise.resolve()
     .then(validateRedirectHeaders)
     .then(validateSecretCorruption)
     .then(validateApprovalApiSafety)
-    .then(validatePluginAdministrationSafety)
     .then(function () { console.log("Security regression tests: OK"); })
     .catch(function (error) {
         console.error(error && error.stack || error);

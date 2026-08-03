@@ -3,31 +3,14 @@
 var fs = require("fs");
 var path = require("path");
 var shared = require("./server/core/shared.js");
-var pluginAdminFactory = require("./server/core/plugin-admin-service-backup-discovery.js");
-var serverAdminFactory = require("./server/core/server-admin-service.js");
 
 module.exports.admin = function (plugin) {
     var root = __dirname;
-    var pluginAdmin = pluginAdminFactory.createPluginAdminService({
-        pluginHandler: plugin.parent,
-        fs: fs,
-        path: path,
-        protectedShortName: plugin.shortName
-    });
-    var serverAdmin = serverAdminFactory.createServerAdminService({
-        path: path,
-        meshRoot: path.dirname(path.dirname(plugin.parent.pluginPath))
-    });
 
     var assets = {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
         "admin-layout.js": ["web/admin/admin-layout.js", "text/javascript; charset=utf-8"],
-        "admin-plugin-updates.js": ["web/admin/admin-plugin-updates.js", "text/javascript; charset=utf-8"],
-        "admin-marketplace.js": ["web/admin/admin-marketplace.js", "text/javascript; charset=utf-8"],
-        "admin-move-mesh-levels.js": ["web/admin/admin-move-mesh-levels.js", "text/javascript; charset=utf-8"],
-        "marketplace.json": ["marketplace.json", "application/json; charset=utf-8"],
-
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],
@@ -92,18 +75,9 @@ module.exports.admin = function (plugin) {
             .replace(/&/g, slash + "u0026");
     }
 
-    function sameOrigin(req) {
-        var headers = req && req.headers || {};
-        var source = String(headers.origin || headers.referer || "");
-        if (!source) return true;
-        try { return new URL(source).host.toLowerCase() === String(headers.host || "").toLowerCase(); }
-        catch (error) { return false; }
-    }
-
     function get(req, res, user) {
         var asset = String(req && req.query && req.query.asset || "");
         var moduleName = String(req && req.query && req.query.module || "");
-        var action = String(req && req.query && req.query.action || "");
 
         if (assets[asset]) { sendAsset(res, asset); return; }
         if (asset === "bootstrap") {
@@ -124,18 +98,6 @@ module.exports.admin = function (plugin) {
             shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
             return;
         }
-        if (action === "plugin-state") {
-            pluginAdmin.list(user)
-                .then(function (plugins) { shared.sendJson(res, 200, { ok: true, plugins: plugins }); })
-                .catch(function (error) { shared.sendJson(res, 500, { ok: false, error: errorText(error) }); });
-            return;
-        }
-        if (action === "server-state") {
-            serverAdmin.services(user)
-                .then(function (services) { shared.sendJson(res, 200, { ok: true, services: services }); })
-                .catch(function (error) { shared.sendJson(res, 500, { ok: false, error: errorText(error) }); });
-            return;
-        }
         try {
             res.render("SIRK-Portal", {
                 title: "SIRK Management Platform",
@@ -151,7 +113,6 @@ module.exports.admin = function (plugin) {
     function post(req, res, user) {
         var moduleName = String(req && req.query && req.query.module || "");
         var asset = String(req && req.query && req.query.asset || "");
-        var action = String(req && req.query && req.query.action || "");
 
         if (moduleName) {
             if (req && req.body && typeof req.body.payload === "string") {
@@ -183,34 +144,6 @@ module.exports.admin = function (plugin) {
             plugin.runtime.saveAdminSettings(user, payload)
                 .then(function (snapshot) { shared.sendJson(res, 200, { ok: true, snapshot: snapshot }); })
                 .catch(function (error) { shared.sendJson(res, 403, { ok: false, error: errorText(error) }); });
-            return;
-        }
-
-        if (action === "plugin-operation") {
-            if (!sameOrigin(req)) {
-                shared.sendJson(res, 403, { ok: false, error: "Cross-origin request rejected." });
-                return;
-            }
-            var pluginPayload = shared.parseJsonObject(req && req.body && req.body.payload, {});
-            pluginAdmin.operate(user, pluginPayload.operation, pluginPayload)
-                .then(function (result) {
-                    return pluginAdmin.list(user).then(function (plugins) {
-                        shared.sendJson(res, 200, { ok: true, result: result, plugins: plugins });
-                    });
-                })
-                .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
-            return;
-        }
-
-        if (action === "server-restart") {
-            if (!sameOrigin(req)) {
-                shared.sendJson(res, 403, { ok: false, error: "Cross-origin request rejected." });
-                return;
-            }
-            var serverPayload = shared.parseJsonObject(req && req.body && req.body.payload, {});
-            serverAdmin.restart(user, serverPayload.serviceName)
-                .then(function (result) { shared.sendJson(res, 202, { ok: true, result: result }); })
-                .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
             return;
         }
 
