@@ -1,3 +1,9 @@
+## 1.6.24
+
+- Always display Run instead of Request in the direct-only Desktop script launcher.
+- Replace stale browser scripts and stylesheets automatically when the plugin version changes.
+- Recreate Desktop Commands when a newer frontend version is loaded into an existing MeshCentral page.
+
 ## 1.6.23
 
 - Limit Desktop Quick commands to file-backed scripts that do not require approval.

@@ -87,6 +87,12 @@ function createSerializedStartupHook(version, pin) {
             return new Promise(function (resolve, reject) {
                 var existing = document.getElementById(id);
                 if (existing) {
+                    if (String(existing.src || "") !== String(sourceUrl || "")) {
+                        existing.remove();
+                        existing = null;
+                    }
+                }
+                if (existing) {
                     if (existing.getAttribute("data-loaded") === "1") resolve();
                     else {
                         existing.addEventListener("load", resolve, { once: true });
@@ -105,11 +111,14 @@ function createSerializedStartupHook(version, pin) {
         }
 
         function style(id, name) {
-            if (document.getElementById(id)) return;
+            var href = asset(name);
+            var existing = document.getElementById(id);
+            if (existing && String(existing.href || "") === String(href)) return;
+            if (existing) existing.remove();
             var link = document.createElement("link");
             link.id = id;
             link.rel = "stylesheet";
-            link.href = asset(name);
+            link.href = href;
             (document.head || document.documentElement).appendChild(link);
         }
 

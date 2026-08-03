@@ -97,6 +97,8 @@ assert.ok(desktopCommands.indexOf('if (child.requiresApproval !== true)') >= 0 &
     "Desktop Commands must expose only scripts that can execute without approval.");
 assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
     "Desktop Commands must request direct execution and render folder/script icons.");
+assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
+    "Desktop direct scripts must always display Run and never a Request button.");
 assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,
     "Desktop Commands must not duplicate script folders alongside built-in command categories.");
 assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
@@ -110,6 +112,10 @@ assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && 
     "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
 
 var pluginMain = read("plugin-main.js");
+assert.ok(pluginMain.indexOf('String(existing.src || "") !== String(sourceUrl || "")') >= 0,
+    "Plugin updates must replace stale versioned browser scripts already present in the page.");
+assert.ok(pluginMain.indexOf('String(existing.href || "") === String(href)') >= 0,
+    "Plugin updates must replace stale versioned stylesheets already present in the page.");
 assert.ok(pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
     "Desktop Commands must load during native MeshCentral startup.");
 

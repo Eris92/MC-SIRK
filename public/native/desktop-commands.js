@@ -1,8 +1,11 @@
 (function () {
     "use strict";
 
-    if (window.__sirkDesktopCommandsLoaded) return;
-    window.__sirkDesktopCommandsLoaded = true;
+    var desktopVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
+    if (window.__sirkDesktopCommandsLoaded === desktopVersion) return;
+    window.__sirkDesktopCommandsLoaded = desktopVersion;
+    var previousDesktopCommands = document.getElementById("SirkDesktopCommands");
+    if (previousDesktopCommands) previousDesktopCommands.remove();
 
     var state = { data: null, category: "", folder: "", search: "" };
     var TEXT = {
@@ -131,7 +134,7 @@
             host.appendChild(element("h3", "", value.label));
             if (value.description) host.appendChild(element("p", "", value.description));
             var collect = variableForm(host, value);
-            var run = element("button", "sirk-quick-command-submit", value.requiresApproval ? text("request") : text("run"));
+            var run = element("button", "sirk-quick-command-submit", text("run"));
             run.type = "button";
             run.onclick = function () { submit(value, collect, run, status); };
             host.appendChild(run);

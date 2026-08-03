@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.24",
+    "date": "2026-08-03",
+    "changes": [
+      "Always display Run instead of Request in the direct-only Desktop script launcher.",
+      "Replace stale browser scripts and stylesheets automatically when the plugin version changes.",
+      "Recreate Desktop Commands when a newer frontend version is loaded into an existing MeshCentral page."
+    ]
+  },
+  {
     "version": "1.6.23",
     "date": "2026-08-03",
     "changes": [
