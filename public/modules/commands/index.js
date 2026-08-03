@@ -72,15 +72,18 @@
     function buildTree() {
         var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", iconMarkup: MENU_ICONS.scripts, children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
         (catalog || []).forEach(function (category) {
+            var visibleCommands = (category.commands || []).filter(function (command) { return command.showWithoutDesktop === true || tools.state.editMode; });
+            if (!visibleCommands.length) return;
             children.push({
                 type: "directory", name: tr(category.title), path: "@menu/" + category.key, iconMarkup: MENU_ICONS[category.key] || MENU_ICONS.other,
-                children: (category.commands || []).map(function (command) {
+                children: visibleCommands.map(function (command) {
                     return {
                         type: "script", kind: "command", name: tr(command.label), label: tr(command.label),
                         description: tr(command.description || ""), path: commandPath(category, command), commandId: command.id,
                         variables: command.variables || [], approvalLevels: command.approvalLevels || [],
                         requiresApproval: command.requiresApproval === true, runAsUser: command.runAsUser,
                         confirmExecution: command.confirmExecution === true, multiHost: true,
+                        showOnDesktop: command.showOnDesktop === true, showWithoutDesktop: command.showWithoutDesktop === true,
                         iconMarkup: ICONS[command.id] || ICONS.mmc
                     };
                 })
@@ -170,10 +173,12 @@
             var label = document.createElement("input"); label.type = "text"; label.value = value.label || item.label || "";
             var description = document.createElement("textarea"); description.rows = 3; description.value = value.description || item.description || "";
             var confirmLabel = document.createElement("label"), confirm = document.createElement("input"); confirm.type = "checkbox"; confirm.checked = value.confirmExecution === true; confirmLabel.appendChild(confirm); confirmLabel.appendChild(document.createTextNode(" " + msg("Potwierdź przed uruchomieniem", "Confirm before execution")));
+            var desktopLabel = document.createElement("label"), desktop = document.createElement("input"); desktop.type = "checkbox"; desktop.checked = value.showOnDesktop === true; desktopLabel.appendChild(desktop); desktopLabel.appendChild(document.createTextNode(" " + msg("Dostępne podczas połączenia z pulpitem (Quick commands)", "Available during a Desktop connection (Quick commands)")));
+            var offlineLabel = document.createElement("label"), offline = document.createElement("input"); offline.type = "checkbox"; offline.checked = value.showWithoutDesktop === true; offlineLabel.appendChild(offline); offlineLabel.appendChild(document.createTextNode(" " + msg("Dostępne bez połączenia z pulpitem (My Commands)", "Available without a Desktop connection (My Commands)")));
             function row(title, control) { var host = document.createElement("label"); host.className = "mc-script-form-row"; host.appendChild(shell.element("span", "mc-script-form-label", title)); host.appendChild(control); return host; }
-            card.appendChild(row(msg("Nazwa", "Label"), label)); card.appendChild(row(msg("Opis", "Description"), description)); card.appendChild(row(msg("Wykonanie", "Execution"), confirmLabel));
+            card.appendChild(row(msg("Nazwa", "Label"), label)); card.appendChild(row(msg("Opis", "Description"), description)); card.appendChild(row(msg("Pulpit", "Desktop"), desktopLabel)); card.appendChild(row(msg("Bez pulpitu", "Without Desktop"), offlineLabel)); card.appendChild(row(msg("Wykonanie", "Execution"), confirmLabel));
             var actions = document.createElement("div"); actions.className = "mc-script-manage-actions"; var save = shell.element("button", "btn btn-primary", msg("Zapisz", "Save")); save.type = "button";
-            save.onclick = function () { save.disabled = true; shell.post("command-definition", { id: item.commandId, label: label.value, description: description.value, confirmExecution: confirm.checked }).then(function (result) { catalog = result.catalog || catalog; tree = buildTree(); tools.state.editMode = false; shell.render(); }).catch(function (error) { save.disabled = false; shell.error(host, error); }); };
+            save.onclick = function () { save.disabled = true; shell.post("command-definition", { id: item.commandId, label: label.value, description: description.value, confirmExecution: confirm.checked, showOnDesktop: desktop.checked, showWithoutDesktop: offline.checked }).then(function (result) { catalog = result.catalog || catalog; tree = buildTree(); tools.state.editMode = false; shell.render(); }).catch(function (error) { save.disabled = false; shell.error(host, error); }); };
             actions.appendChild(save); card.appendChild(actions); host.appendChild(card); label.focus();
         }).catch(function (error) { shell.error(shell.state.page.details, error); });
     }

@@ -126,6 +126,12 @@ assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.in
     "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
 assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,
     "Built-in My Commands entries must expose a persistent command editor.");
+assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0 && commandsServer.indexOf('["system", "other"]') >= 0,
+    "Built-in commands must persist separate Desktop and without-Desktop availability, with System and Other defaulting to Desktop only.");
+assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
+    "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
+assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || tools.state.editMode") >= 0,
+    "My Commands must hide Desktop-only commands outside edit mode.");
 assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
     "Built-in commands must not receive Approval level 1 implicitly.");
 assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,

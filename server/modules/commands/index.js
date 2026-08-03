@@ -92,13 +92,15 @@ module.exports.createModule = function (context) {
         return [1, 2, 3].filter(function (level) { return levels.indexOf(level) >= 0; });
     }
     function commandOverrides() { return (context.settings.read().modules.mycommands || {}).commandOverrides || {}; }
-    function effectiveCommand(command) {
+    function effectiveCommand(command, categoryKey) {
         var override = commandOverrides()[command.id] || {};
         var result = shared.copy(command);
         if (override.label) result.label = shared.cleanText(override.label, 200);
         if (Object.prototype.hasOwnProperty.call(override, "description")) result.description = shared.cleanText(override.description, 1000);
         result.approvalLevels = [];
         result.confirmExecution = override.confirmExecution === true;
+        result.showOnDesktop = override.showOnDesktop !== false;
+        result.showWithoutDesktop = Object.prototype.hasOwnProperty.call(override, "showWithoutDesktop") ? override.showWithoutDesktop === true : ["system", "other"].indexOf(String(categoryKey || "")) < 0;
         return result;
     }
     function executionRows() {
@@ -121,7 +123,7 @@ module.exports.createModule = function (context) {
         for (var index = 0; index < keys.length; index++) {
             var category = catalog[keys[index]];
             var command = (category.commands || []).find(function (item) { return item.id === commandId; });
-            if (command) return { category: category, command: effectiveCommand(command) };
+            if (command) return { category: category, command: effectiveCommand(command, category.key) };
         }
         return null;
     }
@@ -149,8 +151,8 @@ module.exports.createModule = function (context) {
                 title: category.title,
                 icon: category.icon,
                 commands: category.commands.map(function (source) {
-                    var command = effectiveCommand(source), levels = command.approvalLevels;
-                    return { id: command.id, label: command.label, description: command.description, variables: publicVariables(command.variables), approvalLevels: levels, requiresApproval: levels.length > 0, confirmExecution: command.confirmExecution === true, runAsUser: command.runAsUser };
+                    var command = effectiveCommand(source, category.key), levels = command.approvalLevels;
+                    return { id: command.id, label: command.label, description: command.description, variables: publicVariables(command.variables), approvalLevels: levels, requiresApproval: levels.length > 0, confirmExecution: command.confirmExecution === true, runAsUser: command.runAsUser, showOnDesktop: command.showOnDesktop === true, showWithoutDesktop: command.showWithoutDesktop === true };
                 })
             };
         });
@@ -402,7 +404,7 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user); return { ok: true, definition: admin.getDefinition(user, query.path) }; }
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
-            if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true } }; }
+            if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true, showOnDesktop: found.command.showOnDesktop === true, showWithoutDesktop: found.command.showWithoutDesktop === true } }; }
             if (asset === "output") return outputForUser(user, query.id);
             if (asset === "results") return approvalResults(user, query);
             if (asset === "settings") return { ok: true, settings: context.settings.read().modules.mycommands || {}, scriptsRoot: root };
@@ -413,7 +415,11 @@ module.exports.createModule = function (context) {
             var value = req && req.body || {};
             if (asset === "execute") {
                 if (value.scriptPath) requireScriptAccess(user);
-                if (value.commandId) requireCommandAccess(user, value.commandId);
+                if (value.commandId) {
+                    var accessible = requireCommandAccess(user, value.commandId).command;
+                    if (value.desktopDirect === true && accessible.showOnDesktop !== true) throw new Error("This command is disabled during a Desktop connection.");
+                    if (value.desktopDirect !== true && accessible.showWithoutDesktop !== true) throw new Error("This command is available only during a Desktop connection.");
+                }
                 var normalized = value.desktopDirect === true && value.scriptPath ? null : normalizePayload(value);
                 if (value.desktopDirect === true && value.scriptPath || normalized && normalized.approvalLevels.length === 0) return executeDirect(user, value);
                 return context.approval.submit("mycommands", user, value, value.note).then(function (request) { return { ok: true, request: request }; });
@@ -424,7 +430,7 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user); var saved = admin.saveDefinition(user, value.path, value.definition); saved.ok = true; saved.tree = visibleTree(user); return saved; }
             if (asset === "command-definition") {
                 requireAdmin(user); var command = requireCommandAccess(user, value.id).command; var definitions = commandOverrides();
-                definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), confirmExecution: value.confirmExecution === true };
+                definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), confirmExecution: value.confirmExecution === true, showOnDesktop: value.showOnDesktop === true, showWithoutDesktop: value.showWithoutDesktop === true };
                 context.settings.updateSync(function (current) { current.modules.mycommands.commandOverrides = definitions; return current; });
                 return { ok: true, catalog: visibleCatalog(user) };
             }

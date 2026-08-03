@@ -1,3 +1,9 @@
+## 1.6.33
+
+- Add separate per-command switches for Desktop Quick commands and execution without a Desktop connection.
+- Default every System and Other command to Desktop-only availability.
+- Filter both interfaces and enforce command availability on the server API.
+
 ## 1.6.32
 
 - Launch PowerShell, CMD and Windows management tools on the visible interactive desktop.

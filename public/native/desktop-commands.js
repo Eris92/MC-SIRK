@@ -94,7 +94,7 @@
         if (looseScripts.length) scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []) });
         if (scriptGroups.length) result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
         (data.catalog || []).forEach(function (category) {
-            var items = (category.commands || []).map(function (command) { return { kind: "command", iconKind: command.id, commandId: command.id, label: localized(command, "label") || command.label || command.id, description: localized(command, "description") || command.description || "", requiresApproval: false, confirmExecution: command.confirmExecution === true, variables: command.variables || [] }; });
+            var items = (category.commands || []).filter(function (command) { return command.showOnDesktop === true; }).map(function (command) { return { kind: "command", iconKind: command.id, commandId: command.id, label: localized(command, "label") || command.label || command.id, description: localized(command, "description") || command.description || "", requiresApproval: false, confirmExecution: command.confirmExecution === true, variables: command.variables || [] }; });
             if (items.length) result.push({ key: "catalog:" + category.key, label: localized(category, "title") || category.title || category.key, iconKind: category.key, items: items });
         });
         return result.filter(function (category) { return category.items.length; });
