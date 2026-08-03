@@ -8,9 +8,9 @@
         var style = document.createElement("style");
         style.id = "sirk-platform-fixed-edit-actions-style";
         style.textContent =
-            ".sirk-tree-script-actions{width:132px;min-width:132px;justify-content:flex-end}" +
-            ".sirk-tree-action-disabled{opacity:.28!important;filter:grayscale(1);cursor:not-allowed!important;pointer-events:none}" +
-            ".sirk-tree-credential-action:not(.sirk-tree-action-disabled){color:#e0a800}";
+            ".mc-tree-script-actions{width:132px;min-width:132px;justify-content:flex-end}" +
+            ".mc-tree-action-disabled{opacity:.28!important;filter:grayscale(1);cursor:not-allowed!important;pointer-events:none}" +
+            ".mc-tree-credential-action:not(.mc-tree-action-disabled){color:#e0a800}";
         (document.head || document.documentElement).appendChild(style);
     }
 
@@ -79,8 +79,8 @@
                     icon: "🔑",
                     disabled: !credentialsAvailable,
                     className: credentialsAvailable
-                        ? "sirk-tree-credential-action"
-                        : "sirk-tree-action-disabled",
+                        ? "mc-tree-credential-action"
+                        : "mc-tree-action-disabled",
                     title: credentialsAvailable
                         ? "Configure script credentials"
                         : "This script has no SaveSecret variables",
@@ -95,7 +95,7 @@
                     key: "favorite",
                     icon: "★",
                     active: tools.isFavorite(script.path),
-                    className: "sirk-tree-favorite-action",
+                    className: "mc-tree-favorite-action",
                     title: tools.isFavorite(script.path)
                         ? "Remove from favorites"
                         : "Add to favorites",

@@ -58,7 +58,7 @@
     function stringValue(value) { if (value == null) return ""; if (typeof value === "string") return value; try { return JSON.stringify(value, null, 2); } catch (error) { return String(value); } }
     function isAdmin(shell) { return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.siteAdmin); }
     function sync(shell) { tools.syncToolbar(shell.state.page && shell.state.page.toolbar, mode, treeState.selectedScript, { canEdit: isAdmin(shell), enableMulti: true }); }
-    function note(shell, title, message, error) { var host = shell.state.page.details; host.innerHTML = ""; var card = shell.card(title, message); if (error) card.classList.add("sirk-error"); host.appendChild(card); sync(shell); }
+    function note(shell, title, message, error) { var host = shell.state.page.details; host.innerHTML = ""; var card = shell.card(title, message); if (error) card.classList.add("mc-shared-error"); host.appendChild(card); sync(shell); }
     function empty(shell) { note(shell, msg("Wynik", "Output"), tools.state.favoritesOnly && !tools.state.favorites.length ? msg("Brak ulubionych poleceń.", "No favorite commands.") : msg("Wybierz polecenie lub skrypt, aby je uruchomić.", "Select a command or script to run it.")); }
     function confirmExecution(item) { if (!item || item.confirmExecution !== true) return true; return window.confirm(msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?"); }
     function commandPath(category, command) { return "@command/" + category.key + "/" + command.id; }
@@ -86,11 +86,11 @@
     function valueControls(item, card) {
         var variables = Array.isArray(item.variables) ? item.variables : [], controls = [];
         if (!variables.length) return function () { return {}; };
-        var section = document.createElement("div"); section.className = "sirk-script-runtime-variables";
+        var section = document.createElement("div"); section.className = "mc-script-runtime-variables";
         var heading = document.createElement("h3"); heading.textContent = msg("Zmienne", "Variables"); section.appendChild(heading);
         variables.forEach(function (variable) {
-            var row = document.createElement("label"); row.className = "sirk-script-form-row";
-            var label = document.createElement("span"); label.className = "sirk-script-form-label"; label.textContent = tr(variable.label || variable.name) + (variable.required ? " *" : ""); row.appendChild(label);
+            var row = document.createElement("label"); row.className = "mc-script-form-row";
+            var label = document.createElement("span"); label.className = "mc-script-form-label"; label.textContent = tr(variable.label || variable.name) + (variable.required ? " *" : ""); row.appendChild(label);
             var input;
             if (variable.control === "switch") { input = document.createElement("input"); input.type = "checkbox"; input.checked = /^(1|true|yes|tak|on)$/i.test(String(variable.defaultValue || "")); }
             else if (variable.control === "select") { input = document.createElement("select"); (variable.options || []).forEach(function (entry) { var option = document.createElement("option"); option.value = String(entry.value == null ? entry : entry.value); option.textContent = tr(String(entry.label || entry.value || entry)); input.appendChild(option); }); input.value = String(variable.defaultValue || ""); }
@@ -101,8 +101,8 @@
         return function () { var values = {}; controls.forEach(function (entry) { values[entry.variable.name] = entry.variable.control === "switch" ? entry.input.checked : entry.input.value; }); return values; };
     }
 
-    function renderOutput(host, value) { host.innerHTML = ""; if (window.SharedResultsView && typeof window.SharedResultsView.mountResult === "function") { window.SharedResultsView.mountResult(host, value || msg("Brak wyniku.", "No output.")); return; } var pre = document.createElement("pre"); pre.className = "sirk-output"; pre.textContent = stringValue(value) || msg("Brak wyniku.", "No output."); host.appendChild(pre); }
-    function renderWaiting(host, value) { host.innerHTML = ""; var pre = document.createElement("pre"); pre.className = "sirk-output"; pre.textContent = value; host.appendChild(pre); }
+    function renderOutput(host, value) { host.innerHTML = ""; if (window.SharedResultsView && typeof window.SharedResultsView.mountResult === "function") { window.SharedResultsView.mountResult(host, value || msg("Brak wyniku.", "No output.")); return; } var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = stringValue(value) || msg("Brak wyniku.", "No output."); host.appendChild(pre); }
+    function renderWaiting(host, value) { host.innerHTML = ""; var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = value; host.appendChild(pre); }
     function pollOutput(shell, item, responseId, outputHost, sequence, attempt) {
         if (sequence !== pollSequence || treeState.selectedScript !== item.path) return;
         shell.api("output", { id: responseId }).then(function (response) {
@@ -117,7 +117,7 @@
     function execute(shell, item, button, values, outputHost) {
         if (!confirmExecution(item)) { renderWaiting(outputHost, msg("Anulowano wykonanie.", "Execution cancelled.")); return; }
         if (button) button.disabled = true;
-        outputHost.classList.remove("sirk-error"); renderWaiting(outputHost, msg("Wysyłanie polecenia…", "Submitting command…"));
+        outputHost.classList.remove("mc-shared-error"); renderWaiting(outputHost, msg("Wysyłanie polecenia…", "Submitting command…"));
         var payload = { nodeId: node(shell), nodeName: window.currentNode && window.currentNode.name || "", variableValues: values || {}, confirmedExecution: item.confirmExecution === true, note: "" };
         if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
         shell.post("execute", payload).then(function (response) {
@@ -125,14 +125,14 @@
             if (request.status === "pending") { outputs[item.path] = msg("Oczekiwanie na akceptację.", "Waiting for approval."); renderWaiting(outputHost, outputs[item.path]); return; }
             if (result.id) { var immediate = result.output || result.message || msg("Oczekiwanie na wynik agenta…", "Waiting for agent output…"); outputs[item.path] = immediate; renderWaiting(outputHost, immediate); pollSequence++; pollOutput(shell, item, result.id, outputHost, pollSequence, 0); return; }
             var value = result.output || result.message || request.status || msg("Polecenie wysłane.", "Command submitted."); outputs[item.path] = stringValue(value); renderOutput(outputHost, outputs[item.path]);
-        }).catch(function (error) { outputs[item.path] = error.message || String(error); renderWaiting(outputHost, outputs[item.path]); outputHost.classList.add("sirk-error"); }).then(function () { if (button) button.disabled = false; });
+        }).catch(function (error) { outputs[item.path] = error.message || String(error); renderWaiting(outputHost, outputs[item.path]); outputHost.classList.add("mc-shared-error"); }).then(function () { if (button) button.disabled = false; });
     }
 
     function showDefinition(shell, item, autoExecute) {
         var host = shell.state.page.details; host.innerHTML = "";
         var card = shell.card(item.label || item.name, item.description || item.path); var collectValues = valueControls(item, card);
         var button = shell.element("button", "btn btn-primary", item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
-        var outputHost = document.createElement("div"); outputHost.className = "sirk-command-inline-result";
+        var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
         card.appendChild(outputHost); button.onclick = function () { execute(shell, item, button, collectValues(), outputHost); }; host.appendChild(card); sync(shell);
         if (autoExecute === true && (!Array.isArray(item.variables) || item.variables.length === 0)) window.setTimeout(function () { button.click(); }, 0);
@@ -180,7 +180,7 @@
             onRootSelect: function () { mode = "commands"; treeState.selectedScript = ""; tools.saveTreeState(treeState); window.setTimeout(shell.render, 0); },
             onScript: function (item) { mode = "commands"; show(shell, item, true); }
         });
-        var resultsLabel = shell.state.page.primary.querySelector(".sirk-catalog-results .sirk-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
+        var resultsLabel = shell.state.page.primary.querySelector(".mc-catalog-results .mc-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
     }
 
     function results(shell) {
@@ -192,7 +192,7 @@
     function refresh(shell) { var toolbar = shell.state.page && shell.state.page.toolbar; if (toolbar) toolbar.setEnabled("refresh", false); shell.post("refresh", {}).then(function (response) { sourceTree = response.tree || sourceTree; catalog = response.catalog || catalog; tree = buildTree(); if (treeState.selectedScript && !window.SharedDirectoryTree.find(tree, treeState.selectedScript)) treeState.selectedScript = ""; shell.render(); }).catch(function (error) { note(shell, msg("Odświeżanie nie powiodło się", "Refresh failed"), error.message || String(error), true); }).then(function () { if (toolbar) toolbar.setEnabled("refresh", true); }); }
 
     var module = window.SirkPlatformModuleShell.create({
-        key: "mycommands", title: "Commands", menuTitle: "Commands", showInMenu: false, order: 150, preset: "mycommands",
+        key: "mycommands", title: "My Commands", menuTitle: "My Commands", showInMenu: false, order: 150, preset: "mycommands",
         deviceTab: { title: "Commands", pageId: "sirk-platform-mycommands-device-page", topTabId: "MainDevSirkPlatform-Commands" },
         buttons: {
             collapse: { side: "left", order: 10 },

@@ -154,7 +154,7 @@
     }
 
     function toolButton(action, title, icon) {
-        var button = el("button", "sirk-toolbar-button");
+        var button = el("button", "sirk-management-tool");
         button.type = "button";
         button.title = title;
         button.setAttribute("data-portal-management-tool", action);
@@ -164,29 +164,29 @@
 
     function buildShell(host) {
         host.innerHTML = "";
-
-        var shell = el("div", "sirk-standalone-view-scroll");
-        var toolbar = el("div", "sirk-toolbar sirk-toolbar-host");
+        host.classList.add("sirk-platform-management-host", "sirk-native-management");
+        var shell = el("div", "sirk-management-shell mc-portal-module-shell");
+        var toolbar = el("div", "sirk-management-toolbar mc-portal-module-toolbar");
         toolbar.appendChild(toolButton("collapse", t("collapse"), icons.collapse));
         toolbar.appendChild(toolButton("favorites", t("favorites"), icons.star));
         toolbar.appendChild(toolButton("edit", t("edit"), icons.edit));
         toolbar.appendChild(toolButton("refresh", t("refresh"), icons.refresh));
         toolbar.appendChild(toolButton("search", t("search"), icons.search));
-        var search = el("input", "sirk-filter");
+        var search = el("input", "sirk-management-search");
         search.id = "sirkPlatformPortalManagementSearch";
         search.type = "search";
         search.placeholder = t("searchPlaceholder");
         search.value = state.search;
         toolbar.appendChild(search);
-        toolbar.appendChild(el("span", "sirk-toolbar-status"));
+        toolbar.appendChild(el("span", "sirk-management-toolbar-status"));
 
-        var workspace = el("div", "sirk-layout sirk-layout-host");
-        var categories = el("aside", "sirk-column-primary");
-        categories.appendChild(el("div", "sirk-list"));
-        var scripts = el("aside", "sirk-column-secondary");
-        scripts.appendChild(el("div", "sirk-list"));
-        var details = el("div", "sirk-column-details");
-        details.appendChild(el("div", "sirk-content"));
+        var workspace = el("div", "sirk-management-workspace mc-portal-module-workspace mc-portal-module-layout");
+        var categories = el("aside", "sirk-management-column mc-portal-module-primary");
+        categories.appendChild(el("div", "sirk-management-list"));
+        var scripts = el("aside", "sirk-management-column mc-portal-module-secondary");
+        scripts.appendChild(el("div", "sirk-management-list"));
+        var details = el("div", "sirk-management-column mc-portal-module-details");
+        details.appendChild(el("div", "sirk-management-content"));
         workspace.appendChild(categories);
         workspace.appendChild(scripts);
         workspace.appendChild(details);
@@ -200,10 +200,10 @@
     }
 
     function categoryButton(item, active) {
-        var button = el("button", "sirk-nav-item" + (active ? " is-active" : ""));
+        var button = el("button", "sirk-management-item" + (active ? " is-active" : ""));
         button.type = "button";
         button.setAttribute("data-management-root", item.path || "");
-        button.innerHTML = '<span class="sirk-nav-icon">' + (item.icon || icons.folder) + '</span><span></span>';
+        button.innerHTML = '<span class="sirk-management-item-icon">' + (item.icon || icons.folder) + '</span><span></span>';
         button.lastChild.textContent = localized(item, "label") || item.name || item.path;
         var description = localized(item, "description");
         if (description) button.title = description;
@@ -211,7 +211,7 @@
     }
 
     function renderCategories() {
-        var host = state.host.querySelector(".sirk-layout > .sirk-column-primary .sirk-list");
+        var host = state.host.querySelector(".sirk-management-workspace > .sirk-management-column:nth-child(1) .sirk-management-list");
         host.innerHTML = "";
         var visibleRoots = roots().filter(function (root) {
             return !tools.state.favoritesOnly || containsVisibleScript(root);
@@ -230,7 +230,7 @@
         visibleRoots.forEach(function (root) {
             host.appendChild(categoryButton(root, !state.results && state.root === root.path));
         });
-        state.host.classList.toggle("is-collapsed", state.collapsed);
+        state.host.classList.toggle("is-management-collapsed", state.collapsed);
     }
 
     function actionButton(action, title, icon, disabled, active) {
@@ -246,10 +246,10 @@
     function scriptRow(script, depth) {
         var row = el("div", "sirk-script-row" + (state.script === script.path ? " is-active" : ""));
         row.style.setProperty("--sirk-depth", String(depth || 0));
-        var open = el("button", "sirk-nav-item sirk-script-open");
+        var open = el("button", "sirk-management-item sirk-script-open");
         open.type = "button";
         open.setAttribute("data-script-path", script.path);
-        open.innerHTML = '<span class="sirk-nav-icon' + (script.requiresApproval ? ' sirk-script-approval-icon' : '') + '">' + (script.requiresApproval ? icons.approval : icons.script) + '</span><span class="sirk-script-label"></span>';
+        open.innerHTML = '<span class="sirk-management-item-icon' + (script.requiresApproval ? ' sirk-script-approval-icon' : '') + '">' + (script.requiresApproval ? icons.approval : icons.script) + '</span><span class="sirk-script-label"></span>';
         open.querySelector(".sirk-script-label").textContent = localized(script, "label") || script.name || script.path;
         var scriptDescription = localized(script, "description");
         if (scriptDescription) open.title = scriptDescription;
@@ -282,7 +282,7 @@
             var heading = el("div", "sirk-folder-heading");
             heading.setAttribute("data-folder-path", node.path || "");
             heading.style.setProperty("--sirk-depth", String(depth || 0));
-            heading.innerHTML = '<span class="sirk-nav-icon">' + icons.folder + '</span><span></span>';
+            heading.innerHTML = '<span class="sirk-management-item-icon">' + icons.folder + '</span><span></span>';
             heading.lastChild.textContent = localized(node, "label") || node.name || node.path;
             var folderDescription = localized(node, "description");
             if (folderDescription) heading.title = folderDescription;
@@ -292,7 +292,7 @@
     }
 
     function renderScripts() {
-        var host = state.host.querySelector(".sirk-layout > .sirk-column-secondary .sirk-list");
+        var host = state.host.querySelector(".sirk-management-workspace > .sirk-management-column:nth-child(2) .sirk-management-list");
         host.innerHTML = "";
         if (state.results) {
             [
@@ -305,10 +305,10 @@
                 { value: "rejected", label: "rejected", icon: icons.rejected }
             ].forEach(function (item) {
                 var status = item.value;
-                var button = el("button", "sirk-nav-item sirk-result-status sirk-result-status-" + (status || "all") + (state.status === status ? " is-active" : ""));
+                var button = el("button", "sirk-management-item sirk-result-status sirk-result-status-" + (status || "all") + (state.status === status ? " is-active" : ""));
                 button.type = "button";
                 button.setAttribute("data-result-status", status);
-                button.innerHTML = '<span class="sirk-nav-icon sirk-result-status-icon">' + item.icon + '</span><span></span>';
+                button.innerHTML = '<span class="sirk-management-item-icon sirk-result-status-icon">' + item.icon + '</span><span></span>';
                 button.lastChild.textContent = t(item.label);
                 host.appendChild(button);
             });
@@ -323,7 +323,7 @@
     }
 
     function detailsHost() {
-        return state.host.querySelector(".sirk-content");
+        return state.host.querySelector(".sirk-management-content");
     }
 
     function shellAdapter() {
@@ -332,7 +332,7 @@
             api: api,
             post: post,
             card: function (title, description) {
-                var card = el("div", "sirk-card");
+                var card = el("div", "sirk-card mc-shared-card");
                 card.appendChild(el("h3", "", title));
                 if (description) card.appendChild(el("p", "sirk-muted", description));
                 return card;
@@ -340,7 +340,7 @@
             element: el,
             error: function (host, error) {
                 host.innerHTML = "";
-                var card = el("div", "sirk-card sirk-error");
+                var card = el("div", "sirk-card mc-shared-error");
                 card.textContent = error && error.message || String(error);
                 host.appendChild(card);
             }
@@ -350,7 +350,7 @@
     function showMessage(title, message, error) {
         var host = detailsHost();
         host.innerHTML = "";
-        var card = el("div", "sirk-card" + (error ? " sirk-error" : ""));
+        var card = el("div", "sirk-card" + (error ? " mc-shared-error" : ""));
         card.appendChild(el("h2", "", title));
         card.appendChild(el("p", "sirk-muted", message));
         host.appendChild(card);
@@ -549,7 +549,7 @@
                     post("refresh", {}).then(function (response) { state.tree = response.tree || state.tree; renderAll(); });
                 }
                 if (action === "search") {
-                    var search = state.host.querySelector(".sirk-filter");
+                    var search = state.host.querySelector(".sirk-management-search");
                     search.classList.toggle("is-visible");
                     if (search.classList.contains("is-visible")) search.focus();
                 }
@@ -580,7 +580,7 @@
             }
         });
         shell.addEventListener("input", function (event) {
-            if (!event.target.classList.contains("sirk-filter")) return;
+            if (!event.target.classList.contains("sirk-management-search")) return;
             state.search = event.target.value || "";
             renderScripts();
             if (state.results) renderResults();
@@ -610,7 +610,7 @@
             else if (linkedPath) showMessage("Script link", "Nie znaleziono skryptu wskazanego w linku.", true);
         }).catch(function (error) {
             host.innerHTML = "";
-            host.appendChild(el("div", "sirk-card sirk-error", error.message || String(error)));
+            host.appendChild(el("div", "sirk-card mc-shared-error", error.message || String(error)));
         });
     }
 

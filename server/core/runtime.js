@@ -221,8 +221,7 @@ module.exports.createRuntime = function (options) {
                 ? module.apiPost(asset, req, user)
                 : module.apiGet(asset, req, user);
         } catch (error) {
-            var syncMessage = String(error && error.message || error);
-            shared.sendJson(res, /not configured|unavailable/i.test(syncMessage) ? 200 : 400, { ok: false, unavailable: /not configured|unavailable/i.test(syncMessage), error: syncMessage });
+            shared.sendJson(res, 400, { ok: false, error: String(error && error.message || error) });
             return;
         }
         Promise.resolve(operation).then(function (value) {
@@ -232,7 +231,6 @@ module.exports.createRuntime = function (options) {
             var status = /permission|access|disabled/i.test(message)
                 ? 403
                 : /not found|unavailable|missing/i.test(message) ? 404 : 400;
-            if (/not configured/i.test(message)) status = 200;
             shared.sendJson(res, status, { ok: false, error: message });
         });
     }
@@ -252,25 +250,7 @@ module.exports.createRuntime = function (options) {
         var knownGroups = shared.getUserGroups(parent).map(function (group) { return group.id; });
 
         return settings.update(function (current) {
-            var portal = payload.portal || (moduleOptions.portal && typeof moduleOptions.portal === "object" ? moduleOptions.portal : {});
-            if (current.modules.portal && payload.portal) {
-                ["enabled", "showLauncher", "showNativeLink", "forceNewLogin", "forcePortalInterface", "keepSessionsAfterRestart", "showPasswordReset"].forEach(function (key) {
-                    if (Object.prototype.hasOwnProperty.call(portal, key)) current.modules.portal[key] = portal[key] === true;
-                });
-                ["defaultView", "passwordResetUrl", "siteName", "siteIconUrl"].forEach(function (key) {
-                    if (Object.prototype.hasOwnProperty.call(portal, key)) current.modules.portal[key] = String(portal[key] || "");
-                });
-                if (portal.views && typeof portal.views === "object" && !Array.isArray(portal.views)) {
-                    current.modules.portal.views = Object.keys(portal.views).reduce(function (result, key) {
-                        if (current.modules.portal.views[key]) result[key] = Object.assign({}, current.modules.portal.views[key], { enabled: portal.views[key] && portal.views[key].enabled === true });
-                        return result;
-                    }, Object.assign({}, current.modules.portal.views || {}));
-                }
-            }
             Object.keys(modules).forEach(function (key) {
-                if (key !== "portal" && moduleOptions[key] && typeof moduleOptions[key] === "object" && !Array.isArray(moduleOptions[key])) {
-                    current.modules[key] = Object.assign({}, current.modules[key] || {}, shared.copy(moduleOptions[key]));
-                }
                 if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
                     current.modules[key].enabled = moduleValues[key] === true;
                 }

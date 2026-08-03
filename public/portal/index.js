@@ -83,7 +83,7 @@
             moduleError(host, title, "Moduł nie udostępnia punktu montowania.");
             return;
         }
-        if (host.getAttribute("data-sirk-platform-mounted") === key && host.querySelector(":scope > .sirk-standalone-view-scroll")) return;
+        if (host.getAttribute("data-sirk-platform-mounted") === key && host.querySelector(":scope > .mc-shared-page")) return;
         host.innerHTML = "";
         host.setAttribute("data-sirk-platform-mounted", key);
         module.mount(host, "sirk-portal-" + key);
@@ -219,7 +219,7 @@
             host.setAttribute("data-view", "management");
             main.appendChild(host);
         }
-        host.classList.add();
+        host.classList.add("sirk-platform-management-host");
         return host;
     }
 
@@ -234,7 +234,7 @@
             moduleError(host, "Zarządzanie", "Renderer Zarządzania nie został załadowany.");
             return;
         }
-        if (!force && host.getAttribute("data-sirk-platform-native-management") === "1" && host.querySelector(".sirk-standalone-view-scroll")) return;
+        if (!force && host.getAttribute("data-sirk-platform-native-management") === "1" && host.querySelector(".sirk-management-shell")) return;
         host.setAttribute("data-sirk-platform-native-management", "1");
         window.SirkPlatformPortalManagement.mount(host);
     }

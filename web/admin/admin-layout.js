@@ -2,7 +2,7 @@
     "use strict";
 
     var admin = document.getElementById("sirk-platform-admin");
-    var tabs = admin && admin.querySelector(".sirk-admin-tabs");
+    var tabs = admin && admin.querySelector(".mc-admin-tabs");
     var content = document.getElementById("sirk-platform-admin-content");
     if (!admin || !tabs || !content) return;
 
@@ -14,14 +14,14 @@
     var layout = document.createElement("div");
     var middle = document.createElement("div");
 
-    shell.className = "sirk-admin-shell sirk-admin-management-shell sirk-standalone-view-scroll sirk-portal-module-admin";
-    toolbarHost.className = "sirk-toolbar-host";
-    toolbar.className = "sirk-admin-management-toolbar sirk-toolbar sirk-portal-toolbar";
-    workspace.className = "sirk-layout-host";
-    layout.className = "sirk-admin-management-layout sirk-layout";
-    tabs.classList.add("sirk-column-primary");
-    middle.className = "sirk-admin-middle sirk-column-secondary";
-    content.classList.add("sirk-column-details");
+    shell.className = "mc-admin-shell mc-admin-management-shell mc-portal-module-shell mc-portal-module-admin";
+    toolbarHost.className = "mc-portal-module-toolbar";
+    toolbar.className = "mc-admin-management-toolbar mc-shared-toolbar mc-portal-toolbar";
+    workspace.className = "mc-portal-module-workspace";
+    layout.className = "mc-admin-management-layout mc-portal-module-layout";
+    tabs.classList.add("mc-portal-module-primary");
+    middle.className = "mc-admin-middle mc-portal-module-secondary";
+    content.classList.add("mc-portal-module-details");
 
     admin.insertBefore(shell, tabs);
     shell.appendChild(toolbarHost);
@@ -34,8 +34,8 @@
 
     try {
         if (new URL(window.location.href).searchParams.get("portal") === "1") {
-            admin.classList.add("sirk-admin-portal-embedded");
-            document.documentElement.classList.add("sirk-portal-admin-document");
+            admin.classList.add("mc-admin-portal-embedded");
+            document.documentElement.classList.add("mc-portal-admin-document");
         }
     } catch (error) {}
 
@@ -65,11 +65,11 @@
     function toolButton(action, title, icon) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "sirk-admin-management-tool sirk-toolbar-button";
+        button.className = "mc-admin-management-tool mc-shared-toolbar-button mc-portal-toolbar-button";
         button.setAttribute("data-admin-tool", action);
         button.title = title;
         button.setAttribute("aria-label", title);
-        button.innerHTML = '<span class="sirk-toolbar-icon">' + icon + "</span>";
+        button.innerHTML = '<span class="mc-shared-toolbar-icon mc-portal-toolbar-icon">' + icon + "</span>";
         toolbar.appendChild(button);
         return button;
     }
@@ -78,9 +78,9 @@
     var refresh = toolButton("refresh", "Odśwież", svg('<path d="M20 6v5h-5M4 18v-5h5"/><path d="M6.1 8A7 7 0 0 1 18 6l2 5M4 13l2 5a7 7 0 0 0 11.9-2"/>'));
     var search = toolButton("search", "Szukaj ustawienia", svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'));
     var searchBox = document.createElement("label");
-    searchBox.className = "sirk-admin-management-search sirk-toolbar-search";
+    searchBox.className = "mc-admin-management-search mc-shared-toolbar-search";
     searchBox.hidden = true;
-    searchBox.innerHTML = '<span class="sr-only">Szukaj ustawienia</span><input class="sirk-filter" type="search" placeholder="Szukaj sekcji…">';
+    searchBox.innerHTML = '<span class="sr-only">Szukaj ustawienia</span><input class="mc-portal-filter" type="search" placeholder="Szukaj sekcji…">';
     toolbar.appendChild(searchBox);
 
     function isCollapsed() {
@@ -92,7 +92,7 @@
         value = value === true;
         shell.classList.toggle("is-collapsed", value);
         layout.classList.toggle("is-collapsed", value);
-        collapse.querySelector(".sirk-toolbar-icon").innerHTML = value
+        collapse.querySelector(".mc-shared-toolbar-icon").innerHTML = value
             ? svg('<path d="m9 18 6-6-6-6"/>')
             : svg('<path d="m15 18-6-6 6-6"/>');
         collapse.title = value ? "Rozwiń menu" : "Zwiń menu";
@@ -102,14 +102,14 @@
 
     function decorateButton(button, key) {
         if (!button) return;
-        button.classList.add("sirk-nav-item");
-        if (button.querySelector(".sirk-admin-management-item-icon")) return;
+        button.classList.add("mc-portal-nav-item");
+        if (button.querySelector(".mc-admin-management-item-icon")) return;
         var label = document.createElement("span");
-        label.className = "sirk-admin-management-item-label sirk-portal-nav-label";
+        label.className = "mc-admin-management-item-label mc-portal-nav-label";
         label.textContent = button.textContent.trim();
         button.textContent = "";
         var icon = document.createElement("span");
-        icon.className = "sirk-admin-management-item-icon sirk-nav-icon";
+        icon.className = "mc-admin-management-item-icon mc-portal-nav-icon";
         icon.innerHTML = icons[key] || icons.settings;
         button.appendChild(icon);
         button.appendChild(label);
@@ -126,9 +126,6 @@
         middle.querySelectorAll("[data-debug-key]").forEach(function (button) {
             decorateButton(button, button.getAttribute("data-debug-key"));
         });
-        middle.querySelectorAll("[data-server-key]").forEach(function (button) {
-            decorateButton(button, "server");
-        });
     }
 
     function activeTab() {
@@ -137,12 +134,12 @@
     }
 
     function cleanApprovalProviderOptions() {
-        var header = content.querySelector(".sirk-admin-section-header h3");
+        var header = content.querySelector(".mc-admin-section-header h3");
         if (!header || header.textContent.trim() !== "Approval Center") return;
-        content.querySelectorAll(".sirk-admin-card").forEach(function (card) {
+        content.querySelectorAll(".mc-admin-card").forEach(function (card) {
             var title = card.querySelector("h3");
             if (!title || ["Move Requests", "My Commands", "Scripts"].indexOf(title.textContent.trim()) < 0) return;
-            card.querySelectorAll(".sirk-admin-check").forEach(function (field) {
+            card.querySelectorAll(".mc-admin-check").forEach(function (field) {
                 var label = field.querySelector("strong");
                 if (label && ["Provider enabled", "Show in Requests", "Show in Overview"].indexOf(label.textContent.trim()) >= 0) field.remove();
             });
@@ -153,7 +150,7 @@
         var query = String(searchBox.querySelector("input").value || "").trim().toLocaleLowerCase();
         [tabs, middle].forEach(function (host) {
             host.querySelectorAll("button").forEach(function (button) {
-                var label = button.querySelector(".sirk-admin-management-item-label");
+                var label = button.querySelector(".mc-admin-management-item-label");
                 button.hidden = !!query && (!label || label.textContent.toLocaleLowerCase().indexOf(query) < 0);
             });
         });
@@ -162,14 +159,13 @@
     function relocateNavigation() {
         var active = activeTab();
         var selector = active === "settings"
-            ? ".sirk-admin-settings-nav:not(.sirk-admin-debug-nav)"
-            : active === "debug" ? ".sirk-admin-debug-nav"
-            : active === "server" ? ".sirk-admin-server-nav" : "";
+            ? ".mc-admin-settings-nav:not(.mc-admin-debug-nav)"
+            : active === "debug" ? ".mc-admin-debug-nav" : "";
         var navigation = selector ? (content.querySelector(selector) || middle.querySelector(selector)) : null;
 
         middle.innerHTML = "";
         if (navigation) {
-            navigation.classList.add("sirk-admin-section-nav");
+            navigation.classList.add("mc-admin-section-nav");
             middle.appendChild(navigation);
         }
         middle.hidden = !navigation;
@@ -177,8 +173,8 @@
         shell.setAttribute("data-admin-view", active);
         shell.style.setProperty("--portal-secondary-width", navigation ? "236px" : "0px");
 
-        var settingsLayout = content.querySelector(".sirk-admin-settings-layout");
-        if (settingsLayout) settingsLayout.classList.add("sirk-admin-settings-layout-single");
+        var settingsLayout = content.querySelector(".mc-admin-settings-layout");
+        if (settingsLayout) settingsLayout.classList.add("mc-admin-settings-layout-single");
         cleanApprovalProviderOptions();
         decorateNavigation();
         applySearch();

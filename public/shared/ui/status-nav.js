@@ -22,12 +22,12 @@
             this.list(options.counts).forEach(function (item) {
                 var button = document.createElement("button");
                 button.type = "button";
-                button.className = "sirk-nav-item sirk-result-status sirk-result-status-" + (item.key || "all");
+                button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-result-status sirk-result-status-" + (item.key || "all");
                 var icon = document.createElement("span");
-                icon.className = "sirk-nav-icon sirk-result-status-icon";
+                icon.className = "sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon";
                 icon.innerHTML = item.icon;
                 var label = document.createElement("span");
-                label.className = "sirk-portal-nav-label";
+                label.className = "mc-portal-nav-label";
                 label.textContent = item.title + (item.badge == null ? "" : " (" + item.badge + ")");
                 button.appendChild(icon);
                 button.appendChild(label);

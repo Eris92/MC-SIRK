@@ -31,8 +31,8 @@
 
     function managementActive(root) {
         if (!root) return false;
-        var host = root.querySelector('[data-="1"],.');
-        if (host && !host.hidden && host.style.display !== "none" && host.querySelector(".sirk-standalone-view-scroll")) return true;
+        var host = root.querySelector('[data-sirk-platform-management-host="1"],.sirk-platform-management-host');
+        if (host && !host.hidden && host.style.display !== "none" && host.querySelector(".sirk-management-shell")) return true;
         var button = root.querySelector('[data-sirk-platform-management-nav="1"].is-active,[data-sirk-view="management"].is-active');
         return !!button;
     }
@@ -46,15 +46,15 @@
 
     function normalizeManagementIcons(root) {
         if (!root) return;
-        root.querySelectorAll('.sirk-nav-item[data-management-root]').forEach(function (button) {
-            var icon = button.querySelector('.sirk-nav-icon');
+        root.querySelectorAll('.sirk-management-item[data-management-root]').forEach(function (button) {
+            var icon = button.querySelector('.sirk-management-item-icon');
             var path = button.getAttribute('data-management-root') || '';
             replaceIcon(icon, path === '@results' ? icons.result : icons.folder);
         });
-        root.querySelectorAll('.sirk-folder-heading .sirk-nav-icon').forEach(function (icon) {
+        root.querySelectorAll('.sirk-folder-heading .sirk-management-item-icon').forEach(function (icon) {
             replaceIcon(icon, icons.folder);
         });
-        root.querySelectorAll('.sirk-script-open .sirk-nav-icon').forEach(function (icon) {
+        root.querySelectorAll('.sirk-script-open .sirk-management-item-icon').forEach(function (icon) {
             replaceIcon(icon, icons.script);
         });
     }
@@ -79,7 +79,7 @@
         var candidates = titleCandidates(root);
         for (var index = 0; index < candidates.length; index++) {
             var node = candidates[index];
-            if (node.closest('.sirk-content,.sirk-card')) continue;
+            if (node.closest('.sirk-management-content,.sirk-card')) continue;
             node.textContent = 'Zarządzanie';
         }
         document.title = document.title.replace(/Przegląd|Overview|Jira|Defender/i, 'Zarządzanie');

@@ -34,7 +34,7 @@
             return shell.api("issues", { jql: jql, maxResults: 100 }).then(function (result) {
                 shell.state.page.secondary.innerHTML = "";
                 (result.issues || []).forEach(function (issue) {
-                    var button = shell.element("button", "sirk-nav-item", issue.key + " · " + (issue.fields && issue.fields.summary || ""));
+                    var button = shell.element("button", "mc-shared-nav-item", issue.key + " · " + (issue.fields && issue.fields.summary || ""));
                     button.onclick = function () { shell.api("issue", { key: issue.key }).then(function (details) { shell.json(shell.state.page.details, details.issue); }); };
                     shell.state.page.secondary.appendChild(button);
                 });

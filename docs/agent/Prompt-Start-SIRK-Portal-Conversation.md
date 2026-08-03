@@ -34,7 +34,7 @@ Stałe zasady:
 - Backend znajduje się wyłącznie w server/.
 - Frontend znajduje się w public/portal, public/native, public/shared i public/modules.
 - Panel administracyjny znajduje się w web/admin i views/SIRK-Portal.handlebars.
-- Przed zmianą UI potwierdź loader w admin.js albo plugin-main-standalone.js.
+- Przed zmianą UI potwierdź loader w admin.js.
 - Iframe aktywnej sesji hosta pozostaje stale podłączony do DOM.
 - PL/EN i motyw nie mogą przeładowywać child workspace.
 - Po zmianie runtime uruchom test celowany i npm test.

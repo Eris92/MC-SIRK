@@ -5,8 +5,7 @@ Czytaj ten indeks dla zadań dotyczących Node.js, MeshCentral backend, storage,
 ## Entry pointy
 
 ```text
-SIRK-Portal.js
-plugin-main-standalone.js
+SIRKPortal.js
 plugin-main.js
 server/core/runtime-portal.js
 server/core/runtime.js
@@ -25,7 +24,6 @@ server/core/runtime.js
 | HTTP clients i integracje | `http-client.js`, `integration-service.js` |
 | skrypty i wykonanie | `script-admin-service.js`, `server-script-executor.js`, `script-confirmation-library.js` |
 | panel admina i plugin management | `server-admin-service.js`, `plugin-admin-service*.js` |
-| sesje | `session-persistence.js` |
 | współdzielone helpery | `shared.js` |
 
 ## `server/modules/`

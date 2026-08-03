@@ -7,14 +7,12 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | Zadanie | Najpierw przeczytaj |
 |---|---|
 | backend, storage, API, integracje, permissions | `server/INDEX.md` |
-| samodzielny Portal, native UI, shared UI, renderery | `public/INDEX.md` |
+| natywny UI MeshCentral, shared UI, renderery | `public/INDEX.md` |
 | panel administracyjny | `web/INDEX.md` |
 | walidatory, build, kontrola struktury | `scripts/INDEX.md` |
 | wybór testu lub analiza regresji | `test/INDEX.md` |
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
-| kontynuacja pracy w nowym czacie | `docs/CONTINUE-IN-NEW-CHAT.md` |
-| integracja Portalu z MeshCentral | `docs/portal-integration.md` |
 | reguły pracy agenta | `docs/agent/11-Agent-SIRK-Portal.md` |
 
 ## Reguła selektywnego odczytu
@@ -29,7 +27,6 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 
 - nazwy i struktura: `docs/REPOSITORY-LAYOUT.md`;
 - stan wersji i migracji: `docs/PROJECT-STATE.md`;
-- zachowanie Portalu: `docs/portal-integration.md`;
 - router instrukcji: `AGENTS.md`;
 - reguły projektu: `docs/agent/11-Agent-SIRK-Portal.md`.
 

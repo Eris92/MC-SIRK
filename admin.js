@@ -30,8 +30,6 @@ module.exports.admin = function (plugin) {
         "admin-marketplace.js": ["web/admin/admin-marketplace.js", "text/javascript; charset=utf-8"],
         "admin-move-mesh-levels.js": ["web/admin/admin-move-mesh-levels.js", "text/javascript; charset=utf-8"],
         "admin-portal.js": ["web/admin/admin-portal.js", "text/javascript; charset=utf-8"],
-        "system-updates.js": ["public/portal/system-updates.js", "text/javascript; charset=utf-8"],
-        "system-updates.css": ["public/portal/system-updates.css", "text/css; charset=utf-8"],
         "marketplace.json": ["marketplace.json", "application/json; charset=utf-8"],
 
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
@@ -42,7 +40,6 @@ module.exports.admin = function (plugin) {
         "icons/sirk-ui.svg": ["assets/icons/sirk-ui.svg", "image/svg+xml; charset=utf-8"],
 
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
-        "native-portal-launcher.js": ["public/native/portal-launcher.js", "text/javascript; charset=utf-8"],
         "portal-device-tabs.js": ["public/native/device-tabs.js", "text/javascript; charset=utf-8"],
         "portal-device-tabs.css": ["public/native/device-tabs.css", "text/css; charset=utf-8"],
         "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],

@@ -21,16 +21,16 @@
 
     function inject() {
         Array.prototype.forEach.call(
-            root.querySelectorAll(".sirk-admin-settings-panel .sirk-admin-card"),
+            root.querySelectorAll(".mc-admin-settings-panel .mc-admin-card"),
             function (card) {
-                var panel = card.closest(".sirk-admin-settings-panel");
-                var panelHeading = panel && panel.querySelector(".sirk-admin-section-header h3");
+                var panel = card.closest(".mc-admin-settings-panel");
+                var panelHeading = panel && panel.querySelector(".mc-admin-section-header h3");
                 if (!panelHeading || !/^approval\s*center$/i.test(String(panelHeading.textContent || "").trim())) return;
                 var heading = card.querySelector("h3");
                 var type = heading && titleMap[String(heading.textContent || "").trim()];
                 if (!type || card.querySelector('[data-sirk-platform-noapproval="' + type + '"]')) return;
                 var label = document.createElement("label");
-                label.className = "sirk-admin-check sirk-admin-noapproval";
+                label.className = "mc-admin-check mc-admin-noapproval";
                 label.setAttribute("data-sirk-platform-noapproval", type);
                 var input = document.createElement("input");
                 input.type = "checkbox";
@@ -52,7 +52,7 @@
     function selectedPolicies() {
         var result = {};
         Array.prototype.forEach.call(
-            root.querySelectorAll(".sirk-admin-settings-panel [data-sirk-platform-noapproval]"),
+            root.querySelectorAll(".mc-admin-settings-panel [data-sirk-platform-noapproval]"),
             function (label) {
                 var type = label.getAttribute("data-sirk-platform-noapproval");
                 var input = label.querySelector('input[type="checkbox"]');

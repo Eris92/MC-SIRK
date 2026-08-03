@@ -27,7 +27,7 @@
         var host = shell.state.page.details;
         host.innerHTML = "";
         var card = shell.card(title, message);
-        if (error) card.classList.add("sirk-error");
+        if (error) card.classList.add("mc-shared-error");
         host.appendChild(card);
         sync(shell);
     }
@@ -63,7 +63,7 @@
 
     function createResultHost() {
         var resultHost = document.createElement("div");
-        resultHost.className = "sirk-script-live-result sirk-script-result-only";
+        resultHost.className = "mc-script-live-result mc-script-result-only";
         return resultHost;
     }
 
@@ -72,13 +72,13 @@
         host.innerHTML = "";
         if (request.status === "pending" || request.status === "executing") {
             var waiting = document.createElement("pre");
-            waiting.className = "sirk-output";
+            waiting.className = "mc-shared-output";
             waiting.textContent = requestOutput(request);
             host.appendChild(waiting);
             return;
         }
-        if (request.status === "failed") host.classList.add("sirk-error");
-        else host.classList.remove("sirk-error");
+        if (request.status === "failed") host.classList.add("mc-shared-error");
+        else host.classList.remove("mc-shared-error");
         window.SharedResultsView.mountResult(host, requestOutput(request), {
             title: request.title || "Result"
         });
@@ -86,14 +86,14 @@
 
     function variableEditor(script) {
         var wrapper = document.createElement("div");
-        wrapper.className = "sirk-script-run-variables";
+        wrapper.className = "mc-script-run-variables";
         var controls = [];
 
         (script.variables || []).forEach(function (variable) {
             var row = document.createElement("label");
-            row.className = "sirk-script-form-row";
+            row.className = "mc-script-form-row";
             var label = document.createElement("span");
-            label.className = "sirk-script-form-label";
+            label.className = "mc-script-form-label";
             label.textContent = (variable.label || variable.name) + (variable.required ? " *" : "");
             row.appendChild(label);
 
@@ -117,7 +117,7 @@
                 control.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
                 control.placeholder = variable.label || variable.name;
             }
-            control.classList.add("sirk-definition-input");
+            control.classList.add("mc-definition-input");
             row.appendChild(control);
             wrapper.appendChild(row);
             controls.push({ variable: variable, control: control });
@@ -153,7 +153,7 @@
         errorHost.innerHTML = "";
         errorHost.appendChild(shell.element(
             "div",
-            "sirk-error",
+            "mc-shared-error",
             error.message || String(error)
         ));
     }
@@ -163,7 +163,7 @@
         detailsHost.appendChild(resultHost);
         resultHost.innerHTML = "";
         resultHost.appendChild(document.createElement("pre"));
-        resultHost.firstChild.className = "sirk-output";
+        resultHost.firstChild.className = "mc-shared-output";
         resultHost.firstChild.textContent = message;
     }
 
@@ -234,7 +234,7 @@
             }
 
             var card = shell.card(script.label || script.name, script.description || script.path);
-            card.classList.add("sirk-script-run-card");
+            card.classList.add("mc-script-run-card");
             if (hasVariables) card.appendChild(variables.element);
 
             var button = shell.element(
@@ -246,7 +246,7 @@
             card.appendChild(button);
 
             var errorHost = document.createElement("div");
-            errorHost.className = "sirk-script-run-error";
+            errorHost.className = "mc-script-run-error";
             card.appendChild(errorHost);
             detailsHost.appendChild(card);
 

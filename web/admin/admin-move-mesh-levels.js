@@ -80,11 +80,11 @@
     }
 
     function moveRequestsCard(panel) {
-        var cards = panel.querySelectorAll(".sirk-admin-card");
+        var cards = panel.querySelectorAll(".mc-admin-card");
         for (var index = 0; index < cards.length; index++) {
             var card = cards[index];
             var heading = card.querySelector(
-                ":scope > h3, :scope > .sirk-admin-card-toggle .sirk-admin-card-toggle-text strong"
+                ":scope > h3, :scope > .mc-admin-card-toggle .mc-admin-card-toggle-text strong"
             );
             if (heading && String(heading.textContent || "").trim() === "Move Requests") return card;
         }
@@ -92,22 +92,22 @@
     }
 
     function addEditor(card, value) {
-        if (!card || card.querySelector(".sirk-move-mesh-levels")) return;
-        var body = card.querySelector(":scope > .sirk-admin-card-body") || card;
+        if (!card || card.querySelector(".mc-move-mesh-levels")) return;
+        var body = card.querySelector(":scope > .mc-admin-card-body") || card;
         var settings = value.settings || {};
         var stored = settings.targetMeshApprovalLevels || {};
         var levels = {};
 
-        var section = element("div", "sirk-move-mesh-levels");
+        var section = element("div", "mc-move-mesh-levels");
         section.appendChild(element("h4", "", "Target Mesh approval levels"));
         section.appendChild(element(
             "div",
-            "sirk-admin-field-description",
+            "mc-admin-field-description",
             "Select the full approval chain required when a device is moved into each MeshCentral device group. No selection means no approval. Groups without an explicit saved value default to Level 1."
         ));
 
-        var wrapper = element("div", "sirk-move-mesh-levels-table-wrap");
-        var table = element("table", "sirk-move-mesh-levels-table");
+        var wrapper = element("div", "mc-move-mesh-levels-table-wrap");
+        var table = element("table", "mc-move-mesh-levels-table");
         var head = table.createTHead().insertRow();
         head.appendChild(element("th", "", "MeshCentral group"));
         head.appendChild(element("th", "", "No approval"));
@@ -178,19 +178,19 @@
         wrapper.appendChild(table);
         section.appendChild(wrapper);
 
-        var actions = element("div", "sirk-admin-inline-actions");
-        var button = element("button", "sirk-admin-primary", "Save Mesh group levels");
+        var actions = element("div", "mc-admin-inline-actions");
+        var button = element("button", "mc-admin-primary", "Save Mesh group levels");
         button.type = "button";
-        var status = element("span", "sirk-admin-save-status");
+        var status = element("span", "mc-admin-save-status");
         button.onclick = function () {
             button.disabled = true;
-            status.className = "sirk-admin-save-status";
+            status.className = "mc-admin-save-status";
             status.textContent = "Saving...";
             save(settings, levels).then(function () {
                 settings.targetMeshApprovalLevels = JSON.parse(JSON.stringify(levels));
                 status.textContent = "Saved";
             }).catch(function (error) {
-                status.className = "sirk-admin-save-status sirk-admin-error";
+                status.className = "mc-admin-save-status mc-admin-error";
                 status.textContent = error.message || String(error);
             }).finally(function () { button.disabled = false; });
         };
@@ -201,14 +201,14 @@
     }
 
     function enhance() {
-        var panel = content.querySelector(".sirk-admin-settings-panel");
+        var panel = content.querySelector(".mc-admin-settings-panel");
         if (!panel) return;
         var card = moveRequestsCard(panel);
         if (!card) return;
         load().then(function (value) { addEditor(card, value); }).catch(function (error) {
-            var body = card.querySelector(":scope > .sirk-admin-card-body") || card;
-            if (!body.querySelector(".sirk-move-mesh-levels-error")) {
-                body.appendChild(element("div", "sirk-admin-error sirk-move-mesh-levels-error", error.message || String(error)));
+            var body = card.querySelector(":scope > .mc-admin-card-body") || card;
+            if (!body.querySelector(".mc-move-mesh-levels-error")) {
+                body.appendChild(element("div", "mc-admin-error mc-move-mesh-levels-error", error.message || String(error)));
             }
         });
     }

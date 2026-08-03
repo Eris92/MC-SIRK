@@ -8,7 +8,6 @@ var path = require("path");
 var httpClient = require("../server/core/http-client.js");
 var secretStore = require("../server/core/secret-store.js");
 var approvalService = require("../server/core/approval-service.js");
-var sessionPersistence = require("../server/core/session-persistence.js");
 var pluginAdminService = require("../server/core/plugin-admin-service.js");
 
 function listen(server) {
@@ -117,34 +116,6 @@ async function validateApprovalApiSafety() {
     }
 }
 
-function validateSessionPersistence() {
-    var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-session-"));
-    var configPath = path.join(directory, "config.json");
-    fs.writeFileSync(configPath, JSON.stringify({ settings: {}, domains: { "": {} } }), "utf8");
-    var manager = sessionPersistence.createManager({
-        fs: fs,
-        nativePath: path,
-        parent: { parent: { datapath: directory } }
-    });
-    try {
-        var enabled = manager.configure(true, {});
-        var stored = JSON.parse(fs.readFileSync(configPath, "utf8"));
-        assert.strictEqual(enabled.enabled, true);
-        assert.strictEqual(enabled.managedBySirkPlatform, true);
-        assert.strictEqual(enabled.restartRequired, true);
-        assert.match(stored.settings.SessionKey, /^[0-9a-f]{128}$/);
-        assert.strictEqual(JSON.stringify(enabled).indexOf(stored.settings.SessionKey), -1);
-        var portal = { sessionKeyManaged: true, sessionKeyHash: enabled.sessionKeyHash };
-        assert.strictEqual(manager.status(portal).managedBySirkPlatform, true);
-        var disabled = manager.configure(false, portal);
-        assert.strictEqual(disabled.enabled, false);
-        assert.strictEqual(Object.prototype.hasOwnProperty.call(JSON.parse(fs.readFileSync(configPath, "utf8")).settings, "SessionKey"), false);
-        assert.ok(fs.readdirSync(path.join(directory, "config-backups")).length >= 2);
-    } finally {
-        fs.rmSync(directory, { recursive: true, force: true });
-    }
-}
-
 async function validatePluginAdministrationSafety() {
     var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-plugin-admin-"));
     var pluginRoot = path.join(directory, "plugins");
@@ -195,7 +166,6 @@ Promise.resolve()
     .then(validateRedirectHeaders)
     .then(validateSecretCorruption)
     .then(validateApprovalApiSafety)
-    .then(validateSessionPersistence)
     .then(validatePluginAdministrationSafety)
     .then(function () { console.log("Security regression tests: OK"); })
     .catch(function (error) {

@@ -29,7 +29,6 @@ SIRK-Portal/
 ├── AGENTS.md
 ├── SIRK-Portal.js
 ├── plugin-main.js
-├── plugin-main-standalone.js
 ├── admin.js
 ├── config.json
 ├── package.json
@@ -97,7 +96,7 @@ Plugin nie odczytuje i nie migruje `mycompany-data`.
 
 `public/` zawiera dokładnie cztery warstwy:
 
-- `public/portal/` — samodzielny SIRK Portal;
+- `public/portal/` — widoki natywnego interfejsu MeshCentral;
 - `public/native/` — integracja z natywnym GUI MeshCentral;
 - `public/shared/` — wspólny runtime, komponenty i style;
 - `public/modules/` — pojedyncze renderery modułów.
@@ -118,16 +117,14 @@ Dla jednego modułu może istnieć tylko jeden renderer.
 ## Loadery
 
 ```text
-SIRK-Portal.js
-  -> plugin-main-standalone.js
-    -> plugin-main.js
-      -> server/core/runtime-portal.js
-        -> server/core/runtime.js
-          -> server/modules/*
+SIRKPortal.js
+  -> plugin-main.js
+    -> server/core/runtime-portal.js
+      -> server/core/runtime.js
+        -> server/modules/*
 ```
 
 - `admin.js` utrzymuje mapę assetów natywnego UI i panelu administracyjnego;
-- `plugin-main-standalone.js` utrzymuje mapę assetów standalone Portalu;
 - każda publiczna nazwa assetu wskazuje dokładnie jeden kanoniczny plik.
 
 ## Panel administracyjny

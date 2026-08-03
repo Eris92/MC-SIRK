@@ -91,7 +91,7 @@ Katalogi `core/`, `modules/` w root, `public/shared-ui/` i płaskie pliki aplika
 ## Procedura zmiany UI
 
 1. użyj `public/INDEX.md`;
-2. znajdź faktyczny loader w `admin.js` albo `plugin-main-standalone.js`;
+2. znajdź faktyczny loader w `admin.js`;
 3. potwierdź renderer i CSS;
 4. zmień najmniejszy zakres;
 5. dodaj lub zaktualizuj test aktualnego kontraktu;

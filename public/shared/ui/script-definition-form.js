@@ -18,8 +18,8 @@
     }
 
     function field(labelText, control) {
-        var row = element("label", "sirk-definition-field");
-        row.appendChild(element("span", "sirk-definition-label", labelText));
+        var row = element("label", "mc-definition-field");
+        row.appendChild(element("span", "mc-definition-label", labelText));
         row.appendChild(control);
         return row;
     }
@@ -55,7 +55,7 @@
     }
 
     function createSelect(values, selected) {
-        var select = element("select", "sirk-definition-input sirk-definition-type");
+        var select = element("select", "mc-definition-input mc-definition-type");
         values.forEach(function (value) {
             var option = element("option", "", value);
             option.value = value;
@@ -66,18 +66,18 @@
     }
 
     function createDirectiveTable(title, rows, types, emptyType) {
-        var section = element("section", "sirk-definition-section");
-        var header = element("div", "sirk-definition-section-header");
+        var section = element("section", "mc-definition-section");
+        var header = element("div", "mc-definition-section-header");
         header.appendChild(element("h4", "", title));
-        var headerActions = element("div", "sirk-definition-section-actions");
+        var headerActions = element("div", "mc-definition-section-actions");
         var add = element("button", "btn btn-secondary btn-sm", "Add variable");
         add.type = "button";
         headerActions.appendChild(add);
         header.appendChild(headerActions);
         section.appendChild(header);
 
-        var wrapper = element("div", "sirk-definition-table-wrap");
-        var table = element("table", "style1 sirk-definition-table");
+        var wrapper = element("div", "mc-definition-table-wrap");
+        var table = element("table", "style1 mc-definition-table");
         var head = table.createTHead().insertRow();
         ["Type", "Variable name", "PL — label | description | options", "EN — label | description | options", ""].forEach(function (name) {
             head.appendChild(element("th", "", name));
@@ -92,19 +92,19 @@
             value = value || { directive: emptyType, name: "", pl: "", en: "" };
             var tr = body.insertRow();
             var type = createSelect(types, types.indexOf(value.directive) >= 0 ? value.directive : emptyType);
-            var name = element("input", "sirk-definition-input");
+            var name = element("input", "mc-definition-input");
             name.type = "text";
             name.value = value.name || "";
             name.placeholder = "ApiToken";
-            var pl = element("input", "sirk-definition-input");
+            var pl = element("input", "mc-definition-input");
             pl.type = "text";
             pl.value = value.pl || "";
             pl.placeholder = "Polska nazwa | Polski opis";
-            var en = element("input", "sirk-definition-input");
+            var en = element("input", "mc-definition-input");
             en.type = "text";
             en.value = value.en || "";
             en.placeholder = "English name | English description";
-            var remove = element("button", "btn btn-secondary btn-sm sirk-definition-remove", "×");
+            var remove = element("button", "btn btn-secondary btn-sm mc-definition-remove", "×");
             remove.type = "button";
             tr.insertCell().appendChild(type);
             tr.insertCell().appendChild(name);
@@ -176,29 +176,29 @@
 
     function createSystemCredentialsSection(state) {
         state = state || { profiles: [] };
-        var section = element("section", "sirk-definition-section sirk-definition-system-credentials");
+        var section = element("section", "mc-definition-section mc-definition-system-credentials");
         section.appendChild(element("h4", "", "Credentials / secrets - System"));
         section.appendChild(element(
             "div",
-            "sirk-shared-muted sirk-system-credentials-description",
+            "mc-shared-muted mc-system-credentials-description",
             "Use credentials configured globally in SirkPlatform. Secrets remain encrypted and are not copied into the script."
         ));
-        var list = element("div", "sirk-system-credentials-list");
+        var list = element("div", "mc-system-credentials-list");
         var boxes = [];
         var profiles = Array.isArray(state.profiles) ? state.profiles : [];
 
         profiles.forEach(function (profile) {
-            var label = element("label", "sirk-system-credential-item");
+            var label = element("label", "mc-system-credential-item");
             var box = element("input");
             box.type = "checkbox";
             box.value = profile.name;
             box.checked = profile.selected === true;
             box.disabled = profile.configured !== true;
             label.appendChild(box);
-            label.appendChild(element("span", "sirk-system-credential-name", profile.label || profile.name));
+            label.appendChild(element("span", "mc-system-credential-name", profile.label || profile.name));
             label.appendChild(element(
                 "span",
-                profile.configured ? "sirk-system-credential-configured" : "sirk-system-credential-unavailable",
+                profile.configured ? "mc-system-credential-configured" : "mc-system-credential-unavailable",
                 profile.configured ? "Configured" : "Not configured globally"
             ));
             list.appendChild(label);
@@ -206,7 +206,7 @@
         });
 
         if (!profiles.length) {
-            list.appendChild(element("div", "sirk-shared-muted", "No global integration profiles are available."));
+            list.appendChild(element("div", "mc-shared-muted", "No global integration profiles are available."));
         }
         section.appendChild(list);
         return {
@@ -232,36 +232,36 @@
                 host.innerHTML = "";
 
                 var card = shell.card("Edit: " + (value.label || script.label || script.name), value.path || script.path);
-                card.classList.add("sirk-script-definition-card", "sirk-script-definition-form");
+                card.classList.add("mc-script-definition-card", "mc-script-definition-form");
 
                 var locales = value.locales || {};
                 var plLocale = locales.pl || {};
                 var enLocale = locales.en || {};
-                var namePl = element("input", "sirk-definition-input");
+                var namePl = element("input", "mc-definition-input");
                 namePl.type = "text";
                 namePl.value = plLocale.label || value.label || script.label || script.name || "";
-                var descriptionPl = element("textarea", "sirk-definition-input");
+                var descriptionPl = element("textarea", "mc-definition-input");
                 descriptionPl.rows = 3;
                 descriptionPl.value = plLocale.description || value.description || "";
-                var nameEn = element("input", "sirk-definition-input");
+                var nameEn = element("input", "mc-definition-input");
                 nameEn.type = "text";
                 nameEn.value = enLocale.label || value.label || script.label || script.name || "";
-                var descriptionEn = element("textarea", "sirk-definition-input");
+                var descriptionEn = element("textarea", "mc-definition-input");
                 descriptionEn.rows = 3;
                 descriptionEn.value = enLocale.description || value.description || "";
 
-                var top = element("div", "sirk-definition-top-grid");
+                var top = element("div", "mc-definition-top-grid");
                 top.appendChild(field("Nazwa (PL)", namePl));
                 top.appendChild(field("Opis (PL)", descriptionPl));
                 top.appendChild(field("Name (EN)", nameEn));
                 top.appendChild(field("Description (EN)", descriptionEn));
                 card.appendChild(top);
 
-                var approval = element("section", "sirk-definition-section sirk-definition-approval");
+                var approval = element("section", "mc-definition-section mc-definition-approval");
                 approval.appendChild(element("h4", "", "Approval"));
-                var approvalBoxes = element("div", "sirk-script-approval-levels");
+                var approvalBoxes = element("div", "mc-script-approval-levels");
                 [1, 2, 3].forEach(function (level) {
-                    var item = element("label", "sirk-definition-check");
+                    var item = element("label", "mc-definition-check");
                     var box = element("input");
                     box.type = "checkbox";
                     box.value = String(level);
@@ -292,14 +292,14 @@
                 var systemCredentials = createSystemCredentialsSection(systemState);
                 card.appendChild(systemCredentials.element);
 
-                var execution = element("section", "sirk-definition-section");
+                var execution = element("section", "mc-definition-section");
                 execution.appendChild(element("h4", "", "Execution"));
                 var runAs = createSelect(["0", "1", "2"], String(value.runAsUser || 0));
                 Array.prototype.forEach.call(runAs.options, function (option) {
                     option.textContent = option.value === "1" ? "Logged-on user" : option.value === "2" ? "SYSTEM" : "Default";
                 });
                 execution.appendChild(field("Run as", runAs));
-                var multiLabel = element("label", "sirk-definition-check");
+                var multiLabel = element("label", "mc-definition-check");
                 var multi = element("input");
                 multi.type = "checkbox";
                 multi.checked = value.multiHost === true;
@@ -308,10 +308,10 @@
                 execution.appendChild(multiLabel);
                 card.appendChild(execution);
 
-                var sourceDetails = element("details", "sirk-definition-source");
+                var sourceDetails = element("details", "mc-definition-source");
                 sourceDetails.open = true;
                 sourceDetails.appendChild(element("summary", "", "Script code"));
-                var source = element("textarea", "sirk-script-editor sirk-definition-source-editor");
+                var source = element("textarea", "mc-script-editor mc-definition-source-editor");
                 source.spellcheck = false;
                 source.value = text(value.body);
                 sourceDetails.appendChild(source);
@@ -334,7 +334,7 @@
                 variables.headerActions.insertBefore(detect, variables.headerActions.firstChild);
 
                 if ((secretState.variables || []).length) {
-                    var hint = element("div", "sirk-definition-secret-state");
+                    var hint = element("div", "mc-definition-secret-state");
                     hint.appendChild(element("strong", "", "Credential status: "));
                     hint.appendChild(document.createTextNode(secretState.variables.map(function (item) {
                         return item.name + " — " + (item.configured ? "configured" : item.required ? "required" : "not configured");
@@ -342,7 +342,7 @@
                     card.appendChild(hint);
                 }
 
-                var actions = element("div", "sirk-script-manage-actions");
+                var actions = element("div", "mc-script-manage-actions");
                 var save = shell.element("button", "btn btn-primary btn-sm", "Save");
                 var credentials = shell.element("button", "btn btn-secondary btn-sm", "Credentials");
                 var cancel = shell.element("button", "btn btn-secondary btn-sm", "Cancel");
@@ -375,7 +375,7 @@
                         if (typeof onSaved === "function") onSaved(results[0]);
                     }).catch(function (error) {
                         save.disabled = false;
-                        var note = element("div", "sirk-error", error.message || String(error));
+                        var note = element("div", "mc-shared-error", error.message || String(error));
                         card.appendChild(note);
                     });
                 };

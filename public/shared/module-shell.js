@@ -15,7 +15,7 @@
         (items || []).forEach(function (item) {
             var button = document.createElement("button");
             button.type = "button";
-            button.className = "sirk-nav-item";
+            button.className = "mc-shared-nav-item";
             button.classList.toggle("active", String(item.key) === String(selected));
             button.textContent = (item.icon ? item.icon + " " : "") + (item.title || item.name || item.key) + (item.badge == null ? "" : " (" + item.badge + ")");
             button.onclick = function () { onSelect(item); };
@@ -26,14 +26,14 @@
     function renderError(host, error) {
         host.innerHTML = "";
         var card = core.card("Error", error && error.message || String(error));
-        card.classList.add("sirk-error");
+        card.classList.add("mc-shared-error");
         host.appendChild(card);
     }
 
     function renderJson(host, value) {
         host.innerHTML = "";
         var pre = document.createElement("pre");
-        pre.className = "sirk-output";
+        pre.className = "mc-shared-output";
         pre.textContent = JSON.stringify(value, null, 2);
         host.appendChild(pre);
     }

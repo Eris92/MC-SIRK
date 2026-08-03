@@ -21,7 +21,7 @@
     }
 
     function bindExisting(root) {
-        (root || document).querySelectorAll(".sirk-standalone-view-scroll").forEach(bindShell);
+        (root || document).querySelectorAll(".sirk-management-shell").forEach(bindShell);
     }
 
     function start() {
@@ -33,7 +33,7 @@
                 records.forEach(function (record) {
                     Array.prototype.forEach.call(record.addedNodes || [], function (node) {
                         if (!node || node.nodeType !== 1) return;
-                        if (node.matches && node.matches(".sirk-standalone-view-scroll")) bindShell(node);
+                        if (node.matches && node.matches(".sirk-management-shell")) bindShell(node);
                         bindExisting(node);
                     });
                 });

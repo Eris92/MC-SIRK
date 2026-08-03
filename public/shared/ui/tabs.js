@@ -4,7 +4,7 @@
         mount: function (options) {
             options = options || {};
             var host = typeof options.container === "string" ? document.querySelector(options.container) : options.container;
-            var root = document.createElement("div"); root.className = "sirk-tabs";
+            var root = document.createElement("div"); root.className = "mc-shared-tabs";
             var state = { active: options.active || "" }, buttons = {};
             function select(key, notify) {
                 state.active = key;
@@ -13,7 +13,7 @@
             }
             (options.tabs || []).forEach(function (tab) {
                 if (tab.visible === false) return;
-                var item = document.createElement("button"); item.type = "button"; item.className = "btn btn-secondary btn-sm sirk-shared-tab"; item.textContent = tab.title || tab.key;
+                var item = document.createElement("button"); item.type = "button"; item.className = "btn btn-secondary btn-sm mc-shared-tab"; item.textContent = tab.title || tab.key;
                 item.onclick = function () { select(tab.key, true); }; buttons[tab.key] = item; root.appendChild(item);
             });
             host.appendChild(root);

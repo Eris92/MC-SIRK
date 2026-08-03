@@ -10,14 +10,19 @@ function exists(relative) { return fs.existsSync(absolute(relative)); }
 function read(relative) { return fs.readFileSync(absolute(relative), "utf8").replace(/^\uFEFF/, ""); }
 function need(source, value, message) { if (source.indexOf(value) < 0) errors.push(message); }
 function reject(source, pattern, message) { if (pattern.test(source)) errors.push(message); }
+function directoryHasFiles(relative) {
+    return exists(relative) && fs.readdirSync(absolute(relative), { withFileTypes: true }).some(function (entry) {
+        return entry.isFile() || (entry.isDirectory() && directoryHasFiles(path.posix.join(relative, entry.name)));
+    });
+}
 
 var required = [
-    "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "plugin-main-standalone.js", "admin.js", "config.json", "package.json",
+    "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "config.json", "package.json",
     "server/core/runtime.js", "server/core/runtime-portal.js", "server/core/settings-store.js", "server/core/secret-store.js",
     "server/core/approval-service.js", "server/core/device-service.js", "server/core/integration-service.js", "server/core/shared.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js", "server/modules/commands/index.js",
     "server/modules/jira/index.js", "server/modules/move-requests/index.js", "server/modules/portal/index.js",
-    "server/modules/security/index.js", "public/portal/standalone/index.html", "public/portal/index.js",
+    "server/modules/security/index.js", "public/portal/index.js",
     "public/native/mesh-plugin-core.js", "public/shared/core.js", "public/shared/runtime.js",
     "public/modules/approvals/index.js", "public/modules/automation/index.js", "views/SIRK-Portal.handlebars",
     "docs/INDEX.md", "server/INDEX.md", "public/INDEX.md", "web/INDEX.md", "scripts/INDEX.md", "test/INDEX.md"
@@ -31,7 +36,7 @@ function validateSyntax(relative) {
     catch (error) { errors.push("Syntax error in " + relative + ": " + error.message); }
 }
 
-["SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "plugin-main-standalone.js", "admin.js", "server/core/runtime.js", "server/core/runtime-portal.js"].forEach(validateSyntax);
+["SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "server/core/runtime.js", "server/core/runtime-portal.js"].forEach(validateSyntax);
 
 if (exists("config.json") && exists("package.json")) {
     var config = JSON.parse(read("config.json"));
@@ -48,10 +53,10 @@ if (exists("config.json") && exists("package.json")) {
 
 if (exists("SIRKPortal.js")) {
     var entry = read("SIRKPortal.js");
-    need(entry, 'require("./plugin-main-standalone.js")', "Entrypoint must load plugin-main-standalone.js.");
+    need(entry, 'require("./plugin-main.js")', "Entrypoint must load plugin-main.js.");
     need(entry, "module.exports.SIRKPortal", "Entrypoint must export SIRKPortal.");
     need(entry, 'createPlugin(parent, "SIRKPortal")', "Entrypoint must initialize SIRKPortal.");
-    reject(entry, /MyCompany/, "Entrypoint contains removed or unsafe plugin identifiers.");
+    reject(entry, /MyCompany|SIRK-Portal/, "Entrypoint contains removed or unsafe plugin identifiers.");
 }
 
 if (exists("SIRKPortalAdmin.js")) {
@@ -68,15 +73,7 @@ if (exists("plugin-main.js")) {
     reject(pluginMain, /MyCompanyRuntime|__MYCOMPANY_VERSION__|mycompany-data|\.\/core\/|\.\/modules\//, "Plugin bootstrap contains removed legacy runtime paths or aliases.");
 }
 
-if (exists("plugin-main-standalone.js")) {
-    var standalone = read("plugin-main-standalone.js");
-    need(standalone, 'require("./plugin-main.js")', "Standalone bootstrap must load plugin-main.js.");
-    need(standalone, 'path.join(__dirname, "public", "portal")', "Standalone bootstrap must use public/portal.");
-    need(standalone, "sirk/api/v1/approvals", "Standalone bootstrap must register the canonical approvals API.");
-    need(standalone, '"../shared/', "Standalone assets must load shared frontend from public/shared.");
-    need(standalone, '"../modules/', "Standalone assets must load module renderers from public/modules.");
-    reject(standalone, /mycompany\/api|approvalcenter\/api|__myCompanyStandaloneRoutes|mycompany\.local/, "Standalone bootstrap contains removed legacy routes or flags.");
-}
+if (exists("plugin-main-standalone.js") || exists("server/standalone.js") || directoryHasFiles("public/portal/standalone")) errors.push("Standalone Portal files must not exist.");
 
 if (exists("admin.js")) {
     var admin = read("admin.js");

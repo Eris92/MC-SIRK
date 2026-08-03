@@ -64,7 +64,7 @@
     }
 
     function checkField(host, labelText, checked, onChange, description) {
-        var label = element("label", "sirk-admin-check");
+        var label = element("label", "mc-admin-check");
         var input = element("input");
         input.type = "checkbox";
         input.checked = checked === true;
@@ -79,9 +79,9 @@
     }
 
     function groupField(host, labelText, selected, onChange) {
-        var wrapper = element("div", "sirk-admin-field");
-        wrapper.appendChild(element("label", "sirk-admin-field-label", labelText));
-        var select = element("select", "sirk-admin-input sirk-admin-groups");
+        var wrapper = element("div", "mc-admin-field");
+        wrapper.appendChild(element("label", "mc-admin-field-label", labelText));
+        var select = element("select", "mc-admin-input mc-admin-groups");
         select.multiple = true;
         select.size = 5;
         selected = Array.isArray(selected) ? selected.map(String) : [];
@@ -133,7 +133,7 @@
 
     function panelIsApprovalCenter(panel) {
         if (!panel) return false;
-        var heading = panel.querySelector(".sirk-admin-section-header h3");
+        var heading = panel.querySelector(".mc-admin-section-header h3");
         if (heading && /approval\s*center/i.test(heading.textContent || "")) return true;
         return Array.prototype.some.call(panel.querySelectorAll("h2,h3,strong"), function (node) {
             return /^approval\s*center$/i.test(String(node.textContent || "").trim());
@@ -141,19 +141,19 @@
     }
 
     function panelTitle(panel) {
-        var heading = panel && panel.querySelector(".sirk-admin-section-header h3");
+        var heading = panel && panel.querySelector(".mc-admin-section-header h3");
         return String(heading && heading.textContent || "").trim();
     }
 
     function cardTitle(card) {
-        var title = card && card.querySelector(":scope > h3, :scope > .sirk-admin-card-toggle .sirk-admin-card-toggle-text strong");
+        var title = card && card.querySelector(":scope > h3, :scope > .mc-admin-card-toggle .mc-admin-card-toggle-text strong");
         return String(title && title.textContent || "").trim();
     }
 
     function existingProviderTitles(panel) {
         var result = Object.create(null);
-        panel.querySelectorAll(".sirk-admin-card").forEach(function (card) {
-            var title = card.querySelector(":scope > h3, :scope > .sirk-admin-card-toggle .sirk-admin-card-toggle-text strong");
+        panel.querySelectorAll(".mc-admin-card").forEach(function (card) {
+            var title = card.querySelector(":scope > h3, :scope > .mc-admin-card-toggle .mc-admin-card-toggle-text strong");
             if (title) result[String(title.textContent || "").trim().toLowerCase()] = true;
         });
         return result;
@@ -161,13 +161,13 @@
 
     function addProviderCard(panel, definition) {
         var state = providerValue(definition.type);
-        var card = element("section", "sirk-admin-card sirk-admin-provider-card sirk-admin-provider-" + definition.type);
+        var card = element("section", "mc-admin-card mc-admin-provider-card mc-admin-provider-" + definition.type);
         card.setAttribute("data-provider", definition.type);
         card.appendChild(element("h3", "", definition.title));
-        card.appendChild(element("div", "sirk-admin-card-description", definition.description));
+        card.appendChild(element("div", "mc-admin-card-description", definition.description));
 
         if (!moduleAvailable(definition.type)) {
-            card.appendChild(element("div", "sirk-admin-notice", "The module is unavailable or failed to initialize."));
+            card.appendChild(element("div", "mc-admin-notice", "The module is unavailable or failed to initialize."));
         }
 
         checkField(card, "Provider enabled", state.enabled, function (value) { state.enabled = value; });
@@ -186,13 +186,13 @@
         groupField(card, "Level 2 approvers", state.levels[2], function (value) { state.levels[2] = value; });
         groupField(card, "Level 3 approvers", state.levels[3], function (value) { state.levels[3] = value; });
 
-        var actions = element("div", "sirk-admin-inline-actions");
-        var save = element("button", "sirk-admin-primary", "Save " + definition.title + " provider");
+        var actions = element("div", "mc-admin-inline-actions");
+        var save = element("button", "mc-admin-primary", "Save " + definition.title + " provider");
         save.type = "button";
-        var status = element("span", "sirk-admin-save-status");
+        var status = element("span", "mc-admin-save-status");
         save.onclick = function () {
             save.disabled = true;
-            status.className = "sirk-admin-save-status";
+            status.className = "mc-admin-save-status";
             status.textContent = "Saving...";
             postProvider(definition.type, state).then(function () {
                 status.textContent = "Saved";
@@ -202,7 +202,7 @@
                 data.moduleSettings.approvalcenter.providers = data.moduleSettings.approvalcenter.providers || {};
                 data.moduleSettings.approvalcenter.providers[definition.type] = JSON.parse(JSON.stringify(state));
             }).catch(function (error) {
-                status.className = "sirk-admin-save-status sirk-admin-error";
+                status.className = "mc-admin-save-status mc-admin-error";
                 status.textContent = error.message || String(error);
             }).then(function () { save.disabled = false; });
         };
@@ -210,7 +210,7 @@
         actions.appendChild(status);
         card.appendChild(actions);
 
-        var saveBar = panel.querySelector(".sirk-admin-actions");
+        var saveBar = panel.querySelector(".mc-admin-actions");
         if (saveBar) panel.insertBefore(card, saveBar);
         else panel.appendChild(card);
         return card;
@@ -228,22 +228,22 @@
 
     function globalSaveBar(panel) {
         return Array.prototype.filter.call(panel.children || [], function (node) {
-            return node.classList && node.classList.contains("sirk-admin-actions");
-        })[0] || panel.querySelector(".sirk-admin-actions");
+            return node.classList && node.classList.contains("mc-admin-actions");
+        })[0] || panel.querySelector(".mc-admin-actions");
     }
 
     function invokeGlobalSave(panel, localButton, localStatus) {
         var bar = globalSaveBar(panel);
-        var globalButton = bar && bar.querySelector(".sirk-admin-primary");
-        var globalStatus = bar && bar.querySelector(".sirk-admin-save-status");
+        var globalButton = bar && bar.querySelector(".mc-admin-primary");
+        var globalStatus = bar && bar.querySelector(".mc-admin-save-status");
         if (!globalButton) {
-            localStatus.className = "sirk-admin-save-status sirk-admin-error";
+            localStatus.className = "mc-admin-save-status mc-admin-error";
             localStatus.textContent = "Save action is unavailable.";
             return;
         }
 
         localButton.disabled = true;
-        localStatus.className = "sirk-admin-save-status";
+        localStatus.className = "mc-admin-save-status";
         localStatus.textContent = "Saving...";
         globalButton.click();
 
@@ -252,7 +252,7 @@
             if (!localButton.isConnected) return;
             var text = String(globalStatus && globalStatus.textContent || "").trim();
             if (text && text !== "Saving...") {
-                localStatus.className = globalStatus.className || "sirk-admin-save-status";
+                localStatus.className = globalStatus.className || "mc-admin-save-status";
                 localStatus.textContent = text;
                 localButton.disabled = false;
                 return;
@@ -260,7 +260,7 @@
             attempts++;
             if (attempts < 300) window.setTimeout(syncStatus, 100);
             else {
-                localStatus.className = "sirk-admin-save-status sirk-admin-error";
+                localStatus.className = "mc-admin-save-status mc-admin-error";
                 localStatus.textContent = "Save status timeout.";
                 localButton.disabled = false;
             }
@@ -269,12 +269,12 @@
     }
 
     function addSaveProxy(card, panel, label) {
-        if (!card || card.querySelector(".sirk-admin-inline-actions") || card.querySelector("[data-sirk-platform-save-proxy]")) return;
-        var actions = element("div", "sirk-admin-inline-actions");
+        if (!card || card.querySelector(".mc-admin-inline-actions") || card.querySelector("[data-sirk-platform-save-proxy]")) return;
+        var actions = element("div", "mc-admin-inline-actions");
         actions.setAttribute("data-sirk-platform-save-proxy", "1");
-        var save = element("button", "sirk-admin-primary", label);
+        var save = element("button", "mc-admin-primary", label);
         save.type = "button";
-        var status = element("span", "sirk-admin-save-status");
+        var status = element("span", "mc-admin-save-status");
         save.onclick = function () { invokeGlobalSave(panel, save, status); };
         actions.appendChild(save);
         actions.appendChild(status);
@@ -296,17 +296,17 @@
         card.dataset.collapsibleReady = "1";
         var title = card.querySelector(":scope > h3");
         if (!title) return;
-        var description = card.querySelector(":scope > .sirk-admin-card-description");
-        var toggle = element("button", "sirk-admin-card-toggle");
+        var description = card.querySelector(":scope > .mc-admin-card-description");
+        var toggle = element("button", "mc-admin-card-toggle");
         toggle.type = "button";
         toggle.setAttribute("aria-expanded", "false");
-        toggle.appendChild(element("span", "sirk-admin-card-arrow", "▶"));
-        var heading = element("span", "sirk-admin-card-toggle-text");
+        toggle.appendChild(element("span", "mc-admin-card-arrow", "▶"));
+        var heading = element("span", "mc-admin-card-toggle-text");
         heading.appendChild(element("strong", "", title.textContent));
         if (description) heading.appendChild(element("small", "", description.textContent));
         toggle.appendChild(heading);
 
-        var body = element("div", "sirk-admin-card-body");
+        var body = element("div", "mc-admin-card-body");
         Array.prototype.slice.call(card.childNodes).forEach(function (node) {
             if (node !== title && node !== description) body.appendChild(node);
         });
@@ -317,7 +317,7 @@
             var open = body.hidden;
             body.hidden = !open;
             toggle.setAttribute("aria-expanded", open ? "true" : "false");
-            toggle.querySelector(".sirk-admin-card-arrow").textContent = open ? "▼" : "▶";
+            toggle.querySelector(".mc-admin-card-arrow").textContent = open ? "▼" : "▶";
             card.classList.toggle("is-open", open);
         };
         card.prepend(toggle);
@@ -326,11 +326,11 @@
 
     function enhance() {
         scheduled = false;
-        var panels = content.querySelectorAll(".sirk-admin-settings-panel");
+        var panels = content.querySelectorAll(".mc-admin-settings-panel");
         if (!panels.length) return;
         Array.prototype.forEach.call(panels, function (panel) {
             ensureInlineSaveActions(panel);
-            panel.querySelectorAll(".sirk-admin-card").forEach(makeCollapsible);
+            panel.querySelectorAll(".mc-admin-card").forEach(makeCollapsible);
         });
     }
 

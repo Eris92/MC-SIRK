@@ -24,11 +24,11 @@ function files(relative) {
 });
 
 [
-    "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "plugin-main-standalone.js", "admin.js",
+    "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
     "views/SIRK-Portal.handlebars", "server/core/runtime.js", "server/core/runtime-portal.js",
     "server/modules/approval-center/index.js", "public/shared/core.js", "public/shared/runtime.js",
     "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js", "public/portal/index.js",
-    "public/portal/standalone/index.html", "public/modules/automation/index.js", "public/modules/approvals/index.js",
+    "public/modules/automation/index.js", "public/modules/approvals/index.js",
     "web/admin/admin.js", "assets/icons/sirk-ui.svg", "tools/install/Install-SIRK-Portal-FromGit.ps1"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical file: " + relative);
@@ -75,9 +75,7 @@ var pluginMain = read("plugin-main.js");
 if (pluginMain.indexOf("./server/core/runtime-portal.js") < 0) errors.push("Plugin bootstrap must load server/core/runtime-portal.js.");
 if (/MyCompanyRuntime|__MYCOMPANY_VERSION__|mycompany-data/.test(pluginMain)) errors.push("Plugin bootstrap contains removed MyCompany compatibility code.");
 
-var standalone = read("plugin-main-standalone.js");
-if (standalone.indexOf('public", "portal"') < 0 || standalone.indexOf("sirk/api/v1/approvals") < 0) errors.push("Standalone server must use the canonical Portal root and API route.");
-if (/mycompany\/api|approvalcenter\/api|__myCompanyStandaloneRoutes|mycompany\.local/.test(standalone)) errors.push("Standalone server contains removed legacy routes or flags.");
+if (/plugin-main-standalone|public\/portal\/standalone|server\/standalone/.test(entry + pluginMain)) errors.push("Standalone Portal loader must not remain.");
 
 var adminView = read("views/SIRK-Portal.handlebars");
 if (adminView.indexOf("SIRK Management Platform") < 0 || adminView.indexOf("SirkPlatformAdminData") < 0 || /MyCompanyAdminData|mycompany-admin/.test(adminView)) errors.push("Administration view contains legacy branding or identifiers.");

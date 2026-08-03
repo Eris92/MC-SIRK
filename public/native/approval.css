@@ -1,11 +1,11 @@
-/* Native MeshCentral Approval Center only. Never loaded by /sirkportal/. */
+/* Native MeshCentral Approval Center. */
 html.sirk-platform-native-ui .mc-module-approvalcenter {
   width: 100%;
   min-width: 0;
   color: inherit;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-toolbar {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-toolbar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -16,7 +16,7 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-toolbar {
   background: transparent;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout {
   display: grid;
   grid-template-columns: 220px 290px minmax(0,1fr);
   width: 100%;
@@ -26,13 +26,13 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout {
   resize: none;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed {
   grid-template-columns: 64px 290px minmax(0,1fr);
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-primary,
-html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-secondary,
-html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-details {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-primary,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-secondary,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-details {
   min-width: 0;
   min-height: 0;
   padding: 12px;
@@ -40,13 +40,13 @@ html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,
   box-sizing: border-box;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-primary,
-html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-secondary {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-primary,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-secondary {
   border-right: 1px solid rgba(127,127,127,.28);
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item {
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-nav-item {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -64,15 +64,15 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item {
   box-sizing: border-box;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item:hover,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item.active,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item.is-active,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item:hover,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-item.active {
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item:hover,
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item.active,
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item.is-active,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-nav-item:hover,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-nav-item.active {
   background: rgba(80,120,200,.18);
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-icon,
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item-icon,
 html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-nav-icon {
   display: grid;
   place-items: center;
@@ -111,7 +111,7 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-icon-rejecte
   color: #c74747;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-nav-icon svg,
+html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-management-item-icon svg,
 html.sirk-platform-native-ui .mc-module-approvalcenter .mc-approval-nav-icon svg {
   width: 18px;
   height: 18px;
@@ -141,7 +141,7 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-approval-card-grid 
   align-items: start;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-card,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-card,
 html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-card {
   margin: 0;
   padding: 14px;
@@ -152,8 +152,8 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-card {
   box-shadow: none;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-card h3,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-card strong {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-card h3,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-card strong {
   margin-top: 0;
 }
 
@@ -237,7 +237,7 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .mc-results-table th {
   background: var(--background-color,#fff);
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-primary {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed .mc-shared-primary {
   width: 64px;
   min-width: 64px;
   max-width: 64px;
@@ -245,34 +245,34 @@ html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed
   overflow-x: hidden;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed .mc-approval-nav-label,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed .sirk-script-label {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed .mc-approval-nav-label,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed .sirk-script-label {
   display: none;
 }
 
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed .sirk-nav-item,
-html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed .sirk-nav-item {
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed .sirk-management-item,
+html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed .mc-shared-nav-item {
   justify-content: center;
   padding: 8px 0;
 }
 
 @media (max-width: 1100px) {
-  html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout {
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout {
     grid-template-columns: 190px 250px minmax(0,1fr);
   }
-  html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed {
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed {
     grid-template-columns: 64px 250px minmax(0,1fr);
   }
 }
 
 @media (max-width: 800px) {
-  html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout,
-  html.sirk-platform-native-ui .mc-module-approvalcenter .sirk-layout.is-collapsed {
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout,
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-layout.is-collapsed {
     grid-template-columns: 1fr;
     min-height: 0;
   }
-  html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-primary,
-  html.sirk-platform-native-ui .mc-module-approvalcenter :is(.sirk-column-primary,.sirk-column-secondary,.sirk-column-details) sirk-column-secondary {
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-primary,
+  html.sirk-platform-native-ui .mc-module-approvalcenter .mc-shared-secondary {
     border-right: 0;
     border-bottom: 1px solid rgba(127,127,127,.28);
   }

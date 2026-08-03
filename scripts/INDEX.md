@@ -12,7 +12,6 @@ npm test
 |---|---|
 | finalna struktura repozytorium | `validate-repository-layout.js` |
 | kontrakty architektury | `validate-architecture.js` |
-| standalone Portal | `validate-standalone.js` |
 
 Pełna kolejność znajduje się w `package.json`.
 

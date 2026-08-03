@@ -1,9 +1,9 @@
 {
   "name": "SIRK Management Platform",
   "shortName": "SIRKPortal",
-  "version": "1.8.36-dev.81",
+  "version": "1.6.2",
   "author": "Eris92",
-  "description": "SIRK Management Platform with one unified transparent Portal layout and an independent lifecycle manager.",
+  "description": "SIRK Management Platform extension for the native MeshCentral interface.",
   "hasAdminPanel": true,
   "homepage": "https://github.com/Eris92/SIRK-Portal",
   "changelogUrl": "https://raw.githubusercontent.com/Eris92/SIRK-Portal/main/changelog.md",
@@ -13,11 +13,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Eris92/SIRK-Portal.git"
-  },
-  "updateChannels": {
-    "stable": "main",
-    "beta": "beta",
-    "dev": "develop"
   },
   "meshCentralCompat": ">=1.1.18"
 }

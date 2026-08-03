@@ -45,13 +45,17 @@
         host = host || document;
         var headings = host.querySelectorAll("#sirkPortalRoot .sirk-folder-heading");
         Array.prototype.forEach.call(headings, function (heading) {
-            var iconHost = heading.querySelector(".sirk-nav-icon");
+            var iconHost = heading.querySelector(".sirk-management-item-icon");
             if (!iconHost) return;
+
+            // A real image from iconData always wins.
             if (iconHost.querySelector("img.sirk-management-folder-image")) return;
+
             var labelNode = heading.lastElementChild;
             var label = labelNode ? labelNode.textContent : heading.textContent;
             var key = normalize(label);
             if (heading.getAttribute("data-sirk-platform-subfolder-icon") === key) return;
+
             iconHost.innerHTML = iconFor(label);
             heading.setAttribute("data-sirk-platform-subfolder-icon", key);
         });
@@ -77,20 +81,4 @@
         attempts++;
         if (bind() || attempts > 120) window.clearInterval(timer);
     }, 100);
-
-    var nativeSetAttribute = window.Element && Element.prototype.setAttribute;
-    if (nativeSetAttribute && !nativeSetAttribute.__sirkSameValueGuard) {
-        var guardedSetAttribute = function (name, value) {
-            var textValue = String(value);
-            if (/^(title|aria-label|placeholder)$/i.test(String(name)) && this.getAttribute(name) === textValue) return;
-            return nativeSetAttribute.call(this, name, value);
-        };
-        guardedSetAttribute.__sirkSameValueGuard = true;
-        Element.prototype.setAttribute = guardedSetAttribute;
-    }
-
-    var i18nStyle = document.createElement("style");
-    i18nStyle.id = "sirkSettingsI18nVisibilityFix";
-    i18nStyle.textContent = "html body #sirkPortalRoot .sirk-i18n-visual:after{font-size:14px!important;line-height:1.35!important}";
-    (document.head || document.documentElement).appendChild(i18nStyle);
 }());
