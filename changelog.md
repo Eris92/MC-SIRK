@@ -1,3 +1,8 @@
+## 1.6.46
+
+- Keep long My Commands and My Scripts editors within the visible MeshCentral workspace.
+- Add independent vertical scrolling to every workspace column so all definition fields and actions remain reachable.
+
 ## 1.6.45
 
 - Fix PowerShell and CMD Desktop commands by removing the scheduled-task state race.

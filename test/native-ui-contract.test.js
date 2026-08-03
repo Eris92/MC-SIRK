@@ -76,6 +76,7 @@ assert.ok(admin.indexOf("req.query.action") >= 0 && admin.indexOf("req.body.acti
 
 var desktopCommands = read("public/native/desktop-commands.js");
 var desktopCommandsCss = read("public/native/desktop-commands.css");
+var sharedUiCss = read("public/shared/ui/shared-ui.css");
 var commandsModule = read("public/modules/commands/index.js");
 ['scripts:', 'network:', 'system:', 'other:'].forEach(function (icon) {
     assert.ok(commandsModule.indexOf(icon) >= 0,
@@ -121,6 +122,8 @@ assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
     "Desktop Commands must follow MeshCentral's native night-mode class.");
 assert.ok(desktopCommandsCss.indexOf("var(--sdc-panel)") >= 0 && desktopCommandsCss.indexOf("var(--sdc-text)") >= 0,
     "Desktop Commands surfaces must use theme variables instead of fixed colors.");
+assert.ok(sharedUiCss.indexOf("height:calc(100vh - 155px)") >= 0 && sharedUiCss.indexOf(".mc-shared-details{scrollbar-gutter:stable}") >= 0,
+    "Long script editors must remain inside the viewport and expose a stable vertical scrollbar.");
 assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
     "Desktop Commands script must be exposed by the plugin asset router.");
 var commandsServer = read("server/modules/commands/index.js");

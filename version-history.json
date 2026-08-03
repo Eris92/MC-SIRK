@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.46",
+    "date": "2026-08-03",
+    "changes": [
+      "Keep long script editors within the visible MeshCentral workspace.",
+      "Add independent vertical scrolling to workspace columns.",
+      "Preserve natural document flow on narrow mobile layouts."
+    ]
+  },
+  {
     "version": "1.6.45",
     "date": "2026-08-03",
     "changes": [
