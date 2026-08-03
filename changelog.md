@@ -1,3 +1,7 @@
+## 1.6.7
+
+- Restored the complete historical Approval Center workspace, provider filters and request views.
+
 ## 1.6.6
 
 - Added a visible Approval Center menu with approval and rejection actions.

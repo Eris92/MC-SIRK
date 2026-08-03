@@ -30,12 +30,11 @@
             card.appendChild(element("h3", "", "Approval Center"));
             card.appendChild(element("p", "mc-admin-card-description", "Approval rules shared by Move Requests, My Commands and My Scripts."));
             var approvals = current.approvals || {}; var providers = approvals.providers || {};
-            var show = checked(card, "Show Approval Center in the left menu", approvals.showInMenu !== false);
             var retention = number(card, "Retention days", approvals.retentionDays || 365, 1, 3650);
             var move = checked(card, "Enable approvals for Move Requests", !providers.moverequests || providers.moverequests.enabled !== false);
             var commands = checked(card, "Enable approvals for My Commands", !providers.mycommands || providers.mycommands.enabled !== false);
             var scripts = checked(card, "Enable approvals for My Scripts", !providers.myscripts || providers.myscripts.enabled !== false);
-            actions(card, function () { return { modules: {}, moduleOptions: { approvals: { showInMenu: show.checked, retentionDays: retention.value, providers: { moverequests: { enabled: move.checked }, mycommands: { enabled: commands.checked }, myscripts: { enabled: scripts.checked } } } } }; });
+            actions(card, function () { return { modules: {}, moduleOptions: { approvals: { retentionDays: retention.value, providers: { moverequests: { enabled: move.checked }, mycommands: { enabled: commands.checked }, myscripts: { enabled: scripts.checked } } } } }; });
         } else if (tab === "moverequests") {
             card.appendChild(element("h3", "", "Move Request"));
             var enabled = checked(card, "Enable Move Requests", moduleEnabled("moverequests"));

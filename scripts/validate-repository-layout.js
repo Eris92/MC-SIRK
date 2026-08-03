@@ -26,9 +26,9 @@ function files(relative) {
 [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
     "views/SIRK-Portal.handlebars", "server/core/runtime.js",
-    "server/modules/automation/index.js", "server/modules/commands/index.js", "server/modules/move-requests/index.js", "public/shared/core.js", "public/shared/runtime.js",
+    "server/modules/approval-center/index.js", "server/modules/automation/index.js", "server/modules/commands/index.js", "server/modules/move-requests/index.js", "public/shared/core.js", "public/shared/runtime.js",
     "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js",
-    "public/modules/automation/index.js", "public/modules/commands/index.js", "public/modules/move-requests/index.js",
+    "public/modules/approvals/index.js", "public/modules/automation/index.js", "public/modules/commands/index.js", "public/modules/move-requests/index.js",
     "web/admin/admin.js", "assets/icons/sirk-ui.svg", "tools/install/Install-SIRK-Portal-FromGit.ps1"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical file: " + relative);
@@ -96,7 +96,7 @@ moduleDirectories.forEach(function (name) {
     if (!exists("server/modules/" + name + "/index.js")) errors.push("Server module is missing index.js: " + name);
 });
 
-["approval-center", "jira", "security", "portal"].forEach(function (name) {
+["jira", "security", "portal"].forEach(function (name) {
     if (files("server/modules/" + name).length) errors.push("Removed module must not contain files: " + name);
 });
 

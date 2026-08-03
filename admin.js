@@ -18,7 +18,8 @@ module.exports.admin = function (plugin) {
         "icons/sirk-ui.svg": ["assets/icons/sirk-ui.svg", "image/svg+xml; charset=utf-8"],
 
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
-        "approvals.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
+        "approvalcenter.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
+        "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
         "myscripts.js": ["public/modules/automation/index.js", "text/javascript; charset=utf-8"],
         "myscripts.css": ["public/modules/automation/style.css", "text/css; charset=utf-8"],
         "myscripts-menu.svg": ["assets/myscripts-menu.svg", "image/svg+xml; charset=utf-8"],

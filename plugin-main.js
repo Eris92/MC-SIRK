@@ -117,6 +117,7 @@ function createSerializedStartupHook(version, pin) {
         style("sirk-platform-automation-style", "myscripts.css");
         style("sirk-platform-shared-style", "shared-ui/shared-ui.css");
         style("sirk-platform-toolbar-style", "shared-ui/toolbar.css");
+        style("sirk-platform-approval-style", "native-approval.css");
 
         var scripts = [
             ["sirk-platform-core", "core.js"],

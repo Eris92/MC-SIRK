@@ -23,7 +23,8 @@ var DEFAULTS = {
             multiHostConcurrency: 8
         },
         moverequests: { enabled: true, hostButtonEnabled: true, menuEnabled: false },
-        approvals: { retentionDays: 365, providers: {}, showInMenu: true }
+        approvals: { retentionDays: 365, providers: {} },
+        approvalcenter: { enabled: true, retentionDays: 365, providers: {} }
     },
     integrations: {
         ad: { domain: "", login: "" },
@@ -33,6 +34,7 @@ var DEFAULTS = {
 };
 
 var MODULES = [
+    { key: "approvalcenter", name: "Approvals", path: "../modules/approval-center/index.js" },
     { key: "moverequests", name: "Move Requests", path: "../modules/move-requests/index.js" },
     { key: "mycommands", name: "Commands", path: "../modules/commands/index.js" },
     { key: "myscripts", name: "Automation", path: "../modules/automation/index.js" }
@@ -175,35 +177,12 @@ module.exports.createRuntime = function (options) {
                 access: module.getAccess(user)
             };
         });
-        var approvalSettings = settings.read().modules.approvals || {};
-        result.approvals = {
-            enabled: true,
-            ready: true,
-            config: { key: "approvals", name: "Approval Center", showInMenu: approvalSettings.showInMenu !== false },
-            access: { allowed: !!user, siteAdmin: shared.isSiteAdmin(user) }
-        };
         return { ok: true, version: VERSION, modules: result };
     }
 
     function request(method, moduleName, asset, req, res, user) {
         if (moduleName === "_runtime" && method === "GET") {
             shared.sendJson(res, 200, bootstrap(user));
-            return;
-        }
-        if (moduleName === "approvals") {
-            var value = req && req.body || {};
-            if (!user) { shared.sendJson(res, 403, { ok: false, error: "Permission denied." }); return; }
-            if (method === "GET" && asset === "requests") {
-                context.approval.list(user, req && req.query || {}).then(function (result) { result.ok = true; shared.sendJson(res, 200, result); })
-                    .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
-                return;
-            }
-            if (method === "POST" && asset === "decide") {
-                context.approval.decide(user, value.id, value.approved === true, value.note || "").then(function (result) { shared.sendJson(res, 200, { ok: true, request: result }); })
-                    .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
-                return;
-            }
-            shared.sendJson(res, 404, { ok: false, error: "Unknown Approval Center action." });
             return;
         }
         var module = modules[String(moduleName || "").toLowerCase()];
@@ -267,7 +246,6 @@ module.exports.createRuntime = function (options) {
                 var approvals = current.modules.approvals || (current.modules.approvals = { retentionDays: 365, providers: {} });
                 approvals.retentionDays = Math.max(1, Math.min(3650, Number(approvalOptions.retentionDays) || 365));
                 approvals.providers = approvals.providers || {};
-                if (Object.prototype.hasOwnProperty.call(approvalOptions, "showInMenu")) approvals.showInMenu = approvalOptions.showInMenu !== false;
                 ["moverequests", "mycommands", "myscripts"].forEach(function (key) {
                     if (!approvalOptions.providers || !Object.prototype.hasOwnProperty.call(approvalOptions.providers, key)) return;
                     var existing = approvals.providers[key] || {};
