@@ -14,15 +14,11 @@ module.exports.admin = function (plugin) {
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],
         "main.css": ["public/shared/styles/main.css", "text/css; charset=utf-8"],
-        "shared/icon-registry.js": ["public/shared/icon-registry.js", "text/javascript; charset=utf-8"],
-        "icons/sirk-ui.svg": ["assets/icons/sirk-ui.svg", "image/svg+xml; charset=utf-8"],
-
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
         "approvalcenter.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
         "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
         "myscripts.js": ["public/modules/automation/index.js", "text/javascript; charset=utf-8"],
         "myscripts.css": ["public/modules/automation/style.css", "text/css; charset=utf-8"],
-        "myscripts-menu.svg": ["assets/myscripts-menu.svg", "image/svg+xml; charset=utf-8"],
         "mycommands.js": ["public/modules/commands/index.js", "text/javascript; charset=utf-8"],
         "moverequests.js": ["public/modules/move-requests/index.js", "text/javascript; charset=utf-8"],
 
@@ -115,6 +111,7 @@ module.exports.admin = function (plugin) {
     function post(req, res, user) {
         var moduleName = String(req && req.query && req.query.module || "");
         var asset = String(req && req.query && req.query.asset || "");
+        var action = String(req && req.query && req.query.action || "");
 
         if (moduleName) {
             if (req && req.body && typeof req.body.payload === "string") {

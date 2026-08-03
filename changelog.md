@@ -1,3 +1,10 @@
+## 1.6.8
+
+- Fixed native Commands tab registration before its plugin page is opened.
+- Unified the full Approval Center with the shared approval settings store.
+- Fixed admin settings POST action routing.
+- Added regression coverage for native UI contracts.
+
 ## 1.6.7
 
 - Restored the complete historical Approval Center workspace, provider filters and request views.

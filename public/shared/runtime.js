@@ -237,15 +237,8 @@
         if (runtime.state.initializePromise) return runtime.state.initializePromise;
         runtime.state.initializePromise = core.api("", "bootstrap").then(function (bootstrap) {
             runtime.state.bootstrap = bootstrap;
-            var chain = core.loadScript("sirk-platform-shared-directory-tree", core.assetUrl("", "shared-ui/tree.js"))
-                .then(function () { return core.loadScript("sirk-platform-shared-catalog-view", core.assetUrl("", "shared-ui/catalog.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-results-view", core.assetUrl("", "shared-ui/results.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-result-layout", core.assetUrl("", "shared-ui/result-layout.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-script-tools", core.assetUrl("", "shared-ui/script-tools.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-script-definition-form", core.assetUrl("", "shared-ui/script-definition-form.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-confirm-execution-form", core.assetUrl("", "shared-ui/confirm-execution-form.js")); })
-                .then(function () { installCredentialsActions(); return core.loadScript("sirk-platform-shared-script-edit-actions", core.assetUrl("", "shared-ui/script-edit-actions.js")); })
-                .then(function () { return core.loadScript("sirk-platform-shared-system-credentials-form", core.assetUrl("", "shared-ui/system-credentials-form.js")); });
+            var chain = Promise.resolve();
+            installCredentialsActions();
 
             order.forEach(function (key) {
                 var state = bootstrap.modules[key];

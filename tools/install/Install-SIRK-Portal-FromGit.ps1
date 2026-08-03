@@ -4,7 +4,7 @@ param(
     [string]$Repository = 'https://github.com/Eris92/MC-SIRK.git',
     [string]$Branch = 'main',
     [string]$MeshRoot = 'C:\Program Files\Open Source\MeshCentral',
-    [string]$ServiceName = 'MeshCentral',
+    [string]$ServiceName = 'meshcentral.exe',
     [switch]$SkipTests
 )
 
@@ -18,7 +18,8 @@ $LegacyTargets = @(
 )
 $RuntimeData = Join-Path $DataRoot 'sirk-platform-data'
 $StageRoot = Join-Path $env:TEMP ('SIRK-Portal-Git-' + [guid]::NewGuid().ToString('N'))
-$Stage = Join-Path $StageRoot 'SIRK-Portal'
+$SourceStage = Join-Path $StageRoot 'source'
+$Stage = Join-Path $StageRoot 'SIRKPortal'
 $BackupRoot = Join-Path $DataRoot 'plugin-backups'
 $Backup = Join-Path $BackupRoot ('SIRKPortal-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 $Git = (Get-Command git.exe -ErrorAction Stop).Source
@@ -58,11 +59,11 @@ function Repair-RuntimeDataPermissions {
 
 try {
     New-Item $StageRoot -ItemType Directory -Force | Out-Null
-    Invoke-Checked $Git @('clone', '--depth', '1', '--single-branch', '--branch', $Branch, $Repository, $Stage)
+    Invoke-Checked $Git @('clone', '--depth', '1', '--single-branch', '--branch', $Branch, $Repository, $SourceStage)
 
-    $ConfigPath = Join-Path $Stage 'config.json'
-    $Entry = Join-Path $Stage 'SIRKPortal.js'
-    $AdminEntry = Join-Path $Stage 'SIRKPortalAdmin.js'
+    $ConfigPath = Join-Path $SourceStage 'config.json'
+    $Entry = Join-Path $SourceStage 'SIRKPortal.js'
+    $AdminEntry = Join-Path $SourceStage 'SIRKPortalAdmin.js'
     if (-not (Test-Path $ConfigPath -PathType Leaf)) { throw 'Repository does not contain config.json.' }
     if (-not (Test-Path $Entry -PathType Leaf)) { throw 'Repository does not contain SIRKPortal.js.' }
     if (-not (Test-Path $AdminEntry -PathType Leaf)) { throw 'Repository does not contain SIRKPortalAdmin.js.' }
@@ -71,7 +72,25 @@ try {
     if ([string]$config.shortName -cne 'SIRKPortal') { throw ('Invalid shortName: {0}' -f $config.shortName) }
     Invoke-Checked $Node @('--check', $Entry)
     Invoke-Checked $Node @('--check', $AdminEntry)
-    if (-not $SkipTests) { Invoke-Checked $Npm @('test') $Stage }
+    if (-not $SkipTests) { Invoke-Checked $Npm @('test') $SourceStage }
+
+    # Build a runtime-only artifact. Repository metadata, tests, documentation and
+    # development tooling must never be copied into MeshCentral's plugin folder.
+    New-Item $Stage -ItemType Directory -Force | Out-Null
+    $RuntimeFiles = @(
+        'admin.js',
+        'config.json',
+        'plugin-main.js',
+        'SIRKPortal.js',
+        'SIRKPortalAdmin.js'
+    )
+    $RuntimeDirectories = @('public', 'seed', 'server', 'views', 'web')
+    foreach ($relativePath in $RuntimeFiles) {
+        Copy-Item (Join-Path $SourceStage $relativePath) (Join-Path $Stage $relativePath) -Force
+    }
+    foreach ($relativePath in $RuntimeDirectories) {
+        Copy-Item (Join-Path $SourceStage $relativePath) (Join-Path $Stage $relativePath) -Recurse -Force
+    }
 
     $service = Get-Service $ServiceName -ErrorAction Stop
     if ($service.Status -ne 'Stopped') { Stop-Service $ServiceName -Force -ErrorAction Stop }

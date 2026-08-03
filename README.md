@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.6.7
+# SIRK Management Platform 1.6.8
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -38,7 +38,6 @@ frontend współdzielony         -> public/shared/
 renderery modułów              -> public/modules/
 panel administracyjny          -> web/admin/
 widok panelu                   -> views/SIRK-Portal.handlebars
-ikony                          -> assets/icons/
 narzędzia instalacyjne         -> tools/install/
 ```
 

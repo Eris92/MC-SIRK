@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.8",
+    "date": "2026-08-03",
+    "changes": [
+      "Fix native Commands tab registration before its plugin page is opened.",
+      "Unify the full Approval Center with the shared approval settings store.",
+      "Fix admin settings POST action routing and add native UI regression coverage."
+    ]
+  },
+  {
     "version": "1.6.7",
     "date": "2026-08-03",
     "changes": [

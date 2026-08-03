@@ -26,9 +26,9 @@ module.exports.createModule = function (context) {
 
     function providerPolicy(type) {
         var current = context.settings.read();
-        return current.modules && current.modules.approvalcenter &&
-            current.modules.approvalcenter.providers &&
-            current.modules.approvalcenter.providers[type] || {};
+        return current.modules && current.modules.approvals &&
+            current.modules.approvals.providers &&
+            current.modules.approvals.providers[type] || {};
     }
 
     function installPolicyGuard() {
@@ -59,7 +59,7 @@ module.exports.createModule = function (context) {
 
     function persistNoApproval(type, enabled) {
         return context.settings.update(function (current) {
-            var approval = current.modules.approvalcenter;
+            var approval = current.modules.approvals;
             approval.providers = approval.providers || {};
             approval.providers[type] = approval.providers[type] || {};
             approval.providers[type].allowNoApproval = enabled === true;
@@ -69,7 +69,7 @@ module.exports.createModule = function (context) {
 
     function normalizeProviderSettings() {
         return context.settings.update(function (current) {
-            var approval = current.modules.approvalcenter;
+            var approval = current.modules.approvals;
             approval.providers = approval.providers || {};
             providerTypes.forEach(function (type) {
                 approval.providers[type] = normalizeProvider(approval.providers[type]);
@@ -91,7 +91,7 @@ module.exports.createModule = function (context) {
         var retentionDays = Math.max(1, Math.min(3650, Number(value.retentionDays) || 365));
 
         return context.settings.update(function (current) {
-            current.modules.approvalcenter.retentionDays = retentionDays;
+            current.modules.approvals.retentionDays = retentionDays;
             return current;
         }).then(function () {
             return Promise.all(providerTypes.map(function (type) {

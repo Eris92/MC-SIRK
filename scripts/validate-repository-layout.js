@@ -18,7 +18,7 @@ function files(relative) {
 
 [
     "server/core", "server/modules", "public/native", "public/shared", "public/modules",
-    "web/admin", "assets/icons", "tools/install", "docs", "scripts", "test"
+    "web/admin", "tools/install", "docs", "scripts", "test"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical directory: " + relative);
 });
@@ -27,9 +27,9 @@ function files(relative) {
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
     "views/SIRK-Portal.handlebars", "server/core/runtime.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js", "server/modules/commands/index.js", "server/modules/move-requests/index.js", "public/shared/core.js", "public/shared/runtime.js",
-    "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js",
+    "public/native/mesh-plugin-core.js",
     "public/modules/approvals/index.js", "public/modules/automation/index.js", "public/modules/commands/index.js", "public/modules/move-requests/index.js",
-    "web/admin/admin.js", "assets/icons/sirk-ui.svg", "tools/install/Install-SIRK-Portal-FromGit.ps1"
+    "web/admin/admin.js", "tools/install/Install-SIRK-Portal-FromGit.ps1"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical file: " + relative);
 });

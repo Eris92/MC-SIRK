@@ -68,7 +68,7 @@
             return true;
         }
         function ensureTopTab() {
-            if (!enabled() || !document.getElementById(pageId)) return false;
+            if (!enabled()) return false;
             var anchor = document.getElementById("MainDevTerminal") || document.getElementById("MainDevPlugins");
             if (!anchor || !anchor.parentNode) return false;
             var tab = document.getElementById(topTabId);

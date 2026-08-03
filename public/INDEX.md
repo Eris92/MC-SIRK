@@ -25,7 +25,6 @@ public/native/approval.css
 public/shared/core.js
 public/shared/runtime.js
 public/shared/module-shell.js
-public/shared/icon-registry.js
 public/shared/styles/
 public/shared/ui/
 ```
