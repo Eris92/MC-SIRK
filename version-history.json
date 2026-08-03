@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.11",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore the original purple Approval Center menu icon with the green approval mark.",
+      "Prevent Approval Center from retaining the cloned My Devices icon."
+    ]
+  },
+  {
     "version": "1.6.10",
     "date": "2026-08-03",
     "changes": [

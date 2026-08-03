@@ -8,6 +8,9 @@ var root = path.resolve(__dirname, "..");
 function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
 var shell = read("public/shared/module-shell.js");
+var sharedCore = read("public/shared/core.js");
+assert.ok(sharedCore.indexOf("approvalcenter: svgData") >= 0 && sharedCore.indexOf('fill="#7b1fa2"') >= 0,
+    "Approval Center must use its original purple clipboard menu icon.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);

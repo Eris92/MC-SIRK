@@ -1,3 +1,8 @@
+## 1.6.11
+
+- Restored the original purple Approval Center menu icon with the green approval mark.
+- Prevented Approval Center from retaining the cloned My Devices icon.
+
 ## 1.6.10
 
 - Restored complete Approval Center settings for every provider.
