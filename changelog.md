@@ -1,3 +1,8 @@
+## 1.6.9
+
+- Restored the Commands button beside MeshCentral's native Desktop Tools button.
+- Restored the compact desktop command menu above the native footer.
+
 ## 1.6.8
 
 - Fixed native Commands tab registration before its plugin page is opened.

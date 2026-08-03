@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.9",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore the Commands button beside MeshCentral's native Desktop Tools button.",
+      "Restore the compact desktop command menu above the native footer."
+    ]
+  },
+  {
     "version": "1.6.8",
     "date": "2026-08-03",
     "changes": [

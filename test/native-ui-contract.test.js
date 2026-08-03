@@ -31,4 +31,16 @@ var admin = read("admin.js");
 assert.ok(admin.indexOf('var action = String(req && req.query && req.query.action || "")') >= 0,
     "Admin POST routing must read the requested action.");
 
+var desktopCommands = read("public/native/desktop-commands.js");
+assert.ok(desktopCommands.indexOf('document.getElementById("DeskToolsButton")') >= 0,
+    "Desktop Commands must mount beside MeshCentral's native Tools button.");
+assert.ok(desktopCommands.indexOf('tools.parentNode.insertBefore(wrapper, tools.nextSibling)') >= 0,
+    "Desktop Commands must be inserted immediately after the native Tools button.");
+assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
+    "Desktop Commands script must be exposed by the plugin asset router.");
+
+var pluginMain = read("plugin-main.js");
+assert.ok(pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
+    "Desktop Commands must load during native MeshCentral startup.");
+
 console.log("Native UI contracts: OK");
