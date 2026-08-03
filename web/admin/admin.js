@@ -9,6 +9,44 @@
     function settings() { return data.moduleSettings || {}; }
     function checked(host, text, value) { var label = element("label", "mc-admin-check"); var input = document.createElement("input"); input.type = "checkbox"; input.checked = value !== false; label.appendChild(input); label.appendChild(document.createTextNode(text)); host.appendChild(label); return input; }
     function number(host, text, value, min, max) { var label = element("label", "mc-admin-field"); label.appendChild(element("span", "mc-admin-field-label", text)); var input = document.createElement("input", "mc-admin-input"); input.type = "number"; input.min = min; input.max = max; input.value = value; label.appendChild(input); host.appendChild(label); return input; }
+    function groupLevel(host, text, selected) {
+        var field = element("fieldset", "mc-admin-groups-field");
+        field.appendChild(element("legend", "mc-admin-field-label", text));
+        selected = Array.isArray(selected) ? selected.map(String) : [];
+        var inputs = [];
+        (data.userGroups || []).forEach(function (group) {
+            var label = element("label", "mc-admin-check");
+            var input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = String(group.id || group._id || "");
+            input.checked = selected.indexOf(input.value) >= 0;
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(group.name || group.title || input.value));
+            field.appendChild(label);
+            inputs.push(input);
+        });
+        if (!inputs.length) field.appendChild(element("div", "mc-admin-card-description", "No MeshCentral user groups are available."));
+        host.appendChild(field);
+        return function () { return inputs.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }); };
+    }
+    function approvalProvider(host, title, source) {
+        source = source || {};
+        var card = element("section", "mc-admin-provider-card");
+        card.appendChild(element("h4", "", title));
+        var enabled = checked(card, "Enable this approval provider", source.enabled !== false);
+        var showTab = checked(card, "Show provider tab in Approval Center", source.showTab !== false);
+        var showOverview = checked(card, "Show provider in Approval overview", source.showOverview !== false);
+        var noApproval = checked(card, "Allow execution without approval", source.allowNoApproval === true);
+        card.appendChild(element("p", "mc-admin-card-description", "When enabled, requests without selected approval levels execute immediately."));
+        var levels = source.levels || {};
+        var level1 = groupLevel(card, "Level 1 approver groups", levels[1] || levels["1"]);
+        var level2 = groupLevel(card, "Level 2 approver groups", levels[2] || levels["2"]);
+        var level3 = groupLevel(card, "Level 3 approver groups", levels[3] || levels["3"]);
+        host.appendChild(card);
+        return function () {
+            return { enabled: enabled.checked, showTab: showTab.checked, showOverview: showOverview.checked, allowNoApproval: noApproval.checked, levels: { 1: level1(), 2: level2(), 3: level3() } };
+        };
+    }
     function save(values, status, button) {
         button.disabled = true;
         var body = new URLSearchParams();
@@ -30,11 +68,12 @@
             card.appendChild(element("h3", "", "Approval Center"));
             card.appendChild(element("p", "mc-admin-card-description", "Approval rules shared by Move Requests, My Commands and My Scripts."));
             var approvals = current.approvals || {}; var providers = approvals.providers || {};
+            var approvalEnabled = checked(card, "Enable Approval Center", moduleEnabled("approvalcenter"));
             var retention = number(card, "Retention days", approvals.retentionDays || 365, 1, 3650);
-            var move = checked(card, "Enable approvals for Move Requests", !providers.moverequests || providers.moverequests.enabled !== false);
-            var commands = checked(card, "Enable approvals for My Commands", !providers.mycommands || providers.mycommands.enabled !== false);
-            var scripts = checked(card, "Enable approvals for My Scripts", !providers.myscripts || providers.myscripts.enabled !== false);
-            actions(card, function () { return { modules: {}, moduleOptions: { approvals: { retentionDays: retention.value, providers: { moverequests: { enabled: move.checked }, mycommands: { enabled: commands.checked }, myscripts: { enabled: scripts.checked } } } } }; });
+            var move = approvalProvider(card, "Move Requests", providers.moverequests);
+            var commands = approvalProvider(card, "My Commands", providers.mycommands);
+            var scripts = approvalProvider(card, "My Scripts", providers.myscripts);
+            actions(card, function () { return { modules: { approvalcenter: approvalEnabled.checked }, moduleOptions: { approvals: { retentionDays: retention.value, providers: { moverequests: move(), mycommands: commands(), myscripts: scripts() } } } }; });
         } else if (tab === "moverequests") {
             card.appendChild(element("h3", "", "Move Request"));
             var enabled = checked(card, "Enable Move Requests", moduleEnabled("moverequests"));

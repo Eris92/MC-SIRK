@@ -1,3 +1,9 @@
+## 1.6.10
+
+- Restored complete Approval Center settings for every provider.
+- Added provider visibility, immediate execution and Level 1-3 approver group controls.
+- Persisted every Approval option from the simplified native administration panel.
+
 ## 1.6.9
 
 - Restored the Commands button beside MeshCentral's native Desktop Tools button.

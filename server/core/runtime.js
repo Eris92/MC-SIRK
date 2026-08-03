@@ -249,7 +249,18 @@ module.exports.createRuntime = function (options) {
                 ["moverequests", "mycommands", "myscripts"].forEach(function (key) {
                     if (!approvalOptions.providers || !Object.prototype.hasOwnProperty.call(approvalOptions.providers, key)) return;
                     var existing = approvals.providers[key] || {};
-                    existing.enabled = approvalOptions.providers[key].enabled !== false;
+                    var provider = approvalOptions.providers[key] || {};
+                    existing.enabled = provider.enabled !== false;
+                    existing.showTab = provider.showTab !== false;
+                    existing.showOverview = provider.showOverview !== false;
+                    existing.allowNoApproval = provider.allowNoApproval === true;
+                    existing.levels = existing.levels || {};
+                    [1, 2, 3].forEach(function (level) {
+                        var selected = provider.levels && (provider.levels[level] || provider.levels[String(level)]);
+                        existing.levels[level] = (Array.isArray(selected) ? selected : []).map(String).filter(function (id, index, all) {
+                            return knownGroups.indexOf(id) >= 0 && all.indexOf(id) === index;
+                        });
+                    });
                     approvals.providers[key] = existing;
                 });
             }
@@ -289,6 +300,7 @@ module.exports.createRuntime = function (options) {
                 myscripts: moduleFolders("myscripts"),
                 mycommands: moduleFolders("mycommands")
             },
+            userGroups: shared.getUserGroups(parent),
             integrations: integrations.publicSettings(user),
             moduleLoadErrors: shared.copy(moduleLoadErrors),
             diagnostics: {

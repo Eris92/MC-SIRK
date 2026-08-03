@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.10",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore complete Approval Center settings for every provider.",
+      "Add provider visibility, immediate execution and Level 1-3 approver group controls.",
+      "Persist every Approval option from the native administration panel."
+    ]
+  },
+  {
     "version": "1.6.9",
     "date": "2026-08-03",
     "changes": [

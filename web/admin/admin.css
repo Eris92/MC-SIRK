@@ -263,6 +263,12 @@
     margin-top: 2px;
 }
 
+.mc-admin-provider-card{margin:14px 0;padding:12px;border:1px solid #b8b8b8;border-radius:4px;background:rgba(127,127,127,.04)}
+.mc-admin-provider-card h4{margin:0 0 10px;font-size:16px}
+.mc-admin-groups-field{margin:12px 0;padding:10px;border:1px solid rgba(127,127,127,.35);border-radius:4px}
+.mc-admin-groups-field legend{padding:0 5px}
+.mc-admin-groups-field .mc-admin-check{margin:6px 0}
+
 .mc-admin-check strong,
 .mc-admin-check small {
     display: block;

@@ -27,6 +27,19 @@ assert.ok(approvals.indexOf("current.modules.approvals") >= 0,
 assert.ok(approvals.indexOf("current.modules.approvalcenter.retentionDays") < 0,
     "Approval Center must not persist retention in a disconnected module key.");
 
+var serverRuntime = read("server/core/runtime.js");
+["showTab", "showOverview", "allowNoApproval", "existing.levels"].forEach(function (field) {
+    assert.ok(serverRuntime.indexOf(field) >= 0,
+        "Admin settings must persist the Approval provider option: " + field);
+});
+assert.ok(serverRuntime.indexOf("userGroups: shared.getUserGroups(parent)") >= 0,
+    "Approval settings must receive MeshCentral groups for Level 1-3 selection.");
+
+var adminUi = read("web/admin/admin.js");
+["Allow execution without approval", "Level 1 approver groups", "Level 2 approver groups", "Level 3 approver groups", "Show provider tab", "Show provider in Approval overview"].forEach(function (label) {
+    assert.ok(adminUi.indexOf(label) >= 0, "Approval settings UI is missing: " + label);
+});
+
 var admin = read("admin.js");
 assert.ok(admin.indexOf('var action = String(req && req.query && req.query.action || "")') >= 0,
     "Admin POST routing must read the requested action.");
