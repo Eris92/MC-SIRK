@@ -1,3 +1,8 @@
+## 1.6.52
+
+- Prevent the browser runtime decorator from restoring script credential actions outside Edit mode.
+- Cover both script action renderers with Edit-mode visibility regression checks.
+
 ## 1.6.51
 
 - Clear stale variable controls and output before running a parameter-free Quick command.

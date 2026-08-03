@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.52",
+    "date": "2026-08-03",
+    "changes": [
+      "Hide script credential actions outside Edit mode in the active runtime decorator.",
+      "Add regression checks for every script-action rendering layer."
+    ]
+  },
+  {
     "version": "1.6.51",
     "date": "2026-08-03",
     "changes": [

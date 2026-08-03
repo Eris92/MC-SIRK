@@ -30,7 +30,7 @@
                 config = config || {};
                 var actions = originalActions.call(tools, script, config) || [];
                 var hasCredentials = !!(script && ((Array.isArray(script.secretVariables) && script.secretVariables.length) || (Array.isArray(script.secretDefinitions) && script.secretDefinitions.length)));
-                if (hasCredentials && config.canEdit === true && !actions.some(function (action) { return action && action.key === "credentials"; })) {
+                if (tools.state.editMode === true && hasCredentials && config.canEdit === true && !actions.some(function (action) { return action && action.key === "credentials"; })) {
                     actions.unshift({
                         key: "credentials",
                         icon: "🔑",

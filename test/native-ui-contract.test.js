@@ -34,12 +34,16 @@ var approvalIcons = read("public/modules/approvals/index.js");
 });
 assert.ok(browserRuntime.indexOf("stroke='currentColor'") >= 0,
     "Decorated command icons must follow the active MeshCentral theme.");
+assert.ok(browserRuntime.indexOf('if (tools.state.editMode === true && hasCredentials && config.canEdit === true') >= 0,
+    "The runtime credential-action decorator must never restore credential buttons outside Edit mode.");
 var directoryTree = read("public/shared/ui/tree.js");
 assert.ok(directoryTree.indexOf('function lineIcon(kind)') >= 0 && directoryTree.indexOf('icon: "▣"') < 0,
     "Script-tree fallback icons must be proper SVG artwork rather than solid text blocks.");
 var editActions = read("public/shared/ui/script-edit-actions.js");
 assert.ok(editActions.indexOf('if (config.canEdit === true && typeof config.onEdit === "function")') >= 0,
     "The edit action must only be rendered for editable file-backed scripts.");
+assert.ok(editActions.indexOf("if (tools.state.editMode)") >= 0,
+    "Enhanced script actions must keep credentials and editing controls inside Edit mode.");
 assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
     "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
 assert.ok(browserRuntime.indexOf('if (view != null && !isCustomView(view)) core.restoreWorkspace();') >= 0,
