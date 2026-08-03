@@ -1,3 +1,8 @@
+## 1.6.47
+
+- Show per-script credential controls only while script edit mode is active.
+- Keep the normal My Scripts and My Commands lists free of administration-only actions.
+
 ## 1.6.46
 
 - Keep long My Commands and My Scripts editors within the visible MeshCentral workspace.

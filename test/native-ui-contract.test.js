@@ -150,8 +150,12 @@ assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf
 assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf("decorateScriptTree") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,
     "File-backed scripts must persist and enforce separate Desktop and My Commands card availability.");
 var scriptDefinitionForm = read("public/shared/ui/script-definition-form.js");
+var scriptTools = read("public/shared/ui/script-tools.js");
 assert.ok(scriptDefinitionForm.indexOf("showOnDesktop.checked") >= 0 && scriptDefinitionForm.indexOf("showWithoutDesktop.checked") >= 0,
     "The script editor must save both script availability controls.");
+assert.ok(scriptTools.indexOf('if (state.editMode) {\n                        actions.push({ key: "favorite"') >= 0 &&
+    scriptTools.indexOf('if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials"') > scriptTools.indexOf('if (state.editMode) {\n                        actions.push({ key: "favorite"'),
+    "Script credential actions must only be created inside script edit mode.");
 assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
     "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
 assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0 && commandsModule.indexOf("siteAdmin = isAdmin(shell)") >= 0,

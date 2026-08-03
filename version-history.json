@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.47",
+    "date": "2026-08-03",
+    "changes": [
+      "Show script credential controls only in script edit mode.",
+      "Hide administration-only credential actions from normal script lists."
+    ]
+  },
+  {
     "version": "1.6.46",
     "date": "2026-08-03",
     "changes": [
