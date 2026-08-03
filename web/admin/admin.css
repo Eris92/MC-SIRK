@@ -612,3 +612,82 @@
 #sirkPortalRoot #sirk-platform-admin{padding:0}
 #sirkPortalRoot #sirk-platform-admin>h2,#sirkPortalRoot #sirk-platform-admin>.mc-admin-subtitle{display:none}
 #sirkPortalRoot #sirk-platform-admin>.mc-admin-management-shell{border:0;border-radius:0}
+
+/* MeshCentral renders the plugin administration in a dark application frame.
+   Keep every local surface explicit so inherited light-theme text cannot become unreadable. */
+#sirk-platform-admin {
+    color-scheme: dark;
+    color: #f3f4f6;
+    background: #17191d;
+}
+
+#sirk-platform-admin .mc-admin-subtitle,
+#sirk-platform-admin .mc-admin-card-description,
+#sirk-platform-admin .mc-admin-section-header p,
+#sirk-platform-admin .mc-admin-field-description,
+#sirk-platform-admin .mc-admin-check small,
+#sirk-platform-admin .mc-admin-table-secondary {
+    color: #b8c0cc;
+}
+
+#sirk-platform-admin .mc-admin-management-shell,
+#sirk-platform-admin .mc-admin-management-toolbar,
+#sirk-platform-admin .mc-admin-management-shell > .mc-admin-tabs,
+#sirk-platform-admin .mc-admin-management-shell > .mc-admin-middle {
+    background: #17191d;
+    border-color: #3d4552;
+}
+
+#sirk-platform-admin .mc-admin-management-shell #sirk-platform-admin-content {
+    background: #17191d;
+}
+
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-tabs > button,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-settings-nav button,
+#sirk-platform-admin .mc-admin-management-tool,
+#sirk-platform-admin .mc-admin-secondary,
+#sirk-platform-admin .mc-admin-health-option {
+    color: #e5e7eb;
+}
+
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-tabs > button:hover,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-settings-nav button:hover,
+#sirk-platform-admin .mc-admin-management-tool:hover,
+#sirk-platform-admin .mc-admin-management-tool.is-active {
+    background: #252d3b;
+    color: #ffffff;
+}
+
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-tabs > button.active,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-settings-nav button.active {
+    background: #33456f;
+    box-shadow: inset 3px 0 0 #7c9cff;
+    color: #ffffff;
+}
+
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-card,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-actions,
+#sirk-platform-admin .mc-admin-debug,
+#sirk-platform-admin .mc-admin-table {
+    color: #f3f4f6;
+    background: #20242b;
+    border-color: #3d4552;
+}
+
+#sirk-platform-admin .mc-admin-input,
+#sirk-platform-admin .mc-admin-log,
+#sirk-platform-admin pre {
+    color: #edf2f7;
+    background: #101216;
+    border-color: #4b5563;
+}
+
+#sirk-platform-admin .mc-admin-table th,
+#sirk-platform-admin .mc-admin-table td {
+    color: #eef2f7;
+    border-color: #3d4552;
+}
+
+#sirk-platform-admin .mc-admin-table th {
+    background: #282d36;
+}
