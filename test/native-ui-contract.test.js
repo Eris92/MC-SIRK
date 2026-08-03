@@ -134,8 +134,10 @@ assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServe
     "Interactive Desktop tools must launch their executable directly without a flashing helper CMD window.");
 assert.ok(commandsServer.indexOf('Buffer.from(vbs, "utf8")') >= 0 && commandsServer.indexOf("wscript.exe") >= 0 && commandsServer.indexOf("shell.AppActivate") >= 0,
     "Interactive Desktop tools must use a console-free WScript launcher that activates the requested window.");
-assert.ok(commandsServer.indexOf("Get-ScheduledTask -TaskName $taskName") >= 0 && commandsServer.indexOf("if(-not $started)") >= 0,
-    "The scheduled Desktop launcher must reach Running state before its temporary task is removed.");
+assert.ok(commandsServer.indexOf("Get-ScheduledTaskInfo -TaskName $taskName") >= 0 && commandsServer.indexOf("LastRunTime.Year") >= 0,
+    "The scheduled Desktop launcher must confirm that the task was started without racing its short-lived Running state.");
+assert.ok(commandsServer.indexOf("DeleteFile WScript.ScriptFullName") >= 0,
+    "The console-free launcher must clean up its own script only after it has been opened by WScript.");
 assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
     "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
 assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,

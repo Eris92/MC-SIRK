@@ -1,3 +1,8 @@
+## 1.6.45
+
+- Fix PowerShell and CMD Desktop commands by removing the scheduled-task state race.
+- Confirm the launch from task run information and let the console-free launcher clean up its own file safely.
+
 ## 1.6.44
 
 - Added separate per-script visibility controls for Desktop Quick commands and the My Commands card.

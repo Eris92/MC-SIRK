@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.45",
+    "date": "2026-08-03",
+    "changes": [
+      "Fix PowerShell and CMD Desktop commands by removing a short-lived scheduled-task state race.",
+      "Confirm task start using its run information and return the agent result promptly.",
+      "Let the WScript launcher delete its own temporary file after opening it."
+    ]
+  },
+  {
     "version": "1.6.44",
     "date": "2026-08-03",
     "changes": [

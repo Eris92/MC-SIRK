@@ -219,12 +219,13 @@ module.exports.createModule = function (context) {
             "For attempt = 1 To 25",
             "  WScript.Sleep 200",
             "  For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
-            "    If Not before.Exists(CStr(proc.ProcessId)) Then shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then WScript.Quit 0",
+            "    If Not before.Exists(CStr(proc.ProcessId)) Then shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True : WScript.Quit 0",
             "  Next",
             "Next",
             "For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
-            "  shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then WScript.Quit 0",
-            "Next"
+            "  shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True : WScript.Quit 0",
+            "Next",
+            "CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True"
         ].join("\r\n");
         var encodedVbs = Buffer.from(vbs, "utf8").toString("base64");
         return [
@@ -241,11 +242,11 @@ module.exports.createModule = function (context) {
             "try{",
             "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
             "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
-            "$started=$false",
-            "for($i=0;$i-lt 60;$i++){Start-Sleep -Milliseconds 250;$taskState=(Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue).State;if($taskState-eq 'Running'){$started=$true}elseif($started){break}}",
-            "if(-not $started){throw 'The interactive Desktop launcher did not start.'}",
+            "Start-Sleep -Milliseconds 750",
+            "$taskInfo=Get-ScheduledTaskInfo -TaskName $taskName -ErrorAction Stop",
+            "if($taskInfo.LastRunTime.Year-lt 2000){throw 'The interactive Desktop launcher did not start.'}",
             "Write-Output 'Started on the interactive desktop: " + psQuote(label || "Command") + "'",
-            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue;Remove-Item -LiteralPath $scriptPath -Force -ErrorAction SilentlyContinue}"
+            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue}"
         ].join(";");
     }
     function injectVariables(commandText, type, definitions, supplied, secretValues) {
