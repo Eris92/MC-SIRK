@@ -117,6 +117,7 @@ function createSerializedStartupHook(version, pin) {
         style("sirk-platform-automation-style", "myscripts.css");
         style("sirk-platform-shared-style", "shared-ui/shared-ui.css");
         style("sirk-platform-toolbar-style", "shared-ui/toolbar.css");
+        style("sirk-platform-desktop-commands-style", "desktop-commands.css");
 
         var scripts = [
             ["sirk-platform-core", "core.js"],
@@ -139,7 +140,8 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-credentials", "shared-ui/system-credentials-form.js"],
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
-            ["sirk-platform-runtime", "runtime.js"]
+            ["sirk-platform-runtime", "runtime.js"],
+            ["sirk-platform-desktop-commands", "desktop-commands.js"]
         ];
 
         scripts.reduce(function (chain, item) {
