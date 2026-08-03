@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.20",
+    "date": "2026-08-03",
+    "changes": [
+      "Recover automatically when requests.json is a directory, locked file or has incompatible Windows permissions.",
+      "Switch Approval persistence to approval-requests.json without deleting the blocked legacy path.",
+      "Prevent Approval storage failures from blocking My Scripts definition editing."
+    ]
+  },
+  {
     "version": "1.6.19",
     "date": "2026-08-03",
     "changes": [

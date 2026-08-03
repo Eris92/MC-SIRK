@@ -1,3 +1,9 @@
+## 1.6.20
+
+- Recover automatically when `requests.json` is a directory, locked file or has incompatible Windows permissions.
+- Switch Approval persistence to `approval-requests.json` without deleting the blocked legacy path.
+- Prevent Approval storage failures from blocking My Scripts definition editing.
+
 ## 1.6.19
 
 - Show the definition edit action only for real file-backed scripts, not built-in command presets.

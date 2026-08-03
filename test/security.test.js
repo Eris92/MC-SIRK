@@ -118,6 +118,30 @@ async function validateApprovalApiSafety() {
     }
 }
 
+async function validateApprovalDatabaseFallback() {
+    var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-approval-fallback-"));
+    var blockedPath = path.join(directory, "requests.json");
+    fs.mkdirSync(blockedPath);
+    var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
+    var current = { modules: { approvals: { providers: { sample: { enabled: true, levels: { 1: [] } } } } } };
+    var service = approvalService.createApprovalService({
+        fs: fs, path: path,
+        parent: { parent: { webserver: { users: { "user/domain/admin": admin } } } },
+        settings: { read: function () { return current; }, isModuleEnabled: function () { return true; } },
+        databasePath: blockedPath
+    });
+    service.registerProvider({ type: "sample", title: "Sample", approvalLevels: [1], canSubmit: function () { return true; } });
+    try {
+        await service.submit("sample", admin, { value: 1 }, "test");
+        var fallback = path.join(directory, "approval-requests.json");
+        assert.strictEqual(fs.existsSync(fallback), true,
+            "Approval must use its fallback database when requests.json is not a writable file.");
+        assert.strictEqual(JSON.parse(fs.readFileSync(fallback, "utf8")).requests.length, 1);
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+
 async function validatePluginAdministrationSafety() {
     var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirkPlatform-plugin-admin-"));
     var pluginRoot = path.join(directory, "plugins");
@@ -168,6 +192,7 @@ Promise.resolve()
     .then(validateRedirectHeaders)
     .then(validateSecretCorruption)
     .then(validateApprovalApiSafety)
+    .then(validateApprovalDatabaseFallback)
     .then(function () { console.log("Security regression tests: OK"); })
     .catch(function (error) {
         console.error(error && error.stack || error);

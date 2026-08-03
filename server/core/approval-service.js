@@ -9,20 +9,46 @@ module.exports.createApprovalService = function (options) {
     var parent = options.parent;
     var settings = options.settings;
     var databasePath = options.databasePath;
+    var fallbackDatabasePath = path.join(path.dirname(databasePath), "approval-requests.json");
+    var activeDatabasePath = databasePath;
     var tokenPath = path.join(path.dirname(databasePath), "approval-api-tokens.json");
     var providers = Object.create(null);
     var queue = Promise.resolve();
 
     function readRows() {
-        var value = shared.readJson(fs, databasePath, { requests: [] });
+        var value;
+        try {
+            var stat = fs.statSync(activeDatabasePath);
+            if (!stat.isFile()) {
+                var error = new Error("Approval database path is not a file.");
+                error.code = "EISDIR";
+                throw error;
+            }
+            value = JSON.parse(fs.readFileSync(activeDatabasePath, "utf8").replace(/^\uFEFF/, ""));
+        } catch (error) {
+            var code = String(error && error.code || "");
+            if (activeDatabasePath === databasePath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) {
+                activeDatabasePath = fallbackDatabasePath;
+                value = shared.readJson(fs, activeDatabasePath, { requests: [] });
+            } else if (code === "ENOENT") {
+                value = { requests: [] };
+            } else {
+                value = { requests: [] };
+            }
+        }
         return Array.isArray(value.requests) ? value.requests : [];
     }
 
     function writeRows(rows) {
-        shared.writeJsonAtomic(fs, path, databasePath, {
-            schemaVersion: 3,
-            requests: rows
-        });
+        var value = { schemaVersion: 3, requests: rows };
+        try {
+            shared.writeJsonAtomic(fs, path, activeDatabasePath, value);
+        } catch (error) {
+            var code = String(error && error.code || "");
+            if (activeDatabasePath !== databasePath || ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) < 0) throw error;
+            activeDatabasePath = fallbackDatabasePath;
+            shared.writeJsonAtomic(fs, path, activeDatabasePath, value);
+        }
     }
 
     function transact(work) {
