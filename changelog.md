@@ -1,3 +1,8 @@
+## 1.6.49
+
+- Fix the My Commands selection race that could remove Run from the third column.
+- Render a clearly visible Run action and start the selected script only after it is clicked.
+
 ## 1.6.48
 
 - Move Quick commands execution output from the full-width footer into the third column.

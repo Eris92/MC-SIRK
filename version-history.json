@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.49",
+    "date": "2026-08-03",
+    "changes": [
+      "Fix competing My Commands renders that could hide Run.",
+      "Show a dedicated Run action in the third column.",
+      "Execute the selected script only after Run is clicked."
+    ]
+  },
+  {
     "version": "1.6.48",
     "date": "2026-08-03",
     "changes": [

@@ -164,6 +164,8 @@ assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
     "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
 assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0 && commandsModule.indexOf("siteAdmin = isAdmin(shell)") >= 0,
     "My Commands must always expose every command to Site Admin while filtering Desktop-only commands for other users.");
+assert.ok(commandsModule.indexOf("mc-command-run-button") >= 0 && commandsModule.indexOf('treeState.selectedScript = item.path; tools.saveTreeState(treeState); shell.render();') >= 0,
+    "The Commands card must render one stable Run view instead of racing direct selection against a full module render.");
 assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
     "Built-in commands must not receive Approval level 1 implicitly.");
 assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,

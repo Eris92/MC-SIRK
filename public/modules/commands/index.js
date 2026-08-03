@@ -141,7 +141,7 @@
     function showDefinition(shell, item, autoExecute) {
         var host = shell.state.page.details; host.innerHTML = "";
         var card = shell.card(item.label || item.name, item.description || item.path); var collectValues = valueControls(item, card);
-        var button = shell.element("button", "btn btn-primary", item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
+        var button = shell.element("button", "btn btn-primary mc-command-run-button", item.requiresApproval ? msg("Poproś o akceptację", "Request") : "▶ " + msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
         var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
         card.appendChild(outputHost); button.onclick = function () { execute(shell, item, button, collectValues(), outputHost); }; host.appendChild(card); sync(shell);
@@ -205,7 +205,7 @@
             filterScript: filterItem, scriptActions: function (item) { return actions(shell, item); },
             onResults: function () { mode = "results"; treeState.selectedScript = ""; shell.render(); },
             onRootSelect: function () { mode = "commands"; treeState.selectedScript = ""; tools.saveTreeState(treeState); window.setTimeout(shell.render, 0); },
-            onScript: function (item) { mode = "commands"; show(shell, item, true); }
+            onScript: function (item) { mode = "commands"; treeState.selectedScript = item.path; tools.saveTreeState(treeState); shell.render(); }
         });
         var resultsLabel = shell.state.page.primary.querySelector(".mc-catalog-results .mc-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
     }
