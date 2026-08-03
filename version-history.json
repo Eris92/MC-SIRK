@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.22",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore the missing Desktop Commands folder column for file-backed scripts.",
+      "Display categories, top-level folders and scripts as three separate columns.",
+      "Preserve the direct two-column layout for built-in Network, System and Other commands."
+    ]
+  },
+  {
     "version": "1.6.21",
     "date": "2026-08-03",
     "changes": [

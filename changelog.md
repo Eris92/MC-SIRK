@@ -1,3 +1,9 @@
+## 1.6.22
+
+- Restore the missing Desktop Commands folder column for file-backed scripts.
+- Display categories, top-level folders and scripts as three separate columns.
+- Preserve the direct two-column layout for built-in Network, System and Other commands.
+
 ## 1.6.21
 
 - Synchronize the Desktop Quick commands first column with the main My Commands categories.

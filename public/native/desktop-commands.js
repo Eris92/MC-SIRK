@@ -4,7 +4,7 @@
     if (window.__sirkDesktopCommandsLoaded) return;
     window.__sirkDesktopCommandsLoaded = true;
 
-    var state = { data: null, category: "", search: "" };
+    var state = { data: null, category: "", folder: "", search: "" };
     var TEXT = {
         pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Parametry", run: "Uruchom", request: "Wyślij wniosek", loading: "Ładowanie poleceń…", sent: "Polecenie zostało wysłane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wysłać polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
         en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", request: "Request", loading: "Loading commands…", sent: "Command submitted.", pending: "Command is waiting for approval.", failed: "Command could not be submitted.", confirm: "Run command", required: "Complete the required fields." }
@@ -40,8 +40,17 @@
     }
     function categories(data) {
         var result = [];
-        var scripts = flattenScripts(data.tree, []);
-        if (scripts.length) result.push({ key: "scripts", label: text("scripts"), items: scripts });
+        var scriptGroups = [];
+        var looseScripts = [];
+        (data.tree && data.tree.children || []).forEach(function (root) {
+            if (root.type === "script") looseScripts.push(root);
+            else {
+                var items = flattenScripts(root, []);
+                if (items.length) scriptGroups.push({ key: root.path || root.name, label: localized(root, "label") || root.name || root.path, items: items });
+            }
+        });
+        if (looseScripts.length) scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []) });
+        if (scriptGroups.length) result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
         (data.catalog || []).forEach(function (category) {
             result.push({
                 key: "catalog:" + category.key,
@@ -140,18 +149,22 @@
         var all = categories(state.data || {});
         if (!all.some(function (category) { return category.key === state.category; })) state.category = all[0] && all[0].key || "";
         var selected = all.find(function (category) { return category.key === state.category; });
+        var groups = selected && selected.groups || [];
+        if (!groups.some(function (group) { return group.key === state.folder; })) state.folder = groups[0] && groups[0].key || "";
+        var selectedGroup = groups.find(function (group) { return group.key === state.folder; });
         var query = state.search.toLowerCase();
-        var items = (selected && selected.items || []).filter(function (item) { return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0; });
+        var items = (selectedGroup && selectedGroup.items || selected && selected.items || []).filter(function (item) { return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0; });
         panel.innerHTML = "";
         var header = element("header");
         header.appendChild(element("strong", "", text("title")));
         var close = element("button", "", "×"); close.type = "button"; close.title = "Close"; header.appendChild(close); panel.appendChild(header);
         var search = document.createElement("input"); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
-        var browser = element("div", "sirk-quick-command-browser"), nav = element("nav"), list = element("section");
-        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : "", category.label); button.type = "button"; button.onclick = function () { state.category = category.key; render(panel); }; nav.appendChild(button); });
+        var browser = element("div", "sirk-quick-command-browser" + (groups.length ? " has-folders" : "")), nav = element("nav", "sirk-quick-command-categories"), folders = element("nav", "sirk-quick-command-folders"), list = element("section", "sirk-quick-command-items");
+        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : "", category.label); button.type = "button"; button.onclick = function () { state.category = category.key; state.folder = ""; render(panel); }; nav.appendChild(button); });
+        groups.forEach(function (group) { var button = element("button", group.key === state.folder ? "is-active" : "", group.label); button.type = "button"; button.onclick = function () { state.folder = group.key; render(panel); }; folders.appendChild(button); });
         items.forEach(function (item) { var button = element("button"); button.type = "button"; button.appendChild(element("strong", "", item.label)); if (item.description) button.appendChild(element("small", "", item.description)); button.onclick = function () { selectItem(panel, item); }; list.appendChild(button); });
         if (!items.length) list.appendChild(element("p", "", text("empty")));
-        browser.appendChild(nav); browser.appendChild(list); panel.appendChild(browser);
+        browser.appendChild(nav); if (groups.length) browser.appendChild(folders); browser.appendChild(list); panel.appendChild(browser);
         panel.appendChild(element("div", "sirk-quick-command-run"));
         panel.appendChild(element("div", "sirk-quick-command-status"));
         close.onclick = function () { panel.hidden = true; var toggle = document.getElementById("SirkDesktopCommandsButton"); if (toggle) toggle.setAttribute("aria-expanded", "false"); };
