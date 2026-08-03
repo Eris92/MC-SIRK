@@ -92,6 +92,9 @@ async function validateApprovalApiSafety() {
         execute: function () { executions++; return { message: "done" }; }
     });
     try {
+        await service.initialize();
+        assert.strictEqual(fs.existsSync(path.join(directory, "requests.json")), false,
+            "Approval startup must not create or rewrite an empty request database.");
         var created = service.createApiToken(admin, {
             name: "test",
             scopes: ["providers:read", "requests:read", "requests:write", "requests:decide"],

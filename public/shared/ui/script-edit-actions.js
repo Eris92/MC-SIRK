@@ -119,16 +119,14 @@
                     }
                 });
 
-                actions.push({
-                    key: "edit",
-                    icon: "✎",
-                    title: "Edit script definition and approval levels",
-                    onClick: function () {
-                        if (config.canEdit === true && typeof config.onEdit === "function") {
-                            config.onEdit(script);
-                        }
-                    }
-                });
+                if (config.canEdit === true && typeof config.onEdit === "function") {
+                    actions.push({
+                        key: "edit",
+                        icon: "✎",
+                        title: "Edit script definition and approval levels",
+                        onClick: function () { config.onEdit(script); }
+                    });
+                }
             }
 
             if (tools.state.multiPickMode && config.enableMulti === true) {

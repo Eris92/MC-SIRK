@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.19",
+    "date": "2026-08-03",
+    "changes": [
+      "Show the definition edit action only for real file-backed scripts, not built-in command presets.",
+      "Prevent Approval Center startup from rewriting an unchanged or empty requests database.",
+      "Keep My Commands browsing and edit mode independent from Approval storage availability."
+    ]
+  },
+  {
     "version": "1.6.18",
     "date": "2026-08-03",
     "changes": [

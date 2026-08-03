@@ -1,3 +1,9 @@
+## 1.6.19
+
+- Show the definition edit action only for real file-backed scripts, not built-in command presets.
+- Prevent Approval Center startup from rewriting an unchanged or empty requests database.
+- Keep My Commands browsing and edit mode independent from Approval storage availability.
+
 ## 1.6.18
 
 - Made administration saves complete synchronously through MeshCentral's settings file interface.

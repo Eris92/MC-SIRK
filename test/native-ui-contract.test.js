@@ -37,6 +37,9 @@ assert.ok(browserRuntime.indexOf("stroke='currentColor'") >= 0,
 var directoryTree = read("public/shared/ui/tree.js");
 assert.ok(directoryTree.indexOf('function lineIcon(kind)') >= 0 && directoryTree.indexOf('icon: "▣"') < 0,
     "Script-tree fallback icons must be proper SVG artwork rather than solid text blocks.");
+var editActions = read("public/shared/ui/script-edit-actions.js");
+assert.ok(editActions.indexOf('if (config.canEdit === true && typeof config.onEdit === "function")') >= 0,
+    "The edit action must only be rendered for editable file-backed scripts.");
 assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
     "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
 assert.ok(browserRuntime.indexOf('if (view != null && !isCustomView(view)) core.restoreWorkspace();') >= 0,

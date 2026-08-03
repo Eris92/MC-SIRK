@@ -457,16 +457,18 @@ module.exports.createApprovalService = function (options) {
     }
 
     function initialize() {
-        return transact(function (rows) {
-            rows.forEach(function (request) {
-                if (request.status === "executing") {
-                    request.status = "failed";
-                    request.result = { message: "Execution was interrupted by server restart." };
-                    request.updatedAt = Date.now();
-                }
-            });
-            return true;
+        var rows = readRows();
+        var changed = false;
+        rows.forEach(function (request) {
+            if (request.status === "executing") {
+                request.status = "failed";
+                request.result = { message: "Execution was interrupted by server restart." };
+                request.updatedAt = Date.now();
+                changed = true;
+            }
         });
+        if (changed) writeRows(rows);
+        return Promise.resolve(true);
     }
 
     return {
