@@ -54,10 +54,12 @@ assert.ok(admin.indexOf('var action = String(req && req.query && req.query.actio
     "Admin POST routing must read the requested action.");
 
 var desktopCommands = read("public/native/desktop-commands.js");
-assert.ok(desktopCommands.indexOf('document.getElementById("DeskToolsButton")') >= 0,
-    "Desktop Commands must mount beside MeshCentral's native Tools button.");
-assert.ok(desktopCommands.indexOf('tools.parentNode.insertBefore(wrapper, tools.nextSibling)') >= 0,
-    "Desktop Commands must be inserted immediately after the native Tools button.");
+assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
+    "Desktop Commands must mount on the native desktop stage.");
+assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,
+    "Desktop Commands must load the complete command and script tree.");
+assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
+    "Desktop Commands must retain the historical category browser and variable form.");
 assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
     "Desktop Commands script must be exposed by the plugin asset router.");
 

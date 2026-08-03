@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.13",
+    "date": "2026-08-03",
+    "changes": [
+      "Restore the historical right-edge Desktop Commands launcher.",
+      "Restore the full compact Commands workspace with search, category navigation, scripts and parameters.",
+      "Remove the simplified footer command list."
+    ]
+  },
+  {
     "version": "1.6.12",
     "date": "2026-08-03",
     "changes": [

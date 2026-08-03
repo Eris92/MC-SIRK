@@ -1,3 +1,9 @@
+## 1.6.13
+
+- Restored the historical right-edge Desktop Commands launcher.
+- Restored the full compact Commands workspace with search, category navigation, scripts and parameters.
+- Removed the simplified footer command list.
+
 ## 1.6.12
 
 - Remove SIRK `viewmode` parameters when returning to native MeshCentral pages.
