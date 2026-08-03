@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.44",
+    "date": "2026-08-03",
+    "changes": [
+      "Add independent Desktop Quick commands and My Commands card visibility controls to every script.",
+      "Filter script trees and execution endpoints according to the selected surface.",
+      "Keep every script visible to Site Admin in My Commands for administration."
+    ]
+  },
+  {
     "version": "1.6.43",
     "date": "2026-08-03",
     "changes": [

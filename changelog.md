@@ -1,3 +1,8 @@
+## 1.6.44
+
+- Added separate per-script visibility controls for Desktop Quick commands and the My Commands card.
+- Desktop and card script trees now respect their respective visibility setting; Site Admin still sees every script in the card for administration.
+
 ## 1.6.43
 
 - Replace the intermittent hidden PowerShell Desktop launcher with console-free `wscript.exe`.

@@ -232,7 +232,7 @@
     function load(panel) {
         if (state.data) { render(panel); return; }
         panel.innerHTML = ""; panel.appendChild(element("div", "sirk-quick-command-loading", text("loading")));
-        window.SirkPlatformCore.api("mycommands", "scripts").then(function (response) { state.data = response; render(panel); })
+        window.SirkPlatformCore.api("mycommands", "scripts", null, { surface: "desktop" }).then(function (response) { state.data = response; render(panel); })
             .catch(function (error) { panel.innerHTML = ""; panel.appendChild(element("div", "sirk-quick-command-status is-error", error.message || String(error))); });
     }
 

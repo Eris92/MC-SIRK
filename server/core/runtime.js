@@ -20,7 +20,9 @@ var DEFAULTS = {
             showInMenu: false,
             showOnDevice: true,
             maxMultiHostNodes: 200,
-            multiHostConcurrency: 8
+            multiHostConcurrency: 8,
+            commandOverrides: {},
+            scriptAvailability: {}
         },
         moverequests: { enabled: true, hostButtonEnabled: true, menuEnabled: false },
         approvals: { retentionDays: 365, providers: {} },

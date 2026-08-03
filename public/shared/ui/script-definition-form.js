@@ -306,6 +306,20 @@
                 multiLabel.appendChild(multi);
                 multiLabel.appendChild(document.createTextNode(" Allow multi-device execution"));
                 execution.appendChild(multiLabel);
+                var desktopLabel = element("label", "mc-definition-check");
+                var showOnDesktop = element("input");
+                showOnDesktop.type = "checkbox";
+                showOnDesktop.checked = value.showOnDesktop !== false;
+                desktopLabel.appendChild(showOnDesktop);
+                desktopLabel.appendChild(document.createTextNode(" Available during a Desktop connection (Quick commands)"));
+                execution.appendChild(desktopLabel);
+                var cardLabel = element("label", "mc-definition-check");
+                var showWithoutDesktop = element("input");
+                showWithoutDesktop.type = "checkbox";
+                showWithoutDesktop.checked = value.showWithoutDesktop !== false;
+                cardLabel.appendChild(showWithoutDesktop);
+                cardLabel.appendChild(document.createTextNode(" Available without a Desktop connection (My Commands)"));
+                execution.appendChild(cardLabel);
                 card.appendChild(execution);
 
                 var sourceDetails = element("details", "mc-definition-source");
@@ -363,6 +377,8 @@
                                 secretVariables: secrets.values(),
                                 runAsUser: Number(runAs.value) || 0,
                                 multiHost: multi.checked,
+                                showOnDesktop: showOnDesktop.checked,
+                                showWithoutDesktop: showWithoutDesktop.checked,
                                 body: source.value
                             }
                         }),

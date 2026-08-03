@@ -15,6 +15,7 @@ var options = { fs: fs, path: path, filePath: blockedPath, fallbackPath: fallbac
 var store = factory.createSettingsStore(options);
 store.updateSync(function (settings) {
     settings.modules.mycommands.commandOverrides = { cmd: { showOnDesktop: true, showWithoutDesktop: false } };
+    settings.modules.mycommands.scriptAvailability = { "system/tool.ps1": { showOnDesktop: false, showWithoutDesktop: true } };
     return settings;
 });
 
@@ -22,5 +23,7 @@ assert.strictEqual(fs.existsSync(fallbackPath), true);
 var restarted = factory.createSettingsStore(options).read();
 assert.strictEqual(restarted.modules.mycommands.commandOverrides.cmd.showOnDesktop, true);
 assert.strictEqual(restarted.modules.mycommands.commandOverrides.cmd.showWithoutDesktop, false);
+assert.strictEqual(restarted.modules.mycommands.scriptAvailability["system/tool.ps1"].showOnDesktop, false);
+assert.strictEqual(restarted.modules.mycommands.scriptAvailability["system/tool.ps1"].showWithoutDesktop, true);
 fs.rmSync(temporary, { recursive: true, force: true });
 console.log("Settings fallback: OK");

@@ -66,10 +66,29 @@ module.exports.createModule = function (context) {
         if (!found || !folderAccess.canAccess(user, folderRules(), "@menu/" + found.category.key)) throw new Error("Folder access denied.");
         return found;
     }
-    function visibleTree(user) {
+    function scriptAvailability() { return (context.settings.read().modules.mycommands || {}).scriptAvailability || {}; }
+    function scriptAvailabilityKey(relativePath) { return String(relativePath || "").replace(/\\/g, "/").toLowerCase(); }
+    function effectiveScriptAvailability(relativePath) {
+        var override = scriptAvailability()[scriptAvailabilityKey(relativePath)] || {};
+        return { showOnDesktop: override.showOnDesktop !== false, showWithoutDesktop: override.showWithoutDesktop !== false };
+    }
+    function decorateScriptTree(node, surface, showAll) {
+        var value = shared.copy(node);
+        if (value.type === "script") {
+            var availability = effectiveScriptAvailability(value.path);
+            value.showOnDesktop = availability.showOnDesktop;
+            value.showWithoutDesktop = availability.showWithoutDesktop;
+            if (!showAll && surface === "desktop" && !availability.showOnDesktop) return null;
+            if (!showAll && surface !== "desktop" && !availability.showWithoutDesktop) return null;
+            return value;
+        }
+        value.children = (value.children || []).map(function (child) { return decorateScriptTree(child, surface, showAll); }).filter(Boolean);
+        return value;
+    }
+    function visibleTree(user, surface) {
         var value = library.getTree();
         if (!canUseScripts(user)) value.children = [];
-        return value;
+        return decorateScriptTree(value, surface || "card", surface !== "desktop" && shared.isSiteAdmin(user));
     }
     function visibleCatalog(user) {
         return publicCatalog().filter(function (category) { return folderAccess.canAccess(user, folderRules(), "@menu/" + category.key); });
@@ -433,11 +452,11 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var query = req && req.query || {};
-            if (asset === "scripts") return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user), directExecutionAllowed: true, scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
+            if (asset === "scripts") return { ok: true, tree: visibleTree(user, query.surface === "desktop" ? "desktop" : "card"), catalog: visibleCatalog(user), directExecutionAllowed: true, scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
             if (asset === "catalog") return { ok: true, catalog: visibleCatalog(user) };
             if (asset === "script") { requireScriptAccess(user); var script = library.getScript(query.path, true); if (!script) throw new Error("Script not found."); return { ok: true, script: script }; }
             if (asset === "source") { requireAdmin(user); requireScriptAccess(user); var source = library.getSource(query.path); if (!source) throw new Error("Script not found."); return { ok: true, source: source }; }
-            if (asset === "definition") { requireScriptAccess(user); return { ok: true, definition: admin.getDefinition(user, query.path) }; }
+            if (asset === "definition") { requireScriptAccess(user); var definition = admin.getDefinition(user, query.path); var availability = effectiveScriptAvailability(query.path); definition.showOnDesktop = availability.showOnDesktop; definition.showWithoutDesktop = availability.showWithoutDesktop; return { ok: true, definition: definition }; }
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
             if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true, showOnDesktop: found.command.showOnDesktop === true, showWithoutDesktop: found.command.showWithoutDesktop === true } }; }
@@ -451,6 +470,11 @@ module.exports.createModule = function (context) {
             var value = req && req.body || {};
             if (asset === "execute") {
                 if (value.scriptPath) requireScriptAccess(user);
+                if (value.scriptPath) {
+                    var scriptAccess = effectiveScriptAvailability(value.scriptPath);
+                    if (value.desktopDirect === true && scriptAccess.showOnDesktop !== true) throw new Error("This script is disabled during a Desktop connection.");
+                    if (value.desktopDirect !== true && scriptAccess.showWithoutDesktop !== true) throw new Error("This script is available only during a Desktop connection.");
+                }
                 if (value.commandId) {
                     var accessible = requireCommandAccess(user, value.commandId).command;
                     if (value.desktopDirect === true && accessible.showOnDesktop !== true) throw new Error("This command is disabled during a Desktop connection.");
@@ -463,7 +487,18 @@ module.exports.createModule = function (context) {
             if (asset === "multi-execute") return multiExecute(user, value);
             if (asset === "refresh") { library.invalidate(); return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user) }; }
             if (asset === "source") { requireAdmin(user); requireScriptAccess(user); return { ok: true, script: library.saveSource(value.path, value.text), tree: visibleTree(user) }; }
-            if (asset === "definition") { requireScriptAccess(user); var saved = admin.saveDefinition(user, value.path, value.definition); saved.ok = true; saved.tree = visibleTree(user); return saved; }
+            if (asset === "definition") {
+                requireScriptAccess(user);
+                var saved = admin.saveDefinition(user, value.path, value.definition);
+                var definitions = scriptAvailability();
+                definitions[scriptAvailabilityKey(value.path)] = { showOnDesktop: value.definition && value.definition.showOnDesktop === true, showWithoutDesktop: value.definition && value.definition.showWithoutDesktop === true };
+                context.settings.updateSync(function (current) { current.modules.mycommands.scriptAvailability = definitions; return current; });
+                saved.definition.showOnDesktop = definitions[scriptAvailabilityKey(value.path)].showOnDesktop;
+                saved.definition.showWithoutDesktop = definitions[scriptAvailabilityKey(value.path)].showWithoutDesktop;
+                saved.ok = true;
+                saved.tree = visibleTree(user);
+                return saved;
+            }
             if (asset === "command-definition") {
                 requireAdmin(user); var command = requireCommandAccess(user, value.id).command; var definitions = commandOverrides();
                 definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), confirmExecution: value.confirmExecution === true, showOnDesktop: value.showOnDesktop === true, showWithoutDesktop: value.showWithoutDesktop === true };

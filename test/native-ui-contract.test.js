@@ -85,8 +85,8 @@ assert.ok(commandsModule.indexOf("iconMarkup: ICONS[command.id]") >= 0,
     "My Commands entries must expose their command-specific SVG artwork to the shared tree.");
 assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Desktop Commands must mount on the native desktop stage.");
-assert.ok(desktopCommands.indexOf('window.SirkPlatformCore.api("mycommands", "scripts")') >= 0,
-    "Desktop Commands must load the complete command and script tree.");
+assert.ok(desktopCommands.indexOf('{ surface: "desktop" }') >= 0,
+    "Desktop Commands must request the Desktop-filtered command and script tree.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
     "Desktop Commands must retain the category browser and render variables in the third column.");
 assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0,
@@ -142,6 +142,11 @@ assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && comma
     "Built-in My Commands entries must expose a persistent command editor.");
 assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0 && commandsServer.indexOf('["system", "other"]') >= 0,
     "Built-in commands must persist separate Desktop and without-Desktop availability, with System and Other defaulting to Desktop only.");
+assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf("decorateScriptTree") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,
+    "File-backed scripts must persist and enforce separate Desktop and My Commands card availability.");
+var scriptDefinitionForm = read("public/shared/ui/script-definition-form.js");
+assert.ok(scriptDefinitionForm.indexOf("showOnDesktop.checked") >= 0 && scriptDefinitionForm.indexOf("showWithoutDesktop.checked") >= 0,
+    "The script editor must save both script availability controls.");
 assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
     "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
 assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0 && commandsModule.indexOf("siteAdmin = isAdmin(shell)") >= 0,
