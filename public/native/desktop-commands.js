@@ -38,9 +38,8 @@
             var image = document.createElement("img"); image.className = "sirk-quick-command-icon"; image.alt = ""; image.src = iconData; host.appendChild(image); return;
         }
         var icon = element("span", "sirk-quick-command-icon");
-        icon.innerHTML = kind === "folder"
-            ? '<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/></svg>'
-            : '<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/></svg>';
+        var artwork = { folder: '<path d="M3 6h7l2 2h9v11H3V6Z"/>', network: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>', system: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>', other: '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>', script: '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>' };
+        icon.innerHTML = '<svg viewBox="0 0 24 24">' + (artwork[kind] || artwork.script) + '</svg>';
         host.appendChild(icon);
     }
     function flattenScripts(node, output) {
@@ -65,6 +64,10 @@
         });
         if (looseScripts.length) scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []) });
         if (scriptGroups.length) result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
+        (data.catalog || []).forEach(function (category) {
+            var items = (category.commands || []).map(function (command) { return { kind: "command", iconKind: category.key, commandId: command.id, label: localized(command, "label") || command.label || command.id, description: localized(command, "description") || command.description || "", requiresApproval: false, confirmExecution: command.confirmExecution === true, variables: command.variables || [] }; });
+            if (items.length) result.push({ key: "catalog:" + category.key, label: localized(category, "title") || category.title || category.key, iconKind: category.key, items: items });
+        });
         return result.filter(function (category) { return category.items.length; });
     }
 
@@ -165,9 +168,9 @@
         var close = element("button", "", "×"); close.type = "button"; close.title = "Close"; header.appendChild(close); panel.appendChild(header);
         var search = document.createElement("input"); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
         var browser = element("div", "sirk-quick-command-browser" + (groups.length ? " has-folders" : "")), nav = element("nav", "sirk-quick-command-categories"), folders = element("nav", "sirk-quick-command-folders"), list = element("section", "sirk-quick-command-items");
-        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : ""); button.type = "button"; addIcon(button, category.iconData, "folder"); button.appendChild(element("span", "", category.label)); button.onclick = function () { state.category = category.key; state.folder = ""; render(panel); }; nav.appendChild(button); });
+        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : ""); button.type = "button"; addIcon(button, category.iconData, category.iconKind || "folder"); button.appendChild(element("span", "", category.label)); button.onclick = function () { state.category = category.key; state.folder = ""; render(panel); }; nav.appendChild(button); });
         groups.forEach(function (group) { var button = element("button", group.key === state.folder ? "is-active" : ""); button.type = "button"; addIcon(button, group.iconData, "folder"); button.appendChild(element("span", "", group.label)); button.onclick = function () { state.folder = group.key; render(panel); }; folders.appendChild(button); });
-        items.forEach(function (item) { var button = element("button"); button.type = "button"; addIcon(button, item.iconData, "script"); var copy = element("span", "sirk-quick-command-copy"); copy.appendChild(element("strong", "", item.label)); if (item.description) copy.appendChild(element("small", "", item.description)); button.appendChild(copy); button.onclick = function () { selectItem(panel, item); }; list.appendChild(button); });
+        items.forEach(function (item) { var button = element("button"); button.type = "button"; addIcon(button, item.iconData, item.iconKind || "script"); var copy = element("span", "sirk-quick-command-copy"); copy.appendChild(element("strong", "", item.label)); if (item.description) copy.appendChild(element("small", "", item.description)); button.appendChild(copy); button.onclick = function () { selectItem(panel, item); }; list.appendChild(button); });
         if (!items.length) list.appendChild(element("p", "", text("empty")));
         browser.appendChild(nav); if (groups.length) browser.appendChild(folders); browser.appendChild(list); panel.appendChild(browser);
         panel.appendChild(element("div", "sirk-quick-command-run"));

@@ -8,6 +8,9 @@ var folderAccess = require("../../core/folder-access.js");
 module.exports.createModule = function (context) {
     var root = context.path.join(context.pluginRoot, "seed", "MyCommands");
     var resultsPath = context.path.join(context.dataRoot, "mycommands", "results.json");
+    var fallbackResultsPath = context.path.join(context.dataRoot, "mycommands", "command-results.json");
+    var activeResultsPath = resultsPath;
+    var memoryRows = [];
     var library = libraryFactory.createScriptLibrary({ fs: context.fs, path: context.path, root: root, readOnly: true, allowWrite: true });
     var admin = adminFactory.createScriptAdminService({ context: context, library: library, namespace: "script-secrets.mycommands" });
     var unregister = null;
@@ -98,8 +101,18 @@ module.exports.createModule = function (context) {
         result.confirmExecution = override.confirmExecution === true;
         return result;
     }
-    function executionRows() { var value = shared.readJson(context.fs, resultsPath, { rows: [] }); return Array.isArray(value.rows) ? value.rows : []; }
-    function writeRows(rows) { shared.writeJsonAtomic(context.fs, context.path, resultsPath, { schemaVersion: 1, rows: rows }); }
+    function executionRows() {
+        var value;
+        try { var stat = context.fs.statSync(activeResultsPath); if (!stat.isFile()) { var invalid = new Error("Command results path is not a file."); invalid.code = "EISDIR"; throw invalid; } value = JSON.parse(context.fs.readFileSync(activeResultsPath, "utf8").replace(/^\uFEFF/, "")); }
+        catch (error) { var code = String(error && error.code || ""); if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) { activeResultsPath = fallbackResultsPath; value = shared.readJson(context.fs, activeResultsPath, { rows: memoryRows }); } else value = { rows: memoryRows }; }
+        memoryRows = Array.isArray(value.rows) ? value.rows : memoryRows;
+        return shared.copy(memoryRows);
+    }
+    function writeRows(rows) {
+        memoryRows = shared.copy(rows); var value = { schemaVersion: 1, rows: rows };
+        try { shared.writeJsonAtomic(context.fs, context.path, activeResultsPath, value); }
+        catch (error) { var code = String(error && error.code || ""); if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) { activeResultsPath = fallbackResultsPath; try { shared.writeJsonAtomic(context.fs, context.path, activeResultsPath, value); } catch (ignored) {} } else if (activeResultsPath !== fallbackResultsPath) throw error; }
+    }
     function saveExecution(row) { var rows = executionRows(); rows.unshift(row); if (rows.length > 2000) rows.length = 2000; writeRows(rows); }
 
     function findCatalogCommand(commandId) {

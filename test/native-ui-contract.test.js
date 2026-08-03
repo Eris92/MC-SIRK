@@ -97,6 +97,8 @@ assert.ok(desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0 &
     "Desktop Commands must expose file-backed scripts as direct actions without Approval UI.");
 assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
     "Desktop Commands must request direct execution and render folder/script icons.");
+assert.ok(desktopCommands.indexOf('(data.catalog || []).forEach') >= 0,
+    "Desktop Commands must include Network, System and Other alongside Scripts.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
     "Desktop direct scripts must always display Run and never a Request button.");
 assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,
@@ -118,6 +120,8 @@ assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 
     "Built-in commands must not receive Approval level 1 implicitly.");
 assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,
     "Every built-in command must execute directly; Approval is reserved for file-backed scripts.");
+assert.ok(commandsServer.indexOf("fallbackResultsPath") >= 0 && commandsServer.indexOf("memoryRows") >= 0,
+    "Command execution must survive an inaccessible results.json by using fallback and in-memory storage.");
 assert.ok(commandsModule.indexOf('row("Approval", approvals)') < 0,
     "The built-in command editor must not offer Approval settings.");
 assert.ok(commandsModule.indexOf("function openCommandEditor") >= 0 && commandsModule.indexOf('canEdit: isAdmin(shell)') >= 0,

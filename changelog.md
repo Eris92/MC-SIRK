@@ -1,3 +1,9 @@
+## 1.6.28
+
+- Restore Network, System and Other next to Scripts in Desktop Quick commands.
+- Keep all built-in Desktop commands direct and Request-free while retaining script Approval behavior.
+- Recover from inaccessible `mycommands/results.json` through alternate disk storage and an in-memory fallback.
+
 ## 1.6.27
 
 - Make every built-in Network, System and Other command execute without Request.
