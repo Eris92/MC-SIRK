@@ -10,7 +10,6 @@ module.exports.admin = function (plugin) {
     var assets = {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
-        "admin-layout.js": ["web/admin/admin-layout.js", "text/javascript; charset=utf-8"],
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],

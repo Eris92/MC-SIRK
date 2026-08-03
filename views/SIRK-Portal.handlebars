@@ -1,14 +1,12 @@
-<div id="sirk-platform-admin" class="mc-admin sirk-platform-admin" data-plugin="{{pluginShortName}}">
-    <h2>SIRK Management Platform</h2>
-    <div class="mc-admin-subtitle">Move Requests, My Commands i My Scripts</div>
+<div id="sirk-platform-admin" class="mc-admin sirk-platform-admin" data-plugin="{{pluginShortName}}" aria-label="SIRK Management Platform administration">
     <div class="mc-admin-tabs">
-        <button type="button" data-tab="overview" class="active">Overview</button>
-        <button type="button" data-tab="settings">Settings</button>
-        <button type="button" data-tab="debug">Debug</button>
+        <button type="button" data-tab="approvals" class="active">Approval Center</button>
+        <button type="button" data-tab="moverequests">Move Request</button>
+        <button type="button" data-tab="mycommands">My Commands</button>
+        <button type="button" data-tab="myscripts">My Scripts</button>
     </div>
     <div id="sirk-platform-admin-content"></div>
 </div>
 <script>window.SirkPlatformAdminData={{{adminDataJson}}};</script>
 <link rel="stylesheet" href="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin.css">
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin.js"></script>
-<script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin-layout.js"></script>

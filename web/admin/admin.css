@@ -691,3 +691,52 @@
 #sirk-platform-admin .mc-admin-table th {
     background: #282d36;
 }
+
+/* Compact two-column settings surface: the four supported areas are the only navigation. */
+#sirk-platform-admin {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 0;
+    min-height: 520px;
+    padding: 0;
+    border: 1px solid #3d4552;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#sirk-platform-admin .mc-admin-tabs {
+    padding: 10px 8px;
+    border: 0;
+    border-right: 1px solid #3d4552;
+    border-radius: 0;
+    background: #17191d;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button {
+    padding: 11px 12px;
+    border-radius: 6px;
+    color: #e5e7eb;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button:hover {
+    background: #252d3b;
+    border-color: transparent;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button.active {
+    background: #33456f;
+    border-color: transparent;
+    box-shadow: inset 3px 0 0 #7c9cff;
+    color: #fff;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content {
+    padding: 22px;
+    background: #17191d;
+}
+
+@media (max-width: 760px) {
+    #sirk-platform-admin { grid-template-columns: 1fr; }
+    #sirk-platform-admin .mc-admin-tabs { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #3d4552; }
+    #sirk-platform-admin .mc-admin-tabs > button { width: auto; white-space: nowrap; }
+}

@@ -239,6 +239,20 @@ module.exports.createRuntime = function (options) {
             });
             current.modules.mycommands.showInMenu = false;
             current.modules.moverequests.menuEnabled = false;
+            if (moduleOptions.approvals) {
+                var approvalOptions = moduleOptions.approvals;
+                var approvals = current.modules.approvals || (current.modules.approvals = { retentionDays: 365, providers: {} });
+                approvals.retentionDays = Math.max(1, Math.min(3650, Number(approvalOptions.retentionDays) || 365));
+                approvals.providers = approvals.providers || {};
+                ["moverequests", "mycommands", "myscripts"].forEach(function (key) {
+                    if (!approvalOptions.providers || !Object.prototype.hasOwnProperty.call(approvalOptions.providers, key)) return;
+                    var existing = approvals.providers[key] || {};
+                    existing.enabled = approvalOptions.providers[key].enabled !== false;
+                    approvals.providers[key] = existing;
+                });
+            }
+            if (moduleOptions.moverequests) current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
+            if (moduleOptions.mycommands) current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
             return current;
         }).then(function () {
             return integrations.save(user, {
