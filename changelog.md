@@ -1,3 +1,9 @@
+## 1.6.35
+
+- Always show every built-in command to Site Admin in My Commands.
+- Keep Desktop-only filtering for non-administrative users.
+- Allow Site Admin to reach the editor for every command without first changing its availability.
+
 ## 1.6.34
 
 - Resolve the active Windows desktop user from the owner of `explorer.exe`.

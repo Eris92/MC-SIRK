@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.35",
+    "date": "2026-08-03",
+    "changes": [
+      "Always show every built-in command to Site Admin in My Commands.",
+      "Keep Desktop-only filtering for non-administrative users.",
+      "Allow Site Admin to reach the editor for every command without first changing its availability."
+    ]
+  },
+  {
     "version": "1.6.34",
     "date": "2026-08-03",
     "changes": [

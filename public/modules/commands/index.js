@@ -9,6 +9,7 @@
     var treeState = { selectedRoot: "", selectedScript: "", expanded: {} };
     var outputs = Object.create(null);
     var pollSequence = 0;
+    var siteAdmin = false;
     var tools = window.SharedScriptTools.create({ storageKey: "sirkPlatform.mycommands.preferences", deepLinkParameter: "mycommand" });
     tools.restoreTreeState(treeState);
 
@@ -72,7 +73,7 @@
     function buildTree() {
         var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", iconMarkup: MENU_ICONS.scripts, children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
         (catalog || []).forEach(function (category) {
-            var visibleCommands = (category.commands || []).filter(function (command) { return command.showWithoutDesktop === true || tools.state.editMode; });
+            var visibleCommands = (category.commands || []).filter(function (command) { return command.showWithoutDesktop === true || siteAdmin || tools.state.editMode; });
             if (!visibleCommands.length) return;
             children.push({
                 type: "directory", name: tr(category.title), path: "@menu/" + category.key, iconMarkup: MENU_ICONS[category.key] || MENU_ICONS.other,
@@ -230,7 +231,7 @@
             search: { side: "left", order: 70 }, clear: false, settings: false
         },
         tabs: [], defaultTab: "commands",
-        render: function (shell) { return shell.api("scripts").then(function (response) { sourceTree = response.tree; catalog = response.catalog || []; tree = buildTree(); tools.applyDeepLink(tree, treeState); return mode === "results" ? results(shell) : commands(shell); }); }
+        render: function (shell) { siteAdmin = isAdmin(shell); return shell.api("scripts").then(function (response) { sourceTree = response.tree; catalog = response.catalog || []; tree = buildTree(); tools.applyDeepLink(tree, treeState); return mode === "results" ? results(shell) : commands(shell); }); }
     });
 
     module.mountDeviceCommands = function (host, nodeId) { mode = "commands"; status = ""; if (typeof module.onDeviceRefreshEnd === "function") module.onDeviceRefreshEnd(String(nodeId || "")); return module.mount(host, "sirk-device-commands"); };
