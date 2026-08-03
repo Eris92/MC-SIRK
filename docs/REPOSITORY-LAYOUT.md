@@ -42,12 +42,9 @@ SIRK-Portal/
 │   │   ├── device-service.js
 │   │   └── pozostałe usługi wspólne
 │   └── modules/
-│       ├── approval-center/
 │       ├── automation/
 │       ├── commands/
-│       ├── jira/
-│       ├── move-requests/
-│       └── security/
+│       └── move-requests/
 ├── public/
 │   ├── INDEX.md
 │   ├── native/

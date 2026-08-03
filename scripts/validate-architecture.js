@@ -20,11 +20,9 @@ var required = [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "config.json", "package.json",
     "server/core/runtime.js", "server/core/settings-store.js", "server/core/secret-store.js",
     "server/core/approval-service.js", "server/core/device-service.js", "server/core/integration-service.js", "server/core/shared.js",
-    "server/modules/approval-center/index.js", "server/modules/automation/index.js", "server/modules/commands/index.js",
-    "server/modules/jira/index.js", "server/modules/move-requests/index.js",
-    "server/modules/security/index.js",
+    "server/modules/automation/index.js", "server/modules/commands/index.js", "server/modules/move-requests/index.js",
     "public/native/mesh-plugin-core.js", "public/shared/core.js", "public/shared/runtime.js",
-    "public/modules/approvals/index.js", "public/modules/automation/index.js", "views/SIRK-Portal.handlebars",
+    "public/modules/automation/index.js", "public/modules/commands/index.js", "public/modules/move-requests/index.js", "views/SIRK-Portal.handlebars",
     "docs/INDEX.md", "server/INDEX.md", "public/INDEX.md", "web/INDEX.md", "scripts/INDEX.md", "test/INDEX.md"
 ];
 
@@ -81,7 +79,7 @@ if (exists("admin.js")) {
         'require("./server/core/shared.js")', 'require("./server/core/plugin-admin-service-backup-discovery.js")',
         'require("./server/core/server-admin-service.js")', '"core.js": ["public/shared/core.js"',
         '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"',
-        '"approvalcenter.js": ["public/modules/approvals/index.js"', '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"',
+        '"moverequests.js": ["public/modules/move-requests/index.js"', '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"',
         'res.render("SIRK-Portal"', 'title: "SIRK Management Platform"'
     ].forEach(function (value) { need(admin, value, "Admin router missing canonical integration: " + value); });
     reject(admin, /MyCompanyAdminData|views\/MyCompany|\.\/core\/|\.\/modules\//, "Admin router contains removed MyCompany or root backend paths.");

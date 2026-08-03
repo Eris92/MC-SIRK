@@ -29,12 +29,9 @@ server/core/runtime.js
 
 | Moduł | Katalog |
 |---|---|
-| Approvals | `approval-center/` |
 | Automation | `automation/` |
 | Commands | `commands/` |
-| Jira Integration | `jira/` |
 | Device Transfers | `move-requests/` |
-| Security | `security/` |
 
 Każdy moduł zaczynaj od jego `index.js`. Nie otwieraj pozostałych modułów bez zależności potwierdzonej w runtime.
 

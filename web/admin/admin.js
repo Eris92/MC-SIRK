@@ -7,18 +7,15 @@
     var data = window.SirkPlatformAdminData || {};
     var content = document.getElementById("sirk-platform-admin-content");
     var active = "overview";
-    var settingsSection = "approvalcenter";
+    var settingsSection = "moverequests";
     var debugSection = "config";
     var draft = null;
 
     var settingsItems = [
-        { key: "approvalcenter", title: "Approval Center" },
         { key: "moverequests", title: "Move Request" },
         { key: "mycommands", title: "My Commands" },
         { key: "myscripts", title: "My Scripts" },
-        { key: "folderpermissions", title: "Uprawnienia folderów" },
-        { key: "myjira", title: "My Jira" },
-        { key: "defendertools", title: "Defender XDR" }
+        { key: "folderpermissions", title: "Uprawnienia folderów" }
     ];
 
     var debugItems = [
@@ -65,23 +62,16 @@
             modules[module.key] = module.enabled === true;
         });
 
-        ensureObject(moduleOptions, "approvalcenter");
-        ensureObject(moduleOptions.approvalcenter, "providers");
         ensureObject(moduleOptions, "moverequests");
         ensureObject(moduleOptions, "mycommands");
-        ensureObject(moduleOptions, "myjira");
-        ensureObject(moduleOptions, "defendertools");
         ensureObject(moduleOptions, "myscripts");
         ensureObject(moduleOptions.mycommands, "folderPermissions");
         ensureObject(moduleOptions.myscripts, "folderPermissions");
 
         ensureObject(integrationValues, "ad");
         ensureObject(integrationValues, "entra");
-        ensureObject(integrationValues, "jira");
-        ensureObject(integrationValues, "defender");
         ensureObject(integrationValues, "zabbix");
-        ensureObject(integrationValues.defender, "permissions");
-        ["ad", "entra", "jira", "defender", "zabbix"].forEach(function (key) {
+        ["ad", "entra", "zabbix"].forEach(function (key) {
             ensureObject(integrationValues[key], "health");
             if (["ok", "warning", "critical"].indexOf(integrationValues[key].health.status) < 0) integrationValues[key].health.status = "ok";
         });
@@ -340,7 +330,6 @@
         draft.moduleOptions.moverequests.menuEnabled = false;
 
         var moduleJobs = [
-            postModule("approvalcenter", "settings", draft.moduleOptions.approvalcenter),
             postModule("moverequests", "settings", {
                 hostButtonEnabled: draft.moduleOptions.moverequests.hostButtonEnabled !== false,
                 menuEnabled: false
@@ -804,13 +793,10 @@
         layout.appendChild(panel);
         content.appendChild(layout);
 
-        if (settingsSection === "approvalcenter") approvalSettings(panel);
-        else if (settingsSection === "moverequests") moveRequestsSettings(panel);
+        if (settingsSection === "moverequests") moveRequestsSettings(panel);
         else if (settingsSection === "mycommands") myCommandsSettings(panel);
         else if (settingsSection === "myscripts") myScriptsSettings(panel);
         else if (settingsSection === "folderpermissions") folderPermissionsSettings(panel);
-        else if (settingsSection === "myjira") myJiraSettings(panel);
-        else if (settingsSection === "defendertools") defenderSettings(panel);
         else moveRequestsSettings(panel);
 
         renderSaveBar(panel);

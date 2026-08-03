@@ -36,12 +36,9 @@ Nie twórz ponownie `public/shared-ui/` ani płaskich plików aplikacyjnych w `p
 
 | Moduł | Renderer |
 |---|---|
-| Approvals | `public/modules/approvals/index.js` |
 | Automation | `public/modules/automation/index.js` |
 | Commands | `public/modules/commands/index.js` |
-| Jira | `public/modules/jira/index.js` |
 | Device Transfers | `public/modules/move-requests/index.js` |
-| Security | `public/modules/security/index.js` |
 
 Dla jednego modułu może istnieć tylko jeden renderer.
 

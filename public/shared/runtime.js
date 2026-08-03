@@ -6,15 +6,12 @@
     var core = window.SirkPlatformCore;
     runtime.state = runtime.state || { bootstrap: null, initializePromise: null, nodeId: "" };
     var files = {
-        approvalcenter: "approvalcenter.js",
         moverequests: "moverequests.js",
         mycommands: "mycommands.js",
-        myjira: "myjira.js",
-        defendertools: "defendertools.js",
         myscripts: "myscripts.js"
     };
-    var order = ["approvalcenter", "moverequests", "mycommands", "myjira", "defendertools", "myscripts"];
-    var viewModes = { myscripts: 101, mycommands: 102, myjira: 103, defendertools: 104, approvalcenter: 105, moverequests: 106 };
+    var order = ["moverequests", "mycommands", "myscripts"];
+    var viewModes = { myscripts: 101, mycommands: 102, moverequests: 106 };
 
     function isCustomView(view) {
         view = Number(view);

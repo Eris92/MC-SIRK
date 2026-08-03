@@ -4,9 +4,6 @@
     var VIEW_MODES = {
         myscripts: 101,
         mycommands: 102,
-        myjira: 103,
-        defendertools: 104,
-        approvalcenter: 105,
         moverequests: 106
     };
 

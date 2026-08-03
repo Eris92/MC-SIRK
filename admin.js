@@ -21,11 +21,8 @@ module.exports.admin = function (plugin) {
 
     var assets = {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
-        "admin-ui-enhancements.css": ["web/admin/admin-ui-enhancements.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
         "admin-layout.js": ["web/admin/admin-layout.js", "text/javascript; charset=utf-8"],
-        "admin-approval-policy.js": ["web/admin/admin-approval-policy.js", "text/javascript; charset=utf-8"],
-        "admin-ui-enhancements.js": ["web/admin/admin-ui-enhancements.js", "text/javascript; charset=utf-8"],
         "admin-plugin-updates.js": ["web/admin/admin-plugin-updates.js", "text/javascript; charset=utf-8"],
         "admin-marketplace.js": ["web/admin/admin-marketplace.js", "text/javascript; charset=utf-8"],
         "admin-move-mesh-levels.js": ["web/admin/admin-move-mesh-levels.js", "text/javascript; charset=utf-8"],
@@ -39,16 +36,10 @@ module.exports.admin = function (plugin) {
         "icons/sirk-ui.svg": ["assets/icons/sirk-ui.svg", "image/svg+xml; charset=utf-8"],
 
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
-        "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
-
-
         "myscripts.js": ["public/modules/automation/index.js", "text/javascript; charset=utf-8"],
         "myscripts.css": ["public/modules/automation/style.css", "text/css; charset=utf-8"],
         "myscripts-menu.svg": ["assets/myscripts-menu.svg", "image/svg+xml; charset=utf-8"],
         "mycommands.js": ["public/modules/commands/index.js", "text/javascript; charset=utf-8"],
-        "myjira.js": ["public/modules/jira/index.js", "text/javascript; charset=utf-8"],
-        "defendertools.js": ["public/modules/security/index.js", "text/javascript; charset=utf-8"],
-        "approvalcenter.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
         "moverequests.js": ["public/modules/move-requests/index.js", "text/javascript; charset=utf-8"],
 
         "shared-ui/toolbar-config.js": ["public/shared/ui/toolbar-config.js", "text/javascript; charset=utf-8"],

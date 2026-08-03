@@ -26,9 +26,9 @@ function files(relative) {
 [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
     "views/SIRK-Portal.handlebars", "server/core/runtime.js",
-    "server/modules/approval-center/index.js", "public/shared/core.js", "public/shared/runtime.js",
+    "server/modules/automation/index.js", "server/modules/commands/index.js", "server/modules/move-requests/index.js", "public/shared/core.js", "public/shared/runtime.js",
     "public/shared/icon-registry.js", "public/native/mesh-plugin-core.js",
-    "public/modules/automation/index.js", "public/modules/approvals/index.js",
+    "public/modules/automation/index.js", "public/modules/commands/index.js", "public/modules/move-requests/index.js",
     "web/admin/admin.js", "assets/icons/sirk-ui.svg", "tools/install/Install-SIRK-Portal-FromGit.ps1"
 ].forEach(function (relative) {
     if (!exists(relative)) errors.push("Missing canonical file: " + relative);
@@ -83,17 +83,21 @@ if (adminView.indexOf("SIRK Management Platform") < 0 || adminView.indexOf("Sirk
 var adminSource = read("admin.js");
 [
     '"core.js": ["public/shared/core.js"', '"mesh-plugin-core.js": ["public/native/mesh-plugin-core.js"',
-    '"approvalcenter.js": ["public/modules/approvals/index.js"',
+    '"moverequests.js": ["public/modules/move-requests/index.js"',
     '"shared-ui/toolbar.js": ["public/shared/ui/toolbar.js"'
 ].forEach(function (fragment) {
     if (adminSource.indexOf(fragment) < 0) errors.push("Asset router is missing canonical mapping: " + fragment);
 });
 if (/\["public\/(?:core|runtime|module-shell|portal-|my|defender|move|main\.)/.test(adminSource) || adminSource.indexOf("public/shared-ui/") >= 0) errors.push("Asset router contains a removed flat public path.");
 
-var moduleDirectories = fs.readdirSync(absolute("server/modules"), { withFileTypes: true }).filter(function (entry) { return entry.isDirectory() && entry.name !== "portal"; }).map(function (entry) { return entry.name; });
+var moduleDirectories = fs.readdirSync(absolute("server/modules"), { withFileTypes: true }).filter(function (entry) { return entry.isDirectory() && ["automation", "commands", "move-requests"].indexOf(entry.name) >= 0; }).map(function (entry) { return entry.name; });
 moduleDirectories.forEach(function (name) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) errors.push("Server module directory must use kebab-case: " + name);
     if (!exists("server/modules/" + name + "/index.js")) errors.push("Server module is missing index.js: " + name);
+});
+
+["approval-center", "jira", "security", "portal"].forEach(function (name) {
+    if (files("server/modules/" + name).length) errors.push("Removed module must not contain files: " + name);
 });
 
 var registrations = Object.create(null);

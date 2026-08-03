@@ -43,13 +43,10 @@
         server: svg('<rect x="4" y="3" width="16" height="7" rx="1"/><rect x="4" y="14" width="16" height="7" rx="1"/><path d="M7 6.5h.01M7 17.5h.01M10 6.5h7M10 17.5h7"/>'),
         debug: svg('<path d="M9 9h6v9a3 3 0 0 1-6 0V9Z"/><path d="M10 5h4l1 4H9l1-4ZM4 13h5M15 13h5M6 8l3 3M18 8l-3 3M6 18h3M15 18h3"/>'),
         portal: svg('<path d="M4 5h16v14H4z"/><path d="M4 9h16M8 9v10"/>'),
-        approvalcenter: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/>'),
         moverequests: svg('<path d="M5 7h12l-3-3m3 3-3 3M19 17H7l3 3m-3-3 3-3"/>'),
         mycommands: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m7 10 3 2-3 2m5 1h5"/>'),
         myscripts: svg('<path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6m-6 4h6"/>'),
         folderpermissions: svg('<path d="M3 6h6l2 2h10v11H3V6Z"/><path d="M12 12h6M15 9v6"/>'),
-        myjira: svg('<path d="m12 3 8 8-8 10-8-10 8-8Z"/><path d="m9 11 3 3 3-3"/>'),
-        defendertools: svg('<path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z"/><path d="m8.5 12 2.3 2.3 4.7-5"/>'),
         config: svg('<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>'),
         logs: svg('<path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/>'),
         errors: svg('<path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17h.01"/>')

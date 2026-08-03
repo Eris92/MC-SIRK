@@ -22,37 +22,18 @@ var DEFAULTS = {
             maxMultiHostNodes: 200,
             multiHostConcurrency: 8
         },
-        myjira: { enabled: false, accessGroupIds: [] },
-        defendertools: { enabled: false },
-        approvalcenter: { enabled: true, retentionDays: 365, providers: {} },
         moverequests: { enabled: true, hostButtonEnabled: true, menuEnabled: false }
     },
     integrations: {
         ad: { domain: "", login: "" },
         entra: { tenantId: "", clientId: "" },
-        jira: {
-            url: "", email: "", projectKey: "", assetFieldId: "",
-            hostnameAttribute: "Hostname", workspaceId: "", cloudId: "",
-            aql: "objectType = Computer", maxResults: 100, verifyTls: true,
-            cmdbEnabled: true, approvalTransitionId: "", closeTransitionId: ""
-        },
-        defender: {
-            tenantId: "", clientId: "", incidentMode: "active", timeRange: "30d",
-            dateField: "lastUpdateDateTime", customFromUtc: "", customToUtc: "",
-            showIncidentId: "", nameContains: "",
-            mdcaApiBaseUrl: "https://portal.cloudappsecurity.com/cas/api",
-            permissions: { incidents: [], email: [], trusted: [], hunting: [] }
-        },
         zabbix: { url: "", username: "", verifyTls: true }
     }
 };
 
 var MODULES = [
-    { key: "approvalcenter", name: "Approvals", path: "../modules/approval-center/index.js" },
     { key: "moverequests", name: "Move Requests", path: "../modules/move-requests/index.js" },
     { key: "mycommands", name: "Commands", path: "../modules/commands/index.js" },
-    { key: "myjira", name: "Jira Integration", path: "../modules/jira/index.js" },
-    { key: "defendertools", name: "Security", path: "../modules/security/index.js" },
     { key: "myscripts", name: "Automation", path: "../modules/automation/index.js" }
 ];
 
@@ -257,12 +238,6 @@ module.exports.createRuntime = function (options) {
             });
             current.modules.mycommands.showInMenu = false;
             current.modules.moverequests.menuEnabled = false;
-            if (moduleOptions.myjira) {
-                current.modules.myjira.accessGroupIds = normalizeGroups(
-                    moduleOptions.myjira.accessGroupIds,
-                    knownGroups
-                );
-            }
             return current;
         }).then(function () {
             return integrations.save(user, {
@@ -310,7 +285,7 @@ module.exports.createRuntime = function (options) {
     function updateModules(user, values) {
         return saveAdminSettings(user, {
             modules: values,
-            moduleOptions: { myjira: settings.read().modules.myjira },
+            moduleOptions: {},
             integrations: integrations.readSettings(),
             secrets: {}
         });
