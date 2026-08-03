@@ -43,11 +43,17 @@ var serverRuntime = read("server/core/runtime.js");
 });
 assert.ok(serverRuntime.indexOf("userGroups: shared.getUserGroups(parent)") >= 0,
     "Approval settings must receive MeshCentral groups for Level 1-3 selection.");
+var saveAdminStart = serverRuntime.indexOf("function saveAdminSettings");
+var saveAdminEnd = serverRuntime.indexOf("function moduleFolders", saveAdminStart);
+assert.ok(serverRuntime.slice(saveAdminStart, saveAdminEnd).indexOf("integrations.save") < 0,
+    "Module settings saves must not rewrite integrations or the encrypted secret store.");
 
 var adminUi = read("web/admin/admin.js");
 ["Allow execution without approval", "Level 1 approver groups", "Level 2 approver groups", "Level 3 approver groups", "Show provider tab", "Show provider in Approval overview"].forEach(function (label) {
     assert.ok(adminUi.indexOf(label) >= 0, "Approval settings UI is missing: " + label);
 });
+assert.ok(adminUi.indexOf("AbortController") >= 0 && adminUi.indexOf("15000") >= 0,
+    "Admin saves must time out and restore the Save button instead of hanging indefinitely.");
 
 var admin = read("admin.js");
 assert.ok(admin.indexOf('var action = String(req && req.query && req.query.action || "")') >= 0,

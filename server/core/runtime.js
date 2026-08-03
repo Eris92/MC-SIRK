@@ -267,11 +267,6 @@ module.exports.createRuntime = function (options) {
             if (moduleOptions.moverequests) current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
             if (moduleOptions.mycommands) current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
             return current;
-        }).then(function () {
-            return integrations.save(user, {
-                integrations: payload.integrations || {},
-                secrets: payload.secrets || {}
-            });
         }).then(function () { return adminSnapshot(user); });
     }
 

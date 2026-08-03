@@ -1,3 +1,9 @@
+## 1.6.14
+
+- Fixed administration saves that remained in progress indefinitely.
+- Removed unrelated integration and secret-store writes from module settings saves.
+- Added a 15-second request timeout and visible server-response errors.
+
 ## 1.6.13
 
 - Restored the historical right-edge Desktop Commands launcher.

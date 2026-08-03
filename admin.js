@@ -138,9 +138,7 @@ module.exports.admin = function (plugin) {
         if (action === "save-settings" || action === "save-modules") {
             var payload = {
                 modules: shared.parseJsonObject(req && req.body && req.body.modules, {}),
-                moduleOptions: shared.parseJsonObject(req && req.body && req.body.moduleOptions, {}),
-                integrations: shared.parseJsonObject(req && req.body && req.body.integrations, {}),
-                secrets: shared.parseJsonObject(req && req.body && req.body.secrets, {})
+                moduleOptions: shared.parseJsonObject(req && req.body && req.body.moduleOptions, {})
             };
             plugin.runtime.saveAdminSettings(user, payload)
                 .then(function (snapshot) { shared.sendJson(res, 200, { ok: true, snapshot: snapshot }); })

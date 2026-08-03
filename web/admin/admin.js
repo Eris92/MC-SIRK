@@ -49,14 +49,19 @@
     }
     function save(values, status, button) {
         button.disabled = true;
+        button.textContent = "Saving…";
+        status.className = "mc-admin-save-status";
+        status.textContent = "Saving settings…";
         var body = new URLSearchParams();
         body.set("modules", JSON.stringify(values.modules)); body.set("moduleOptions", JSON.stringify(values.moduleOptions));
-        body.set("integrations", JSON.stringify(data.integrations && data.integrations.values || {})); body.set("secrets", "{}");
         var url = new URL("pluginadmin.ashx", window.location.href); url.searchParams.set("pin", root.getAttribute("data-plugin") || "SIRKPortal"); url.searchParams.set("action", "save-settings");
-        fetch(url.href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }, body: body.toString() })
-            .then(function (response) { return response.json(); }).then(function (result) { if (!result.ok) throw new Error(result.error || "Save failed."); data = result.snapshot; window.SirkPlatformAdminData = data; status.textContent = "Saved"; })
+        var controller = typeof AbortController === "function" ? new AbortController() : null;
+        var timer = window.setTimeout(function () { if (controller) controller.abort(); }, 15000);
+        fetch(url.href, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "Accept": "application/json" }, body: body.toString(), signal: controller && controller.signal })
+            .then(function (response) { return response.text().then(function (text) { var result; try { result = JSON.parse(text || "{}"); } catch (error) { throw new Error("Server returned an invalid response (HTTP " + response.status + ")."); } if (!response.ok || !result.ok) throw new Error(result.error || "Save failed (HTTP " + response.status + ")."); return result; }); })
+            .then(function (result) { data = result.snapshot; window.SirkPlatformAdminData = data; status.className = "mc-admin-save-status"; status.textContent = "Saved"; })
             .catch(function (error) { status.textContent = error.message || String(error); status.className = "mc-admin-save-status mc-admin-error"; })
-            .then(function () { button.disabled = false; });
+            .then(function () { window.clearTimeout(timer); button.disabled = false; button.textContent = "Save settings"; });
     }
     function actions(host, values) { var row = element("div", "mc-admin-actions"); var button = element("button", "mc-admin-primary", "Save settings"); button.type = "button"; var status = element("span", "mc-admin-save-status", ""); button.onclick = function () { save(values(), status, button); }; row.appendChild(button); row.appendChild(status); host.appendChild(row); }
     function moduleEnabled(key) { return (data.modules || []).some(function (item) { return item.key === key && item.enabled === true; }); }
