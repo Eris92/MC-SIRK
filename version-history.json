@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.43",
+    "date": "2026-08-03",
+    "changes": [
+      "Replace the intermittent hidden PowerShell Desktop launcher with console-free wscript.exe.",
+      "Launch and activate the requested process without displaying a helper console window.",
+      "Fall back to an existing matching process for single-instance Windows tools."
+    ]
+  },
+  {
     "version": "1.6.42",
     "date": "2026-08-03",
     "changes": [

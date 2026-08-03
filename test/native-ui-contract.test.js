@@ -132,8 +132,8 @@ assert.ok(commandsServer.indexOf("Get-Process explorer -IncludeUserName") >= 0 &
     "Interactive command launch must resolve the Explorer session owner before using the WMI fallback.");
 assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServer.indexOf("-Execute $env:ComSpec") < 0,
     "Interactive Desktop tools must launch their executable directly without a flashing helper CMD window.");
-assert.ok(commandsServer.indexOf('Buffer.from(focusScript, "utf16le")') >= 0 && commandsServer.indexOf("AppActivate($process.Id)") >= 0 && commandsServer.indexOf("-WindowStyle Hidden -EncodedCommand") >= 0,
-    "Interactive Desktop tools must use a hidden launcher that activates the requested window in the foreground.");
+assert.ok(commandsServer.indexOf('Buffer.from(vbs, "utf8")') >= 0 && commandsServer.indexOf("wscript.exe") >= 0 && commandsServer.indexOf("shell.AppActivate") >= 0,
+    "Interactive Desktop tools must use a console-free WScript launcher that activates the requested window.");
 assert.ok(commandsServer.indexOf("Get-ScheduledTask -TaskName $taskName") >= 0 && commandsServer.indexOf("if(-not $started)") >= 0,
     "The scheduled Desktop launcher must reach Running state before its temporary task is removed.");
 assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,

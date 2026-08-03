@@ -1,3 +1,9 @@
+## 1.6.43
+
+- Replace the intermittent hidden PowerShell Desktop launcher with console-free `wscript.exe`.
+- Launch the requested tool independently and activate its new process without displaying a helper window.
+- Fall back to activating an existing matching process for single-instance Windows tools.
+
 ## 1.6.42
 
 - Reduce the selected script heading size in the Quick commands variable panel.

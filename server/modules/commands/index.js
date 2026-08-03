@@ -187,21 +187,37 @@ module.exports.createModule = function (context) {
     }
     function interactiveDesktopCommand(commandText, label) {
         var launch = desktopLaunch(commandText);
-        var focusScript = [
-            "$start=@{FilePath='" + psQuote(launch.executable) + "';PassThru=$true}",
-            launch.argumentsText ? "$start.ArgumentList='" + psQuote(launch.argumentsText) + "'" : "",
-            "$process=Start-Process @start",
-            "$shell=New-Object -ComObject WScript.Shell",
-            "for($i=0;$i-lt 20;$i++){Start-Sleep -Milliseconds 200;$process.Refresh();if($process.MainWindowHandle-ne 0){$shell.SendKeys('%');if($shell.AppActivate($process.Id)){break}}}",
-            "Start-Sleep -Milliseconds 500"
-        ].filter(Boolean).join(";");
-        var encodedFocusScript = Buffer.from(focusScript, "utf16le").toString("base64");
+        var processName = String(launch.executable).split(/[\\/]/).pop();
+        var launchLine = '"' + launch.executable + '"' + (launch.argumentsText ? " " + launch.argumentsText : "");
+        var vbs = [
+            "Set shell = CreateObject(\"WScript.Shell\")",
+            "Set before = CreateObject(\"Scripting.Dictionary\")",
+            "Set wmi = GetObject(\"winmgmts:\\\\.\\root\\cimv2\")",
+            "For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
+            "  before(CStr(proc.ProcessId)) = True",
+            "Next",
+            "shell.Run \"" + launchLine.replace(/"/g, '""') + "\", 1, False",
+            "For attempt = 1 To 25",
+            "  WScript.Sleep 200",
+            "  For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
+            "    If Not before.Exists(CStr(proc.ProcessId)) Then shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then WScript.Quit 0",
+            "  Next",
+            "Next",
+            "For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
+            "  shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then WScript.Quit 0",
+            "Next"
+        ].join("\r\n");
+        var encodedVbs = Buffer.from(vbs, "utf8").toString("base64");
         return [
             "$userName=(Get-Process explorer -IncludeUserName -ErrorAction SilentlyContinue|Where-Object{$_.UserName}|Select-Object -First 1 -ExpandProperty UserName)",
             "if([string]::IsNullOrWhiteSpace($userName)){$userName=(Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName}",
             "if([string]::IsNullOrWhiteSpace($userName)){throw 'No interactive Windows user is logged on.'}",
             "$taskName='SIRK-Desktop-'+[guid]::NewGuid().ToString('N')",
-            "$action=New-ScheduledTaskAction -Execute ($env:SystemRoot+'\\System32\\WindowsPowerShell\\v1.0\\powershell.exe') -Argument '-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand " + encodedFocusScript + "'",
+            "$scriptDirectory=Join-Path $env:ProgramData 'SIRK Management Platform'",
+            "New-Item -ItemType Directory -Path $scriptDirectory -Force|Out-Null",
+            "$scriptPath=Join-Path $scriptDirectory ($taskName+'.vbs')",
+            "[IO.File]::WriteAllBytes($scriptPath,[Convert]::FromBase64String('" + encodedVbs + "'))",
+            "$action=New-ScheduledTaskAction -Execute ($env:SystemRoot+'\\System32\\wscript.exe') -Argument ('//B //NoLogo \"'+$scriptPath+'\"')",
             "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
             "try{",
             "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
@@ -210,7 +226,7 @@ module.exports.createModule = function (context) {
             "for($i=0;$i-lt 60;$i++){Start-Sleep -Milliseconds 250;$taskState=(Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue).State;if($taskState-eq 'Running'){$started=$true}elseif($started){break}}",
             "if(-not $started){throw 'The interactive Desktop launcher did not start.'}",
             "Write-Output 'Started on the interactive desktop: " + psQuote(label || "Command") + "'",
-            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue}"
+            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue;Remove-Item -LiteralPath $scriptPath -Force -ErrorAction SilentlyContinue}"
         ].join(";");
     }
     function injectVariables(commandText, type, definitions, supplied, secretValues) {
