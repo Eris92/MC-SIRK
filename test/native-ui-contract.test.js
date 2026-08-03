@@ -122,6 +122,8 @@ assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && 
     "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
 assert.ok(commandsServer.indexOf("function interactiveDesktopCommand") >= 0 && commandsServer.indexOf("New-ScheduledTaskPrincipal") >= 0 && commandsServer.indexOf("-LogonType Interactive") >= 0,
     "GUI commands must launch in the logged-on Windows user's interactive desktop session.");
+assert.ok(commandsServer.indexOf("Get-Process explorer -IncludeUserName") >= 0 && commandsServer.indexOf("Get-CimInstance Win32_ComputerSystem") >= 0,
+    "Interactive command launch must resolve the Explorer session owner before using the WMI fallback.");
 assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
     "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
 assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,

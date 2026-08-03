@@ -180,7 +180,8 @@ module.exports.createModule = function (context) {
     function interactiveDesktopCommand(commandText, label) {
         var action = "/c " + String(commandText || "");
         return [
-            "$userName=(Get-CimInstance Win32_ComputerSystem).UserName",
+            "$userName=(Get-Process explorer -IncludeUserName -ErrorAction SilentlyContinue|Where-Object{$_.UserName}|Select-Object -First 1 -ExpandProperty UserName)",
+            "if([string]::IsNullOrWhiteSpace($userName)){$userName=(Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName}",
             "if([string]::IsNullOrWhiteSpace($userName)){throw 'No interactive Windows user is logged on.'}",
             "$taskName='SIRK-Desktop-'+[guid]::NewGuid().ToString('N')",
             "$action=New-ScheduledTaskAction -Execute $env:ComSpec -Argument '" + psQuote(action) + "'",

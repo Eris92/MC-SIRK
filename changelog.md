@@ -1,3 +1,9 @@
+## 1.6.34
+
+- Resolve the active Windows desktop user from the owner of `explorer.exe`.
+- Retain `Win32_ComputerSystem.UserName` only as a fallback for systems without Explorer details.
+- Fix false "No interactive Windows user is logged on" errors during active Desktop sessions.
+
 ## 1.6.33
 
 - Add separate per-command switches for Desktop Quick commands and execution without a Desktop connection.
