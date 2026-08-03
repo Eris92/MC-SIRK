@@ -1,3 +1,8 @@
+## 1.6.6
+
+- Added a visible Approval Center menu with approval and rejection actions.
+- Added the Approval Center visibility switch to its configuration.
+
 ## 1.6.5
 
 - Restored the native Commands device tab and removed the overlapping Desktop overlay.

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.6",
+    "date": "2026-08-03",
+    "changes": [
+      "Add a visible Approval Center menu with approval and rejection actions.",
+      "Add the Approval Center visibility switch."
+    ]
+  },
+  {
     "version": "1.6.5",
     "date": "2026-08-03",
     "changes": [
