@@ -107,6 +107,8 @@ assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopComman
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
+assert.ok(desktopCommands.indexOf('"▶ " + text("run")') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details .sirk-quick-command-submit') >= 0,
+    "The variable Run action must remain visually distinct from transparent tree buttons.");
 assert.ok(desktopCommands.indexOf("function desktopConnected()") >= 0 && desktopCommands.indexOf("window.desktop.State") >= 0 && desktopCommands.indexOf("syncAvailability(wrapper)") >= 0,
     "Quick commands must be hidden and blocked unless MeshCentral reports an active Desktop session.");
 assert.ok(desktopCommands.indexOf('waitForExecution(result.id') >= 0 && desktopCommands.indexOf('"output"') >= 0,

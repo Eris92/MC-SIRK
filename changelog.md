@@ -1,3 +1,9 @@
+## 1.6.42
+
+- Reduce the selected script heading size in the Quick commands variable panel.
+- Give Run a dedicated blue action-button design that cannot be overridden by tree button styles.
+- Add a play indicator and clearer hover, shadow and disabled states to Run.
+
 ## 1.6.41
 
 - Keep the temporary Desktop launch task until its hidden launcher has actually started and completed.

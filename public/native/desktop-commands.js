@@ -222,7 +222,7 @@
         }
         if (groups.length) appendGroups(groups, 0); else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
         if (!tree.children.length) tree.appendChild(element("p", "", text("empty")));
-        if (state.detail && (state.detail.variables || []).length) { var collect = variableForm(details, state.detail); var run = element("button", "sirk-quick-command-submit", text("run")); run.type = "button"; run.onclick = function () { submit(state.detail, collect, run, panel.querySelector(".sirk-quick-command-status")); }; details.appendChild(run); }
+        if (state.detail && (state.detail.variables || []).length) { var collect = variableForm(details, state.detail); var run = element("button", "sirk-quick-command-submit", "▶ " + text("run")); run.type = "button"; run.onclick = function () { submit(state.detail, collect, run, panel.querySelector(".sirk-quick-command-status")); }; details.appendChild(run); }
         browser.appendChild(nav); browser.appendChild(tree); browser.appendChild(details); panel.appendChild(browser);
         panel.appendChild(element("div", "sirk-quick-command-status"));
         close.onclick = function () { panel.hidden = true; var toggle = document.getElementById("SirkDesktopCommandsButton"); if (toggle) toggle.setAttribute("aria-expanded", "false"); };
