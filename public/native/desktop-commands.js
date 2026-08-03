@@ -46,7 +46,7 @@
     function flattenScripts(node, output) {
         (node && node.children || []).forEach(function (child) {
             if (child.type === "script") {
-                if (child.requiresApproval !== true) output.push({ kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), iconData: child.iconData || "", requiresApproval: false, confirmExecution: child.confirmExecution === true, variables: child.variables || [] });
+                output.push({ kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), iconData: child.iconData || "", requiresApproval: false, confirmExecution: child.confirmExecution === true, variables: child.variables || [] });
             } else flattenScripts(child, output);
         });
         return output;

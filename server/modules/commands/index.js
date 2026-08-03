@@ -84,16 +84,19 @@ module.exports.createModule = function (context) {
         });
     }
     function requireAdmin(user) { if (!shared.isSiteAdmin(user)) throw new Error("Permission denied."); }
-    function allowNoApproval() {
-        var current = context.settings.read();
-        var provider = current.modules && current.modules.approvals && current.modules.approvals.providers && current.modules.approvals.providers.mycommands || {};
-        return provider.allowNoApproval === true;
-    }
     function approvalLevels(levels) {
         levels = Array.isArray(levels) ? levels.map(Number) : [];
-        levels = [1, 2, 3].filter(function (level) { return levels.indexOf(level) >= 0; });
-        if (!levels.length && !allowNoApproval()) levels = [1];
-        return levels;
+        return [1, 2, 3].filter(function (level) { return levels.indexOf(level) >= 0; });
+    }
+    function commandOverrides() { return (context.settings.read().modules.mycommands || {}).commandOverrides || {}; }
+    function effectiveCommand(command) {
+        var override = commandOverrides()[command.id] || {};
+        var result = shared.copy(command);
+        if (override.label) result.label = shared.cleanText(override.label, 200);
+        if (Object.prototype.hasOwnProperty.call(override, "description")) result.description = shared.cleanText(override.description, 1000);
+        result.approvalLevels = approvalLevels(override.approvalLevels || []);
+        result.confirmExecution = override.confirmExecution === true;
+        return result;
     }
     function executionRows() { var value = shared.readJson(context.fs, resultsPath, { rows: [] }); return Array.isArray(value.rows) ? value.rows : []; }
     function writeRows(rows) { shared.writeJsonAtomic(context.fs, context.path, resultsPath, { schemaVersion: 1, rows: rows }); }
@@ -105,7 +108,7 @@ module.exports.createModule = function (context) {
         for (var index = 0; index < keys.length; index++) {
             var category = catalog[keys[index]];
             var command = (category.commands || []).find(function (item) { return item.id === commandId; });
-            if (command) return { category: category, command: command };
+            if (command) return { category: category, command: effectiveCommand(command) };
         }
         return null;
     }
@@ -132,9 +135,9 @@ module.exports.createModule = function (context) {
                 key: category.key,
                 title: category.title,
                 icon: category.icon,
-                commands: category.commands.map(function (command) {
-                    var levels = approvalLevels([]);
-                    return { id: command.id, label: command.label, description: command.description, variables: publicVariables(command.variables), approvalLevels: levels, requiresApproval: levels.length > 0, runAsUser: command.runAsUser };
+                commands: category.commands.map(function (source) {
+                    var command = effectiveCommand(source), levels = command.approvalLevels;
+                    return { id: command.id, label: command.label, description: command.description, variables: publicVariables(command.variables), approvalLevels: levels, requiresApproval: levels.length > 0, confirmExecution: command.confirmExecution === true, runAsUser: command.runAsUser };
                 })
             };
         });
@@ -238,9 +241,16 @@ module.exports.createModule = function (context) {
     }
 
     function executeDirect(user, value) {
-        var payload = normalizePayload(value);
-        if (!payload.scriptPath || payload.approvalLevels.length) {
-            return Promise.reject(new Error("This script requires approval."));
+        value = shared.copy(value || {});
+        var payload;
+        if (value.desktopDirect === true && value.scriptPath) {
+            var script = library.getScript(value.scriptPath, true);
+            if (!script) return Promise.reject(new Error("Script not found."));
+            if (script.confirmExecution === true && value.confirmedExecution !== true) return Promise.reject(new Error("Execution confirmation is required for this script."));
+            payload = { nodeId: value.nodeId, nodeName: value.nodeName, scriptPath: script.path, scriptHash: script.hash, label: script.label || script.name, description: script.description || "", approvalLevels: [], variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? value.variableValues : {}, confirmedExecution: script.confirmExecution === true };
+        } else {
+            payload = normalizePayload(value);
+            if (payload.approvalLevels.length) return Promise.reject(new Error("This command requires approval."));
         }
         var request = {
             id: "",
@@ -354,13 +364,14 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var query = req && req.query || {};
-            if (asset === "scripts") return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user), directExecutionAllowed: allowNoApproval(), scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
+            if (asset === "scripts") return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user), directExecutionAllowed: true, scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
             if (asset === "catalog") return { ok: true, catalog: visibleCatalog(user) };
             if (asset === "script") { requireScriptAccess(user); var script = library.getScript(query.path, true); if (!script) throw new Error("Script not found."); return { ok: true, script: script }; }
             if (asset === "source") { requireAdmin(user); requireScriptAccess(user); var source = library.getSource(query.path); if (!source) throw new Error("Script not found."); return { ok: true, source: source }; }
             if (asset === "definition") { requireScriptAccess(user); return { ok: true, definition: admin.getDefinition(user, query.path) }; }
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
+            if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, approvalLevels: found.command.approvalLevels || [], confirmExecution: found.command.confirmExecution === true } }; }
             if (asset === "output") return outputForUser(user, query.id);
             if (asset === "results") return approvalResults(user, query);
             if (asset === "settings") return { ok: true, settings: context.settings.read().modules.mycommands || {}, scriptsRoot: root };
@@ -372,13 +383,20 @@ module.exports.createModule = function (context) {
             if (asset === "execute") {
                 if (value.scriptPath) requireScriptAccess(user);
                 if (value.commandId) requireCommandAccess(user, value.commandId);
-                if (value.desktopDirect === true && value.scriptPath) return executeDirect(user, value);
+                var normalized = value.desktopDirect === true && value.scriptPath ? null : normalizePayload(value);
+                if (value.desktopDirect === true && value.scriptPath || normalized && normalized.approvalLevels.length === 0) return executeDirect(user, value);
                 return context.approval.submit("mycommands", user, value, value.note).then(function (request) { return { ok: true, request: request }; });
             }
             if (asset === "multi-execute") return multiExecute(user, value);
             if (asset === "refresh") { library.invalidate(); return { ok: true, tree: visibleTree(user), catalog: visibleCatalog(user) }; }
             if (asset === "source") { requireAdmin(user); requireScriptAccess(user); return { ok: true, script: library.saveSource(value.path, value.text), tree: visibleTree(user) }; }
             if (asset === "definition") { requireScriptAccess(user); var saved = admin.saveDefinition(user, value.path, value.definition); saved.ok = true; saved.tree = visibleTree(user); return saved; }
+            if (asset === "command-definition") {
+                requireAdmin(user); var command = requireCommandAccess(user, value.id).command; var definitions = commandOverrides();
+                definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), approvalLevels: approvalLevels(value.approvalLevels), confirmExecution: value.confirmExecution === true };
+                context.settings.updateSync(function (current) { current.modules.mycommands.commandOverrides = definitions; return current; });
+                return { ok: true, catalog: visibleCatalog(user) };
+            }
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.saveSecrets(user, value.path, value.values, value.clearNames) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.saveSystemCredentials(user, value.path, value.selected) }; }
             if (asset === "settings") {

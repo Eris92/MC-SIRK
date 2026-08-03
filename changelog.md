@@ -1,3 +1,15 @@
+## 1.6.26
+
+- Restore a functional edit pencil for built-in My Commands entries.
+- Add persistent command label, description, confirmation and Approval-level settings.
+- Stop assigning Approval level 1 to every built-in command by default and execute commands with no configured levels directly.
+
+## 1.6.25
+
+- Keep all accessible file-backed scripts visible in Desktop Commands regardless of the main Approval setting.
+- Execute Desktop scripts directly while preserving Approval behavior in the main My Commands and My Scripts pages.
+- Keep built-in command presets excluded from the direct Desktop launcher.
+
 ## 1.6.24
 
 - Always display Run instead of Request in the direct-only Desktop script launcher.

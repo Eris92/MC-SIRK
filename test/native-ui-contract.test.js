@@ -93,8 +93,8 @@ assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), group
     "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-folders') >= 0 && desktopCommands.indexOf('state.folder') >= 0,
     "Desktop Commands must render the missing folder column between categories and scripts.");
-assert.ok(desktopCommands.indexOf('if (child.requiresApproval !== true)') >= 0 && desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0,
-    "Desktop Commands must expose only scripts that can execute without approval.");
+assert.ok(desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0 && desktopCommands.indexOf('requiresApproval: false') >= 0,
+    "Desktop Commands must expose file-backed scripts as direct actions without Approval UI.");
 assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
     "Desktop Commands must request direct execution and render folder/script icons.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
@@ -110,6 +110,14 @@ assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands
 var commandsServer = read("server/modules/commands/index.js");
 assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
     "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
+assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
+    "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
+assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,
+    "Built-in My Commands entries must expose a persistent command editor.");
+assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
+    "Built-in commands must not receive Approval level 1 implicitly.");
+assert.ok(commandsModule.indexOf("function openCommandEditor") >= 0 && commandsModule.indexOf('canEdit: isAdmin(shell)') >= 0,
+    "The edit pencil must be available and functional for built-in commands.");
 
 var pluginMain = read("plugin-main.js");
 assert.ok(pluginMain.indexOf('String(existing.src || "") !== String(sourceUrl || "")') >= 0,
