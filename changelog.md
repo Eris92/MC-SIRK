@@ -1,3 +1,8 @@
+## 1.6.54
+
+- Prevent the active remote Desktop keyboard handler from intercepting Quick commands form input.
+- Reduce the Quick commands Run action to a compact 84 by 32 pixel control.
+
 ## 1.6.53
 
 - Mark SIRK workspaces with their logical view number while they reuse MeshCentral page p1.

@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.54",
+    "date": "2026-08-03",
+    "changes": [
+      "Allow typing in Quick commands variables while a remote Desktop session is active.",
+      "Stop form keyboard events before they reach the remote Desktop handler.",
+      "Use a smaller compact Run button."
+    ]
+  },
+  {
     "version": "1.6.53",
     "date": "2026-08-03",
     "changes": [

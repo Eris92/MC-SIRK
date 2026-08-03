@@ -35,6 +35,12 @@
         if (value != null) result.textContent = value;
         return result;
     }
+    function protectInput(control) {
+        ["keydown", "keypress", "keyup"].forEach(function (eventName) {
+            control.addEventListener(eventName, function (event) { event.stopPropagation(); });
+        });
+        return control;
+    }
     function addIcon(host, iconData, kind) {
         if (iconData) {
             var image = document.createElement("img"); image.className = "sirk-quick-command-icon"; image.alt = ""; image.src = iconData; host.appendChild(image); return;
@@ -110,9 +116,9 @@
             row.appendChild(caption);
             var input;
             if (variable.control === "select") {
-                input = document.createElement("select");
+                input = protectInput(document.createElement("select"));
                 (variable.options || []).forEach(function (choice) { var option = document.createElement("option"); option.value = String(choice.value == null ? choice : choice.value); option.textContent = localized(choice, "label") || choice.label || option.value; input.appendChild(option); });
-            } else { input = document.createElement("input"); input.type = variable.control === "switch" ? "checkbox" : "text"; }
+            } else { input = protectInput(document.createElement("input")); input.type = variable.control === "switch" ? "checkbox" : "text"; }
             if (input.type === "checkbox") input.checked = /^(1|true|yes|tak)$/i.test(String(variable.defaultValue || ""));
             else input.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
             row.appendChild(input); host.appendChild(row); controls.push({ variable: variable, input: input });
@@ -198,7 +204,7 @@
         var header = element("header");
         header.appendChild(element("strong", "", text("title")));
         var close = element("button", "", "×"); close.type = "button"; close.title = "Close"; header.appendChild(close); panel.appendChild(header);
-        var search = document.createElement("input"); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
+        var search = protectInput(document.createElement("input")); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
         var browser = element("div", "sirk-quick-command-browser"), nav = element("nav", "sirk-quick-command-categories"), tree = element("nav", "sirk-quick-command-tree"), details = element("section", "sirk-quick-command-details");
         all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : ""); button.type = "button"; addIcon(button, category.iconData, category.iconKind || "folder"); button.appendChild(element("span", "", category.label)); button.onclick = function () { state.category = category.key; state.detail = null; render(panel); }; nav.appendChild(button); });
         function matches(item) { return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0; }

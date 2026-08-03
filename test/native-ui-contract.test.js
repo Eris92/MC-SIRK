@@ -126,6 +126,10 @@ assert.ok(desktopCommands.indexOf('"▶ " + text("run")') >= 0 && desktopCommand
     "The variable Run action must remain visually distinct from transparent tree buttons.");
 assert.ok(desktopCommands.indexOf("function desktopConnected()") >= 0 && desktopCommands.indexOf("window.desktop.State") >= 0 && desktopCommands.indexOf("syncAvailability(wrapper)") >= 0,
     "Quick commands must be hidden and blocked unless MeshCentral reports an active Desktop session.");
+assert.ok(desktopCommands.indexOf("function protectInput(control)") >= 0 && desktopCommands.indexOf('event.stopPropagation()') >= 0,
+    "Quick command inputs must keep keyboard events away from the active remote Desktop handler.");
+assert.ok(desktopCommandsCss.indexOf("min-width:84px;min-height:32px") >= 0,
+    "The Quick commands Run action must use the compact control size.");
 assert.ok(desktopCommands.indexOf('waitForExecution(result.id') >= 0 && desktopCommands.indexOf('"output"') >= 0,
     "Desktop Commands must wait for the agent result instead of reporting submission as execution success.");
 assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
