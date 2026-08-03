@@ -31,7 +31,12 @@
         return foreground ? ((foreground[0] * 299 + foreground[1] * 587 + foreground[2] * 114) / 1000) > 160 : false;
     }
     function syncHostTheme() {
-        root.setAttribute("data-host-theme", hostIsDark() ? "dark" : "light");
+        var theme = hostIsDark() ? "dark" : "light";
+        root.setAttribute("data-host-theme", theme);
+        if (root.parentElement) {
+            root.parentElement.classList.add("sirk-admin-host");
+            root.parentElement.setAttribute("data-sirk-host-theme", theme);
+        }
     }
     syncHostTheme();
     var themeSyncPending = false;

@@ -1,3 +1,8 @@
+## 1.6.59
+
+- Synchronize the MeshCentral wrapper surrounding the administration panel with night mode.
+- Remove the remaining light frame around the dark administration surface.
+
 ## 1.6.58
 
 - Follow MeshCentral's native live `nightMode` state in the administration panel.

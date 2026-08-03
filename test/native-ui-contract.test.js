@@ -25,10 +25,12 @@ assert.ok(adminCss.indexOf("body.night #sirk-platform-admin") >= 0 && adminCss.i
     "The administration panel must react live to MeshCentral light and night theme classes.");
 assert.ok(adminCss.lastIndexOf("html body #sirk-platform-admin") > adminCss.lastIndexOf("color-scheme: dark;"),
     "Final live-theme rules must follow and override the legacy forced-dark compatibility block.");
-assert.ok(adminCss.indexOf('#sirk-platform-admin[data-host-theme="dark"]') >= 0 && adminJs.indexOf('root.setAttribute("data-host-theme", hostIsDark() ? "dark" : "light")') >= 0,
+assert.ok(adminCss.indexOf('#sirk-platform-admin[data-host-theme="dark"]') >= 0 && adminJs.indexOf('var theme = hostIsDark() ? "dark" : "light"') >= 0 && adminJs.indexOf('root.setAttribute("data-host-theme", theme)') >= 0,
     "The administration panel must infer the live MeshCentral host theme when the host does not expose body.night.");
 assert.ok(adminJs.indexOf('typeof window.nightMode === "boolean"') >= 0 && adminJs.indexOf('localStorage.getItem("nightMode")') >= 0,
     "The administration panel must use MeshCentral's native live nightMode state instead of a plugin container color.");
+assert.ok(adminJs.indexOf('root.parentElement.classList.add("sirk-admin-host")') >= 0 && adminCss.indexOf('.sirk-admin-host[data-sirk-host-theme="dark"]') >= 0,
+    "The MeshCentral wrapper around the administration panel must not leave a light frame in night mode.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);

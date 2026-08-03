@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.59",
+    "date": "2026-08-03",
+    "changes": [
+      "Synchronize the administration host wrapper with the active MeshCentral theme.",
+      "Remove the remaining white frame around the administration panel in night mode."
+    ]
+  },
+  {
     "version": "1.6.58",
     "date": "2026-08-03",
     "changes": [
