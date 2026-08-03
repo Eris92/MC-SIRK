@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.27",
+    "date": "2026-08-03",
+    "changes": [
+      "Make every built-in Network, System and Other command execute without Request.",
+      "Reserve Approval levels exclusively for file-backed scripts.",
+      "Remove Approval controls from the built-in command editor while retaining label, description and confirmation settings."
+    ]
+  },
+  {
     "version": "1.6.26",
     "date": "2026-08-03",
     "changes": [

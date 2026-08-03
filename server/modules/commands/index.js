@@ -94,7 +94,7 @@ module.exports.createModule = function (context) {
         var result = shared.copy(command);
         if (override.label) result.label = shared.cleanText(override.label, 200);
         if (Object.prototype.hasOwnProperty.call(override, "description")) result.description = shared.cleanText(override.description, 1000);
-        result.approvalLevels = approvalLevels(override.approvalLevels || []);
+        result.approvalLevels = [];
         result.confirmExecution = override.confirmExecution === true;
         return result;
     }
@@ -371,7 +371,7 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user); return { ok: true, definition: admin.getDefinition(user, query.path) }; }
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
-            if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, approvalLevels: found.command.approvalLevels || [], confirmExecution: found.command.confirmExecution === true } }; }
+            if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true } }; }
             if (asset === "output") return outputForUser(user, query.id);
             if (asset === "results") return approvalResults(user, query);
             if (asset === "settings") return { ok: true, settings: context.settings.read().modules.mycommands || {}, scriptsRoot: root };
@@ -393,7 +393,7 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user); var saved = admin.saveDefinition(user, value.path, value.definition); saved.ok = true; saved.tree = visibleTree(user); return saved; }
             if (asset === "command-definition") {
                 requireAdmin(user); var command = requireCommandAccess(user, value.id).command; var definitions = commandOverrides();
-                definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), approvalLevels: approvalLevels(value.approvalLevels), confirmExecution: value.confirmExecution === true };
+                definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), confirmExecution: value.confirmExecution === true };
                 context.settings.updateSync(function (current) { current.modules.mycommands.commandOverrides = definitions; return current; });
                 return { ok: true, catalog: visibleCatalog(user) };
             }

@@ -1,3 +1,9 @@
+## 1.6.27
+
+- Make every built-in Network, System and Other command execute without Request.
+- Reserve Approval levels exclusively for file-backed scripts.
+- Remove Approval controls from the built-in command editor while retaining label, description and confirmation settings.
+
 ## 1.6.26
 
 - Restore a functional edit pencil for built-in My Commands entries.

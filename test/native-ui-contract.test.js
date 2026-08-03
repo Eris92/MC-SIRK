@@ -116,6 +116,10 @@ assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && comma
     "Built-in My Commands entries must expose a persistent command editor.");
 assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
     "Built-in commands must not receive Approval level 1 implicitly.");
+assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,
+    "Every built-in command must execute directly; Approval is reserved for file-backed scripts.");
+assert.ok(commandsModule.indexOf('row("Approval", approvals)') < 0,
+    "The built-in command editor must not offer Approval settings.");
 assert.ok(commandsModule.indexOf("function openCommandEditor") >= 0 && commandsModule.indexOf('canEdit: isAdmin(shell)') >= 0,
     "The edit pencil must be available and functional for built-in commands.");
 
