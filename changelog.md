@@ -1,3 +1,9 @@
+## 1.6.41
+
+- Keep the temporary Desktop launch task until its hidden launcher has actually started and completed.
+- Replace the unsafe fixed 750 ms cleanup delay with scheduled-task state monitoring.
+- Report a real launcher startup failure instead of a false successful start.
+
 ## 1.6.40
 
 - Show Quick commands only while MeshCentral reports `desktop.State === 3`.

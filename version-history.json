@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.41",
+    "date": "2026-08-03",
+    "changes": [
+      "Keep the temporary Desktop launch task until its hidden launcher has actually started and completed.",
+      "Replace the fixed cleanup delay with scheduled-task state monitoring.",
+      "Report a real launcher startup failure instead of a false successful start."
+    ]
+  },
+  {
     "version": "1.6.40",
     "date": "2026-08-03",
     "changes": [

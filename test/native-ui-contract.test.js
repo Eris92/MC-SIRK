@@ -132,6 +132,8 @@ assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServe
     "Interactive Desktop tools must launch their executable directly without a flashing helper CMD window.");
 assert.ok(commandsServer.indexOf('Buffer.from(focusScript, "utf16le")') >= 0 && commandsServer.indexOf("AppActivate($process.Id)") >= 0 && commandsServer.indexOf("-WindowStyle Hidden -EncodedCommand") >= 0,
     "Interactive Desktop tools must use a hidden launcher that activates the requested window in the foreground.");
+assert.ok(commandsServer.indexOf("Get-ScheduledTask -TaskName $taskName") >= 0 && commandsServer.indexOf("if(-not $started)") >= 0,
+    "The scheduled Desktop launcher must reach Running state before its temporary task is removed.");
 assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
     "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
 assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,

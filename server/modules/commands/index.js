@@ -192,7 +192,8 @@ module.exports.createModule = function (context) {
             launch.argumentsText ? "$start.ArgumentList='" + psQuote(launch.argumentsText) + "'" : "",
             "$process=Start-Process @start",
             "$shell=New-Object -ComObject WScript.Shell",
-            "for($i=0;$i-lt 20;$i++){Start-Sleep -Milliseconds 200;$process.Refresh();if($process.MainWindowHandle-ne 0){$shell.SendKeys('%');if($shell.AppActivate($process.Id)){break}}}"
+            "for($i=0;$i-lt 20;$i++){Start-Sleep -Milliseconds 200;$process.Refresh();if($process.MainWindowHandle-ne 0){$shell.SendKeys('%');if($shell.AppActivate($process.Id)){break}}}",
+            "Start-Sleep -Milliseconds 500"
         ].filter(Boolean).join(";");
         var encodedFocusScript = Buffer.from(focusScript, "utf16le").toString("base64");
         return [
@@ -205,7 +206,9 @@ module.exports.createModule = function (context) {
             "try{",
             "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
             "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
-            "Start-Sleep -Milliseconds 750",
+            "$started=$false",
+            "for($i=0;$i-lt 60;$i++){Start-Sleep -Milliseconds 250;$taskState=(Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue).State;if($taskState-eq 'Running'){$started=$true}elseif($started){break}}",
+            "if(-not $started){throw 'The interactive Desktop launcher did not start.'}",
             "Write-Output 'Started on the interactive desktop: " + psQuote(label || "Command") + "'",
             "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue}"
         ].join(";");
