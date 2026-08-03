@@ -205,7 +205,12 @@
             filterScript: filterItem, scriptActions: function (item) { return actions(shell, item); },
             onResults: function () { mode = "results"; treeState.selectedScript = ""; shell.render(); },
             onRootSelect: function () { mode = "commands"; treeState.selectedScript = ""; tools.saveTreeState(treeState); window.setTimeout(shell.render, 0); },
-            onScript: function (item) { mode = "commands"; treeState.selectedScript = item.path; tools.saveTreeState(treeState); shell.render(); }
+            onScript: function (item) {
+                mode = "commands";
+                treeState.selectedScript = item.path;
+                tools.saveTreeState(treeState);
+                show(shell, item, false);
+            }
         });
         var resultsLabel = shell.state.page.primary.querySelector(".mc-catalog-results .mc-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
     }

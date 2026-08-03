@@ -1,3 +1,8 @@
+## 1.6.56
+
+- Render the selected Commands item immediately in the third column.
+- Restore the variables form and Run button without relying on a nested module render.
+
 ## 1.6.55
 
 - Make the administration panel follow MeshCentral's live light and night theme class.

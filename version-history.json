@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.56",
+    "date": "2026-08-03",
+    "changes": [
+      "Render the selected Commands item immediately in the third column.",
+      "Restore the variables form and Run action after selecting a command or script."
+    ]
+  },
+  {
     "version": "1.6.55",
     "date": "2026-08-03",
     "changes": [
