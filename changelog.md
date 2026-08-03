@@ -1,3 +1,8 @@
+## 1.6.55
+
+- Make the administration panel follow MeshCentral's live light and night theme class.
+- Replace forced dark surfaces with shared theme variables for cards, navigation, tables and inputs.
+
 ## 1.6.54
 
 - Prevent the active remote Desktop keyboard handler from intercepting Quick commands form input.

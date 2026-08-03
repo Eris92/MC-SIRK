@@ -8,6 +8,7 @@ var root = path.resolve(__dirname, "..");
 function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
 var shell = read("public/shared/module-shell.js");
+var adminCss = read("web/admin/admin.css");
 var sharedCore = read("public/shared/core.js");
 assert.ok(sharedCore.indexOf("approvalcenter: svgData") >= 0 && sharedCore.indexOf('fill="#7b1fa2"') >= 0,
     "Approval Center must use its original purple clipboard menu icon.");
@@ -19,6 +20,10 @@ assert.ok(sharedCore.indexOf('window.xxcurrentView = Number(viewMode)') >= 0,
     "A SIRK workspace hosted in p1 must use its logical view number so native go(1) redraws the device list on return.");
 assert.ok(sharedCore.indexOf('if (!core.workspaceState && typeof window.go === "function"') >= 0,
     "Switching directly between SIRK workspaces must not briefly invoke native go(1) and discard the new custom URL.");
+assert.ok(adminCss.indexOf("body.night #sirk-platform-admin") >= 0 && adminCss.indexOf("--sirk-admin-bg: #ffffff") >= 0 && adminCss.indexOf("--sirk-admin-bg: #17191d") >= 0,
+    "The administration panel must react live to MeshCentral light and night theme classes.");
+assert.ok(adminCss.lastIndexOf("html body #sirk-platform-admin") > adminCss.lastIndexOf("color-scheme: dark;"),
+    "Final live-theme rules must follow and override the legacy forced-dark compatibility block.");
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);

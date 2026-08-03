@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6.55",
+    "date": "2026-08-03",
+    "changes": [
+      "Make the administration panel react immediately to MeshCentral theme changes.",
+      "Provide readable light and night colors for every administration surface.",
+      "Remove the visual effect of the previous forced-dark compatibility layer."
+    ]
+  },
+  {
     "version": "1.6.54",
     "date": "2026-08-03",
     "changes": [

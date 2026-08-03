@@ -562,6 +562,113 @@
     }
 }
 
+/* Follow MeshCentral's live theme class. These rules intentionally come last:
+   older compatibility declarations above used fixed dark colors. */
+#sirk-platform-admin {
+    --sirk-admin-bg: #ffffff;
+    --sirk-admin-surface: #f7f8fa;
+    --sirk-admin-surface-strong: #eef1f5;
+    --sirk-admin-text: #172033;
+    --sirk-admin-muted: #667085;
+    --sirk-admin-border: #d0d7e2;
+    --sirk-admin-hover: #e8eefb;
+    --sirk-admin-active: #dce7ff;
+    --sirk-admin-input: #ffffff;
+    color-scheme: light;
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-bg) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+body.night #sirk-platform-admin,
+body.dark #sirk-platform-admin,
+.night #sirk-platform-admin {
+    --sirk-admin-bg: #17191d;
+    --sirk-admin-surface: #20242b;
+    --sirk-admin-surface-strong: #282d36;
+    --sirk-admin-text: #f3f4f6;
+    --sirk-admin-muted: #b8c0cc;
+    --sirk-admin-border: #3d4552;
+    --sirk-admin-hover: #252d3b;
+    --sirk-admin-active: #33456f;
+    --sirk-admin-input: #101216;
+    color-scheme: dark;
+}
+
+#sirk-platform-admin .mc-admin-tabs,
+#sirk-platform-admin #sirk-platform-admin-content,
+#sirk-platform-admin .mc-admin-management-shell,
+#sirk-platform-admin .mc-admin-management-toolbar,
+#sirk-platform-admin .mc-admin-management-shell > .mc-admin-tabs,
+#sirk-platform-admin .mc-admin-management-shell > .mc-admin-middle {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-bg) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-card,
+#sirk-platform-admin .mc-admin-management-shell .mc-admin-actions,
+#sirk-platform-admin .mc-admin-debug,
+#sirk-platform-admin .mc-admin-table {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-surface) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button,
+#sirk-platform-admin .mc-admin-settings-nav button,
+#sirk-platform-admin .mc-admin-management-tool,
+#sirk-platform-admin .mc-admin-secondary,
+#sirk-platform-admin .mc-admin-health-option,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card h3,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card p,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card label,
+#sirk-platform-admin #sirk-platform-admin-content .mc-admin-card span {
+    color: var(--sirk-admin-text) !important;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button:hover,
+#sirk-platform-admin .mc-admin-settings-nav button:hover,
+#sirk-platform-admin .mc-admin-management-tool:hover {
+    background: var(--sirk-admin-hover) !important;
+}
+
+#sirk-platform-admin .mc-admin-tabs > button.active,
+#sirk-platform-admin .mc-admin-settings-nav button.active,
+#sirk-platform-admin .mc-admin-management-tool.is-active {
+    background: var(--sirk-admin-active) !important;
+    color: var(--sirk-admin-text) !important;
+}
+
+#sirk-platform-admin .mc-admin-input,
+#sirk-platform-admin .mc-admin-log,
+#sirk-platform-admin pre {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-input) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+#sirk-platform-admin .mc-admin-card-description,
+#sirk-platform-admin .mc-admin-section-header p,
+#sirk-platform-admin .mc-admin-field-description,
+#sirk-platform-admin .mc-admin-check small,
+#sirk-platform-admin .mc-admin-table-secondary {
+    color: var(--sirk-admin-muted) !important;
+}
+
+#sirk-platform-admin .mc-admin-table th {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-surface-strong) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+#sirk-platform-admin .mc-admin-table td,
+#sirk-platform-admin .mc-admin-section-header,
+#sirk-platform-admin .mc-admin-actions {
+    border-color: var(--sirk-admin-border) !important;
+}
+
 .mc-admin-folder-permission{margin:10px 0;padding:12px;border:1px solid rgba(127,127,127,.32);border-radius:6px;background:rgba(80,120,200,.035)}
 .mc-admin-folder-permission.is-disabled{opacity:.62;background:rgba(127,127,127,.08)}
 .mc-admin-folder-permission-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px}
@@ -776,4 +883,90 @@
     #sirk-platform-admin { grid-template-columns: 1fr; }
     #sirk-platform-admin .mc-admin-tabs { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid #3d4552; }
     #sirk-platform-admin .mc-admin-tabs > button { width: auto; white-space: nowrap; }
+}
+
+/* Final live-theme precedence over all legacy compatibility declarations. */
+html body #sirk-platform-admin,
+html body #sirk-platform-admin .mc-admin-tabs,
+html body #sirk-platform-admin #sirk-platform-admin-content,
+html body #sirk-platform-admin .mc-admin-management-shell,
+html body #sirk-platform-admin .mc-admin-management-toolbar,
+html body #sirk-platform-admin .mc-admin-management-shell > .mc-admin-tabs,
+html body #sirk-platform-admin .mc-admin-management-shell > .mc-admin-middle {
+    color-scheme: light;
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-bg) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+html body.night #sirk-platform-admin,
+html body.night #sirk-platform-admin .mc-admin-tabs,
+html body.night #sirk-platform-admin #sirk-platform-admin-content,
+html body.dark #sirk-platform-admin,
+html body.dark #sirk-platform-admin .mc-admin-tabs,
+html body.dark #sirk-platform-admin #sirk-platform-admin-content {
+    color-scheme: dark;
+}
+
+html body #sirk-platform-admin #sirk-platform-admin-content .mc-admin-card,
+html body #sirk-platform-admin .mc-admin-management-shell .mc-admin-card,
+html body #sirk-platform-admin .mc-admin-management-shell .mc-admin-actions,
+html body #sirk-platform-admin .mc-admin-debug,
+html body #sirk-platform-admin .mc-admin-table {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-surface) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-tabs > button,
+html body #sirk-platform-admin .mc-admin-settings-nav button,
+html body #sirk-platform-admin .mc-admin-management-tool,
+html body #sirk-platform-admin .mc-admin-secondary,
+html body #sirk-platform-admin .mc-admin-health-option,
+html body #sirk-platform-admin #sirk-platform-admin-content .mc-admin-card h3,
+html body #sirk-platform-admin #sirk-platform-admin-content .mc-admin-card p,
+html body #sirk-platform-admin #sirk-platform-admin-content .mc-admin-card label,
+html body #sirk-platform-admin #sirk-platform-admin-content .mc-admin-card span {
+    color: var(--sirk-admin-text) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-tabs > button:hover,
+html body #sirk-platform-admin .mc-admin-settings-nav button:hover,
+html body #sirk-platform-admin .mc-admin-management-tool:hover {
+    background: var(--sirk-admin-hover) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-tabs > button.active,
+html body #sirk-platform-admin .mc-admin-settings-nav button.active,
+html body #sirk-platform-admin .mc-admin-management-tool.is-active {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-active) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-input,
+html body #sirk-platform-admin .mc-admin-log,
+html body #sirk-platform-admin pre {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-input) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-card-description,
+html body #sirk-platform-admin .mc-admin-section-header p,
+html body #sirk-platform-admin .mc-admin-field-description,
+html body #sirk-platform-admin .mc-admin-check small,
+html body #sirk-platform-admin .mc-admin-table-secondary {
+    color: var(--sirk-admin-muted) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-table th {
+    color: var(--sirk-admin-text) !important;
+    background: var(--sirk-admin-surface-strong) !important;
+    border-color: var(--sirk-admin-border) !important;
+}
+
+html body #sirk-platform-admin .mc-admin-table td,
+html body #sirk-platform-admin .mc-admin-section-header,
+html body #sirk-platform-admin .mc-admin-actions {
+    border-color: var(--sirk-admin-border) !important;
 }
