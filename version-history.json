@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.6.58",
+    "date": "2026-08-03",
+    "changes": [
+      "Use MeshCentral's native live nightMode value for administration colors.",
+      "Skip the always-light plugin wrapper when resolving the effective theme."
+    ]
+  },
+  {
     "version": "1.6.57",
     "date": "2026-08-03",
     "changes": [

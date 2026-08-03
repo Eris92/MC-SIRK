@@ -11,7 +11,15 @@
         return [Number(match[1]), Number(match[2]), Number(match[3])];
     }
     function hostIsDark() {
-        var current = root.parentElement;
+        if (typeof window.nightMode === "boolean") return window.nightMode;
+        if (document.body && document.body.classList && document.body.classList.contains("night")) return true;
+        try {
+            var storedMode = window.localStorage && window.localStorage.getItem("nightMode");
+            if (storedMode === "1") return true;
+            if (storedMode === "2") return false;
+            if (storedMode === "0" && window.matchMedia) return window.matchMedia("(prefers-color-scheme: dark)").matches;
+        } catch (error) {}
+        var current = document.body;
         while (current) {
             var style = window.getComputedStyle(current);
             var background = colorParts(style.backgroundColor);

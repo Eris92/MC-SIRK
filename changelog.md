@@ -1,3 +1,8 @@
+## 1.6.58
+
+- Follow MeshCentral's native live `nightMode` state in the administration panel.
+- Ignore the permanently light plugin wrapper when determining the host theme.
+
 ## 1.6.57
 
 - Detect the effective MeshCentral host theme even when no `body.night` class is exposed.
