@@ -102,14 +102,14 @@
         var style = document.createElement("style");
         style.id = "sirk-command-run-style";
         style.textContent = [
-            ".mc-shared-page-mycommands .mc-command-run-button{",
+            ".mc-command-run-button{",
             "display:inline-flex!important;align-items:center!important;justify-content:center!important;",
             "min-width:96px!important;min-height:34px!important;padding:7px 14px!important;",
             "margin:10px 0!important;border:1px solid #3158bd!important;border-radius:5px!important;",
             "background:#3867d6!important;color:#fff!important;font-weight:700!important;",
             "visibility:visible!important;opacity:1!important;position:relative!important;z-index:2!important}",
-            ".mc-shared-page-mycommands .mc-command-run-button:hover{background:#3158bd!important}",
-            ".mc-shared-page-mycommands .mc-command-run-button:disabled{opacity:.6!important;cursor:wait!important}"
+            ".mc-command-run-button:hover{background:#3158bd!important}",
+            ".mc-command-run-button:disabled{opacity:.6!important;cursor:wait!important}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
@@ -219,6 +219,7 @@
     }
 
     function installCommandsCatalogHook() {
+        if (window.__sirkNativeCommandAutoRun === true) return true;
         var catalog = window.SharedCatalogView;
         if (!catalog || typeof catalog.mount !== "function" || catalog.mount.__sirkCommandAutoRunWrapped) return false;
 
@@ -243,6 +244,7 @@
     }
 
     document.addEventListener("click", function (event) {
+        if (window.__sirkNativeCommandAutoRun === true) return;
         var target = event.target && event.target.closest
             ? event.target.closest(".mc-shared-page-mycommands .mc-tree-script")
             : null;
