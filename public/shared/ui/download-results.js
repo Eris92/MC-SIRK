@@ -151,6 +151,10 @@
     }
 
     function customViewMode() {
+        var workspace = window.SirkPlatformCore && window.SirkPlatformCore.workspaceState;
+        if (workspace && [101, 102, 105, 106].indexOf(Number(workspace.viewMode)) >= 0) {
+            return String(workspace.viewMode);
+        }
         try {
             var value = Number(new URL(window.location.href).searchParams.get("viewmode"));
             return [101, 102, 105, 106].indexOf(value) >= 0 ? String(value) : "";

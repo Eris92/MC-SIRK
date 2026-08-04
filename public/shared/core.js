@@ -158,7 +158,7 @@
     function selectMenuItem(item, isLeft) {
         if (!item || !item.classList) return;
         clearMenuSelection(item);
-        item.classList.add(modernMenuItem(item) ? "active" : (isLeft ? "lbbuttonsel" : "fullselect"));
+        item.classList.add(modernMenuItem(item) ? "active" : (isLeft ? "lbbuttonsel2" : "fullselect"));
         item.setAttribute("aria-current", "page");
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "sirk-portal",
-  "version": "1.6.78",
+  "version": "1.6.79",
   "private": true,
   "scripts": {
     "test": "node scripts/validate-repository-layout.js && node scripts/validate-architecture.js && node test/admin-entrypoint.test.js && node test/admin-settings-save.test.js && node test/admin-permissions-settings.test.js && node test/admin-permissions-ui.test.js && node test/settings-fallback.test.js && node test/runtime-module-load.test.js && node test/browser-hook-serialization.test.js && node test/native-ui-contract.test.js && node test/menu-selection-state.test.js && node test/generated-download.test.js && node test/command-click-execution.test.js && node test/current-device-node-context.test.js && node test/agent-command-guard.test.js && node test/script-run-as-mode.test.js && node test/logged-on-user-command-policy.test.js && node test/elevated-quick-commands.test.js && node test/system-quick-command-launcher-contract.test.js && node test/security.test.js && node test/script-localization.test.js && node test/folder-access.test.js && node test/integration-health.test.js",

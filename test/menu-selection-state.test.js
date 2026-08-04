@@ -12,11 +12,15 @@ assert.ok(core.indexOf("core.activateMenu = function (viewMode)") >= 0,
     "Opening a SIRK workspace must synchronize the native MeshCentral menu selection.");
 assert.ok(core.indexOf("core.workspaceState.menuSelection = peers.map") >= 0,
     "The previous native menu selection must be captured before changing it.");
+assert.ok(core.indexOf('isLeft ? "lbbuttonsel2" : "fullselect"') >= 0,
+    "Opening a SIRK workspace must immediately use MeshCentral's fully selected left-menu class.");
 assert.ok(core.indexOf("item.element.className = item.className") >= 0,
     "Leaving the SIRK workspace must restore the original native menu classes.");
 
 assert.ok(helper.indexOf("function syncActiveSirkMenu()") >= 0,
     "The active SIRK menu must be re-applied after MeshCentral redraws navigation.");
+assert.ok(helper.indexOf("window.SirkPlatformCore && window.SirkPlatformCore.workspaceState") >= 0 && helper.indexOf("workspace.viewMode") >= 0,
+    "Menu synchronization must use the active SIRK workspace even when MeshCentral rewrites the URL.");
 assert.ok(helper.indexOf("document.querySelectorAll('[id^=\"MainMenu\"],[id^=\"LeftMenu\"]')") >= 0,
     "All native and plugin menu entries must be considered, not only direct siblings.");
 assert.ok(helper.indexOf('left ? "lbbuttonsel2" : "fullselect"') >= 0,

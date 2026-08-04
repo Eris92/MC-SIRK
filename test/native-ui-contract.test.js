@@ -5,7 +5,7 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.resolve(__dirname, "..");
-function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
+function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8").replace(/\r\n/g, "\n"); }
 
 var shell = read("public/shared/module-shell.js");
 var adminCss = read("web/admin/admin.css");
@@ -126,7 +126,7 @@ assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
     "Desktop Commands must use command-specific icons matching My Commands.");
 assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if ((value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
-assert.ok(desktopCommands.indexOf('state.detail = value;\n            render(panel);\n            submit(value') >= 0 && desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
+assert.ok(/state\.detail = value;\s*render\(panel\);\s*submit\(value/.test(desktopCommands) && desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
     "Selecting a variable-free Quick command must clear the previous details pane before automatic execution.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
@@ -190,8 +190,8 @@ assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
     "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
 assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0 && commandsModule.indexOf("siteAdmin = isAdmin(shell)") >= 0,
     "My Commands must always expose every command to Site Admin while filtering Desktop-only commands for other users.");
-assert.ok(commandsModule.indexOf("mc-command-run-button") >= 0 && commandsModule.indexOf('tools.saveTreeState(treeState);\n                show(shell, item, false);') >= 0,
-    "Selecting an item in Commands must immediately render its details and Run action without a rejected nested module render.");
+assert.ok(commandsModule.indexOf("mc-command-run-button") >= 0 && commandsModule.indexOf('tools.saveTreeState(treeState);\n                show(shell, item, true);') >= 0,
+    "Selecting an item in Commands must render its details immediately and directly execute variable-free entries.");
 assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
     "Built-in commands must not receive Approval level 1 implicitly.");
 assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,
