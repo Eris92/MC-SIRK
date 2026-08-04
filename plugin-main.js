@@ -153,7 +153,8 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
             ["sirk-platform-runtime", "runtime.js"],
-            ["sirk-platform-desktop-commands", "desktop-commands.js"]
+            ["sirk-platform-desktop-commands", "desktop-commands.js"],
+            ["sirk-platform-quick-output-state", "quick-output-state.js"]
         ];
 
         scripts.reduce(function (chain, item) {
