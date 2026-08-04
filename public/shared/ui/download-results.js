@@ -97,80 +97,86 @@
         return true;
     }
 
-    function commandsPage() {
-        return document.querySelector(".mc-shared-page-mycommands");
+    function ensureCommandRunStyle() {
+        if (document.getElementById("sirk-command-run-style")) return;
+        var style = document.createElement("style");
+        style.id = "sirk-command-run-style";
+        style.textContent = [
+            ".mc-shared-page-mycommands .mc-command-run-button{",
+            "display:inline-flex!important;align-items:center!important;justify-content:center!important;",
+            "min-width:96px!important;min-height:34px!important;padding:7px 14px!important;",
+            "margin:10px 0!important;border:1px solid #3158bd!important;border-radius:5px!important;",
+            "background:#3867d6!important;color:#fff!important;font-weight:700!important;",
+            "visibility:visible!important;opacity:1!important;position:relative!important;z-index:2!important}",
+            ".mc-shared-page-mycommands .mc-command-run-button:hover{background:#3158bd!important}",
+            ".mc-shared-page-mycommands .mc-command-run-button:disabled{opacity:.6!important;cursor:wait!important}"
+        ].join("");
+        (document.head || document.documentElement).appendChild(style);
     }
 
-    function selectedRunButton() {
-        var page = commandsPage();
-        if (!page) return null;
-        var buttons = page.querySelectorAll(".mc-command-run-button");
+    function currentRunButtons() {
+        return Array.prototype.slice.call(document.querySelectorAll(
+            ".mc-shared-page-mycommands .mc-command-run-button"
+        ));
+    }
+
+    function newRunButton(previousButtons) {
+        var buttons = currentRunButtons();
         for (var index = buttons.length - 1; index >= 0; index -= 1) {
-            if (buttons[index].isConnected) return buttons[index];
+            if (buttons[index].isConnected && previousButtons.indexOf(buttons[index]) < 0) {
+                return buttons[index];
+            }
         }
         return null;
     }
 
     function hasRuntimeVariables(button) {
-        var page = button && typeof button.closest === "function"
-            ? button.closest(".mc-shared-page-mycommands")
-            : commandsPage();
-        return !!(page && page.querySelector(
+        var card = button && typeof button.closest === "function"
+            ? button.closest(".mc-shared-card, section")
+            : null;
+        return !!(card && card.querySelector(
             ".mc-script-runtime-variables input, " +
             ".mc-script-runtime-variables select, " +
             ".mc-script-runtime-variables textarea"
         ));
     }
 
-    function scheduleSelectedRun(sequence, attempt) {
+    function scheduleSelectedRun(sequence, previousButtons, attempt) {
         if (sequence !== commandSelectionSequence) return;
 
-        var button = selectedRunButton();
+        var button = newRunButton(previousButtons);
         if (!button) {
-            if (attempt < 120) {
+            if (attempt < 160) {
                 window.setTimeout(function () {
-                    scheduleSelectedRun(sequence, attempt + 1);
+                    scheduleSelectedRun(sequence, previousButtons, attempt + 1);
                 }, 50);
             }
             return;
         }
 
         if (hasRuntimeVariables(button)) return;
-        if (button.disabled) return;
         if (button.getAttribute("data-sirk-auto-run") === String(sequence)) return;
+
+        if (button.disabled) {
+            if (attempt < 160) {
+                window.setTimeout(function () {
+                    scheduleSelectedRun(sequence, previousButtons, attempt + 1);
+                }, 50);
+            }
+            return;
+        }
 
         button.setAttribute("data-sirk-auto-run", String(sequence));
         button.click();
     }
 
     function beginSelectedRun() {
+        ensureCommandRunStyle();
+        var previousButtons = currentRunButtons();
         var sequence = ++commandSelectionSequence;
         window.setTimeout(function () {
-            scheduleSelectedRun(sequence, 0);
+            scheduleSelectedRun(sequence, previousButtons, 0);
         }, 0);
-    }
-
-    function installCommandsCatalogHook() {
-        var catalog = window.SharedCatalogView;
-        if (!catalog || typeof catalog.mount !== "function" || catalog.mount.__sirkCommandAutoRunWrapped) return false;
-
-        var original = catalog.mount;
-        var wrapped = function (options) {
-            var effectiveOptions = options;
-            if (options && typeof options.onScript === "function") {
-                effectiveOptions = Object.assign({}, options);
-                var originalOnScript = options.onScript;
-                effectiveOptions.onScript = function (item) {
-                    var result = originalOnScript(item);
-                    beginSelectedRun();
-                    return result;
-                };
-            }
-            return original.call(catalog, effectiveOptions);
-        };
-        wrapped.__sirkCommandAutoRunWrapped = true;
-        catalog.mount = wrapped;
-        return true;
     }
 
     document.addEventListener("click", function (event) {
@@ -178,17 +184,18 @@
             ? event.target.closest(".mc-shared-page-mycommands .mc-tree-script")
             : null;
         if (!target) return;
+
+        // Capture phase runs before SharedDirectoryTree replaces the clicked DOM subtree.
+        // That guarantees the newly rendered Run action can be located afterwards.
         beginSelectedRun();
-    }, false);
+    }, true);
 
     function scan() {
+        ensureCommandRunStyle();
         installMountHook();
-        installCommandsCatalogHook();
         document.querySelectorAll(".mc-results-viewer, .mc-script-output, .mc-shared-result").forEach(enhanceHost);
     }
 
-    installMountHook();
-    installCommandsCatalogHook();
     scan();
 
     if (typeof MutationObserver === "function") {
