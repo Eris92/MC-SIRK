@@ -10,3 +10,64 @@
 <script>window.SirkPlatformAdminData={{{adminDataJson}}};</script>
 <link rel="stylesheet" href="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin.css&v={{version}}">
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin.js&v={{version}}"></script>
+<script>
+(function () {
+    "use strict";
+    var installed = false;
+
+    function parseOutput(value) {
+        var raw = String(value == null ? "" : value);
+        var lines = raw.split(/\r?\n/);
+        var downloadPath = "";
+        var visible = [];
+        lines.forEach(function (line) {
+            var trimmed = String(line || "").trim();
+            var download = trimmed.match(/^CSV_DOWNLOAD:\s*(.+)$/i);
+            if (download) { downloadPath = download[1].trim(); return; }
+            if (/^__(?:MYCOMMANDS|COMMANDTABS)_PROGRESS__/i.test(trimmed)) return;
+            visible.push(line);
+        });
+        while (visible.length && !String(visible[0]).trim()) visible.shift();
+        while (visible.length && !String(visible[visible.length - 1]).trim()) visible.pop();
+        return { raw: raw, visible: visible.join("\n"), downloadPath: downloadPath };
+    }
+
+    function appendDownload(host, filePath) {
+        if (!filePath || !host) return;
+        var actions = host.querySelector(".mc-results-inline-actions");
+        if (!actions || actions.querySelector("[data-sirk-download]")) return;
+        var root = document.getElementById("sirk-platform-admin");
+        var url = new URL("pluginadmin.ashx", window.location.href);
+        url.searchParams.set("pin", root && root.getAttribute("data-plugin") || "SIRKPortal");
+        url.searchParams.set("asset", "download");
+        url.searchParams.set("path", filePath);
+        var link = document.createElement("a");
+        link.className = "btn btn-primary btn-sm";
+        link.setAttribute("data-sirk-download", "true");
+        link.href = url.href;
+        link.textContent = "Pobierz";
+        actions.insertBefore(link, actions.firstChild);
+    }
+
+    function install() {
+        if (installed || !window.SharedResultsView || typeof window.SharedResultsView.mountResult !== "function") return false;
+        installed = true;
+        var original = window.SharedResultsView.mountResult;
+        window.SharedResultsView.mountResult = function (host, value, options) {
+            var parsed = parseOutput(value);
+            var result = original.call(window.SharedResultsView, host, parsed.visible || parsed.raw, options);
+            appendDownload(host, parsed.downloadPath);
+            return result;
+        };
+        return true;
+    }
+
+    if (!install()) {
+        var attempts = 0;
+        var timer = window.setInterval(function () {
+            attempts++;
+            if (install() || attempts >= 200) window.clearInterval(timer);
+        }, 50);
+    }
+}());
+</script>
