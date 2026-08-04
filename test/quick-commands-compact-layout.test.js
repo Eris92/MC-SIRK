@@ -6,6 +6,7 @@ var path = require("path");
 
 var root = path.join(__dirname, "..");
 var css = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.css"), "utf8");
+var nativeCore = fs.readFileSync(path.join(root, "public", "native", "mesh-plugin-core.js"), "utf8");
 
 assert.ok(css.indexOf(".sirk-quick-command-header{display:none!important}") >= 0,
     "The separate Quick commands title row must be hidden so the toolbar is first.");
@@ -28,5 +29,14 @@ assert.ok(css.indexOf("height:100%!important") >= 0 &&
 assert.ok(css.indexOf(".sirk-quick-command-status:not(:empty){display:block;flex:1 1 auto") >= 0 &&
     css.indexOf("max-width:none") >= 0 && css.indexOf("overflow:auto") >= 0,
     "Command output must fill the available details pane and scroll inside its own box.");
+assert.ok(nativeCore.indexOf("sirk-quick-commands-layout-contract") >= 0 &&
+    nativeCore.indexOf("padding:12px 8px!important") >= 0,
+    "The details pane must use equal compact horizontal spacing on both sides.");
+assert.ok(nativeCore.indexOf("__sirkPreserveQuickOutput") >= 0 &&
+    nativeCore.indexOf("copyStatus(previousStatus, currentStatus)") >= 0,
+    "Collapsing categories must preserve the current command output.");
+assert.ok(nativeCore.indexOf("observer.observe(previousStatus") >= 0 &&
+    nativeCore.indexOf("attributeFilter: [\"class\"]") >= 0,
+    "Output preservation must continue while an in-flight command updates the detached result node.");
 
 console.log("Exact-width adaptive Quick commands output layout: OK");
