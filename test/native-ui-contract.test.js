@@ -129,10 +129,11 @@ assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
 assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if (!(value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
 assert.ok(desktopCommands.indexOf("state.detail = value;") >= 0 &&
-    desktopCommands.indexOf("writeDetailsCollapsed(false);") >= 0 &&
+    desktopCommands.indexOf("writeDetailsCollapsed(false);") < 0 &&
+    desktopCommands.indexOf("detailsAttention: false") >= 0 &&
     desktopCommands.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0 &&
     desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
-    "Selecting a variable-free Quick command must open the details pane, clear old output and execute automatically.");
+    "Selecting a variable-free Quick command must preserve the hidden-output preference, clear old output and execute automatically.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
 assert.ok(desktopCommands.indexOf('var status = element("div", "sirk-quick-command-status", state.output)') >= 0 &&
