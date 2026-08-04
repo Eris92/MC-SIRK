@@ -158,11 +158,12 @@
             header.type = "button";
             header.className = "mc-tree-folder-header";
             var graphic = appendIcon(header, folder, "mc-tree-folder-icon");
-            var arrow = null;
             if (!graphic) {
-                arrow = document.createElement("span");
-                arrow.className = "mc-tree-folder-arrow";
-                header.appendChild(arrow);
+                graphic = document.createElement("span");
+                graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon";
+                graphic.innerHTML = lineIcon("folder");
+                graphic.style.color = "var(--bs-primary,#3b82f6)";
+                header.appendChild(graphic);
             }
 
             var title = document.createElement("span");
@@ -174,13 +175,13 @@
             body.className = "mc-tree-folder-body";
             var expanded = !!query || options.expanded[folder.path] === true;
             body.hidden = !expanded;
-            if (arrow) arrow.textContent = expanded ? "▼" : "▶";
+            header.classList.toggle("is-expanded", expanded);
 
             header.onclick = function () {
                 expanded = !expanded;
                 options.expanded[folder.path] = expanded;
                 body.hidden = !expanded;
-                if (arrow) arrow.textContent = expanded ? "▼" : "▶";
+                header.classList.toggle("is-expanded", expanded);
             };
 
             section.appendChild(header);
