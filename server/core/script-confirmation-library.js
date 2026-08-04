@@ -3,7 +3,16 @@
 var baseFactory = require("./script-library.js");
 var shared = require("./shared.js");
 
-var DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
+var CONFIRM_DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
+var RUN_AS_DIRECTIVE = /^\s*#\s*runAsUser\s*:\s*([012])\s*$/i;
+
+function normalizeRunAsUser(value) {
+    // MeshAgent semantics:
+    // 0 = Agent (SYSTEM), 1 = UserOrAgent, 2 = UserOnly.
+    // SIRK exposes an unambiguous SYSTEM/User choice, so legacy 1 is
+    // promoted to strict UserOnly instead of silently falling back to SYSTEM.
+    return Number(value) === 0 ? 0 : 2;
+}
 
 function parseEnabled(source) {
     var lines = String(source && source.text || source || "").replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -13,13 +22,13 @@ function parseEnabled(source) {
         var trimmed = line.trim();
         if (!trimmed) continue;
         if (trimmed.charAt(0) !== "#") break;
-        var match = line.match(DIRECTIVE);
+        var match = line.match(CONFIRM_DIRECTIVE);
         if (match) enabled = String(match[1]).toLowerCase() === "true";
     }
     return enabled;
 }
 
-function updateDirective(sourceText, enabled) {
+function splitHeader(sourceText) {
     var newline = String(sourceText || "").indexOf("\r\n") >= 0 ? "\r\n" : "\n";
     var lines = String(sourceText || "").replace(/^\uFEFF/, "").split(/\r?\n/);
     var boundary = lines.length;
@@ -31,23 +40,44 @@ function updateDirective(sourceText, enabled) {
         break;
     }
 
-    var header = lines.slice(0, boundary).filter(function (line) {
-        return !DIRECTIVE.test(String(line || ""));
+    return {
+        newline: newline,
+        header: lines.slice(0, boundary),
+        body: lines.slice(boundary)
+    };
+}
+
+function updateConfirmDirective(sourceText, enabled) {
+    var parts = splitHeader(sourceText);
+    var header = parts.header.filter(function (line) {
+        return !CONFIRM_DIRECTIVE.test(String(line || ""));
     });
-    var body = lines.slice(boundary);
 
     if (enabled === true) {
         var insertAt = 0;
-        for (var headerIndex = 0; headerIndex < header.length; headerIndex++) {
-            if (String(header[headerIndex] || "").trim().charAt(0) === "#") {
-                insertAt = headerIndex + 1;
+        for (var index = 0; index < header.length; index++) {
+            if (String(header[index] || "").trim().charAt(0) === "#") {
+                insertAt = index + 1;
                 break;
             }
         }
         header.splice(insertAt, 0, "# ConfirmExecution: true");
     }
 
-    return header.concat(body).join(newline);
+    return header.concat(parts.body).join(parts.newline);
+}
+
+function updateRunAsDirective(sourceText, runAsUser) {
+    var parts = splitHeader(sourceText);
+    var header = parts.header.filter(function (line) {
+        return !RUN_AS_DIRECTIVE.test(String(line || ""));
+    });
+    var insertAt = header.length;
+
+    while (insertAt > 0 && !String(header[insertAt - 1] || "").trim()) insertAt--;
+    header.splice(insertAt, 0, "# runAsUser: " + normalizeRunAsUser(runAsUser));
+
+    return header.concat(parts.body).join(parts.newline);
 }
 
 function decorateScript(base, script) {
@@ -55,6 +85,7 @@ function decorateScript(base, script) {
     var result = shared.copy(script);
     var source = base.getSource(result.path);
     result.confirmExecution = parseEnabled(source);
+    result.runAsUser = normalizeRunAsUser(result.runAsUser);
     return result;
 }
 
@@ -94,16 +125,25 @@ module.exports.createScriptLibrary = function (options) {
         var definition = base.getDefinition(relativePath);
         if (!definition) return null;
         definition.confirmExecution = parseEnabled(base.getSource(relativePath));
+        definition.runAsUser = normalizeRunAsUser(definition.runAsUser);
         return definition;
     };
 
     wrapper.saveDefinition = function (relativePath, definition) {
         definition = definition && typeof definition === "object" ? definition : {};
         var enabled = definition.confirmExecution === true;
-        var result = base.saveDefinition(relativePath, definition);
+        var runAsUser = normalizeRunAsUser(definition.runAsUser);
+        definition = shared.copy(definition);
+        definition.runAsUser = runAsUser;
+
+        base.saveDefinition(relativePath, definition);
         var source = base.getSource(relativePath);
         if (!source) throw new Error("Script not found after definition save.");
-        base.saveSource(relativePath, updateDirective(source.text, enabled));
+
+        var updated = updateConfirmDirective(source.text, enabled);
+        updated = updateRunAsDirective(updated, runAsUser);
+        base.saveSource(relativePath, updated);
+
         return {
             script: wrapper.getScript(relativePath, true),
             definition: wrapper.getDefinition(relativePath)
@@ -112,3 +152,6 @@ module.exports.createScriptLibrary = function (options) {
 
     return wrapper;
 };
+
+module.exports.normalizeRunAsUser = normalizeRunAsUser;
+module.exports.updateRunAsDirective = updateRunAsDirective;

@@ -41,14 +41,24 @@ var background = {
     cmd: "ipconfig /flushdns"
 };
 
+var legacyLoggedOnUser = {
+    label: "Legacy user script",
+    type: 2,
+    runAsUser: 1,
+    cmd: "whoami"
+};
+
 assert.strictEqual(policy.extractInteractiveCommand(interactiveSource), '"powershell.exe" -NoExit',
     "The policy must recover the original interactive command line from the legacy launcher.");
+assert.strictEqual(policy.normalizeCommandRunAs(legacyLoggedOnUser).runAsUser, 2,
+    "Legacy UserOrAgent mode must be promoted to strict UserOnly mode.");
 
 Promise.resolve()
     .then(function () { return device.sendRunCommands({}, interactive, "interactive", null); })
     .then(function () { return device.sendRunCommands({}, background, "background", null); })
+    .then(function () { return device.sendRunCommands({}, legacyLoggedOnUser, "legacy-user", null); })
     .then(function () {
-        assert.strictEqual(captured.length, 2, "Both commands must reach the MeshAgent transport.");
+        assert.strictEqual(captured.length, 3, "All commands must reach the MeshAgent transport.");
         assert.strictEqual(captured[0].command.runAsUser, 0,
             "The transformed command must execute in the MeshAgent service context.");
         assert.strictEqual(captured[0].command.type, 2,
@@ -68,9 +78,15 @@ Promise.resolve()
             "The limited logged-on-user scheduled-task launcher must be removed.");
         assert.strictEqual(captured[1].command.cmd, background.cmd,
             "Non-interactive commands must remain unchanged.");
+        assert.strictEqual(captured[1].command.runAsUser, 0,
+            "SYSTEM scripts must remain in the MeshAgent service context.");
+        assert.strictEqual(captured[2].command.runAsUser, 2,
+            "Logged-on-user scripts must use MeshAgent UserOnly mode.");
+        assert.strictEqual(legacyLoggedOnUser.runAsUser, 1,
+            "The policy must not mutate the original legacy command object.");
         assert.strictEqual(interactive.cmd, interactiveSource,
-            "The policy must not mutate the original command object.");
-        console.log("SYSTEM Quick commands policy: OK");
+            "The policy must not mutate the original interactive command object.");
+        console.log("SYSTEM and logged-on-user command policy: OK");
     })
     .catch(function (error) {
         console.error(error);
