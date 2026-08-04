@@ -266,11 +266,14 @@
     };
 
     runtime.onNativePageStart = function (view) {
-        if (view != null && !isCustomView(view)) core.restoreWorkspace();
+        if (view != null && !isCustomView(view) && !(Number(view) === 1 && core.workspaceState)) core.restoreWorkspace();
         notify("onNativePageStart", view);
     };
     runtime.onNativePageEnd = function (view) {
-        if (view != null && !isCustomView(view)) core.restoreWorkspace();
+        if (view != null && !isCustomView(view) && !(Number(view) === 1 && core.workspaceState)) core.restoreWorkspace();
+        if (core.workspaceState && typeof core.activateMenu === "function") {
+            core.activateMenu(core.workspaceState.viewMode);
+        }
         notify("onNativePageEnd", view);
     };
     runtime.onDeviceRefreshEnd = function (nodeId) { runtime.state.nodeId = String(nodeId || ""); notify("onDeviceRefreshEnd", runtime.state.nodeId); };

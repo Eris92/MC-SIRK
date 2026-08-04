@@ -62,8 +62,10 @@ assert.ok(editActions.indexOf("if (tools.state.editMode)") >= 0,
     "Enhanced script actions must keep credentials and editing controls inside Edit mode.");
 assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
     "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
-assert.ok(browserRuntime.indexOf('if (view != null && !isCustomView(view)) core.restoreWorkspace();') >= 0,
-    "Every transition to a native MeshCentral page must clear the SIRK workspace URL.");
+assert.ok(browserRuntime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0,
+    "A native redraw of shared page p1 must not turn an active SIRK workspace back into Devices.");
+assert.ok(browserRuntime.indexOf('core.activateMenu(core.workspaceState.viewMode)') >= 0,
+    "The active SIRK menu entry must be reapplied after every native page redraw.");
 
 var approvals = read("server/modules/approval-center/index.js");
 assert.ok(approvals.indexOf("current.modules.approvals") >= 0,

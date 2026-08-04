@@ -8,6 +8,7 @@ var root = path.join(__dirname, "..");
 var core = fs.readFileSync(path.join(root, "public", "shared", "core.js"), "utf8");
 var helper = fs.readFileSync(path.join(root, "public", "shared", "ui", "download-results.js"), "utf8");
 var style = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
+var runtime = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"), "utf8");
 
 assert.ok(core.indexOf("core.activateMenu = function (viewMode)") >= 0,
     "Opening a SIRK workspace must synchronize the native MeshCentral menu selection.");
@@ -44,6 +45,9 @@ assert.ok(core.indexOf('document.documentElement.classList.add("sirk-platform-wo
 assert.ok(core.indexOf("core.isNativeMenuTarget = function (target)") >= 0 &&
     core.indexOf("!core.isNativeMenuTarget(event.target)") >= 0,
     "Blank workspace and page gaps must not restore My Devices; only native menu controls may do so.");
+assert.ok(runtime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0 &&
+    runtime.indexOf('core.activateMenu(core.workspaceState.viewMode)') >= 0,
+    "Shared p1 redraws must preserve the SIRK workspace and reselect its active menu item.");
 assert.ok(style.indexOf('.lbbutton[id^="LeftMenu"]:not([aria-current="page"])') >= 0 &&
     style.indexOf('.lbbutton[id^="LeftMenu"][aria-current="page"]') >= 0,
     "A stale native Devices selection must be visually suppressed while SIRK is active.");
