@@ -162,7 +162,12 @@ function createSerializedStartupHook(version, pin) {
             if (!window.SirkPlatformRuntime || typeof window.SirkPlatformRuntime.initialize !== "function") {
                 throw new Error("SIRK Platform browser runtime was not loaded.");
             }
-            return window.SirkPlatformRuntime.initialize();
+            return window.SirkPlatformRuntime.initialize().then(function () {
+                var nodeId = String(window.__SIRK_CURRENT_NODE_ID__ || "");
+                if (nodeId && typeof window.SirkPlatformRuntime.onDeviceRefreshEnd === "function") {
+                    window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId);
+                }
+            });
         }).catch(function (error) {
             if (window.console) console.error("SIRK Platform browser startup failed", error);
         });
@@ -219,8 +224,13 @@ function createPlugin(parent, shortName) {
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
     };
     obj.onDeviceRefreshEnd = function (nodeId) {
-        var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
-        if (runtime && typeof runtime.onDeviceRefreshEnd === "function") runtime.onDeviceRefreshEnd(nodeId);
+        if (typeof window === "undefined") return;
+        var currentNodeId = String(nodeId || "");
+        if (currentNodeId) window.__SIRK_CURRENT_NODE_ID__ = currentNodeId;
+        var runtime = window.SirkPlatformRuntime || null;
+        if (runtime && typeof runtime.onDeviceRefreshEnd === "function") {
+            runtime.onDeviceRefreshEnd(currentNodeId || String(window.__SIRK_CURRENT_NODE_ID__ || ""));
+        }
     };
     obj.commandResult = function (server, message) {
         var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
