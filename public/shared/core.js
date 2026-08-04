@@ -142,13 +142,6 @@
         return !!item && (String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link"));
     }
 
-    function menuPeers(item) {
-        if (!item || !item.parentNode) return [];
-        return Array.prototype.filter.call(item.parentNode.children, function (candidate) {
-            return /^(MainMenu|LeftMenu)/.test(String(candidate.id || ""));
-        });
-    }
-
     function clearMenuSelection(item) {
         if (!item || !item.classList) return;
         item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2");
@@ -169,12 +162,7 @@
         var targets = [main, left].filter(Boolean);
         if (!targets.length || !core.workspaceState) return false;
 
-        var peers = [];
-        targets.forEach(function (target) {
-            menuPeers(target).forEach(function (peer) {
-                if (peers.indexOf(peer) < 0) peers.push(peer);
-            });
-        });
+        var peers = Array.prototype.slice.call(document.querySelectorAll('[id^="MainMenu"],[id^="LeftMenu"]'));
 
         if (!core.workspaceState.menuSelection) {
             core.workspaceState.menuSelection = peers.map(function (item) {

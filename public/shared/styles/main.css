@@ -2,5 +2,5 @@
 
 /* A native go(1) redraw may select My Devices again while the SIRK p1 workspace
    remains visible. Only SIRK's aria-current item may keep the full-width state. */
-html.sirk-platform-workspace-active .lbbutton[id^="LeftMenu"]:not([aria-current="page"]){width:74px!important;border-radius:5px!important;opacity:.5!important}
+html.sirk-platform-workspace-active .lbbutton[id^="LeftMenu"]:not([aria-current="page"]){width:74px!important;border:0!important;border-radius:5px!important;outline:0!important;background:transparent!important;box-shadow:none!important;opacity:.5!important}
 html.sirk-platform-workspace-active .lbbutton[id^="LeftMenu"][aria-current="page"]{width:82px!important;border-radius:5px 0 0 5px!important;background-color:rgba(80,120,200,.28)!important;box-shadow:inset 3px 0 #4f7df3!important;opacity:1!important}

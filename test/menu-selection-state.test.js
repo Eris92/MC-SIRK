@@ -16,6 +16,8 @@ assert.ok(core.indexOf("core.workspaceState.menuSelection = peers.map") >= 0,
     "The previous native menu selection must be captured before changing it.");
 assert.ok(core.indexOf('isLeft ? "lbbuttonsel2" : "fullselect"') >= 0,
     "Opening a SIRK workspace must immediately use MeshCentral's fully selected left-menu class.");
+assert.ok(core.indexOf('document.querySelectorAll(\'[id^="MainMenu"],[id^="LeftMenu"]\')') >= 0,
+    "Immediate selection must clear every native menu entry, including My Devices.");
 assert.ok(core.indexOf("item.element.className = item.className") >= 0,
     "Leaving the SIRK workspace must restore the original native menu classes.");
 
@@ -51,6 +53,9 @@ assert.ok(runtime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0 &
 assert.ok(style.indexOf('.lbbutton[id^="LeftMenu"]:not([aria-current="page"])') >= 0 &&
     style.indexOf('.lbbutton[id^="LeftMenu"][aria-current="page"]') >= 0,
     "A stale native Devices selection must be visually suppressed while SIRK is active.");
+assert.ok(style.indexOf("background:transparent!important") >= 0 &&
+    style.indexOf("box-shadow:none!important") >= 0,
+    "Inactive native entries must not retain a second selected background or accent.");
 assert.ok(style.indexOf("background-color:rgba(80,120,200,.28)!important") >= 0 &&
     style.indexOf("box-shadow:inset 3px 0 #4f7df3!important") >= 0,
     "The active SIRK left-menu item must remain clearly visible in both host themes.");
