@@ -7,6 +7,7 @@ var path = require("path");
 var root = path.join(__dirname, "..");
 var script = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
 var css = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.css"), "utf8");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 
 assert.ok(script.indexOf("window.SharedToolbar.mount") >= 0 &&
     script.indexOf('preset: "mycommands"') >= 0,
@@ -21,6 +22,13 @@ assert.ok(script.indexOf('key: "close"') >= 0 && script.indexOf("closePanel(pane
 assert.ok(script.indexOf('PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
     script.indexOf("state.favoritesOnly") >= 0 && script.indexOf("filterGroup") >= 0,
     "Quick commands favorites must use the same saved favorites as My Commands.");
+assert.ok(toolbar.indexOf('QUICK_PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
+    toolbar.indexOf("preferences.quickFavoritesOnly") >= 0 &&
+    toolbar.indexOf("writeQuickFavoritesOnly(nextQuickFavorites)") >= 0 &&
+    toolbar.indexOf("restoreQuickFavorites(context.buttons.favorites)") >= 0,
+    "Quick commands must save and restore whether the Favorites-only filter is active.");
+assert.ok(toolbar.indexOf("typeof preferences.favoritesOnly === \"boolean\"") >= 0,
+    "Quick commands must migrate an older saved Favorites-only preference.");
 assert.ok(script.indexOf('path: "@command/" + category.key + "/" + command.id') >= 0,
     "Quick commands must use the same command favorite keys as My Commands.");
 assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&
@@ -42,4 +50,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick commands toolbar and compact Commands-style columns: OK");
+console.log("Quick commands toolbar, persistent Favorites and compact Commands-style columns: OK");
