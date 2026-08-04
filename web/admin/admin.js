@@ -155,10 +155,14 @@
         card.appendChild(foldersHost);
         host.appendChild(card);
         return function () {
+            var selectedAccessGroups = restrict.checked ? accessGroups() : [];
+            if (restrict.checked && !selectedAccessGroups.length) {
+                throw new Error("Select at least one MeshCentral user group for " + title + " module access.");
+            }
             var folderPermissions = {};
             folderReaders.forEach(function (entry) { if (entry.key) folderPermissions[entry.key] = entry.read(); });
             return {
-                accessGroupIds: restrict.checked ? accessGroups() : [],
+                accessGroupIds: selectedAccessGroups,
                 folderPermissions: folderPermissions
             };
         };
@@ -179,7 +183,23 @@
             .catch(function (error) { status.textContent = error.message || String(error); status.className = "mc-admin-save-status mc-admin-error"; })
             .then(function () { window.clearTimeout(timer); button.disabled = false; button.textContent = "Save settings"; });
     }
-    function actions(host, values) { var row = element("div", "mc-admin-actions"); var button = element("button", "mc-admin-primary", "Save settings"); button.type = "button"; var status = element("span", "mc-admin-save-status", ""); button.onclick = function () { save(values(), status, button); }; row.appendChild(button); row.appendChild(status); host.appendChild(row); }
+    function actions(host, values) {
+        var row = element("div", "mc-admin-actions");
+        var button = element("button", "mc-admin-primary", "Save settings");
+        button.type = "button";
+        var status = element("span", "mc-admin-save-status", "");
+        button.onclick = function () {
+            try {
+                save(values(), status, button);
+            } catch (error) {
+                status.textContent = error.message || String(error);
+                status.className = "mc-admin-save-status mc-admin-error";
+            }
+        };
+        row.appendChild(button);
+        row.appendChild(status);
+        host.appendChild(row);
+    }
     function moduleEnabled(key) { return (data.modules || []).some(function (item) { return item.key === key && item.enabled === true; }); }
     function render(tab) {
         content.innerHTML = "";
