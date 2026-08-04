@@ -5,6 +5,7 @@
     window.__sirkDownloadResultsInstalled = true;
 
     var commandSelectionSequence = 0;
+    var sirkViewModes = [101, 102, 105, 106];
 
     function language() {
         try { return localStorage.getItem("sirkPortal.language") === "en" ? "en" : "pl"; }
@@ -150,14 +151,21 @@
         return true;
     }
 
-    function customViewMode() {
-        var workspace = window.SirkPlatformCore && window.SirkPlatformCore.workspaceState;
-        if (workspace && [101, 102, 105, 106].indexOf(Number(workspace.viewMode)) >= 0) {
-            return String(workspace.viewMode);
-        }
+    function acceptedViewMode(value) {
+        value = Number(value);
+        return sirkViewModes.indexOf(value) >= 0 ? String(value) : "";
+    }
+
+    function activeSirkViewMode() {
+        var core = window.SirkPlatformCore;
+        var fromWorkspace = acceptedViewMode(core && core.workspaceState && core.workspaceState.viewMode);
+        if (fromWorkspace) return fromWorkspace;
+
+        var fromCurrentView = acceptedViewMode(window.xxcurrentView);
+        if (fromCurrentView) return fromCurrentView;
+
         try {
-            var value = Number(new URL(window.location.href).searchParams.get("viewmode"));
-            return [101, 102, 105, 106].indexOf(value) >= 0 ? String(value) : "";
+            return acceptedViewMode(new URL(window.location.href).searchParams.get("viewmode"));
         } catch (error) {
             return "";
         }
@@ -167,28 +175,89 @@
         return !!item && (String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link"));
     }
 
+    function hasSelectionClass(item) {
+        if (!item || !item.classList) return false;
+        return ["fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2", "sirk-native-menu-selected"].some(function (name) {
+            return item.classList.contains(name);
+        });
+    }
+
     function clearMenuSelection(item) {
         if (!item || !item.classList) return;
-        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2");
-        item.removeAttribute("aria-current");
+        if (hasSelectionClass(item)) {
+            item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2", "sirk-native-menu-selected");
+        }
+        if (item.getAttribute("aria-current") != null) item.removeAttribute("aria-current");
+        if (item.getAttribute("data-sirk-inline-menu-selected") === "1") {
+            item.style.removeProperty("background-color");
+            item.style.removeProperty("border-radius");
+            item.style.removeProperty("opacity");
+            item.style.removeProperty("box-shadow");
+            item.style.removeProperty("width");
+            item.removeAttribute("data-sirk-inline-menu-selected");
+        }
+    }
+
+    function setImportantStyle(item, property, value) {
+        if (item.style.getPropertyValue(property) === value && item.style.getPropertyPriority(property) === "important") return;
+        item.style.setProperty(property, value, "important");
     }
 
     function selectMenuItem(item, left) {
         if (!item || !item.classList) return;
-        clearMenuSelection(item);
-        item.classList.add(modernMenuItem(item) ? "active" : (left ? "lbbuttonsel2" : "fullselect"));
-        item.setAttribute("aria-current", "page");
+
+        var modern = modernMenuItem(item);
+        var expectedClass = modern ? "active" : (left ? "lbbuttonsel2" : "fullselect");
+        ["fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2"].forEach(function (name) {
+            if (name !== expectedClass && item.classList.contains(name)) item.classList.remove(name);
+        });
+        if (!item.classList.contains(expectedClass)) item.classList.add(expectedClass);
+        if (!item.classList.contains("sirk-native-menu-selected")) item.classList.add("sirk-native-menu-selected");
+        if (item.getAttribute("aria-current") !== "page") item.setAttribute("aria-current", "page");
+
+        if (left && !modern) {
+            setImportantStyle(item, "background-color", "#f4f6f8");
+            setImportantStyle(item, "border-radius", "5px 0 0 5px");
+            setImportantStyle(item, "opacity", "1");
+            setImportantStyle(item, "box-shadow", "none");
+            setImportantStyle(item, "width", "82px");
+            if (item.getAttribute("data-sirk-inline-menu-selected") !== "1") {
+                item.setAttribute("data-sirk-inline-menu-selected", "1");
+            }
+        }
+    }
+
+    function ensureMenuSelectionStyle() {
+        if (document.getElementById("sirk-native-menu-selection-style")) return;
+        var style = document.createElement("style");
+        style.id = "sirk-native-menu-selection-style";
+        style.textContent = [
+            "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected{",
+            "background:#f4f6f8!important;border-radius:5px 0 0 5px!important;",
+            "opacity:1!important;box-shadow:none!important;width:82px!important}",
+            "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .lbtg,",
+            "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .sirk-platform-menu-icon,",
+            "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected svg{",
+            "opacity:1!important;filter:none!important;color:#174a7e!important}"
+        ].join("");
+        (document.head || document.documentElement).appendChild(style);
     }
 
     function syncActiveSirkMenu() {
-        var viewMode = customViewMode();
-        if (!viewMode || !document.getElementById("SirkPlatformWorkspace")) return false;
+        var workspace = document.getElementById("SirkPlatformWorkspace");
+        var core = window.SirkPlatformCore;
+        if (!workspace || workspace.style.display === "none" || !core || !core.workspaceState) return false;
+
+        var viewMode = activeSirkViewMode();
+        if (!viewMode) return false;
 
         var main = document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');
         var left = document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');
         if (!main && !left) return false;
 
-        document.querySelectorAll('[id^="MainMenu"],[id^="LeftMenu"]').forEach(clearMenuSelection);
+        document.querySelectorAll('[id^="MainMenu"],[id^="LeftMenu"]').forEach(function (item) {
+            if (item !== main && item !== left) clearMenuSelection(item);
+        });
         selectMenuItem(main, false);
         selectMenuItem(left, true);
         return true;
@@ -351,6 +420,7 @@
     }, true);
 
     function scan() {
+        ensureMenuSelectionStyle();
         syncActiveSirkMenu();
         installCommandNodeResolver();
         ensureCommandRunStyle();
@@ -377,7 +447,7 @@
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ["class"]
+            attributeFilter: ["class", "style"]
         });
     }
 }());
