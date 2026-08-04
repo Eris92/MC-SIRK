@@ -46,7 +46,7 @@
 .sirk-quick-command-field{display:grid;grid-template-columns:minmax(130px,180px) minmax(180px,1fr);gap:10px;align-items:start;margin:0 0 10px}
 .sirk-quick-command-field>span{padding-top:6px;font-weight:600;overflow-wrap:anywhere}
 .sirk-quick-command-field input:not([type="checkbox"]),.sirk-quick-command-field select{display:block;width:100%;min-width:0;min-height:32px;box-sizing:border-box;padding:5px 7px;border:1px solid var(--sdc-border);border-radius:4px;background:var(--sdc-panel-alt);color:var(--sdc-text)}
-.sirk-quick-command-details .sirk-quick-command-submit{margin:12px 0!important}
+.sirk-quick-command-details .sirk-quick-command-submit{min-width:84px;min-height:32px;margin:12px 0!important}
 .sirk-quick-command-status:empty{display:none}
 .sirk-quick-command-status{margin-top:12px;padding:10px;border-top:1px solid var(--sdc-border);color:var(--sdc-muted);font:500 12px/1.4 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
 .sirk-quick-command-details>.sirk-quick-command-status:not(:empty){min-height:72px;background:var(--sdc-panel-alt);border:1px solid var(--sdc-border);border-radius:4px}
