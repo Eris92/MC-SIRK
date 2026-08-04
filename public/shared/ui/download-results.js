@@ -97,49 +97,57 @@
         return true;
     }
 
-    function isCommandsCatalog(options) {
-        var children = options && options.tree && Array.isArray(options.tree.children) ? options.tree.children : [];
-        var paths = children.map(function (item) { return String(item && item.path || ""); });
-        return paths.indexOf("@menu/scripts") >= 0 && paths.some(function (value) {
-            return /^@menu\/(?:network|system|other)$/i.test(value);
-        });
+    function commandsPage() {
+        return document.querySelector(".mc-shared-page-mycommands");
     }
 
-    function runtimeVariableFields(button) {
-        var card = button && typeof button.closest === "function"
-            ? button.closest(".mc-admin-card, .mc-shared-card, .mc-card, section")
-            : null;
-        card = card || button && button.parentElement;
-        return card && card.querySelector(".mc-script-runtime-variables input, .mc-script-runtime-variables select, .mc-script-runtime-variables textarea");
-    }
-
-    function scheduleAutomaticRun(item, sequence, previousButtons, attempt) {
-        if (sequence !== commandSelectionSequence) return;
-        if (item && Array.isArray(item.variables) && item.variables.length) return;
-
-        var buttons = Array.prototype.slice.call(document.querySelectorAll(".mc-command-run-button"));
-        var button = null;
-        for (var index = buttons.length - 1; index >= 0; index--) {
-            if (previousButtons.indexOf(buttons[index]) < 0 && buttons[index].isConnected) {
-                button = buttons[index];
-                break;
-            }
+    function selectedRunButton() {
+        var page = commandsPage();
+        if (!page) return null;
+        var buttons = page.querySelectorAll(".mc-command-run-button");
+        for (var index = buttons.length - 1; index >= 0; index -= 1) {
+            if (buttons[index].isConnected) return buttons[index];
         }
+        return null;
+    }
 
+    function hasRuntimeVariables(button) {
+        var page = button && typeof button.closest === "function"
+            ? button.closest(".mc-shared-page-mycommands")
+            : commandsPage();
+        return !!(page && page.querySelector(
+            ".mc-script-runtime-variables input, " +
+            ".mc-script-runtime-variables select, " +
+            ".mc-script-runtime-variables textarea"
+        ));
+    }
+
+    function scheduleSelectedRun(sequence, attempt) {
+        if (sequence !== commandSelectionSequence) return;
+
+        var button = selectedRunButton();
         if (!button) {
-            if (attempt < 80) {
+            if (attempt < 120) {
                 window.setTimeout(function () {
-                    scheduleAutomaticRun(item, sequence, previousButtons, attempt + 1);
+                    scheduleSelectedRun(sequence, attempt + 1);
                 }, 50);
             }
             return;
         }
 
-        if (runtimeVariableFields(button)) return;
-        if (button.disabled || button.getAttribute("data-sirk-auto-run") === String(sequence)) return;
+        if (hasRuntimeVariables(button)) return;
+        if (button.disabled) return;
+        if (button.getAttribute("data-sirk-auto-run") === String(sequence)) return;
 
         button.setAttribute("data-sirk-auto-run", String(sequence));
         button.click();
+    }
+
+    function beginSelectedRun() {
+        var sequence = ++commandSelectionSequence;
+        window.setTimeout(function () {
+            scheduleSelectedRun(sequence, 0);
+        }, 0);
     }
 
     function installCommandsCatalogHook() {
@@ -149,14 +157,12 @@
         var original = catalog.mount;
         var wrapped = function (options) {
             var effectiveOptions = options;
-            if (isCommandsCatalog(options) && typeof options.onScript === "function") {
+            if (options && typeof options.onScript === "function") {
                 effectiveOptions = Object.assign({}, options);
                 var originalOnScript = options.onScript;
                 effectiveOptions.onScript = function (item) {
-                    var previousButtons = Array.prototype.slice.call(document.querySelectorAll(".mc-command-run-button"));
-                    var sequence = ++commandSelectionSequence;
                     var result = originalOnScript(item);
-                    scheduleAutomaticRun(item, sequence, previousButtons, 0);
+                    beginSelectedRun();
                     return result;
                 };
             }
@@ -166,6 +172,14 @@
         catalog.mount = wrapped;
         return true;
     }
+
+    document.addEventListener("click", function (event) {
+        var target = event.target && event.target.closest
+            ? event.target.closest(".mc-shared-page-mycommands .mc-tree-script")
+            : null;
+        if (!target) return;
+        beginSelectedRun();
+    }, false);
 
     function scan() {
         installMountHook();
