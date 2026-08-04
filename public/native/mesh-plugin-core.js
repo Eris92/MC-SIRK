@@ -88,7 +88,14 @@
             style.textContent = [
                 ".sirk-desktop-commands .sirk-quick-command-details{padding:12px 8px!important}",
                 ".sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention{border-color:rgba(220,38,38,.55)!important;background:rgba(220,38,38,.12)!important;color:#b42318!important}",
-                "[data-bs-theme=dark] .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.night .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.dark .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention{border-color:rgba(248,113,113,.7)!important;background:rgba(248,113,113,.16)!important;color:#fca5a5!important}"
+                "[data-bs-theme=dark] .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.night .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.dark .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention{border-color:rgba(248,113,113,.7)!important;background:rgba(248,113,113,.16)!important;color:#fca5a5!important}",
+                ".sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"]{width:min(545px,calc(100% - 52px))!important;transition:none!important}",
+                ".sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"]:has(.sirk-quick-command-browser.is-collapsed){width:min(404px,calc(100% - 52px))!important}",
+                ".sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout{grid-template-columns:minmax(165px,205px) minmax(285px,340px) 0!important;transition:none!important}",
+                ".sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout.is-collapsed{grid-template-columns:64px minmax(285px,340px) 0!important}",
+                ".sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-details{display:none!important}",
+                "@media(max-width:1100px){.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"]{width:min(485px,calc(100% - 52px))!important}.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"]:has(.sirk-quick-command-browser.is-collapsed){width:min(364px,calc(100% - 52px))!important}.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout{grid-template-columns:minmax(150px,185px) minmax(250px,300px) 0!important}.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout.is-collapsed{grid-template-columns:64px minmax(250px,300px) 0!important}}",
+                "@media(max-width:760px){.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"]{width:calc(100% - 48px)!important}.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout,.sirk-desktop-commands-panel[data-sirk-details-preferred-collapsed=\"1\"] .sirk-quick-command-browser.mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}}"
             ].join("");
             (document.head || document.documentElement).appendChild(style);
         }
@@ -171,6 +178,12 @@
             writeStorageBoolean(DETAILS_ATTENTION_KEY, value === true);
         }
 
+        function applyDetailsPreference(panel) {
+            if (!panel) return;
+            if (detailsPreferredCollapsed()) panel.setAttribute("data-sirk-details-preferred-collapsed", "1");
+            else panel.removeAttribute("data-sirk-details-preferred-collapsed");
+        }
+
         function transientOutput(value) {
             return /^(Ładowanie poleceń|Loading commands|Polecenie wysłano do agenta|Command sent to the agent)/i.test(String(value || "").trim());
         }
@@ -250,8 +263,10 @@
 
         function reconcileDetailsPreference(panel, button) {
             if (!panel) return;
+            applyDetailsPreference(panel);
             window.setTimeout(function () {
                 if (!panel.isConnected) return;
+                applyDetailsPreference(panel);
                 var browser = panel.querySelector(".sirk-quick-command-browser");
                 var status = panel.querySelector(".sirk-quick-command-status");
                 var currentOutput = status ? String(status.textContent || "").trim() : "";
@@ -265,6 +280,7 @@
 
                 if (!detailsPreferredCollapsed()) {
                     setDetailsAttention(false);
+                    applyDetailsPreference(panel);
                     syncDetailsButton(panel, button);
                     return;
                 }
@@ -289,6 +305,8 @@
                 var host = quickToolbarHost(options && options.container);
                 if (!host) return originalMount.call(toolbar, options);
 
+                var panel = host.closest(".sirk-desktop-commands-panel");
+                applyDetailsPreference(panel);
                 var effective = Object.assign({}, options || {});
                 effective.buttons = Object.assign({}, options && options.buttons || {});
                 effective.customButtons = (options && options.customButtons || []).map(function (definition) {
@@ -296,13 +314,18 @@
                     var details = Object.assign({}, definition);
                     var originalDetails = details.onClick;
                     details.onClick = function (api, event, currentDefinition) {
-                        var panel = host.closest(".sirk-desktop-commands-panel");
-                        var opening = detailsCollapsed(panel);
+                        var opening = detailsCollapsed(panel) || detailsPreferredCollapsed();
                         setDetailsPreference(!opening);
                         if (opening) setDetailsAttention(false);
-                        return typeof originalDetails === "function"
+                        applyDetailsPreference(panel);
+                        var result = typeof originalDetails === "function"
                             ? originalDetails(api, event, currentDefinition)
                             : undefined;
+                        window.setTimeout(function () {
+                            applyDetailsPreference(panel);
+                            syncDetailsButton(panel, panel && panel.querySelector(".sirk-quick-command-details-toggle"));
+                        }, 0);
+                        return result;
                     };
                     return details;
                 });
@@ -311,7 +334,6 @@
                 var originalCollapse = collapse.onClick;
 
                 collapse.onClick = function (api, event, definition) {
-                    var panel = host.closest(".sirk-desktop-commands-panel");
                     if (!panel || typeof originalCollapse !== "function") {
                         return typeof originalCollapse === "function"
                             ? originalCollapse(api, event, definition)
@@ -334,7 +356,6 @@
                 effective.buttons.collapse = collapse;
 
                 var api = originalMount.call(toolbar, effective);
-                var panel = host.closest(".sirk-desktop-commands-panel");
                 var detailsButton = api && api.buttons && api.buttons.details;
                 syncDetailsButton(panel, detailsButton);
                 window.setTimeout(function () {
@@ -373,6 +394,7 @@
             Array.prototype.forEach.call(
                 document.querySelectorAll(".sirk-desktop-commands-panel"),
                 function (panel) {
+                    applyDetailsPreference(panel);
                     wrapExistingButton(panel);
                     restoreCollapsedPreference(panel, collapseButton(panel));
                     reconcileDetailsPreference(panel, panel.querySelector(".sirk-quick-command-details-toggle"));
