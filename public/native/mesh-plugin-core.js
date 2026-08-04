@@ -69,7 +69,7 @@
     }
 
     function installQuickCommandsLayoutContract() {
-        if (typeof document === "undefined" || sirkCore.__quickCommandsLayoutContractInstalled) return;
+        if (typeof document === "undefined" || typeof document.createElement !== "function" || sirkCore.__quickCommandsLayoutContractInstalled) return;
         sirkCore.__quickCommandsLayoutContractInstalled = true;
 
         var style = document.getElementById("sirk-quick-commands-layout-contract");
