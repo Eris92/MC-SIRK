@@ -2,7 +2,7 @@
     "use strict";
     var root = document.getElementById("sirk-platform-admin");
     var content = document.getElementById("sirk-platform-admin-content");
-    var data = window.SirkPlatformAdminData || { modules: [], moduleSettings: {}, integrations: {} };
+    var data = window.SirkPlatformAdminData || { modules: [], moduleSettings: {}, integrations: {}, folderPermissions: {}, userGroups: [] };
     if (!root || !content) return;
 
     function colorParts(value) {
@@ -74,9 +74,16 @@
             field.appendChild(label);
             inputs.push(input);
         });
-        if (!inputs.length) field.appendChild(element("div", "mc-admin-card-description", "No MeshCentral user groups are available."));
+        if (!inputs.length) field.appendChild(element("div", "mc-admin-card-description", "No MeshCentral user groups are available. Create a user group in MeshCentral first."));
         host.appendChild(field);
-        return function () { return inputs.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }); };
+        var getter = function () { return inputs.filter(function (input) { return input.checked; }).map(function (input) { return input.value; }); };
+        getter.inputs = inputs;
+        getter.field = field;
+        getter.setDisabled = function (disabled) {
+            field.classList.toggle("mc-admin-disabled", disabled === true);
+            inputs.forEach(function (input) { input.disabled = disabled === true; });
+        };
+        return getter;
     }
     function approvalProvider(host, title, source) {
         source = source || {};
@@ -96,6 +103,70 @@
             return { enabled: enabled.checked, showTab: showTab.checked, showOverview: showOverview.checked, allowNoApproval: noApproval.checked, levels: { 1: level1(), 2: level2(), 3: level3() } };
         };
     }
+    function folderPermission(host, source) {
+        source = source || {};
+        var card = element("section", "mc-admin-permission-folder");
+        var label = source.label || source.key || "Folder";
+        card.appendChild(element("h5", "", label));
+        if (source.key && source.key !== label) card.appendChild(element("div", "mc-admin-permission-key", source.key));
+        var enabled = checked(card, "Enable this category or folder", source.enabled !== false);
+        var allowAll = checked(card, "Allow every user who has module access", source.configured === false ? true : source.allowAll === true);
+        var groups = groupLevel(card, "Allowed MeshCentral user groups", source.groupIds || []);
+        function sync() {
+            allowAll.disabled = !enabled.checked;
+            groups.setDisabled(!enabled.checked || allowAll.checked);
+        }
+        enabled.onchange = sync;
+        allowAll.onchange = sync;
+        sync();
+        host.appendChild(card);
+        return function () {
+            return {
+                enabled: enabled.checked,
+                allowAll: enabled.checked && allowAll.checked,
+                groupIds: enabled.checked && !allowAll.checked ? groups() : []
+            };
+        };
+    }
+    function modulePermissions(host, key, title, source, folders) {
+        source = source || {};
+        folders = Array.isArray(folders) ? folders : [];
+        var configuredRules = source.folderPermissions && typeof source.folderPermissions === "object" && !Array.isArray(source.folderPermissions) ? source.folderPermissions : {};
+        folders = folders.map(function (folder) {
+            var item = Object.assign({}, folder || {});
+            item.configured = Object.prototype.hasOwnProperty.call(configuredRules, String(item.key || ""));
+            return item;
+        });
+        var card = element("section", "mc-admin-provider-card mc-admin-permission-module");
+        card.appendChild(element("h4", "", title));
+        card.appendChild(element("p", "mc-admin-card-description", "Module access is evaluated first. Device permissions configured in MeshCentral are always required as well."));
+        var selectedGroups = Array.isArray(source.accessGroupIds) ? source.accessGroupIds : [];
+        var restrict = checked(card, "Restrict module access to selected MeshCentral user groups", selectedGroups.length > 0);
+        var accessGroups = groupLevel(card, "Groups allowed to open and execute in this module", selectedGroups);
+        function syncModule() { accessGroups.setDisabled(!restrict.checked); }
+        restrict.onchange = syncModule;
+        syncModule();
+
+        var foldersHost = element("div", "mc-admin-permission-folders");
+        foldersHost.appendChild(element("h4", "mc-admin-permission-subtitle", "Category and folder access"));
+        foldersHost.appendChild(element("p", "mc-admin-card-description", "A disabled category is hidden for non-administrators. When Allow every user is off, select one or more groups."));
+        var folderReaders = folders.map(function (folder) { return { key: String(folder.key || ""), read: folderPermission(foldersHost, folder) }; });
+        if (!folderReaders.length) foldersHost.appendChild(element("div", "mc-admin-notice", "No folders are currently available. Refresh this page after adding scripts."));
+        card.appendChild(foldersHost);
+        host.appendChild(card);
+        return function () {
+            var selectedAccessGroups = restrict.checked ? accessGroups() : [];
+            if (restrict.checked && !selectedAccessGroups.length) {
+                throw new Error("Select at least one MeshCentral user group for " + title + " module access.");
+            }
+            var folderPermissions = {};
+            folderReaders.forEach(function (entry) { if (entry.key) folderPermissions[entry.key] = entry.read(); });
+            return {
+                accessGroupIds: selectedAccessGroups,
+                folderPermissions: folderPermissions
+            };
+        };
+    }
     function save(values, status, button) {
         button.disabled = true;
         button.textContent = "Saving…";
@@ -112,7 +183,23 @@
             .catch(function (error) { status.textContent = error.message || String(error); status.className = "mc-admin-save-status mc-admin-error"; })
             .then(function () { window.clearTimeout(timer); button.disabled = false; button.textContent = "Save settings"; });
     }
-    function actions(host, values) { var row = element("div", "mc-admin-actions"); var button = element("button", "mc-admin-primary", "Save settings"); button.type = "button"; var status = element("span", "mc-admin-save-status", ""); button.onclick = function () { save(values(), status, button); }; row.appendChild(button); row.appendChild(status); host.appendChild(row); }
+    function actions(host, values) {
+        var row = element("div", "mc-admin-actions");
+        var button = element("button", "mc-admin-primary", "Save settings");
+        button.type = "button";
+        var status = element("span", "mc-admin-save-status", "");
+        button.onclick = function () {
+            try {
+                save(values(), status, button);
+            } catch (error) {
+                status.textContent = error.message || String(error);
+                status.className = "mc-admin-save-status mc-admin-error";
+            }
+        };
+        row.appendChild(button);
+        row.appendChild(status);
+        host.appendChild(row);
+    }
     function moduleEnabled(key) { return (data.modules || []).some(function (item) { return item.key === key && item.enabled === true; }); }
     function render(tab) {
         content.innerHTML = "";
@@ -138,6 +225,23 @@
             var commandEnabled = checked(card, "Enable My Commands", moduleEnabled("mycommands"));
             var desktop = checked(card, "Show Commands in Desktop", !(current.mycommands && current.mycommands.showOnDevice === false));
             actions(card, function () { return { modules: { mycommands: commandEnabled.checked }, moduleOptions: { mycommands: { showOnDevice: desktop.checked } } }; });
+        } else if (tab === "permissions") {
+            card.appendChild(element("h3", "", "Permissions"));
+            card.appendChild(element("p", "mc-admin-card-description", "Grant script and command execution through MeshCentral user groups. Add a user to one of the selected groups to give access."));
+            var folderData = data.folderPermissions || {};
+            var commandPermissions = modulePermissions(card, "mycommands", "My Commands", current.mycommands, folderData.mycommands);
+            var scriptPermissions = modulePermissions(card, "myscripts", "My Scripts", current.myscripts, folderData.myscripts);
+            actions(card, function () {
+                return {
+                    modules: {},
+                    moduleOptions: {
+                        permissions: {
+                            mycommands: commandPermissions(),
+                            myscripts: scriptPermissions()
+                        }
+                    }
+                };
+            });
         } else {
             card.appendChild(element("h3", "", "My Scripts"));
             var scriptEnabled = checked(card, "Enable My Scripts", moduleEnabled("myscripts"));
