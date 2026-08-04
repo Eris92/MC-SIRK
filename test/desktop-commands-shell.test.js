@@ -50,7 +50,7 @@ assert.ok(css.indexOf(".is-details-collapsed{grid-template-columns:minmax(165px,
     css.indexOf(".is-details-collapsed .sirk-quick-command-details{display:none!important}") >= 0,
     "Quick commands must remove the complete details column when output is hidden.");
 assert.ok(script.indexOf("function refresh(panel)") >= 0 &&
-    script.indexOf('setOutput(panel, text("loading"), false)') >= 0 &&
+    script.indexOf('assignOutput(text("loading"), false, false)') >= 0 &&
     script.indexOf('onClick: function () { refresh(panel); }') >= 0,
     "Quick refresh progress must stay inside the details output pane.");
 assert.ok(script.indexOf('panel.appendChild(element("div", "sirk-quick-command-loading"') < 0,
@@ -62,5 +62,17 @@ assert.ok(css.indexOf(".sirk-quick-command-label") >= 0 &&
 assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 0 &&
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
+assert.ok(script.indexOf("detailsAttention: false") >= 0 &&
+    script.indexOf('classList.toggle("has-attention", state.detailsCollapsed && state.detailsAttention)') >= 0 &&
+    css.indexOf(".sirk-quick-command-details-toggle.has-attention") >= 0,
+    "A completed hidden output must mark the output toggle with a subtle attention state.");
+assert.ok(script.indexOf('toolbar.setActive("details", false)') >= 0,
+    "The output toggle must keep its normal button style while the output pane is open.");
+assert.ok(script.indexOf("writeDetailsCollapsed(false)") < 0 &&
+    script.indexOf("function showDetails") < 0,
+    "Executing, refreshing or loading Quick commands must not automatically reopen a hidden output pane.");
+assert.ok(script.indexOf("assignOutput(text(\"refreshed\"), false, true)") >= 0 &&
+    script.indexOf("setOutput(panel, response.output || text(failed ? \"failed\" : \"completed\"), failed, true)") >= 0,
+    "Refresh completion and command completion must request attention only when output is hidden.");
 
-console.log("Quick commands toolbar, persistent Favorites, output collapse and compact columns: OK");
+console.log("Quick commands toolbar, persistent Favorites, hidden output attention and compact columns: OK");
