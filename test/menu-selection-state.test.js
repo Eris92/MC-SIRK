@@ -41,11 +41,17 @@ assert.ok(helper.indexOf('item.setAttribute("aria-current", "page")') >= 0,
 assert.ok(core.indexOf('document.documentElement.classList.add("sirk-platform-workspace-active")') >= 0 &&
     core.indexOf('document.documentElement.classList.remove("sirk-platform-workspace-active")') >= 0,
     "The document must expose and clear the lifetime of an active SIRK workspace.");
+assert.ok(core.indexOf("core.isNativeMenuTarget = function (target)") >= 0 &&
+    core.indexOf("!core.isNativeMenuTarget(event.target)") >= 0,
+    "Blank workspace and page gaps must not restore My Devices; only native menu controls may do so.");
 assert.ok(style.indexOf('.lbbutton[id^="LeftMenu"]:not([aria-current="page"])') >= 0 &&
     style.indexOf('.lbbutton[id^="LeftMenu"][aria-current="page"]') >= 0,
     "A stale native Devices selection must be visually suppressed while SIRK is active.");
+assert.ok(style.indexOf("background-color:rgba(80,120,200,.28)!important") >= 0 &&
+    style.indexOf("box-shadow:inset 3px 0 #4f7df3!important") >= 0,
+    "The active SIRK left-menu item must remain clearly visible in both host themes.");
 assert.ok(helper.indexOf('setImportantStyle(item, "background-color"') < 0 &&
     helper.indexOf("background:#f4f6f8!important") < 0,
-    "The active left-menu fill must come from MeshCentral's current light or night theme.");
+    "The active left-menu fill must not force a light-only color in night mode.");
 
 console.log("SIRK menu selection state: OK");

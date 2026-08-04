@@ -230,15 +230,21 @@
         return !!target.closest("#SirkPlatformWorkspace,[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-']");
     };
 
+    core.isNativeMenuTarget = function (target) {
+        if (!target || !target.closest) return false;
+        var menu = target.closest("[id^='MainMenu'],[id^='LeftMenu']");
+        return !!menu && !core.isSirkPlatformTarget(menu);
+    };
+
     core.installNativeRestoreGuard = function () {
         if (core.nativeRestoreGuardInstalled) return;
         core.nativeRestoreGuardInstalled = true;
         document.addEventListener("pointerdown", function (event) {
-            if (!core.workspaceState || core.isSirkPlatformTarget(event.target)) return;
+            if (!core.workspaceState || !core.isNativeMenuTarget(event.target)) return;
             core.restoreWorkspace();
         }, true);
         document.addEventListener("keydown", function (event) {
-            if ((event.key !== "Enter" && event.key !== " ") || !core.workspaceState || core.isSirkPlatformTarget(event.target)) return;
+            if ((event.key !== "Enter" && event.key !== " ") || !core.workspaceState || !core.isNativeMenuTarget(event.target)) return;
             core.restoreWorkspace();
         }, true);
     };

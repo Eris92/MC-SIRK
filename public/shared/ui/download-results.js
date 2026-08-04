@@ -218,7 +218,6 @@
         if (left && !modern) {
             setImportantStyle(item, "border-radius", "5px 0 0 5px");
             setImportantStyle(item, "opacity", "1");
-            setImportantStyle(item, "box-shadow", "none");
             setImportantStyle(item, "width", "82px");
             if (item.getAttribute("data-sirk-inline-menu-selected") !== "1") {
                 item.setAttribute("data-sirk-inline-menu-selected", "1");
@@ -233,7 +232,7 @@
         style.textContent = [
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected{",
             "border-radius:5px 0 0 5px!important;",
-            "opacity:1!important;box-shadow:none!important;width:82px!important}",
+            "opacity:1!important;width:82px!important}",
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .lbtg,",
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .sirk-platform-menu-icon,",
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected svg{",
