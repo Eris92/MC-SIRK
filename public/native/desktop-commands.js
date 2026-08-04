@@ -8,10 +8,38 @@
     var previousDesktopCommands = document.getElementById("SirkDesktopCommands");
     if (previousDesktopCommands) previousDesktopCommands.remove();
 
-    var state = { data: null, category: "", search: "", expanded: {}, detail: null };
+    var PREFERENCES_KEY = "sirkPlatform.mycommands.preferences";
+    var state = {
+        data: null,
+        category: "",
+        search: "",
+        searchVisible: false,
+        favoritesOnly: false,
+        collapsed: false,
+        expanded: {},
+        detail: null
+    };
     var TEXT = {
-        pl: { title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…", empty: "Brak poleceń.", variables: "Zmienne", run: "Uruchom", loading: "Ładowanie poleceń…", sent: "Polecenie wysłano do agenta…", completed: "Polecenie zostało wykonane.", pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.", disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.", timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", required: "Uzupełnij wymagane pola." },
-        en: { title: "Quick commands", scripts: "Scripts", search: "Search commands…", empty: "No commands.", variables: "Variables", run: "Run", loading: "Loading commands…", sent: "Command sent to the agent…", completed: "Command executed.", pending: "Command is waiting for approval.", failed: "Command execution failed.", disconnected: "Quick commands require an active Desktop connection.", timeout: "The agent did not confirm command execution.", confirm: "Run command", required: "Complete the required fields." }
+        pl: {
+            title: "Szybkie polecenia", scripts: "Skrypty", search: "Szukaj poleceń…",
+            empty: "Brak poleceń.", emptyFavorites: "Brak ulubionych poleceń.", variables: "Zmienne",
+            run: "Uruchom", loading: "Ładowanie poleceń…", sent: "Polecenie wysłano do agenta…",
+            completed: "Polecenie zostało wykonane.", pending: "Polecenie oczekuje na akceptację.",
+            failed: "Nie udało się wykonać polecenia.", disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.",
+            timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie",
+            required: "Uzupełnij wymagane pola.", collapse: "Zwiń kategorie", expand: "Rozwiń kategorie",
+            favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij"
+        },
+        en: {
+            title: "Quick commands", scripts: "Scripts", search: "Search commands…",
+            empty: "No commands.", emptyFavorites: "No favorite commands.", variables: "Variables",
+            run: "Run", loading: "Loading commands…", sent: "Command sent to the agent…",
+            completed: "Command executed.", pending: "Command is waiting for approval.",
+            failed: "Command execution failed.", disconnected: "Quick commands require an active Desktop connection.",
+            timeout: "The agent did not confirm command execution.", confirm: "Run command",
+            required: "Complete the required fields.", collapse: "Collapse categories", expand: "Expand categories",
+            favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close"
+        }
     };
 
     function language() {
@@ -41,12 +69,39 @@
         });
         return control;
     }
+    function readPreferences() {
+        try {
+            var value = JSON.parse(window.localStorage.getItem(PREFERENCES_KEY) || "{}");
+            return value && typeof value === "object" ? value : {};
+        } catch (error) { return {}; }
+    }
+    function favoritePaths() {
+        var value = readPreferences();
+        return Array.isArray(value.favorites) ? value.favorites.map(String) : [];
+    }
+    function isFavorite(item) {
+        return !!(item && item.path && favoritePaths().indexOf(String(item.path)) >= 0);
+    }
+    function toolbarSvg(path) {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+    }
     function addIcon(host, iconData, kind) {
         if (iconData) {
-            var image = document.createElement("img"); image.className = "sirk-quick-command-icon"; image.alt = ""; image.src = iconData; host.appendChild(image); return;
+            var image = document.createElement("img");
+            image.className = "sirk-quick-command-icon";
+            image.alt = "";
+            image.src = iconData;
+            host.appendChild(image);
+            return;
         }
         var icon = element("span", "sirk-quick-command-icon");
-        var artwork = { folder: '<path d="M3 6h7l2 2h9v11H3V6Z"/>', network: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>', system: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>', other: '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>', script: '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>' };
+        var artwork = {
+            folder: '<path d="M3 6h7l2 2h9v11H3V6Z"/>',
+            network: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+            system: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+            other: '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>',
+            script: '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>'
+        };
         artwork.powershell = '<path d="M4 5h16v14H4z"/><path d="m8 9 3 3-3 3M13 15h4"/>';
         artwork.cmd = '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m7 10 3 2-3 2M12 15h5"/>';
         artwork.regedit = '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>';
@@ -73,7 +128,13 @@
     function flattenScripts(node, output) {
         (node && node.children || []).forEach(function (child) {
             if (child.type === "script") {
-                output.push({ kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), iconData: child.iconData || "", requiresApproval: false, confirmExecution: child.confirmExecution === true, variables: child.variables || [] });
+                output.push({
+                    kind: "script", path: child.path,
+                    label: localized(child, "label") || child.name || child.path,
+                    description: localized(child, "description"), iconData: child.iconData || "",
+                    requiresApproval: false, confirmExecution: child.confirmExecution === true,
+                    variables: child.variables || []
+                });
             } else flattenScripts(child, output);
         });
         return output;
@@ -81,10 +142,29 @@
     function scriptGroup(node) {
         var children = (node.children || []).filter(function (child) { return child.type !== "script"; }).map(scriptGroup).filter(Boolean);
         var items = (node.children || []).filter(function (child) { return child.type === "script"; }).map(function (child) {
-            return { kind: "script", path: child.path, label: localized(child, "label") || child.name || child.path, description: localized(child, "description"), iconData: child.iconData || "", requiresApproval: false, confirmExecution: child.confirmExecution === true, variables: child.variables || [] };
+            return {
+                kind: "script", path: child.path,
+                label: localized(child, "label") || child.name || child.path,
+                description: localized(child, "description"), iconData: child.iconData || "",
+                requiresApproval: false, confirmExecution: child.confirmExecution === true,
+                variables: child.variables || []
+            };
         });
         if (!items.length && !children.length) return null;
-        return { key: node.path || node.name, label: localized(node, "label") || node.name || node.path, iconData: node.iconData || "", items: items, children: children };
+        return {
+            key: node.path || node.name,
+            label: localized(node, "label") || node.name || node.path,
+            iconData: node.iconData || "", items: items, children: children
+        };
+    }
+    function filterGroup(group) {
+        var items = (group.items || []).filter(isFavorite);
+        var children = (group.children || []).map(filterGroup).filter(Boolean);
+        if (!items.length && !children.length) return null;
+        return {
+            key: group.key, label: group.label, iconData: group.iconData || "",
+            items: items, children: children
+        };
     }
     function categories(data) {
         var result = [];
@@ -93,15 +173,58 @@
         var looseScripts = [];
         (data.tree && data.tree.children || []).forEach(function (root) {
             if (root.type === "script") looseScripts.push(root);
-            else { var group = scriptGroup(root); if (group) scriptGroups.push(group); }
+            else {
+                var group = scriptGroup(root);
+                if (group) scriptGroups.push(group);
+            }
         });
-        if (looseScripts.length) scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []) });
-        if (scriptGroups.length) result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
+        if (looseScripts.length) {
+            scriptGroups.unshift({
+                key: "__root__", label: text("scripts"),
+                items: flattenScripts({ children: looseScripts }, []), children: []
+            });
+        }
+        if (scriptGroups.length) {
+            result.push({
+                key: "scripts", label: text("scripts"), groups: scriptGroups,
+                items: flattenScripts(data.tree, [])
+            });
+        }
         (data.catalog || []).forEach(function (category) {
-            var items = (category.commands || []).filter(function (command) { return command.showOnDesktop === true; }).map(function (command) { return { kind: "command", iconKind: command.id, commandId: command.id, label: localized(command, "label") || command.label || command.id, description: localized(command, "description") || command.description || "", requiresApproval: false, confirmExecution: command.confirmExecution === true, variables: command.variables || [] }; });
-            if (items.length) result.push({ key: "catalog:" + category.key, label: localized(category, "title") || category.title || category.key, iconKind: category.key, items: items });
+            var items = (category.commands || []).filter(function (command) {
+                return command.showOnDesktop === true;
+            }).map(function (command) {
+                return {
+                    kind: "command", iconKind: command.id, commandId: command.id,
+                    path: "@command/" + category.key + "/" + command.id,
+                    label: localized(command, "label") || command.label || command.id,
+                    description: localized(command, "description") || command.description || "",
+                    requiresApproval: false, confirmExecution: command.confirmExecution === true,
+                    variables: command.variables || []
+                };
+            });
+            if (items.length) {
+                result.push({
+                    key: "catalog:" + category.key,
+                    label: localized(category, "title") || category.title || category.key,
+                    iconKind: category.key, items: items
+                });
+            }
         });
-        return result.filter(function (category) { return category.items.length; });
+        if (state.favoritesOnly) {
+            result = result.map(function (category) {
+                var groups = (category.groups || []).map(filterGroup).filter(Boolean);
+                var items = (category.items || []).filter(isFavorite);
+                return {
+                    key: category.key, label: category.label,
+                    iconKind: category.iconKind, iconData: category.iconData,
+                    groups: groups, items: items
+                };
+            });
+        }
+        return result.filter(function (category) {
+            return (category.items && category.items.length) || (category.groups && category.groups.length);
+        });
     }
 
     function variableForm(host, item) {
@@ -117,42 +240,77 @@
             var input;
             if (variable.control === "select") {
                 input = protectInput(document.createElement("select"));
-                (variable.options || []).forEach(function (choice) { var option = document.createElement("option"); option.value = String(choice.value == null ? choice : choice.value); option.textContent = localized(choice, "label") || choice.label || option.value; input.appendChild(option); });
-            } else { input = protectInput(document.createElement("input")); input.type = variable.control === "switch" ? "checkbox" : "text"; }
+                (variable.options || []).forEach(function (choice) {
+                    var option = document.createElement("option");
+                    option.value = String(choice.value == null ? choice : choice.value);
+                    option.textContent = localized(choice, "label") || choice.label || option.value;
+                    input.appendChild(option);
+                });
+            } else {
+                input = protectInput(document.createElement("input"));
+                input.type = variable.control === "switch" ? "checkbox" : "text";
+            }
             if (input.type === "checkbox") input.checked = /^(1|true|yes|tak)$/i.test(String(variable.defaultValue || ""));
             else input.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
-            row.appendChild(input); host.appendChild(row); controls.push({ variable: variable, input: input });
+            row.appendChild(input);
+            host.appendChild(row);
+            controls.push({ variable: variable, input: input });
         });
         return function () {
             var values = {}, valid = true;
-            controls.forEach(function (entry) { var value = entry.input.type === "checkbox" ? entry.input.checked : entry.input.value; values[entry.variable.name] = value; if (entry.variable.required && entry.input.type !== "checkbox" && !String(value).trim()) valid = false; });
+            controls.forEach(function (entry) {
+                var value = entry.input.type === "checkbox" ? entry.input.checked : entry.input.value;
+                values[entry.variable.name] = value;
+                if (entry.variable.required && entry.input.type !== "checkbox" && !String(value).trim()) valid = false;
+            });
             return { ok: valid, values: values };
         };
     }
 
     function submit(item, collect, button, status) {
-        if (!desktopConnected()) { status.textContent = text("disconnected"); status.classList.add("is-error"); return; }
+        if (!desktopConnected()) {
+            status.textContent = text("disconnected");
+            status.classList.add("is-error");
+            return;
+        }
         var values = collect();
         if (values.cancelled) return;
-        if (!values.ok) { status.textContent = text("required"); status.classList.add("is-error"); return; }
+        if (!values.ok) {
+            status.textContent = text("required");
+            status.classList.add("is-error");
+            return;
+        }
         if (item.confirmExecution && !window.confirm(text("confirm") + ' "' + item.label + '"?')) return;
         var node = currentNode();
-        var payload = { nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values, confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: "" };
-        if (!payload.nodeId) { status.textContent = "Device is not ready."; status.classList.add("is-error"); return; }
-        if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
+        var payload = {
+            nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values,
+            confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: ""
+        };
+        if (!payload.nodeId) {
+            status.textContent = "Device is not ready.";
+            status.classList.add("is-error");
+            return;
+        }
+        if (item.kind === "command") payload.commandId = item.commandId;
+        else payload.scriptPath = item.path;
         if (button) button.disabled = true;
         status.textContent = text("loading");
         status.classList.remove("is-error");
         window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
             var request = response.request || {};
             var result = request.result || {};
-            if (request.status === "pending") { status.textContent = text("pending"); return; }
+            if (request.status === "pending") {
+                status.textContent = text("pending");
+                return;
+            }
             status.textContent = text("sent");
             if (result.id) waitForExecution(result.id, status, 0);
         }).catch(function (error) {
             status.textContent = text("failed") + " " + (error.message || String(error));
             status.classList.add("is-error");
-        }).then(function () { if (button) button.disabled = false; });
+        }).then(function () {
+            if (button) button.disabled = false;
+        });
     }
 
     function waitForExecution(id, status, attempt) {
@@ -165,7 +323,10 @@
                     return;
                 }
                 if (attempt < 20) waitForExecution(id, status, attempt + 1);
-                else { status.textContent = text("timeout"); status.classList.add("is-error"); }
+                else {
+                    status.textContent = text("timeout");
+                    status.classList.add("is-error");
+                }
             }).catch(function (error) {
                 status.textContent = text("failed") + " " + (error.message || String(error));
                 status.classList.add("is-error");
@@ -176,40 +337,200 @@
     function selectItem(panel, item, button) {
         var status = panel.querySelector(".sirk-quick-command-status");
         function use(value) {
-            if ((value.variables || []).length) { state.detail = value; render(panel); return; }
+            if ((value.variables || []).length) {
+                state.detail = value;
+                render(panel);
+                return;
+            }
             state.detail = value;
             render(panel);
             submit(value, function () { return { ok: true, values: {} }; }, null, panel.querySelector(".sirk-quick-command-status"));
         }
         status.textContent = "";
         status.classList.remove("is-error");
-        if (item.kind !== "script") { use(item); return; }
+        if (item.kind !== "script") {
+            use(item);
+            return;
+        }
         button.disabled = true;
         status.textContent = text("loading");
         window.SirkPlatformCore.api("mycommands", "script", null, { path: item.path }).then(function (response) {
             var script = response.script || item;
             status.textContent = "";
             button.disabled = false;
-            use({ kind: "script", path: script.path, label: localized(script, "label") || script.label || script.name, description: localized(script, "description") || script.description || "", variables: script.variables || [], requiresApproval: false, confirmExecution: script.confirmExecution === true });
-        }).catch(function (error) { button.disabled = false; status.textContent = error.message || String(error); status.classList.add("is-error"); });
+            use({
+                kind: "script", path: script.path,
+                label: localized(script, "label") || script.label || script.name,
+                description: localized(script, "description") || script.description || "",
+                variables: script.variables || [], requiresApproval: false,
+                confirmExecution: script.confirmExecution === true
+            });
+        }).catch(function (error) {
+            button.disabled = false;
+            status.textContent = error.message || String(error);
+            status.classList.add("is-error");
+        });
+    }
+
+    function closePanel(panel) {
+        panel.hidden = true;
+        var toggle = document.getElementById("SirkDesktopCommandsButton");
+        if (toggle) toggle.setAttribute("aria-expanded", "false");
+    }
+
+    function mountToolbar(panel, host) {
+        if (!window.SharedToolbar || !window.SharedToolbarConfig) {
+            var close = element("button", "sirk-quick-command-fallback-close", "×");
+            close.type = "button";
+            close.title = text("close");
+            close.onclick = function () { closePanel(panel); };
+            host.appendChild(close);
+            return null;
+        }
+
+        var toolbar = window.SharedToolbar.mount({
+            container: host,
+            preset: "mycommands",
+            buttons: {
+                collapse: {
+                    title: state.collapsed ? text("expand") : text("collapse"),
+                    side: "left", order: 10,
+                    onClick: function () {
+                        state.collapsed = !state.collapsed;
+                        render(panel);
+                    }
+                },
+                favorites: {
+                    title: state.favoritesOnly ? text("showAll") : text("favorites"),
+                    side: "left", order: 20,
+                    onClick: function () {
+                        state.favoritesOnly = !state.favoritesOnly;
+                        state.category = "";
+                        state.detail = null;
+                        render(panel);
+                    }
+                },
+                link: false,
+                manage: false,
+                refresh: {
+                    title: text("refresh"), side: "left", order: 50,
+                    onClick: function () {
+                        state.data = null;
+                        state.detail = null;
+                        load(panel);
+                    }
+                },
+                multi: false,
+                search: { title: text("search"), side: "left", order: 70 },
+                clear: false,
+                settings: false
+            },
+            customButtons: [{
+                key: "close", title: text("close"), side: "right", order: 200,
+                icon: toolbarSvg('<path d="m6 6 12 12M18 6 6 18"/>'),
+                onClick: function () { closePanel(panel); }
+            }],
+            handlers: {
+                onSearch: function (value) {
+                    state.search = String(value || "");
+                    state.searchVisible = true;
+                    render(panel);
+                }
+            }
+        });
+
+        toolbar.setTitle("collapse", state.collapsed ? text("expand") : text("collapse"));
+        toolbar.setActive("collapse", state.collapsed);
+        var collapseDefinition = window.SharedToolbarConfig.definitions && window.SharedToolbarConfig.definitions.collapse;
+        if (collapseDefinition) {
+            toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon);
+        }
+        toolbar.setTitle("favorites", state.favoritesOnly ? text("showAll") : text("favorites"));
+        toolbar.setActive("favorites", state.favoritesOnly);
+        toolbar.setTitle("refresh", text("refresh"));
+        toolbar.setTitle("search", text("search"));
+        toolbar.setActive("search", state.searchVisible);
+        toolbar.setTitle("close", text("close"));
+
+        if (toolbar.buttons.search) {
+            toolbar.buttons.search.onclick = function () {
+                state.searchVisible = !state.searchVisible;
+                if (!state.searchVisible) state.search = "";
+                render(panel);
+            };
+        }
+        toolbar.state.search = state.search;
+        toolbar.searchInput.value = state.search;
+        protectInput(toolbar.searchInput);
+        toolbar.showSearch(state.searchVisible, false);
+        if (state.searchVisible) {
+            window.setTimeout(function () {
+                if (!toolbar.searchInput.isConnected) return;
+                toolbar.searchInput.focus();
+                toolbar.searchInput.setSelectionRange(toolbar.searchInput.value.length, toolbar.searchInput.value.length);
+            }, 0);
+        }
+        return toolbar;
     }
 
     function render(panel) {
         var all = categories(state.data || {});
-        if (!all.some(function (category) { return category.key === state.category; })) state.category = all[0] && all[0].key || "";
+        if (!all.some(function (category) { return category.key === state.category; })) {
+            state.category = all[0] && all[0].key || "";
+        }
         var selected = all.find(function (category) { return category.key === state.category; });
         var groups = selected && selected.groups || [];
         var query = state.search.toLowerCase();
+
         panel.innerHTML = "";
-        var header = element("header");
+        var header = element("header", "sirk-quick-command-header");
         header.appendChild(element("strong", "", text("title")));
-        var close = element("button", "", "×"); close.type = "button"; close.title = "Close"; header.appendChild(close); panel.appendChild(header);
-        var search = protectInput(document.createElement("input")); search.type = "search"; search.className = "sirk-quick-command-search"; search.placeholder = text("search"); search.value = state.search; panel.appendChild(search);
-        var browser = element("div", "sirk-quick-command-browser"), nav = element("nav", "sirk-quick-command-categories"), tree = element("nav", "sirk-quick-command-tree"), details = element("section", "sirk-quick-command-details");
-        all.forEach(function (category) { var button = element("button", category.key === state.category ? "is-active" : ""); button.type = "button"; addIcon(button, category.iconData, category.iconKind || "folder"); button.appendChild(element("span", "", category.label)); button.onclick = function () { state.category = category.key; state.detail = null; render(panel); }; nav.appendChild(button); });
-        function matches(item) { return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0; }
-        function groupMatches(group) { return !query || (group.items || []).some(matches) || (group.children || []).some(groupMatches); }
-        function appendItem(item, depth) { if (!matches(item)) return; var button = element("button", state.detail && (state.detail.path || state.detail.commandId) === (item.path || item.commandId) ? "is-active" : ""); button.type = "button"; button.style.setProperty("--sdc-depth", String(depth)); addIcon(button, item.iconData, item.iconKind || "script"); var copy = element("span", "sirk-quick-command-copy"); copy.appendChild(element("strong", "", item.label)); button.appendChild(copy); button.onclick = function () { selectItem(panel, item, button); }; tree.appendChild(button); }
+        panel.appendChild(header);
+
+        var toolbarHost = element("div", "sirk-quick-command-toolbar-host");
+        panel.appendChild(toolbarHost);
+        mountToolbar(panel, toolbarHost);
+
+        var browser = element("div", "sirk-quick-command-browser mc-shared-layout");
+        browser.classList.toggle("is-collapsed", state.collapsed);
+        var nav = element("nav", "sirk-quick-command-categories mc-shared-primary");
+        var tree = element("nav", "sirk-quick-command-tree mc-shared-secondary");
+        var details = element("section", "sirk-quick-command-details mc-shared-details");
+
+        all.forEach(function (category) {
+            var button = element("button", category.key === state.category ? "is-active" : "");
+            button.type = "button";
+            button.title = category.label;
+            addIcon(button, category.iconData, category.iconKind || "folder");
+            button.appendChild(element("span", "sirk-quick-command-label", category.label));
+            button.onclick = function () {
+                state.category = category.key;
+                state.detail = null;
+                render(panel);
+            };
+            nav.appendChild(button);
+        });
+
+        function matches(item) {
+            return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0;
+        }
+        function groupMatches(group) {
+            return !query || (group.items || []).some(matches) || (group.children || []).some(groupMatches);
+        }
+        function appendItem(item, depth) {
+            if (!matches(item)) return;
+            var selectedItem = state.detail && (state.detail.path || state.detail.commandId) === (item.path || item.commandId);
+            var button = element("button", selectedItem ? "is-active" : "");
+            button.type = "button";
+            button.title = item.label;
+            button.style.setProperty("--sdc-depth", String(depth));
+            addIcon(button, item.iconData, item.iconKind || "script");
+            var copy = element("span", "sirk-quick-command-copy");
+            copy.appendChild(element("strong", "sirk-quick-command-label", item.label));
+            button.appendChild(copy);
+            button.onclick = function () { selectItem(panel, item, button); };
+            tree.appendChild(button);
+        }
         function appendGroups(entries, depth) {
             entries.forEach(function (group) {
                 if (!groupMatches(group)) return;
@@ -217,43 +538,94 @@
                 var expanded = query || state.expanded[group.key];
                 var button = element("button", "sirk-quick-command-folder");
                 button.type = "button";
+                button.title = group.label;
                 button.style.setProperty("--sdc-depth", String(depth));
                 var arrow = element("span", "sirk-quick-command-arrow", hasContents ? (expanded ? "▼" : "▶") : "");
                 button.appendChild(arrow);
                 addIcon(button, group.iconData, "folder");
-                button.appendChild(element("span", "", group.label));
-                button.onclick = function () { if (hasContents) state.expanded[group.key] = !state.expanded[group.key]; render(panel); };
+                button.appendChild(element("span", "sirk-quick-command-label", group.label));
+                button.onclick = function () {
+                    if (hasContents) state.expanded[group.key] = !state.expanded[group.key];
+                    render(panel);
+                };
                 tree.appendChild(button);
-                if (expanded) { (group.items || []).forEach(function (item) { appendItem(item, depth + 1); }); appendGroups(group.children, depth + 1); }
+                if (expanded) {
+                    (group.items || []).forEach(function (item) { appendItem(item, depth + 1); });
+                    appendGroups(group.children, depth + 1);
+                }
             });
         }
-        if (groups.length) appendGroups(groups, 0); else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
-        if (!tree.children.length) tree.appendChild(element("p", "", text("empty")));
-        if (state.detail && (state.detail.variables || []).length) { var collect = variableForm(details, state.detail); var run = element("button", "sirk-quick-command-submit", "▶ " + text("run")); run.type = "button"; run.onclick = function () { submit(state.detail, collect, run, panel.querySelector(".sirk-quick-command-status")); }; details.appendChild(run); }
+
+        if (groups.length) appendGroups(groups, 0);
+        else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
+        if (!tree.children.length) {
+            tree.appendChild(element("p", "sirk-quick-command-empty", text(state.favoritesOnly ? "emptyFavorites" : "empty")));
+        }
+
+        if (state.detail && (state.detail.variables || []).length) {
+            var collect = variableForm(details, state.detail);
+            var run = element("button", "btn btn-primary mc-command-run-button sirk-quick-command-submit", "▶ " + text("run"));
+            run.type = "button";
+            run.onclick = function () {
+                submit(state.detail, collect, run, panel.querySelector(".sirk-quick-command-status"));
+            };
+            details.appendChild(run);
+        }
         details.appendChild(element("div", "sirk-quick-command-status"));
-        browser.appendChild(nav); browser.appendChild(tree); browser.appendChild(details); panel.appendChild(browser);
-        close.onclick = function () { panel.hidden = true; var toggle = document.getElementById("SirkDesktopCommandsButton"); if (toggle) toggle.setAttribute("aria-expanded", "false"); };
-        search.oninput = function () { state.search = search.value || ""; render(panel); var next = panel.querySelector(".sirk-quick-command-search"); if (next) { next.focus(); next.setSelectionRange(next.value.length, next.value.length); } };
+
+        browser.appendChild(nav);
+        browser.appendChild(tree);
+        browser.appendChild(details);
+        panel.appendChild(browser);
     }
 
     function load(panel) {
-        if (state.data) { render(panel); return; }
-        panel.innerHTML = ""; panel.appendChild(element("div", "sirk-quick-command-loading", text("loading")));
-        window.SirkPlatformCore.api("mycommands", "scripts", null, { surface: "desktop" }).then(function (response) { state.data = response; render(panel); })
-            .catch(function (error) { panel.innerHTML = ""; panel.appendChild(element("div", "sirk-quick-command-status is-error", error.message || String(error))); });
+        if (state.data) {
+            render(panel);
+            return;
+        }
+        panel.innerHTML = "";
+        panel.appendChild(element("div", "sirk-quick-command-loading", text("loading")));
+        window.SirkPlatformCore.api("mycommands", "scripts", null, { surface: "desktop" }).then(function (response) {
+            state.data = response;
+            render(panel);
+        }).catch(function (error) {
+            panel.innerHTML = "";
+            panel.appendChild(element("div", "sirk-quick-command-status is-error", error.message || String(error)));
+        });
     }
 
     function install() {
         var stage = document.getElementById("deskarea3x") || document.getElementById("DeskParent");
         var existing = document.getElementById("SirkDesktopCommands");
-        if (existing) { syncAvailability(existing); return true; }
+        if (existing) {
+            syncAvailability(existing);
+            return true;
+        }
         if (!stage) return false;
         stage.classList.add("sirk-desktop-commands-host");
-        var wrapper = element("div", "sirk-desktop-commands"); wrapper.id = "SirkDesktopCommands";
-        var button = element("button", "sirk-desktop-commands-toggle", "›_"); button.id = "SirkDesktopCommandsButton"; button.type = "button"; button.title = text("title"); button.setAttribute("aria-expanded", "false");
-        var panel = element("aside", "sirk-desktop-commands-panel"); panel.id = "SirkDesktopCommandsPanel"; panel.hidden = true;
-        wrapper.appendChild(button); wrapper.appendChild(panel); stage.appendChild(wrapper);
-        button.onclick = function () { if (!desktopConnected()) { syncAvailability(wrapper); return; } panel.hidden = !panel.hidden; button.setAttribute("aria-expanded", panel.hidden ? "false" : "true"); if (!panel.hidden) load(panel); };
+        var wrapper = element("div", "sirk-desktop-commands");
+        wrapper.id = "SirkDesktopCommands";
+        var button = element("button", "sirk-desktop-commands-toggle", "›_");
+        button.id = "SirkDesktopCommandsButton";
+        button.type = "button";
+        button.title = text("title");
+        button.setAttribute("aria-expanded", "false");
+        var panel = element("aside", "sirk-desktop-commands-panel");
+        panel.id = "SirkDesktopCommandsPanel";
+        panel.hidden = true;
+        wrapper.appendChild(button);
+        wrapper.appendChild(panel);
+        stage.appendChild(wrapper);
+        button.onclick = function () {
+            if (!desktopConnected()) {
+                syncAvailability(wrapper);
+                return;
+            }
+            panel.hidden = !panel.hidden;
+            button.setAttribute("aria-expanded", panel.hidden ? "false" : "true");
+            if (!panel.hidden) load(panel);
+        };
         syncAvailability(wrapper);
         return true;
     }
