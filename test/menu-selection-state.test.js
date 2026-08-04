@@ -10,57 +10,44 @@ var helper = fs.readFileSync(path.join(root, "public", "shared", "ui", "download
 var style = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
 var runtime = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"), "utf8");
 
-assert.ok(core.indexOf("core.activateMenu = function (viewMode)") >= 0,
-    "Opening a SIRK workspace must synchronize the native MeshCentral menu selection.");
-assert.ok(core.indexOf("core.workspaceState.menuSelection = peers.map") >= 0,
-    "The previous native menu selection must be captured before changing it.");
-assert.ok(core.indexOf('isLeft ? "lbbuttonsel2" : "fullselect"') >= 0,
-    "Opening a SIRK workspace must immediately use MeshCentral's fully selected left-menu class.");
-assert.ok(core.indexOf('document.querySelectorAll(\'[id^="MainMenu"],[id^="LeftMenu"]\')') >= 0,
-    "Immediate selection must clear every native menu entry, including My Devices.");
-assert.ok(core.indexOf("item.element.className = item.className") >= 0,
-    "Leaving the SIRK workspace must restore the original native menu classes.");
+assert.ok(core.indexOf("core.preparePluginMenuItem = function (item)") >= 0,
+    "Menu entries must use the proven native plugin menu preparation flow.");
+assert.ok(core.indexOf('item.setAttribute("data-meshcentral-plugin-menu"') >= 0,
+    "Every SIRK menu item must be registered as an ordered MeshCentral plugin entry.");
+assert.ok(core.indexOf("items = Array.prototype.slice.call(host.children)") >= 0 &&
+    core.indexOf("data-meshcentral-plugin-menu") >= 0,
+    "Plugin menu entries must be sorted deterministically after the native Devices anchor.");
+assert.ok(core.indexOf("core.setPluginMenuActive = function (main, left, active)") >= 0,
+    "One shared native activation helper must control every SIRK module.");
+assert.ok(core.indexOf('left.classList.add(modernMenuItem(left) ? "active" : "lbbuttonsel2")') >= 0,
+    "Legacy left navigation must use MeshCentral's native lbbuttonsel2 state.");
+assert.ok(core.indexOf("#MainMenuSpan [id^='MainMenu']") >= 0 &&
+    core.indexOf("#page_leftbar [id^='LeftMenu']") >= 0,
+    "Selection clearing must be scoped to the actual MeshCentral navigation containers.");
+assert.ok(core.indexOf("core.activeViewMode = value") >= 0,
+    "The current SIRK module must be tracked explicitly instead of inferred from redraw side effects.");
+assert.ok(core.indexOf("core.activateMenu(viewMode)") >= 0,
+    "Opening a SIRK workspace must select its menu immediately.");
+assert.ok(core.indexOf("core.isNativeMenuTarget = function (target)") >= 0,
+    "Only a real native menu activation may close the active SIRK workspace.");
 
-assert.ok(helper.indexOf("function activeSirkViewMode()") >= 0,
-    "Active navigation must be resolved independently from a stale URL query string.");
-assert.ok(helper.indexOf("core && core.workspaceState && core.workspaceState.viewMode") >= 0,
-    "The live SIRK workspace must be the primary active-module source.");
-assert.ok(helper.indexOf("function syncActiveSirkMenu()") >= 0,
-    "The active SIRK menu must be re-applied after MeshCentral redraws navigation.");
-assert.ok(helper.indexOf("document.querySelectorAll('[id^=\"MainMenu\"],[id^=\"LeftMenu\"]')") >= 0,
-    "All native and plugin menu entries must be considered, not only direct siblings.");
-assert.ok(helper.indexOf('left ? "lbbuttonsel2" : "fullselect"') >= 0,
-    "Legacy left navigation must use MeshCentral's actual selected class lbbuttonsel2.");
-assert.ok(helper.indexOf("sirk-native-menu-selected") >= 0,
-    "The selected SIRK menu item must have a deterministic plugin-owned visual state.");
-assert.ok(helper.indexOf("function setImportantStyle(item, property, value)") >= 0,
-    "Inline selection styling must be idempotent to avoid mutation-observer loops.");
-assert.ok(helper.indexOf('attributeFilter: ["class", "style"]') >= 0,
-    "Native class and inline-style changes must trigger menu re-synchronization.");
-assert.ok(helper.indexOf("window.setTimeout(scan, 250)") >= 0,
-    "The active state must be re-applied after delayed native go(1) rendering.");
-assert.ok(helper.indexOf('item.setAttribute("aria-current", "page")') >= 0,
-    "The active SIRK entry must expose the current-page state.");
-assert.ok(core.indexOf('document.documentElement.classList.add("sirk-platform-workspace-active")') >= 0 &&
-    core.indexOf('document.documentElement.classList.remove("sirk-platform-workspace-active")') >= 0,
-    "The document must expose and clear the lifetime of an active SIRK workspace.");
-assert.ok(core.indexOf("core.isNativeMenuTarget = function (target)") >= 0 &&
-    core.indexOf("!core.isNativeMenuTarget(event.target)") >= 0,
-    "Blank workspace and page gaps must not restore My Devices; only native menu controls may do so.");
+assert.ok(helper.indexOf("function syncActiveSirkMenu()") < 0,
+    "The download-results helper must not own or rewrite navigation state.");
+assert.ok(helper.indexOf("sirk-native-menu-selected") < 0,
+    "No second plugin-owned selected class may compete with MeshCentral's native menu classes.");
+assert.ok(helper.indexOf('attributeFilter: ["class", "style"]') < 0,
+    "Download and command helpers must not observe menu class/style mutations.");
+assert.ok(helper.indexOf("installCommandNodeResolver()") >= 0 &&
+    helper.indexOf("installMountHook()") >= 0,
+    "Removing menu workarounds must preserve command node resolution and download handling.");
+
+assert.ok(style.indexOf("sirk-platform-workspace-active .lbbutton") < 0,
+    "Shared styles must not globally override inactive or active MeshCentral menu entries.");
+assert.ok(style.indexOf("background-color:rgba(80,120,200,.28)!important") < 0,
+    "The selected state must come from the native host theme, not a forced plugin color.");
+
 assert.ok(runtime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0 &&
     runtime.indexOf('core.activateMenu(core.workspaceState.viewMode)') >= 0,
-    "Shared p1 redraws must preserve the SIRK workspace and reselect its active menu item.");
-assert.ok(style.indexOf('.lbbutton[id^="LeftMenu"]:not([aria-current="page"])') >= 0 &&
-    style.indexOf('.lbbutton[id^="LeftMenu"][aria-current="page"]') >= 0,
-    "A stale native Devices selection must be visually suppressed while SIRK is active.");
-assert.ok(style.indexOf("background:transparent!important") >= 0 &&
-    style.indexOf("box-shadow:none!important") >= 0,
-    "Inactive native entries must not retain a second selected background or accent.");
-assert.ok(style.indexOf("background-color:rgba(80,120,200,.28)!important") >= 0 &&
-    style.indexOf("box-shadow:inset 3px 0 #4f7df3!important") >= 0,
-    "The active SIRK left-menu item must remain clearly visible in both host themes.");
-assert.ok(helper.indexOf('setImportantStyle(item, "background-color"') < 0 &&
-    helper.indexOf("background:#f4f6f8!important") < 0,
-    "The active left-menu fill must not force a light-only color in night mode.");
+    "A native p1 redraw must preserve the current SIRK module and reapply its native selection.");
 
-console.log("SIRK menu selection state: OK");
+console.log("Native SIRK menu controller: OK");
