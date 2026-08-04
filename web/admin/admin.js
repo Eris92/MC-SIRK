@@ -110,7 +110,7 @@
         card.appendChild(element("h5", "", label));
         if (source.key && source.key !== label) card.appendChild(element("div", "mc-admin-permission-key", source.key));
         var enabled = checked(card, "Enable this category or folder", source.enabled !== false);
-        var allowAll = checked(card, "Allow every user who has module access", source.allowAll === true);
+        var allowAll = checked(card, "Allow every user who has module access", source.configured === false ? true : source.allowAll === true);
         var groups = groupLevel(card, "Allowed MeshCentral user groups", source.groupIds || []);
         function sync() {
             allowAll.disabled = !enabled.checked;
@@ -131,6 +131,12 @@
     function modulePermissions(host, key, title, source, folders) {
         source = source || {};
         folders = Array.isArray(folders) ? folders : [];
+        var configuredRules = source.folderPermissions && typeof source.folderPermissions === "object" && !Array.isArray(source.folderPermissions) ? source.folderPermissions : {};
+        folders = folders.map(function (folder) {
+            var item = Object.assign({}, folder || {});
+            item.configured = Object.prototype.hasOwnProperty.call(configuredRules, String(item.key || ""));
+            return item;
+        });
         var card = element("section", "mc-admin-provider-card mc-admin-permission-module");
         card.appendChild(element("h4", "", title));
         card.appendChild(element("p", "mc-admin-card-description", "Module access is evaluated first. Device permissions configured in MeshCentral are always required as well."));
