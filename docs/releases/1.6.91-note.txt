@@ -1,1 +1,0 @@
-My Commands native device-tab styling is covered by the shared .mc-shared-page contract and the button-style regression test.
