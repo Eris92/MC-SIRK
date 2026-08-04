@@ -48,15 +48,122 @@
         });
     }
 
+    function routeState(view, storedPage, activePage, pageId) {
+        view = Number(view);
+        storedPage = String(storedPage || "");
+        activePage = String(activePage || "");
+        pageId = String(pageId || "");
+        return {
+            pluginView: view === 19,
+            commandsRequested: storedPage === pageId,
+            commandsActive: view === 19 && activePage === pageId
+        };
+    }
+
     function createDeviceIntegration(definition, state, api, mountPage) {
         var options = definition.deviceTab || null;
         if (!options) return null;
         var pageId = options.pageId || ("sirk-platform-" + definition.key + "-device-page");
         var topTabId = options.topTabId || ("MainDevSirkPlatform-" + definition.key);
         var title = options.title || definition.title;
+        var previousPageKey = "sirkPlatform.previousNativePluginPage";
+        var activeKey = "sirkPlatform.commandsDeviceActive";
         var retryTimer = null;
         var retryCount = 0;
+        var reconcileTimers = [];
+        var mountedHost = null;
+        var mountedNodeId = "";
 
+        function currentView() {
+            return typeof window.xxcurrentView === "undefined" ? 0 : Number(window.xxcurrentView);
+        }
+        function getStoredPage() {
+            try {
+                if (typeof window.getstore === "function") return String(window.getstore("_curPluginPage", "") || "");
+            } catch (error) {}
+            try { return String(window.localStorage.getItem("_curPluginPage") || ""); }
+            catch (error2) { return ""; }
+        }
+        function putStoredPage(value) {
+            value = String(value || "");
+            try {
+                if (typeof window.putstore === "function") window.putstore("_curPluginPage", value);
+                else window.localStorage.setItem("_curPluginPage", value);
+            } catch (error) {}
+        }
+        function sessionGet(key) {
+            try { return String(window.sessionStorage.getItem(key) || ""); }
+            catch (error) { return ""; }
+        }
+        function sessionSet(key, value) {
+            try { window.sessionStorage.setItem(key, String(value == null ? "" : value)); }
+            catch (error) {}
+        }
+        function headerPageId(header) {
+            return String(header && header.id || "").replace(/^p19ph-/, "");
+        }
+        function activePageId() {
+            return headerPageId(document.querySelector("#p19headers span.on") || document.querySelector("#p19headers .on"));
+        }
+        function nativePageFromHeaders() {
+            var active = activePageId();
+            if (active && active !== pageId) return active;
+            var headers = document.querySelectorAll ? document.querySelectorAll("#p19headers [id^='p19ph-']") : [];
+            for (var index = 0; index < headers.length; index += 1) {
+                var id = headerPageId(headers[index]);
+                if (id && id !== pageId) return id;
+            }
+            return "";
+        }
+        function rememberNativePage() {
+            var current = getStoredPage();
+            if (!current || current === pageId) current = activePageId();
+            if (!current || current === pageId) current = nativePageFromHeaders();
+            if (current && current !== pageId) sessionSet(previousPageKey, current);
+            return current && current !== pageId ? current : "";
+        }
+        function previousNativePage() {
+            var target = sessionGet(previousPageKey);
+            if (!target || target === pageId) target = nativePageFromHeaders();
+            return target === pageId ? "" : target;
+        }
+        function selectPluginPage(target) {
+            target = String(target || "");
+            var handler = window.pluginHandler;
+            var header = target ? document.getElementById("p19ph-" + target) : null;
+            if (header && handler && typeof handler.callPluginPage === "function") {
+                handler.callPluginPage(target, header);
+                return true;
+            }
+            return false;
+        }
+        function clearCommandsNestedSelection() {
+            var header = document.getElementById("p19ph-" + pageId);
+            var page = document.getElementById(pageId);
+            if (header) header.classList.remove("on");
+            if (page && page.style) page.style.display = "none";
+        }
+        function selectNativePage() {
+            var target = previousNativePage();
+            putStoredPage(target);
+            sessionSet(activeKey, "0");
+            if (!selectPluginPage(target)) clearCommandsNestedSelection();
+            return target;
+        }
+        function setDeviceTitle(active) {
+            var host = document.querySelector("#p19title h1") || document.getElementById("p19title");
+            if (!host || !host.childNodes) return;
+            var textNode = null;
+            for (var index = 0; index < host.childNodes.length; index += 1) {
+                if (host.childNodes[index] && host.childNodes[index].nodeType === 3 && String(host.childNodes[index].nodeValue || "").trim()) {
+                    textNode = host.childNodes[index];
+                    break;
+                }
+            }
+            if (!textNode) return;
+            if (host.__sirkNativeDeviceTitleText == null) host.__sirkNativeDeviceTitleText = textNode.nodeValue;
+            textNode.nodeValue = active ? String(title) : String(host.__sirkNativeDeviceTitleText || "Plugins");
+        }
         function enabled() {
             if (options.enabled === false) return false;
             if (typeof options.enabled === "function" && options.enabled(state.bootstrap, api) === false) return false;
@@ -67,6 +174,26 @@
             if (!window.pluginHandler || typeof window.pluginHandler.registerPluginTab !== "function") return false;
             window.pluginHandler.registerPluginTab({ tabId: pageId, tabTitle: title });
             return true;
+        }
+        function restoreNativeFromTab(event) {
+            if (event && ((event.which === 3) || (event.button === 2))) return;
+            selectNativePage();
+            update(19);
+            window.setTimeout(function () {
+                selectNativePage();
+                update(19);
+            }, 0);
+        }
+        function hookNativePluginsTab() {
+            var plugins = document.getElementById("MainDevPlugins");
+            if (!plugins || plugins.__sirkModuleDeviceRoutingHooked) return;
+            plugins.__sirkModuleDeviceRoutingHooked = true;
+            plugins.addEventListener("mousedown", restoreNativeFromTab, true);
+            plugins.addEventListener("mouseup", restoreNativeFromTab, true);
+            plugins.addEventListener("click", restoreNativeFromTab, true);
+            plugins.addEventListener("keypress", function (event) {
+                if (event && event.key === "Enter") restoreNativeFromTab(event);
+            }, true);
         }
         function ensureTopTab() {
             if (!enabled()) return false;
@@ -84,48 +211,102 @@
                 anchor.parentNode.insertBefore(tab, anchor.nextSibling);
             }
             tab.style.display = "";
+            hookNativePluginsTab();
             return true;
         }
         function remove() {
+            reconcileTimers.forEach(function (timer) { window.clearTimeout(timer); });
+            reconcileTimers = [];
             [topTabId, "p19ph-" + pageId, pageId].forEach(function (id) {
                 var element = document.getElementById(id);
                 if (element && element.parentNode) element.parentNode.removeChild(element);
             });
+            mountedHost = null;
+            mountedNodeId = "";
+            setDeviceTitle(false);
         }
-        function mountDevicePage() {
+        function mountDevicePage(force) {
             var host = document.getElementById(pageId);
+            var currentNode = String(state.nodeId || window.__SIRK_CURRENT_NODE_ID__ || window.selectedNode || "");
             if (!host) return false;
+            if (force !== true && host === mountedHost && mountedNodeId === currentNode && host.childNodes && host.childNodes.length > 0) return true;
             mountPage(host, "device");
+            mountedHost = host;
+            mountedNodeId = currentNode;
+            host.__sirkDeviceMountedNodeId = currentNode;
             return true;
-        }
-        function open(event) {
-            if (event && ((event.which === 3) || (event.button === 2))) return false;
-            registerPage();
-            if (typeof window.putstore === "function") window.putstore("_curPluginPage", pageId);
-            if (typeof window.go === "function") window.go(19, event);
-            window.setTimeout(function () {
-                var header = document.getElementById("p19ph-" + pageId);
-                if (header && window.pluginHandler && typeof window.pluginHandler.callPluginPage === "function") window.pluginHandler.callPluginPage(pageId, header);
-                ensureTopTab();
-                mountDevicePage();
-                update(19);
-            }, 0);
-            if (event && event.preventDefault) event.preventDefault();
-            return false;
         }
         function update(view) {
             var tab = document.getElementById(topTabId);
-            if (!tab) return;
-            if (view == null && typeof window.xxcurrentView !== "undefined") view = window.xxcurrentView;
-            var activeHeader = document.querySelector("#p19headers span.on");
-            var moduleHeader = document.getElementById("p19ph-" + pageId);
-            var active = Number(view) === 19 && activeHeader === moduleHeader;
-            tab.classList.remove("style3x", "style3sel");
-            tab.classList.add(active ? "style3sel" : "style3x");
-            var pluginTab = document.getElementById("MainDevPlugins");
-            if (pluginTab && active) { pluginTab.classList.remove("style3sel"); pluginTab.classList.add("style3x"); }
+            var plugins = document.getElementById("MainDevPlugins");
             var headers = document.getElementById("p19headers");
-            if (headers) headers.style.display = active ? "none" : "";
+            if (view == null) view = currentView();
+            var status = routeState(view, getStoredPage(), activePageId(), pageId);
+            var active = status.commandsActive;
+
+            if (tab) {
+                tab.classList.remove("style3x", "style3sel");
+                tab.classList.add(active ? "style3sel" : "style3x");
+            }
+            if (plugins) {
+                plugins.classList.remove("style3x", "style3sel");
+                plugins.classList.add(status.pluginView && !active ? "style3sel" : "style3x");
+                plugins.style.display = "";
+            }
+            if (headers) {
+                if (active) headers.style.setProperty("display", "none", "important");
+                else headers.style.removeProperty("display");
+            }
+            setDeviceTitle(active);
+            document.documentElement.classList.toggle("sirk-device-commands-active", active);
+            return active;
+        }
+        function reconcile() {
+            if (!enabled()) { remove(); return false; }
+            if (!registerPage()) return false;
+            ensureTopTab();
+
+            var view = currentView();
+            var stored = getStoredPage();
+            if (view === 19 && stored === pageId) {
+                var header = document.getElementById("p19ph-" + pageId);
+                if (header && activePageId() !== pageId) selectPluginPage(pageId);
+                if (update(19)) mountDevicePage(false);
+                return true;
+            }
+
+            if (view === 19) {
+                if (activePageId() === pageId || stored === pageId) selectNativePage();
+                update(19);
+                return true;
+            }
+
+            if (activePageId() === pageId || stored === pageId) selectNativePage();
+            update(view);
+            return true;
+        }
+        function scheduleReconcile() {
+            reconcileTimers.forEach(function (timer) { window.clearTimeout(timer); });
+            reconcileTimers = [0, 25, 100, 300, 750].map(function (delay) {
+                return window.setTimeout(reconcile, delay);
+            });
+        }
+        function open(event) {
+            if (event && ((event.which === 3) || (event.button === 2))) return false;
+            rememberNativePage();
+            sessionSet(activeKey, "1");
+            registerPage();
+            putStoredPage(pageId);
+            if (typeof window.go === "function") window.go(19, event);
+            window.setTimeout(function () {
+                selectPluginPage(pageId);
+                ensureTopTab();
+                update(19);
+                mountDevicePage(false);
+                scheduleReconcile();
+            }, 0);
+            if (event && event.preventDefault) event.preventDefault();
+            return false;
         }
         function sync() {
             if (!enabled()) { remove(); return false; }
@@ -141,18 +322,34 @@
             }
             retryCount = 0;
             ensureTopTab();
+            scheduleReconcile();
             return true;
         }
         return {
             open: open,
             sync: sync,
             update: update,
-            onDeviceRefreshEnd: function (nodeId) { state.nodeId = String(nodeId || ""); sync(); },
-            onNativePageEnd: function (view) { sync(); update(view); }
+            reconcile: reconcile,
+            onDeviceRefreshEnd: function (nodeId) {
+                state.nodeId = String(nodeId || "");
+                mountedHost = null;
+                mountedNodeId = "";
+                sync();
+            },
+            onNativePageStart: function (view) {
+                if (Number(view) !== 19 && (getStoredPage() === pageId || activePageId() === pageId)) selectNativePage();
+                update(view);
+            },
+            onNativePageEnd: function (view) {
+                sync();
+                scheduleReconcile();
+                update(view);
+            }
         };
     }
 
     window.SirkPlatformModuleShell = {
+        routeState: routeState,
         create: function (definition) {
             definition.viewMode = Number(definition.viewMode || VIEW_MODES[definition.key] || 960);
             var state = {
@@ -309,8 +506,9 @@
                     state.nodeId = String(nodeId || "");
                     if (device) device.onDeviceRefreshEnd(nodeId);
                 },
-                onNativePageStart: function () {
+                onNativePageStart: function (view) {
                     if (state.active) close(true);
+                    if (device) device.onNativePageStart(view);
                 },
                 onNativePageEnd: function (view) {
                     if (menuEnabled()) registerMenu(definition, open);
