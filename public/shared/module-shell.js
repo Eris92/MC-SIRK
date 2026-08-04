@@ -4,6 +4,7 @@
     var VIEW_MODES = {
         myscripts: 101,
         mycommands: 102,
+        approvalcenter: 105,
         moverequests: 106
     };
 
@@ -40,7 +41,7 @@
             mainId: "MainMenuSirkPlatform-" + definition.key,
             leftId: "LeftMenuSirkPlatform-" + definition.key,
             title: definition.menuTitle || definition.title,
-            order: definition.order || 200,
+            order: definition.order || definition.viewMode || 200,
             viewMode: definition.viewMode,
             icon: definition.menuIcon || "",
             open: open
@@ -154,7 +155,17 @@
     window.SirkPlatformModuleShell = {
         create: function (definition) {
             definition.viewMode = Number(definition.viewMode || VIEW_MODES[definition.key] || 960);
-            var state = { page: null, pages: {}, tab: definition.defaultTab || "main", search: "", nodeId: "", bootstrap: null };
+            var state = {
+                page: null,
+                pages: {},
+                tab: definition.defaultTab || "main",
+                search: "",
+                nodeId: "",
+                bootstrap: null,
+                active: false,
+                opening: false
+            };
+            var moduleInstance = null;
 
             function syncCollapseControl(page) {
                 if (!page || !page.toolbar || !page.layout || !page.toolbar.buttons.collapse) return;
@@ -192,29 +203,75 @@
                 return page;
             }
 
-            function updateUrl() {
+            function menuEnabled() {
+                if (definition.showInMenu === false) return false;
+                return !(state.bootstrap && state.bootstrap.config && state.bootstrap.config.showInMenu === false);
+            }
+
+            function setRequestedInUrl(enabled) {
                 try {
                     var url = new URL(window.location.href);
-                    url.searchParams.set("viewmode", String(definition.viewMode));
-                    window.history.replaceState(null, "", url.href);
+                    if (enabled) url.searchParams.set("viewmode", String(definition.viewMode));
+                    else if (Number(url.searchParams.get("viewmode")) === definition.viewMode) url.searchParams.delete("viewmode");
+                    if (url.hash === "#") url.hash = "";
+                    window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
                 } catch (error) {}
+            }
+
+            function isRequestedInUrl() {
+                try { return Number(new URL(window.location.href).searchParams.get("viewmode")) === definition.viewMode; }
+                catch (error) { return false; }
+            }
+
+            function syncMenu() {
+                core.setPluginMenuActive(
+                    document.getElementById("MainMenuSirkPlatform-" + definition.key),
+                    document.getElementById("LeftMenuSirkPlatform-" + definition.key),
+                    state.active === true
+                );
+            }
+
+            function close(clearUrl) {
+                if (!state.active && core.activePlugin !== moduleInstance) {
+                    if (clearUrl) setRequestedInUrl(false);
+                    syncMenu();
+                    return;
+                }
+                state.active = false;
+                if (core.activePlugin === moduleInstance) core.activePlugin = null;
+                if (core.workspaceState && Number(core.workspaceState.viewMode) === definition.viewMode) core.restoreWorkspace();
+                syncMenu();
+                if (clearUrl) setRequestedInUrl(false);
             }
 
             function open(event) {
                 if (event && ((event.which === 3) || (event.button === 2))) return false;
-                updateUrl();
-                return core.showWorkspace(definition.title, definition.viewMode, function (host) { mountPage(host, "workspace"); });
-            }
-
-            function menuEnabled() {
-                if (definition.showInMenu === false) return false;
-                return !(state.bootstrap && state.bootstrap.config && state.bootstrap.config.showInMenu === false);
+                if (state.opening) return false;
+                state.opening = true;
+                try {
+                    if (typeof window.go === "function") window.go(1);
+                    if (core.activePlugin && core.activePlugin !== moduleInstance && typeof core.activePlugin.close === "function") {
+                        core.activePlugin.close(false);
+                    }
+                    if (!core.showWorkspace(definition.title, definition.viewMode, function (host) { mountPage(host, "workspace"); })) return false;
+                    core.activePlugin = moduleInstance;
+                    core.clearNativeMenuSelection();
+                    state.active = true;
+                    syncMenu();
+                    if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = definition.viewMode;
+                    setRequestedInUrl(true);
+                    if (event && event.preventDefault) event.preventDefault();
+                    return false;
+                } finally {
+                    state.opening = false;
+                }
             }
 
             var api = {
                 definition: definition,
                 state: state,
                 open: open,
+                close: close,
                 mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: function () {
                     if (!state.page) return;
@@ -231,28 +288,37 @@
             };
 
             var device = createDeviceIntegration(definition, state, api, mountPage);
-            return {
+            moduleInstance = {
                 initialize: function (bootstrapState) {
                     state.bootstrap = bootstrapState || null;
                     if (state.bootstrap && state.bootstrap.config) {
                         definition.menuIcon = state.bootstrap.config.leftMenuIconUrl || state.bootstrap.config.menuIcon || definition.menuIcon;
                     }
                     if (menuEnabled()) registerMenu(definition, open);
+                    syncMenu();
                     if (device) device.sync();
-                    try {
-                        var requested = Number(new URL(window.location.href).searchParams.get("viewmode"));
-                        if (requested === definition.viewMode) window.setTimeout(function () { open(); }, 0);
-                    } catch (error) {}
+                    if (isRequestedInUrl()) window.setTimeout(function () { open(); }, 0);
                     return Promise.resolve();
                 },
                 open: open,
+                close: close,
                 mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: api.render,
                 api: api,
-                onDeviceRefreshEnd: function (nodeId) { state.nodeId = String(nodeId || ""); if (device) device.onDeviceRefreshEnd(nodeId); },
-                onNativePageStart: function () {},
-                onNativePageEnd: function (view) { if (menuEnabled()) registerMenu(definition, open); if (device) device.onNativePageEnd(view); }
+                onDeviceRefreshEnd: function (nodeId) {
+                    state.nodeId = String(nodeId || "");
+                    if (device) device.onDeviceRefreshEnd(nodeId);
+                },
+                onNativePageStart: function () {
+                    if (state.active) close(true);
+                },
+                onNativePageEnd: function (view) {
+                    if (menuEnabled()) registerMenu(definition, open);
+                    syncMenu();
+                    if (device) device.onNativePageEnd(view);
+                }
             };
+            return moduleInstance;
         }
     };
 }());
