@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    window.__sirkNativeCommandAutoRun = true;
+
     var sourceTree = null;
     var catalog = [];
     var tree = null;
@@ -209,7 +211,7 @@
                 mode = "commands";
                 treeState.selectedScript = item.path;
                 tools.saveTreeState(treeState);
-                show(shell, item, false);
+                show(shell, item, true);
             }
         });
         var resultsLabel = shell.state.page.primary.querySelector(".mc-catalog-results .mc-tree-label"); if (resultsLabel) resultsLabel.textContent = msg("Wyniki", "Results");
