@@ -31,6 +31,10 @@ assert.ok(css.indexOf(".mc-tree-favorite-action.active") >= 0 &&
     css.indexOf(".mc-tree-credential-action") >= 0 &&
     css.indexOf("color:var(--sirk-favorite)!important") >= 0,
     "An active favorite star must use the same gold icon treatment as credentials.");
+assert.ok(css.indexOf("/* My Commands can mount as a native device tab outside SirkPlatformWorkspace. */") >= 0 &&
+    css.indexOf(".mc-shared-page{--sirk-button-bg") >= 0 &&
+    css.indexOf(".mc-shared-page :is(.sirk-button,.btn,.mc-command-run-button") >= 0,
+    "My Commands device tabs must receive the same live-theme button contract outside the main workspace.");
 assert.ok(css.indexOf(".mc-shared-nav-item") < 0 && css.indexOf(".mc-tree-folder-header") < 0,
     "Navigation rows must not be converted into action buttons.");
 
@@ -38,8 +42,11 @@ assert.ok(toolbarApi.indexOf('key === "favorites" ? false : value === false') >=
     "Show favorites must remain clickable while Results is active.");
 assert.ok(toolbarApi.indexOf('/^Show all\\b/i.test(item.title)') >= 0,
     "The favorites toolbar state must remain visible while Results is active.");
-assert.ok(toolbar.indexOf('definition.key === "favorites" && resultsActive()') >= 0 &&
-    toolbar.indexOf("leaveResultsAfterFavoritesRender") >= 0 &&
+assert.ok(toolbar.indexOf("function activePage()") >= 0 &&
+    toolbar.indexOf('document.querySelectorAll(".mc-shared-page")') >= 0 &&
+    toolbar.indexOf('page.querySelector(".mc-catalog-results.active,.mc-catalog-results.is-active")') >= 0,
+    "Favorites and Results navigation must resolve the active module page, including My Commands device tabs.");
+assert.ok(toolbar.indexOf("leaveResultsAfterFavoritesRender") >= 0 &&
     toolbar.indexOf("if (catalogRoot) catalogRoot.click()") >= 0,
     "Show favorites must leave Results immediately, including after an empty filter is cleared.");
 
@@ -48,4 +55,4 @@ var sharedCssIndex = adminView.indexOf("asset=main.css");
 assert.ok(adminCssIndex >= 0 && sharedCssIndex > adminCssIndex,
     "Settings must load the shared button contract after its compatibility stylesheet.");
 
-console.log("Shared live-theme button and favorites contract: OK");
+console.log("Shared live-theme button, favorites and Commands device-page contract: OK");
