@@ -216,7 +216,6 @@
         if (item.getAttribute("aria-current") !== "page") item.setAttribute("aria-current", "page");
 
         if (left && !modern) {
-            setImportantStyle(item, "background-color", "#f4f6f8");
             setImportantStyle(item, "border-radius", "5px 0 0 5px");
             setImportantStyle(item, "opacity", "1");
             setImportantStyle(item, "box-shadow", "none");
@@ -233,7 +232,7 @@
         style.id = "sirk-native-menu-selection-style";
         style.textContent = [
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected{",
-            "background:#f4f6f8!important;border-radius:5px 0 0 5px!important;",
+            "border-radius:5px 0 0 5px!important;",
             "opacity:1!important;box-shadow:none!important;width:82px!important}",
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .lbtg,",
             "[id^='LeftMenuSirkPlatform-'].sirk-native-menu-selected .sirk-platform-menu-icon,",
@@ -250,6 +249,7 @@
 
         var viewMode = activeSirkViewMode();
         if (!viewMode) return false;
+        document.documentElement.classList.add("sirk-platform-workspace-active");
 
         var main = document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');
         var left = document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');

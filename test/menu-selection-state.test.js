@@ -7,6 +7,7 @@ var path = require("path");
 var root = path.join(__dirname, "..");
 var core = fs.readFileSync(path.join(root, "public", "shared", "core.js"), "utf8");
 var helper = fs.readFileSync(path.join(root, "public", "shared", "ui", "download-results.js"), "utf8");
+var style = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
 
 assert.ok(core.indexOf("core.activateMenu = function (viewMode)") >= 0,
     "Opening a SIRK workspace must synchronize the native MeshCentral menu selection.");
@@ -29,8 +30,6 @@ assert.ok(helper.indexOf('left ? "lbbuttonsel2" : "fullselect"') >= 0,
     "Legacy left navigation must use MeshCentral's actual selected class lbbuttonsel2.");
 assert.ok(helper.indexOf("sirk-native-menu-selected") >= 0,
     "The selected SIRK menu item must have a deterministic plugin-owned visual state.");
-assert.ok(helper.indexOf('"background:#f4f6f8!important') >= 0,
-    "The active legacy menu item must receive a light filled background.");
 assert.ok(helper.indexOf("function setImportantStyle(item, property, value)") >= 0,
     "Inline selection styling must be idempotent to avoid mutation-observer loops.");
 assert.ok(helper.indexOf('attributeFilter: ["class", "style"]') >= 0,
@@ -39,5 +38,14 @@ assert.ok(helper.indexOf("window.setTimeout(scan, 250)") >= 0,
     "The active state must be re-applied after delayed native go(1) rendering.");
 assert.ok(helper.indexOf('item.setAttribute("aria-current", "page")') >= 0,
     "The active SIRK entry must expose the current-page state.");
+assert.ok(core.indexOf('document.documentElement.classList.add("sirk-platform-workspace-active")') >= 0 &&
+    core.indexOf('document.documentElement.classList.remove("sirk-platform-workspace-active")') >= 0,
+    "The document must expose and clear the lifetime of an active SIRK workspace.");
+assert.ok(style.indexOf('.lbbutton[id^="LeftMenu"]:not([aria-current="page"])') >= 0 &&
+    style.indexOf('.lbbutton[id^="LeftMenu"][aria-current="page"]') >= 0,
+    "A stale native Devices selection must be visually suppressed while SIRK is active.");
+assert.ok(helper.indexOf('setImportantStyle(item, "background-color"') < 0 &&
+    helper.indexOf("background:#f4f6f8!important") < 0,
+    "The active left-menu fill must come from MeshCentral's current light or night theme.");
 
 console.log("SIRK menu selection state: OK");

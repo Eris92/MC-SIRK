@@ -194,6 +194,7 @@
 
     core.restoreWorkspace = function () {
         var state = core.workspaceState;
+        document.documentElement.classList.remove("sirk-platform-workspace-active");
         if (state) {
             if (state.heading) state.heading.textContent = state.headingText;
             (state.hidden || []).forEach(function (item) {
@@ -271,6 +272,7 @@
         // custom so a later native go(1) is not discarded as a same-page no-op.
         if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
         core.workspaceState.viewMode = Number(viewMode);
+        document.documentElement.classList.add("sirk-platform-workspace-active");
         core.activateMenu(viewMode);
         heading.textContent = title;
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
