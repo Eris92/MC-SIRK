@@ -150,6 +150,46 @@
         return true;
     }
 
+    function customViewMode() {
+        try {
+            var value = Number(new URL(window.location.href).searchParams.get("viewmode"));
+            return [101, 102, 105, 106].indexOf(value) >= 0 ? String(value) : "";
+        } catch (error) {
+            return "";
+        }
+    }
+
+    function modernMenuItem(item) {
+        return !!item && (String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link"));
+    }
+
+    function clearMenuSelection(item) {
+        if (!item || !item.classList) return;
+        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2");
+        item.removeAttribute("aria-current");
+    }
+
+    function selectMenuItem(item, left) {
+        if (!item || !item.classList) return;
+        clearMenuSelection(item);
+        item.classList.add(modernMenuItem(item) ? "active" : (left ? "lbbuttonsel2" : "fullselect"));
+        item.setAttribute("aria-current", "page");
+    }
+
+    function syncActiveSirkMenu() {
+        var viewMode = customViewMode();
+        if (!viewMode || !document.getElementById("SirkPlatformWorkspace")) return false;
+
+        var main = document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');
+        var left = document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + viewMode + '"]');
+        if (!main && !left) return false;
+
+        document.querySelectorAll('[id^="MainMenu"],[id^="LeftMenu"]').forEach(clearMenuSelection);
+        selectMenuItem(main, false);
+        selectMenuItem(left, true);
+        return true;
+    }
+
     function ensureCommandRunStyle() {
         if (document.getElementById("sirk-command-run-style")) return;
         var style = document.createElement("style");
@@ -307,6 +347,7 @@
     }, true);
 
     function scan() {
+        syncActiveSirkMenu();
         installCommandNodeResolver();
         ensureCommandRunStyle();
         normalizeRunAsEditors();
@@ -316,6 +357,8 @@
     }
 
     scan();
+    window.setTimeout(scan, 50);
+    window.setTimeout(scan, 250);
 
     if (typeof MutationObserver === "function") {
         var pending = false;
@@ -326,6 +369,11 @@
                 pending = false;
                 scan();
             }, 0);
-        }).observe(document.documentElement, { childList: true, subtree: true });
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["class"]
+        });
     }
 }());
