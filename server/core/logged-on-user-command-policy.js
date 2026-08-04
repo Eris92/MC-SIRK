@@ -61,6 +61,18 @@ function runnerSource() {
     ].join("\r\n");
 }
 
+function hiddenLauncherSource() {
+    return [
+        "Set fso = CreateObject(\"Scripting.FileSystemObject\")",
+        "Set shell = CreateObject(\"WScript.Shell\")",
+        "Set commandFile = fso.OpenTextFile(WScript.Arguments(0), 1, False, -1)",
+        "commandLine = commandFile.ReadAll",
+        "commandFile.Close",
+        "exitCode = shell.Run(commandLine, 0, True)",
+        "WScript.Quit exitCode"
+    ].join("\r\n");
+}
+
 function commandBytes(command) {
     var value = Buffer.from(String(command && command.cmd || ""), "utf8");
     if (Number(command && command.type) !== 2) return value;
@@ -76,6 +88,7 @@ function buildLoggedOnUserLauncher(command, options) {
         Buffer.from([0xef, 0xbb, 0xbf]),
         Buffer.from(runnerSource(), "utf8")
     ]).toString("base64");
+    var launcher64 = Buffer.from(hiddenLauncherSource(), "utf8").toString("base64");
     var wts64 = Buffer.from(activeSessionSource(), "utf8").toString("base64");
 
     return [
@@ -102,13 +115,18 @@ function buildLoggedOnUserLauncher(command, options) {
         "$commandName=if($commandType -eq 1){'command.cmd'}else{'command.ps1'}",
         "$commandPath=Join-Path $workDir $commandName",
         "$runnerPath=Join-Path $workDir 'runner.ps1'",
+        "$launcherPath=Join-Path $workDir 'launcher.vbs'",
+        "$launchCommandPath=Join-Path $workDir 'launch-command.txt'",
         "$outputPath=Join-Path $workDir 'output.txt'",
         "$exitPath=Join-Path $workDir 'exit.txt'",
         "[IO.File]::WriteAllBytes($commandPath,[Convert]::FromBase64String('" + command64 + "'))",
         "[IO.File]::WriteAllBytes($runnerPath,[Convert]::FromBase64String('" + runner64 + "'))",
+        "[IO.File]::WriteAllBytes($launcherPath,[Convert]::FromBase64String('" + launcher64 + "'))",
         "$powerShell=Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'",
-        "$arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"'+$runnerPath+'\" -WorkDir \"'+$workDir+'\" -CommandType '+$commandType",
-        "$action=New-ScheduledTaskAction -Execute $powerShell -Argument $arguments",
+        "$runnerCommand='\"'+$powerShell+'\" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"'+$runnerPath+'\" -WorkDir \"'+$workDir+'\" -CommandType '+$commandType",
+        "[IO.File]::WriteAllText($launchCommandPath,$runnerCommand,[Text.Encoding]::Unicode)",
+        "$wscript=Join-Path $env:SystemRoot 'System32\\wscript.exe'",
+        "$action=New-ScheduledTaskAction -Execute $wscript -Argument ('//B //NoLogo \"'+$launcherPath+'\" \"'+$launchCommandPath+'\"')",
         "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
         "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
         "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
@@ -152,5 +170,6 @@ function apply(plugin, options) {
 module.exports.apply = apply;
 module.exports.activeSessionSource = activeSessionSource;
 module.exports.runnerSource = runnerSource;
+module.exports.hiddenLauncherSource = hiddenLauncherSource;
 module.exports.buildLoggedOnUserLauncher = buildLoggedOnUserLauncher;
 module.exports.transformCommand = transformCommand;
