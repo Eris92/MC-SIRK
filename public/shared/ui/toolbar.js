@@ -20,6 +20,24 @@
         return value;
     }
 
+    function resultsActive() {
+        return !!document.querySelector(
+            "#SirkPlatformWorkspace .mc-catalog-results.active," +
+            "#SirkPlatformWorkspace .mc-catalog-results.is-active"
+        );
+    }
+
+    function firstCatalogRoot() {
+        return document.querySelector("#SirkPlatformWorkspace .mc-tree-root");
+    }
+
+    function leaveResultsAfterFavoritesRender() {
+        window.setTimeout(function () {
+            var root = firstCatalogRoot();
+            if (root) root.click();
+        }, 0);
+    }
+
     window.SharedToolbar = {
         mount: function (options) {
             options = options || {};
@@ -69,8 +87,18 @@
                         api.showSearch(!context.state.searchVisible);
                         return;
                     }
+
+                    var favoriteFromResults = definition.key === "favorites" && resultsActive();
+                    var catalogRoot = favoriteFromResults ? firstCatalogRoot() : null;
+                    if (catalogRoot) catalogRoot.click();
+
                     var handler = definition.onClick || handlers[definition.handler];
                     if (typeof handler === "function") handler(api, event, definition);
+
+                    // With an empty favorites filter Results has no catalog root to click
+                    // before the toggle. After Show all renders the roots again, leave
+                    // Results immediately so the user is never trapped in that view.
+                    if (favoriteFromResults && !catalogRoot) leaveResultsAfterFavoritesRender();
                 };
                 return item;
             }
