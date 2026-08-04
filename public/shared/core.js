@@ -3,6 +3,7 @@
     window.SirkPlatformCore = window.SirkPlatformCore || {};
     var core = window.SirkPlatformCore;
     core.assetVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
+    core.activeViewMode = Number(core.activeViewMode || 0);
 
     function svgData(svg) {
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
@@ -25,6 +26,7 @@
         });
         return endpoint.href;
     };
+
     core.api = function (moduleName, assetName, options, parameters) {
         var request = options || {};
         request.credentials = "same-origin";
@@ -39,6 +41,7 @@
             });
         });
     };
+
     core.post = function (moduleName, assetName, values) {
         var body = new URLSearchParams();
         body.set("payload", JSON.stringify(values && typeof values === "object" ? values : {}));
@@ -48,6 +51,7 @@
             body: body.toString()
         });
     };
+
     core.loadScript = function (id, source) {
         return new Promise(function (resolve, reject) {
             var existing = document.getElementById(id);
@@ -61,13 +65,47 @@
             (document.head || document.documentElement).appendChild(script);
         });
     };
+
+    core.preparePluginMenuItem = function (item) {
+        if (!item) return item;
+        var handler = item.onclick || item.onmouseup;
+        var modern = String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link");
+        item.onclick = item.onmouseup = item.onkeypress = null;
+        item.removeAttribute("onclick");
+        item.removeAttribute("onmouseup");
+        item.removeAttribute("onkeypress");
+        if (handler) {
+            if (modern) item.onclick = handler;
+            else {
+                item.onmouseup = handler;
+                item.onkeypress = function (event) {
+                    if (event && event.key === "Enter") return handler(event);
+                };
+            }
+        }
+        if (modern) item.setAttribute("href", "#");
+        return item;
+    };
+
     core.placeMenuItem = function (item, anchor, order) {
         if (!item || !anchor || !anchor.parentNode) return false;
+        core.preparePluginMenuItem(item);
         var host = anchor.parentNode;
-        item.setAttribute("data-sirk-platform-order", String(order || 100));
+        item.setAttribute("data-meshcentral-plugin-menu", String(order || 100));
         if (item.parentNode !== host) host.insertBefore(item, anchor.nextSibling);
+        var items = Array.prototype.slice.call(host.children).filter(function (child) {
+            return child.hasAttribute("data-meshcentral-plugin-menu");
+        }).sort(function (left, right) {
+            return Number(left.getAttribute("data-meshcentral-plugin-menu")) - Number(right.getAttribute("data-meshcentral-plugin-menu"));
+        });
+        var cursor = anchor;
+        items.forEach(function (entry) {
+            host.insertBefore(entry, cursor.nextSibling);
+            cursor = entry;
+        });
         return true;
     };
+
     core.ensureMenu = function (definition) {
         var mainAnchor = document.getElementById("MainMenuMyDevices");
         var leftAnchor = document.getElementById("LeftMenuMyDevices");
@@ -89,7 +127,9 @@
                 main.onclick = open;
             } else {
                 main.onmouseup = open;
-                main.onkeypress = function (event) { if (event && event.key === "Enter") return open(event); };
+                main.onkeypress = function (event) {
+                    if (event && event.key === "Enter") return open(event);
+                };
             }
             main.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
             core.placeMenuItem(main, mainAnchor, definition.order);
@@ -109,7 +149,9 @@
                 left.onclick = open;
             } else {
                 left.onmouseup = open;
-                left.onkeypress = function (event) { if (event && event.key === "Enter") return open(event); };
+                left.onkeypress = function (event) {
+                    if (event && event.key === "Enter") return open(event);
+                };
             }
             left.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
 
@@ -144,56 +186,63 @@
 
     function clearMenuSelection(item) {
         if (!item || !item.classList) return;
-        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2");
+        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2", "sirk-native-menu-selected");
         item.removeAttribute("aria-current");
+        item.removeAttribute("data-sirk-inline-menu-selected");
+        item.style.removeProperty("background-color");
+        item.style.removeProperty("border-radius");
+        item.style.removeProperty("outline");
+        item.style.removeProperty("box-shadow");
+        item.style.removeProperty("opacity");
+        item.style.removeProperty("width");
     }
 
-    function selectMenuItem(item, isLeft) {
-        if (!item || !item.classList) return;
-        clearMenuSelection(item);
-        item.classList.add(modernMenuItem(item) ? "active" : (isLeft ? "lbbuttonsel2" : "fullselect"));
-        item.setAttribute("aria-current", "page");
-    }
+    core.clearNativeMenuSelection = function () {
+        var selector = [
+            "#MainMenuSpan [id^='MainMenu']",
+            "#page_leftbar [id^='LeftMenu']",
+            "[data-meshcentral-plugin-menu][id^='MainMenu']",
+            "[data-meshcentral-plugin-menu][id^='LeftMenu']"
+        ].join(",");
+        Array.prototype.forEach.call(document.querySelectorAll(selector), clearMenuSelection);
+    };
+
+    core.setPluginMenuActive = function (main, left, active) {
+        if (main) {
+            clearMenuSelection(main);
+            if (active) main.classList.add(modernMenuItem(main) ? "active" : "fullselect");
+            if (active) main.setAttribute("aria-current", "page");
+        }
+        if (left) {
+            clearMenuSelection(left);
+            if (active) left.classList.add(modernMenuItem(left) ? "active" : "lbbuttonsel2");
+            if (active) left.setAttribute("aria-current", "page");
+        }
+    };
 
     core.activateMenu = function (viewMode) {
-        var value = String(viewMode == null ? "" : viewMode);
-        var main = document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]');
-        var left = document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]');
-        var targets = [main, left].filter(Boolean);
-        if (!targets.length || !core.workspaceState) return false;
+        var value = Number(viewMode || 0);
+        var main = value ? document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]') : null;
+        var left = value ? document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]') : null;
+        if (value && !main && !left) return false;
 
-        var peers = Array.prototype.slice.call(document.querySelectorAll('[id^="MainMenu"],[id^="LeftMenu"]'));
-
-        if (!core.workspaceState.menuSelection) {
-            core.workspaceState.menuSelection = peers.map(function (item) {
-                return {
-                    element: item,
-                    className: item.className,
-                    ariaCurrent: item.getAttribute("aria-current")
-                };
-            });
-        }
-
-        peers.forEach(clearMenuSelection);
-        selectMenuItem(main, false);
-        selectMenuItem(left, true);
+        core.activeViewMode = value;
+        core.clearNativeMenuSelection();
+        core.setPluginMenuActive(main, left, value > 0);
         return true;
     };
 
     core.restoreWorkspace = function () {
         var state = core.workspaceState;
         document.documentElement.classList.remove("sirk-platform-workspace-active");
+        core.activeViewMode = 0;
+        Array.prototype.forEach.call(document.querySelectorAll("[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-']"), clearMenuSelection);
+
         if (state) {
             if (state.heading) state.heading.textContent = state.headingText;
             (state.hidden || []).forEach(function (item) {
                 item.element.style.cssText = item.cssText;
                 item.element.hidden = item.hidden;
-            });
-            (state.menuSelection || []).forEach(function (item) {
-                if (!item.element || !item.element.isConnected) return;
-                item.element.className = item.className;
-                if (item.ariaCurrent == null) item.element.removeAttribute("aria-current");
-                else item.element.setAttribute("aria-current", item.ariaCurrent);
             });
             var workspace = document.getElementById("SirkPlatformWorkspace");
             if (workspace) {
@@ -202,6 +251,7 @@
             }
             core.workspaceState = null;
         }
+
         try {
             var url = new URL(window.location.href);
             var customViewModes = [101, 102, 105, 106];
@@ -239,18 +289,21 @@
 
     core.showWorkspace = function (title, viewMode, render) {
         core.installNativeRestoreGuard();
-        if (!core.workspaceState && typeof window.go === "function" && Number(window.xxcurrentView) !== 1) {
+        if (!core.workspaceState && typeof window.go === "function") {
             try { window.go(1); } catch (error) {}
         }
+
         var page = document.getElementById("p1");
         var titleHost = document.getElementById("p1title");
         if (!page || !titleHost) return false;
+
         var workspace = document.getElementById("SirkPlatformWorkspace");
         if (!workspace) {
             workspace = document.createElement("div");
             workspace.id = "SirkPlatformWorkspace";
             page.appendChild(workspace);
         }
+
         var heading = titleHost.querySelector("h1,h2,h3,.title,b,strong") || titleHost;
         if (!core.workspaceState) {
             var hidden = [];
@@ -260,10 +313,9 @@
                 child.hidden = true;
                 child.style.setProperty("display", "none", "important");
             }
-            core.workspaceState = { heading: heading, headingText: heading.textContent, hidden: hidden, viewMode: viewMode };
+            core.workspaceState = { heading: heading, headingText: heading.textContent, hidden: hidden, viewMode: Number(viewMode) };
         }
-        // SIRK workspaces reuse MeshCentral page p1. Mark the logical view as
-        // custom so a later native go(1) is not discarded as a same-page no-op.
+
         if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
         core.workspaceState.viewMode = Number(viewMode);
         document.documentElement.classList.add("sirk-platform-workspace-active");
@@ -272,20 +324,26 @@
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
         workspace.style.display = "block";
         render(workspace);
+        window.setTimeout(function () {
+            if (core.workspaceState && Number(core.workspaceState.viewMode) === Number(viewMode)) core.activateMenu(viewMode);
+        }, 0);
         return false;
     };
+
     core.element = function (tag, className, text) {
         var value = document.createElement(tag);
         if (className) value.className = className;
         if (text != null) value.textContent = text;
         return value;
     };
+
     core.card = function (title, description) {
         var card = core.element("div", "mc-shared-card");
         card.appendChild(core.element("strong", "", title));
         if (description) card.appendChild(core.element("div", "mc-shared-muted", description));
         return card;
     };
+
     core.flattenScripts = function (node, target) {
         target = target || [];
         if (!node) return target;
