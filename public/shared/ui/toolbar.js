@@ -1,10 +1,65 @@
 (function () {
     "use strict";
 
+    var QUICK_PREFERENCES_KEY = "sirkPlatform.mycommands.preferences";
+
     function resolve(value) {
         return typeof value === "string"
             ? document.querySelector(value)
             : value;
+    }
+
+    function isQuickToolbar(host) {
+        return !!(host && host.classList && host.classList.contains("sirk-quick-command-toolbar-host"));
+    }
+
+    function readQuickPreferences() {
+        try {
+            var value = JSON.parse(window.localStorage.getItem(QUICK_PREFERENCES_KEY) || "{}");
+            return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function writeQuickFavoritesOnly(value) {
+        try {
+            var preferences = readQuickPreferences();
+            preferences.quickFavoritesOnly = value === true;
+            window.localStorage.setItem(QUICK_PREFERENCES_KEY, JSON.stringify(preferences));
+        } catch (error) {}
+    }
+
+    function readQuickFavoritesOnly() {
+        var preferences = readQuickPreferences();
+        if (typeof preferences.quickFavoritesOnly === "boolean") return preferences.quickFavoritesOnly;
+        if (typeof preferences.favoritesOnly === "boolean") {
+            writeQuickFavoritesOnly(preferences.favoritesOnly);
+            return preferences.favoritesOnly;
+        }
+        return null;
+    }
+
+    function buttonPressed(item) {
+        return !!(item && (
+            item.classList.contains("is-active") ||
+            item.getAttribute("aria-pressed") === "true"
+        ));
+    }
+
+    function restoreQuickFavorites(item) {
+        if (!item) return;
+        window.setTimeout(function () {
+            if (item.isConnected === false || typeof item.click !== "function") return;
+            var preferred = readQuickFavoritesOnly();
+            if (preferred == null || preferred === buttonPressed(item)) return;
+            item.__sirkQuickFavoritesRestoring = true;
+            try {
+                item.click();
+            } finally {
+                item.__sirkQuickFavoritesRestoring = false;
+            }
+        }, 0);
     }
 
     function button(definition) {
@@ -51,6 +106,7 @@
             options = options || {};
             var host = resolve(options.container);
             if (!host) throw new Error("Toolbar container not found.");
+            var quickToolbar = isQuickToolbar(host);
 
             var root = document.createElement("div");
             root.className = "mc-shared-toolbar mc-portal-toolbar";
@@ -96,12 +152,15 @@
                         return;
                     }
 
+                    var quickFavorites = quickToolbar && definition.key === "favorites";
+                    var nextQuickFavorites = quickFavorites ? !buttonPressed(item) : null;
                     var favoriteFromResults = definition.key === "favorites" && resultsActive();
                     var catalogRoot = favoriteFromResults ? firstCatalogRoot() : null;
                     if (catalogRoot) catalogRoot.click();
 
                     var handler = definition.onClick || handlers[definition.handler];
                     if (typeof handler === "function") handler(api, event, definition);
+                    if (quickFavorites) writeQuickFavoritesOnly(nextQuickFavorites);
 
                     // With an empty favorites filter Results has no catalog root to click
                     // before the toggle. After Show all renders the roots again, leave
@@ -144,6 +203,7 @@
             right.hidden = right.childNodes.length === 0;
             root.hidden = Object.keys(context.buttons).length === 0;
             host.appendChild(root);
+            if (quickToolbar) restoreQuickFavorites(context.buttons.favorites);
             return api;
         }
     };
