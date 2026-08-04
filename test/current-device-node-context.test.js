@@ -8,8 +8,8 @@ var source = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui"
 
 assert.ok(source.indexOf("function validNodeId(value)") >= 0,
     "Commands execution must validate canonical MeshCentral node identifiers.");
-assert.ok(source.indexOf("/^node\\/[^/]+\\/[^/]+$/") >= 0,
-    "Only node/<domain>/<id> identifiers may be sent for execution.");
+assert.ok(source.indexOf("/^node\\/[^/]*\\/[^/]+$/") >= 0,
+    "Both node/<domain>/<id> and default-domain node//<id> identifiers must be accepted.");
 assert.ok(source.indexOf("window.currentNode") >= 0,
     "The currently open MeshCentral device must be the primary node source.");
 assert.ok(source.indexOf("currentDeviceNodeId(values && values.nodeId)") >= 0,
