@@ -3,7 +3,7 @@
     window.SirkPlatformCore = window.SirkPlatformCore || {};
     var core = window.SirkPlatformCore;
     core.assetVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
-    core.activeViewMode = Number(core.activeViewMode || 0);
+    core.activePlugin = core.activePlugin || null;
 
     function svgData(svg) {
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
@@ -66,6 +66,32 @@
         });
     };
 
+    core.enterNativeDevicePage = function () {
+        if (!core.workspaceState && typeof window.go === "function") {
+            window.go(1);
+            return true;
+        }
+        if (typeof window.go === "function") {
+            window.go(1);
+            return true;
+        }
+        return false;
+    };
+
+    core.setLogicalView = function (viewMode) {
+        if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
+    };
+
+    core.updateWorkspaceUrl = function (viewMode, enabled) {
+        try {
+            var url = new URL(window.location.href);
+            if (enabled) url.searchParams.set("viewmode", String(viewMode));
+            else if (Number(url.searchParams.get("viewmode")) === Number(viewMode)) url.searchParams.delete("viewmode");
+            if (url.hash === "#") url.hash = "";
+            window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+        } catch (error) {}
+    };
+
     core.preparePluginMenuItem = function (item) {
         if (!item) return item;
         var handler = item.onclick || item.onmouseup;
@@ -76,12 +102,10 @@
         item.removeAttribute("onkeypress");
         if (handler) {
             if (modern) item.onclick = handler;
-            else {
-                item.onmouseup = handler;
-                item.onkeypress = function (event) {
-                    if (event && event.key === "Enter") return handler(event);
-                };
-            }
+            else item.onmouseup = handler;
+            item.onkeypress = function (event) {
+                if (event && event.key === "Enter") return handler(event);
+            };
         }
         if (modern) item.setAttribute("href", "#");
         return item;
@@ -91,7 +115,7 @@
         if (!item || !anchor || !anchor.parentNode) return false;
         core.preparePluginMenuItem(item);
         var host = anchor.parentNode;
-        item.setAttribute("data-meshcentral-plugin-menu", String(order || 100));
+        item.setAttribute("data-meshcentral-plugin-menu", String(order));
         if (item.parentNode !== host) host.insertBefore(item, anchor.nextSibling);
         var items = Array.prototype.slice.call(host.children).filter(function (child) {
             return child.hasAttribute("data-meshcentral-plugin-menu");
@@ -180,46 +204,38 @@
         }
     };
 
-    function modernMenuItem(item) {
-        return !!item && (String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link"));
-    }
-
-    function clearMenuSelection(item) {
-        if (!item || !item.classList) return;
-        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2", "sirk-native-menu-selected");
-        item.removeAttribute("aria-current");
-        if (item.getAttribute("data-sirk-inline-menu-selected") === "1") {
-            item.style.removeProperty("background-color");
-            item.style.removeProperty("border-radius");
-            item.style.removeProperty("outline");
-            item.style.removeProperty("box-shadow");
-            item.style.removeProperty("opacity");
-            item.style.removeProperty("width");
-            item.removeAttribute("data-sirk-inline-menu-selected");
+    core.setPluginMenuActive = function (main, left, active) {
+        if (main) {
+            main.classList.remove("fullselect", "semiselect", "active");
+            main.removeAttribute("aria-current");
+            if (active) {
+                main.classList.add((String(main.tagName || "").toLowerCase() === "a" || main.classList.contains("nav-link")) ? "active" : "fullselect");
+                main.setAttribute("aria-current", "page");
+            }
         }
-    }
+        if (left) {
+            left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
+            left.removeAttribute("aria-current");
+            if (active) {
+                left.classList.add((String(left.tagName || "").toLowerCase() === "a" || left.classList.contains("nav-link")) ? "active" : "lbbuttonsel2");
+                left.setAttribute("aria-current", "page");
+            }
+        }
+    };
 
     core.clearNativeMenuSelection = function () {
         var selector = [
-            "#MainMenuSpan [id^='MainMenu']",
-            "#page_leftbar [id^='LeftMenu']",
-            "[data-meshcentral-plugin-menu][id^='MainMenu']",
-            "[data-meshcentral-plugin-menu][id^='LeftMenu']"
+            "#MainMenuSpan .fullselect",
+            "#MainMenuSpan .semiselect",
+            "#MainMenuSpan .active",
+            "#page_leftbar .lbbuttonsel",
+            "#page_leftbar .lbbuttonsel2",
+            "#page_leftbar .active"
         ].join(",");
-        Array.prototype.forEach.call(document.querySelectorAll(selector), clearMenuSelection);
-    };
-
-    core.setPluginMenuActive = function (main, left, active) {
-        if (main) {
-            clearMenuSelection(main);
-            if (active) main.classList.add(modernMenuItem(main) ? "active" : "fullselect");
-            if (active) main.setAttribute("aria-current", "page");
-        }
-        if (left) {
-            clearMenuSelection(left);
-            if (active) left.classList.add(modernMenuItem(left) ? "active" : "lbbuttonsel2");
-            if (active) left.setAttribute("aria-current", "page");
-        }
+        Array.prototype.forEach.call(document.querySelectorAll(selector), function (element) {
+            element.classList.remove("fullselect", "semiselect", "lbbuttonsel", "lbbuttonsel2", "active");
+            element.removeAttribute("aria-current");
+        });
     };
 
     core.activateMenu = function (viewMode) {
@@ -227,8 +243,6 @@
         var main = value ? document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]') : null;
         var left = value ? document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]') : null;
         if (value && !main && !left) return false;
-
-        core.activeViewMode = value;
         core.clearNativeMenuSelection();
         core.setPluginMenuActive(main, left, value > 0);
         return true;
@@ -237,9 +251,6 @@
     core.restoreWorkspace = function () {
         var state = core.workspaceState;
         document.documentElement.classList.remove("sirk-platform-workspace-active");
-        core.activeViewMode = 0;
-        Array.prototype.forEach.call(document.querySelectorAll("[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-']"), clearMenuSelection);
-
         if (state) {
             if (state.heading) state.heading.textContent = state.headingText;
             (state.hidden || []).forEach(function (item) {
@@ -253,48 +264,9 @@
             }
             core.workspaceState = null;
         }
-
-        try {
-            var url = new URL(window.location.href);
-            var customViewModes = [101, 102, 105, 106];
-            if (customViewModes.indexOf(Number(url.searchParams.get("viewmode"))) >= 0) {
-                url.searchParams.delete("viewmode");
-                if (url.hash === "#") url.hash = "";
-                window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-            }
-        } catch (error) {}
-    };
-
-    core.isSirkPlatformTarget = function (target) {
-        if (!target || !target.closest) return false;
-        return !!target.closest("#SirkPlatformWorkspace,[id^='MainMenuSirkPlatform-'],[id^='LeftMenuSirkPlatform-']");
-    };
-
-    core.isNativeMenuTarget = function (target) {
-        if (!target || !target.closest) return false;
-        var menu = target.closest("[id^='MainMenu'],[id^='LeftMenu']");
-        return !!menu && !core.isSirkPlatformTarget(menu);
-    };
-
-    core.installNativeRestoreGuard = function () {
-        if (core.nativeRestoreGuardInstalled) return;
-        core.nativeRestoreGuardInstalled = true;
-        document.addEventListener("pointerdown", function (event) {
-            if (!core.workspaceState || !core.isNativeMenuTarget(event.target)) return;
-            core.restoreWorkspace();
-        }, true);
-        document.addEventListener("keydown", function (event) {
-            if ((event.key !== "Enter" && event.key !== " ") || !core.workspaceState || !core.isNativeMenuTarget(event.target)) return;
-            core.restoreWorkspace();
-        }, true);
     };
 
     core.showWorkspace = function (title, viewMode, render) {
-        core.installNativeRestoreGuard();
-        if (!core.workspaceState && typeof window.go === "function") {
-            try { window.go(1); } catch (error) {}
-        }
-
         var page = document.getElementById("p1");
         var titleHost = document.getElementById("p1title");
         if (!page || !titleHost) return false;
@@ -318,18 +290,13 @@
             core.workspaceState = { heading: heading, headingText: heading.textContent, hidden: hidden, viewMode: Number(viewMode) };
         }
 
-        if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
         core.workspaceState.viewMode = Number(viewMode);
         document.documentElement.classList.add("sirk-platform-workspace-active");
-        core.activateMenu(viewMode);
         heading.textContent = title;
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
         workspace.style.display = "block";
         render(workspace);
-        window.setTimeout(function () {
-            if (core.workspaceState && Number(core.workspaceState.viewMode) === Number(viewMode)) core.activateMenu(viewMode);
-        }, 0);
-        return false;
+        return true;
     };
 
     core.element = function (tag, className, text) {
