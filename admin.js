@@ -34,6 +34,7 @@ module.exports.admin = function (plugin) {
         "shared-ui/tree.js": ["public/shared/ui/tree.js", "text/javascript; charset=utf-8"],
         "shared-ui/catalog.js": ["public/shared/ui/catalog.js", "text/javascript; charset=utf-8"],
         "shared-ui/results.js": ["public/shared/ui/results.js", "text/javascript; charset=utf-8"],
+        "download-results.js": ["public/shared/ui/download-results.js", "text/javascript; charset=utf-8"],
         "shared-ui/result-layout.js": ["public/shared/ui/result-layout.js", "text/javascript; charset=utf-8"],
         "shared-ui/script-tools.js": ["public/shared/ui/script-tools.js", "text/javascript; charset=utf-8"],
         "shared-ui/script-definition-form.js": ["public/shared/ui/script-definition-form.js", "text/javascript; charset=utf-8"],
@@ -47,6 +48,67 @@ module.exports.admin = function (plugin) {
 
     function errorText(error) {
         return String(error && error.message || error || "Unknown error.");
+    }
+
+    function setHeader(res, name, value) {
+        if (typeof res.set === "function") res.set(name, value);
+        else if (typeof res.setHeader === "function") res.setHeader(name, value);
+    }
+
+    function isInside(basePath, targetPath) {
+        var resolvedBase = path.resolve(basePath);
+        var resolvedTarget = path.resolve(targetPath);
+        var prefix = resolvedBase.endsWith(path.sep) ? resolvedBase : resolvedBase + path.sep;
+        return resolvedTarget.toLowerCase().indexOf(prefix.toLowerCase()) === 0;
+    }
+
+    function serveDownload(req, res, user) {
+        if (!user) {
+            shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
+            return;
+        }
+
+        var requested = String(req && req.query && req.query.path || "").trim();
+        if (!requested || requested.indexOf("\0") >= 0) {
+            shared.send(res, 400, "text/plain; charset=utf-8", "Invalid file path");
+            return;
+        }
+
+        var target = path.resolve(requested);
+        var allowedRoots = [
+            path.join(root, "seed", "MyScripts"),
+            path.join(root, "seed", "MyCommands")
+        ];
+        var allowed = allowedRoots.some(function (allowedRoot) {
+            return isInside(allowedRoot, target);
+        });
+
+        if (!allowed || path.extname(target).toLowerCase() !== ".csv") {
+            shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
+            return;
+        }
+
+        fs.stat(target, function (error, stat) {
+            if (error || !stat.isFile()) {
+                shared.send(res, 404, "text/plain; charset=utf-8", "File not found");
+                return;
+            }
+
+            var fileName = path.basename(target).replace(/[\r\n"]/g, "_");
+            res.statusCode = 200;
+            setHeader(res, "Content-Type", "text/csv; charset=utf-8");
+            setHeader(res, "Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+            setHeader(res, "Content-Length", String(stat.size));
+            setHeader(res, "Cache-Control", "no-store");
+            setHeader(res, "X-Content-Type-Options", "nosniff");
+
+            var stream = fs.createReadStream(target);
+            stream.on("error", function () {
+                if (!res.headersSent) shared.send(res, 500, "text/plain; charset=utf-8", "Unable to read file");
+                else if (typeof res.destroy === "function") res.destroy();
+            });
+            stream.pipe(res);
+        });
     }
 
     function sendAsset(res, name) {
@@ -78,6 +140,7 @@ module.exports.admin = function (plugin) {
         var asset = String(req && req.query && req.query.asset || "");
         var moduleName = String(req && req.query && req.query.module || "");
 
+        if (asset === "download") { serveDownload(req, res, user); return; }
         if (assets[asset]) { sendAsset(res, asset); return; }
         if (asset === "bootstrap") {
             plugin.runtime.request("GET", "_runtime", "bootstrap", req, res, user);

@@ -73,6 +73,7 @@ function createSerializedStartupHook(version, pin) {
         var browserVersion = "__VERSION__";
         var browserPin = "__PIN__";
         window.__SIRK_PLATFORM_VERSION__ = browserVersion;
+        window.__SIRK_PLATFORM_PIN__ = browserPin;
         document.documentElement.classList.add("sirk-platform-native-ui");
 
         function asset(name) {
@@ -142,6 +143,7 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-tree", "shared-ui/tree.js"],
             ["sirk-platform-catalog", "shared-ui/catalog.js"],
             ["sirk-platform-results", "shared-ui/results.js"],
+            ["sirk-platform-download-results", "download-results.js"],
             ["sirk-platform-result-layout", "shared-ui/result-layout.js"],
             ["sirk-platform-script-tools", "shared-ui/script-tools.js"],
             ["sirk-platform-script-definition", "shared-ui/script-definition-form.js"],
