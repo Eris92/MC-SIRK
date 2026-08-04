@@ -97,6 +97,59 @@
         return true;
     }
 
+    function validNodeId(value) {
+        return /^node\/[^/]+\/[^/]+$/.test(String(value == null ? "" : value).trim());
+    }
+
+    function nodeIdFrom(value) {
+        if (!value) return "";
+        if (typeof value === "string") return validNodeId(value) ? value.trim() : "";
+        var candidates = [value._id, value.nodeid, value.nodeId, value.id];
+        for (var index = 0; index < candidates.length; index += 1) {
+            if (validNodeId(candidates[index])) return String(candidates[index]).trim();
+        }
+        return "";
+    }
+
+    function currentDeviceNodeId(fallback) {
+        var runtime = window.SirkPlatformRuntime;
+        var candidates = [
+            window.currentNode,
+            runtime && runtime.state && runtime.state.currentNode,
+            fallback,
+            runtime && runtime.state && runtime.state.nodeId,
+            window.selectedNode
+        ];
+        for (var index = 0; index < candidates.length; index += 1) {
+            var value = nodeIdFrom(candidates[index]);
+            if (value) return value;
+        }
+        return "";
+    }
+
+    function installCommandNodeResolver() {
+        var core = window.SirkPlatformCore;
+        if (!core || typeof core.post !== "function" || core.post.__sirkCommandNodeResolver) return false;
+
+        var original = core.post;
+        var wrapped = function (moduleName, assetName, values) {
+            if (String(moduleName || "").toLowerCase() === "mycommands" &&
+                String(assetName || "").toLowerCase() === "execute") {
+                var nodeId = currentDeviceNodeId(values && values.nodeId);
+                if (!nodeId) {
+                    return Promise.reject(new Error(language() === "pl"
+                        ? "Nie można ustalić identyfikatora bieżącego urządzenia. Odśwież kartę urządzenia."
+                        : "Unable to determine the current device identifier. Refresh the device page."));
+                }
+                values = Object.assign({}, values || {}, { nodeId: nodeId });
+            }
+            return original.call(core, moduleName, assetName, values);
+        };
+        wrapped.__sirkCommandNodeResolver = true;
+        core.post = wrapped;
+        return true;
+    }
+
     function ensureCommandRunStyle() {
         if (document.getElementById("sirk-command-run-style")) return;
         var style = document.createElement("style");
@@ -250,12 +303,11 @@
             : null;
         if (!target) return;
 
-        // Fallback for a Commands tree mounted before the catalog hook was installed.
-        // A later wrapped callback increments the sequence and cancels this attempt.
         beginSelectedRun(currentRunButtons());
     }, true);
 
     function scan() {
+        installCommandNodeResolver();
         ensureCommandRunStyle();
         normalizeRunAsEditors();
         installMountHook();
