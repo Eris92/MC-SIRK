@@ -17,6 +17,10 @@ assert.ok(script.indexOf('collapse: {') >= 0 &&
     script.indexOf('refresh: {') >= 0 &&
     script.indexOf('search: { title: text("search")') >= 0,
     "Quick commands toolbar must provide collapse, favorites, refresh and search controls.");
+assert.ok(script.indexOf('key: "details"') >= 0 &&
+    script.indexOf('DETAILS_COLLAPSED_KEY = "mc-sirk-quickcommands-details-collapsed"') >= 0 &&
+    script.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)') >= 0,
+    "Quick commands must provide a persistent output-column collapse action.");
 assert.ok(script.indexOf('key: "close"') >= 0 && script.indexOf("closePanel(panel)") >= 0,
     "Quick commands must expose Close as a toolbar action.");
 assert.ok(script.indexOf('PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
@@ -38,10 +42,19 @@ assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&
     "Quick commands must expose the same semantic three-column structure as Commands.");
 assert.ok(script.indexOf('mc-command-run-button sirk-quick-command-submit') >= 0,
     "Quick commands Run must use the same action-button class as My Commands.");
-assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(320px,420px)!important") >= 0,
-    "Quick commands must keep the My Commands first two columns and use a compact details column.");
-assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(320px,420px)!important") >= 0,
-    "Quick commands collapsed layout must keep the compact details column.");
+assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(240px,300px)!important") >= 0,
+    "Quick commands must keep the My Commands first two columns and use a smaller details column.");
+assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(240px,300px)!important") >= 0,
+    "Quick commands collapsed layout must keep the smaller details column.");
+assert.ok(css.indexOf(".is-details-collapsed{grid-template-columns:minmax(165px,205px) minmax(285px,340px) 0!important}") >= 0 &&
+    css.indexOf(".is-details-collapsed .sirk-quick-command-details{display:none!important}") >= 0,
+    "Quick commands must remove the complete details column when output is hidden.");
+assert.ok(script.indexOf("function refresh(panel)") >= 0 &&
+    script.indexOf('setOutput(panel, text("loading"), false)') >= 0 &&
+    script.indexOf('onClick: function () { refresh(panel); }') >= 0,
+    "Quick refresh progress must stay inside the details output pane.");
+assert.ok(script.indexOf('panel.appendChild(element("div", "sirk-quick-command-loading"') < 0,
+    "Quick refresh must not replace the whole panel with a full-width loading message.");
 assert.ok(css.indexOf(".sirk-quick-command-label") >= 0 &&
     css.indexOf("white-space:normal") >= 0 &&
     css.indexOf("overflow-wrap:anywhere") >= 0,
@@ -50,4 +63,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick commands toolbar, persistent Favorites and compact Commands-style columns: OK");
+console.log("Quick commands toolbar, persistent Favorites, output collapse and compact columns: OK");

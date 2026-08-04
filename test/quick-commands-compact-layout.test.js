@@ -12,17 +12,26 @@ assert.ok(css.indexOf(".sirk-quick-command-header{display:none!important}") >= 0
     "The separate Quick commands title row must be hidden so the toolbar is first.");
 assert.ok(css.indexOf("grid-template-rows:auto minmax(0,1fr)") >= 0,
     "The panel must contain only the toolbar row and the browser row.");
-assert.ok(css.indexOf("width:min(965px,calc(100% - 52px))") >= 0,
-    "The normal panel width must equal the maximum widths of its three grid columns.");
-assert.ok(css.indexOf("minmax(320px,420px)") >= 0,
-    "The third details column must retain its compact width cap.");
+assert.ok(css.indexOf("width:min(845px,calc(100% - 52px))") >= 0,
+    "The normal panel width must equal the smaller maximum widths of its three grid columns.");
+assert.ok(css.indexOf("minmax(240px,300px)") >= 0,
+    "The third details column must use the reduced width cap.");
 assert.ok(css.indexOf("minmax(165px,205px) minmax(285px,340px)") >= 0,
     "The first two columns must retain the My Commands geometry.");
-assert.ok(css.indexOf(":has(.sirk-quick-command-browser.is-collapsed){width:min(824px") >= 0,
+assert.ok(css.indexOf(":has(.sirk-quick-command-browser.is-collapsed){width:min(704px") >= 0,
     "Collapsing categories must shrink the panel to the exact sum of the remaining columns.");
-assert.ok(css.indexOf("width:min(865px,calc(100% - 52px))") >= 0 &&
-    css.indexOf("width:min(744px,calc(100% - 52px))") >= 0,
-    "Responsive panel widths must also equal the responsive column sums.");
+assert.ok(css.indexOf(":has(.sirk-quick-command-browser.is-details-collapsed){width:min(545px") >= 0 &&
+    css.indexOf(":has(.sirk-quick-command-browser.is-collapsed.is-details-collapsed){width:min(404px") >= 0,
+    "Hiding output must remove the details width from both normal and category-collapsed panels.");
+assert.ok(css.indexOf("width:min(765px,calc(100% - 52px))") >= 0 &&
+    css.indexOf("width:min(644px,calc(100% - 52px))") >= 0 &&
+    css.indexOf("width:min(485px,calc(100% - 52px))") >= 0 &&
+    css.indexOf("width:min(364px,calc(100% - 52px))") >= 0,
+    "Responsive panel widths must equal the responsive column sums in every collapse state.");
+assert.ok(css.indexOf(".is-details-collapsed{grid-template-columns:minmax(165px,205px) minmax(285px,340px) 0!important}") >= 0 &&
+    css.indexOf(".is-collapsed.is-details-collapsed{grid-template-columns:64px minmax(285px,340px) 0!important}") >= 0 &&
+    css.indexOf(".is-details-collapsed .sirk-quick-command-details{display:none!important}") >= 0,
+    "The details pane must be completely removed from the grid when hidden.");
 assert.ok(css.indexOf("height:100%!important") >= 0 &&
     css.indexOf(".sirk-quick-command-details{display:flex;flex-direction:column") >= 0,
     "The details pane must fill the browser row and provide adaptive vertical layout.");
@@ -31,7 +40,7 @@ assert.ok(css.indexOf(".sirk-quick-command-status:not(:empty){display:block;flex
     "Command output must fill the available details pane and scroll inside its own box.");
 assert.ok(nativeCore.indexOf("sirk-quick-commands-layout-contract") >= 0 &&
     nativeCore.indexOf("padding:12px 8px!important") >= 0,
-    "The details pane must use equal compact horizontal spacing on both sides.");
+    "The details pane must keep equal compact horizontal spacing on both sides.");
 assert.ok(nativeCore.indexOf("__sirkPreserveQuickOutput") >= 0 &&
     nativeCore.indexOf("copyStatus(previousStatus, currentStatus)") >= 0,
     "Collapsing categories must preserve the current command output.");
@@ -56,4 +65,4 @@ assert.ok(nativeCore.indexOf("LEGACY_COLLAPSED_KEYS") >= 0 &&
     nativeCore.indexOf("shared.quickCollapsed") >= 0,
     "Existing saved Quick Commands preferences must migrate to the dedicated key.");
 
-console.log("Exact-width toolbar-persistent Quick Commands layout: OK");
+console.log("Exact-width dual-collapse Quick Commands layout: OK");
