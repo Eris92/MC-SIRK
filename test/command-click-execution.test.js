@@ -7,20 +7,22 @@ var path = require("path");
 var source = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "download-results.js"), "utf8");
 
 assert.ok(source.indexOf("function installCommandsCatalogHook()") >= 0,
-    "The native Commands catalog must install the selection execution hook.");
-assert.ok(source.indexOf("isCommandsCatalog(options)") >= 0,
-    "The selection hook must be restricted to the Commands catalog.");
-assert.ok(source.indexOf("var result = originalOnScript(item)") >= 0,
-    "The existing script-selection behavior must run before automatic execution.");
-assert.ok(source.indexOf("scheduleAutomaticRun(item, sequence, previousButtons, 0)") >= 0,
-    "Selecting a command or script must schedule execution.");
-assert.ok(source.indexOf("item.variables.length") >= 0,
-    "Items with declared variables must not auto-run before input is collected.");
+    "The Commands catalog must install a selection execution hook.");
+assert.ok(source.indexOf("function beginSelectedRun()") >= 0,
+    "A selected script must start a new execution sequence.");
+assert.ok(source.indexOf("function scheduleSelectedRun(sequence, attempt)") >= 0,
+    "Async file-backed script definitions must be polled until the Run action exists.");
+assert.ok(source.indexOf(".mc-shared-page-mycommands .mc-tree-script") >= 0,
+    "Existing Commands trees mounted before the wrapper loads must have a click fallback.");
+assert.ok(source.indexOf(".mc-shared-page-mycommands") >= 0,
+    "Automatic execution must be scoped to the Commands page.");
 assert.ok(source.indexOf(".mc-script-runtime-variables input") >= 0,
-    "File-backed scripts with runtime variable controls must remain manual.");
+    "Scripts with runtime variables must remain manual.");
 assert.ok(source.indexOf("button.click()") >= 0,
-    "Variable-free selected scripts must invoke the existing Run action.");
-assert.ok(source.indexOf("previousButtons.indexOf(buttons[index]) < 0") >= 0,
-    "The hook must not execute a stale Run button from the previously selected script.");
+    "A variable-free selected script must invoke the existing Run action.");
+assert.ok(source.indexOf("data-sirk-auto-run") >= 0,
+    "The same selection must not execute twice.");
+assert.ok(source.indexOf("sequence !== commandSelectionSequence") >= 0,
+    "A stale selection must not execute after a newer script was clicked.");
 
 console.log("Command selection execution contract: OK");
