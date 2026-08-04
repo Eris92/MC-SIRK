@@ -18,6 +18,11 @@
         return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
     }
 
+    function statusKey(value) {
+        value = String(value || "all").toLowerCase();
+        return value || "all";
+    }
+
     var icons = {
         overview: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'),
         moverequests: svg('<path d="M7 7h11l-3-3M18 7l-3 3"/><path d="M17 17H6l3 3M6 17l3-3"/>'),
@@ -134,10 +139,11 @@
         var host = shell.state.page.secondary;
         host.innerHTML = "";
         window.SharedStatusNav.list().forEach(function (status) {
+            var key = statusKey(status.key);
             nav(host, {
                 title: status.title,
-                icon: icons[status.key] || icons.all,
-                className: "mc-approval-status",
+                icon: icons[key] || status.icon || icons.all,
+                className: "mc-approval-status sirk-result-status sirk-result-status-" + key,
                 active: selectedStatus === status.key,
                 onClick: function () { selectedStatus = status.key; shell.render(); }
             }, shell);
@@ -150,12 +156,12 @@
         actions.className = "mc-approval-request-actions";
 
         [
-            { title: "Approve", approved: true, danger: false },
-            { title: "Reject", approved: false, danger: true }
+            { title: "Approve", approved: true, className: "sirk-action-approve" },
+            { title: "Reject", approved: false, className: "sirk-action-reject" }
         ].forEach(function (definition) {
             var button = document.createElement("button");
             button.type = "button";
-            button.className = definition.danger ? "btn btn-secondary" : "btn";
+            button.className = "btn " + definition.className;
             button.textContent = definition.title;
             button.onclick = function () {
                 button.disabled = true;
@@ -191,7 +197,13 @@
             card.classList.add("mc-approval-request-card");
 
             var meta = shell.element("div", "mc-shared-muted mc-approval-request-meta");
-            meta.textContent = (request.requester && request.requester.name || "—") + " · " + (request.status || "—");
+            meta.appendChild(document.createTextNode((request.requester && request.requester.name || "—") + " · "));
+            var requestStatus = shell.element(
+                "span",
+                "mc-approval-request-status mc-approval-request-status-" + statusKey(request.status),
+                request.status || "—"
+            );
+            meta.appendChild(requestStatus);
             card.appendChild(meta);
 
             card.appendChild(shell.element("div", "mc-shared-muted", new Date(request.createdAt).toLocaleString()));
@@ -237,7 +249,7 @@
                     return progress.text || ((progress.approved || 0) + "/" + (progress.total || 0));
                 } },
                 { title: "Status", value: function (request) { return request.status || "—"; }, className: function (request) {
-                    return "mc-results-status mc-results-status-" + String(request.status || "unknown").toLowerCase();
+                    return "mc-results-status mc-results-status-" + statusKey(request.status);
                 } },
                 { title: "Summary", value: function (request) { return request.summary || "—"; } }
             ],
