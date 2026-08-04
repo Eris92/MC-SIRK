@@ -20,15 +20,23 @@
         return value;
     }
 
+    function activePage() {
+        var pages = Array.prototype.slice.call(document.querySelectorAll(".mc-shared-page"));
+        for (var index = pages.length - 1; index >= 0; index -= 1) {
+            var page = pages[index];
+            if (!page.hidden && page.offsetParent !== null) return page;
+        }
+        return document.getElementById("SirkPlatformWorkspace") || null;
+    }
+
     function resultsActive() {
-        return !!document.querySelector(
-            "#SirkPlatformWorkspace .mc-catalog-results.active," +
-            "#SirkPlatformWorkspace .mc-catalog-results.is-active"
-        );
+        var page = activePage();
+        return !!(page && page.querySelector(".mc-catalog-results.active,.mc-catalog-results.is-active"));
     }
 
     function firstCatalogRoot() {
-        return document.querySelector("#SirkPlatformWorkspace .mc-tree-root");
+        var page = activePage();
+        return page ? page.querySelector(".mc-tree-root") : null;
     }
 
     function leaveResultsAfterFavoritesRender() {
