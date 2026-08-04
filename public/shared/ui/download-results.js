@@ -98,7 +98,7 @@
     }
 
     function validNodeId(value) {
-        return /^node\/[^/]+\/[^/]+$/.test(String(value == null ? "" : value).trim());
+        return /^node\/[^/]*\/[^/]+$/.test(String(value == null ? "" : value).trim());
     }
 
     function nodeIdFrom(value) {
