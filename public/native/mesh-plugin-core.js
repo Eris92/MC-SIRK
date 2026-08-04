@@ -77,13 +77,19 @@
             "mc-sirk-quickcommands-collapsed",
             "sirkPlatform.quickcommands.collapsed"
         ];
+        var DETAILS_PREFERRED_KEY = "mc-sirk-quickcommands-details-preferred-collapsed";
+        var DETAILS_ATTENTION_KEY = "mc-sirk-quickcommands-details-attention";
         var SHARED_PREFERENCES_KEY = "sirkPlatform.mycommands.preferences";
 
         var style = document.getElementById("sirk-quick-commands-layout-contract");
         if (!style) {
             style = document.createElement("style");
             style.id = "sirk-quick-commands-layout-contract";
-            style.textContent = ".sirk-desktop-commands .sirk-quick-command-details{padding:12px 8px!important}";
+            style.textContent = [
+                ".sirk-desktop-commands .sirk-quick-command-details{padding:12px 8px!important}",
+                ".sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention{border-color:rgba(220,38,38,.55)!important;background:rgba(220,38,38,.12)!important;color:#b42318!important}",
+                "[data-bs-theme=dark] .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.night .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention,body.dark .sirk-desktop-commands .sirk-quick-command-details-toggle.has-attention{border-color:rgba(248,113,113,.7)!important;background:rgba(248,113,113,.16)!important;color:#fca5a5!important}"
+            ].join("");
             (document.head || document.documentElement).appendChild(style);
         }
 
@@ -92,6 +98,18 @@
             if (/^(1|true|yes|on)$/i.test(String(value))) return true;
             if (/^(0|false|no|off)$/i.test(String(value))) return false;
             return null;
+        }
+
+        function storageBoolean(key, fallback) {
+            try {
+                var value = parseStoredBoolean(window.localStorage.getItem(key));
+                return value == null ? fallback : value;
+            } catch (error) { return fallback; }
+        }
+
+        function writeStorageBoolean(key, value) {
+            try { window.localStorage.setItem(key, value === true ? "1" : "0"); }
+            catch (error) {}
         }
 
         function saveCollapsedPreference(value) {
@@ -129,6 +147,32 @@
         function currentCollapsed(panel) {
             var browser = panel && panel.querySelector(".sirk-quick-command-browser");
             return !!(browser && browser.classList.contains("is-collapsed"));
+        }
+
+        function detailsCollapsed(panel) {
+            var browser = panel && panel.querySelector(".sirk-quick-command-browser");
+            return !!(browser && browser.classList.contains("is-details-collapsed"));
+        }
+
+        function detailsPreferredCollapsed() {
+            return storageBoolean(DETAILS_PREFERRED_KEY, storageBoolean("mc-sirk-quickcommands-details-collapsed", false));
+        }
+
+        function detailsAttention() {
+            return storageBoolean(DETAILS_ATTENTION_KEY, false);
+        }
+
+        function setDetailsPreference(value) {
+            writeStorageBoolean(DETAILS_PREFERRED_KEY, value === true);
+            if (value !== true) writeStorageBoolean(DETAILS_ATTENTION_KEY, false);
+        }
+
+        function setDetailsAttention(value) {
+            writeStorageBoolean(DETAILS_ATTENTION_KEY, value === true);
+        }
+
+        function transientOutput(value) {
+            return /^(Ładowanie poleceń|Loading commands|Polecenie wysłano do agenta|Command sent to the agent)/i.test(String(value || "").trim());
         }
 
         function copyStatus(source, target) {
@@ -198,6 +242,43 @@
             panel.__sirkQuickRestoring = false;
         }
 
+        function syncDetailsButton(panel, button) {
+            if (!panel || !button) return;
+            button.classList.add("sirk-quick-command-details-toggle");
+            button.classList.toggle("has-attention", detailsPreferredCollapsed() && detailsAttention());
+        }
+
+        function reconcileDetailsPreference(panel, button) {
+            if (!panel) return;
+            window.setTimeout(function () {
+                if (!panel.isConnected) return;
+                var browser = panel.querySelector(".sirk-quick-command-browser");
+                var status = panel.querySelector(".sirk-quick-command-status");
+                var currentOutput = status ? String(status.textContent || "").trim() : "";
+                var previousOutput = String(panel.__sirkQuickLastOutput || "");
+                panel.__sirkQuickLastOutput = currentOutput;
+
+                button = button && button.isConnected ? button : panel.querySelector(".sirk-quick-command-details-toggle");
+                if (detailsPreferredCollapsed() && currentOutput && currentOutput !== previousOutput && !transientOutput(currentOutput)) {
+                    setDetailsAttention(true);
+                }
+
+                if (!detailsPreferredCollapsed()) {
+                    setDetailsAttention(false);
+                    syncDetailsButton(panel, button);
+                    return;
+                }
+
+                if (browser && !detailsCollapsed(panel) && button && typeof button.click === "function" && !panel.__sirkQuickDetailsRestoreInProgress) {
+                    panel.__sirkQuickDetailsRestoreInProgress = true;
+                    try { button.click(); }
+                    finally { panel.__sirkQuickDetailsRestoreInProgress = false; }
+                    return;
+                }
+                syncDetailsButton(panel, button);
+            }, 0);
+        }
+
         function installToolbarHook() {
             var toolbar = window.SharedToolbar;
             if (!toolbar || typeof toolbar.mount !== "function") return false;
@@ -210,6 +291,22 @@
 
                 var effective = Object.assign({}, options || {});
                 effective.buttons = Object.assign({}, options && options.buttons || {});
+                effective.customButtons = (options && options.customButtons || []).map(function (definition) {
+                    if (!definition || definition.key !== "details") return definition;
+                    var details = Object.assign({}, definition);
+                    var originalDetails = details.onClick;
+                    details.onClick = function (api, event, currentDefinition) {
+                        var panel = host.closest(".sirk-desktop-commands-panel");
+                        var opening = detailsCollapsed(panel);
+                        setDetailsPreference(!opening);
+                        if (opening) setDetailsAttention(false);
+                        return typeof originalDetails === "function"
+                            ? originalDetails(api, event, currentDefinition)
+                            : undefined;
+                    };
+                    return details;
+                });
+
                 var collapse = Object.assign({}, effective.buttons.collapse || {});
                 var originalCollapse = collapse.onClick;
 
@@ -238,8 +335,11 @@
 
                 var api = originalMount.call(toolbar, effective);
                 var panel = host.closest(".sirk-desktop-commands-panel");
+                var detailsButton = api && api.buttons && api.buttons.details;
+                syncDetailsButton(panel, detailsButton);
                 window.setTimeout(function () {
                     restoreCollapsedPreference(panel, api && api.buttons && api.buttons.collapse);
+                    reconcileDetailsPreference(panel, detailsButton);
                 }, 0);
                 return api;
             };
@@ -275,6 +375,7 @@
                 function (panel) {
                     wrapExistingButton(panel);
                     restoreCollapsedPreference(panel, collapseButton(panel));
+                    reconcileDetailsPreference(panel, panel.querySelector(".sirk-quick-command-details-toggle"));
                 }
             );
         }
