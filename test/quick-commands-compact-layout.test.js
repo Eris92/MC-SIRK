@@ -79,5 +79,14 @@ assert.ok(nativeCore.indexOf("transientOutput") >= 0 &&
     nativeCore.indexOf("Ładowanie poleceń") >= 0 &&
     nativeCore.indexOf("Command sent to the agent") >= 0,
     "Loading and submission progress must not be treated as completed hidden output.");
+assert.ok(nativeCore.indexOf('data-sirk-details-preferred-collapsed') >= 0 &&
+    nativeCore.indexOf("applyDetailsPreference(panel)") >= 0,
+    "The preferred hidden state must be represented directly on the persistent panel element.");
+assert.ok(nativeCore.indexOf('transition:none!important') >= 0 &&
+    nativeCore.indexOf('width:min(545px,calc(100% - 52px))!important') >= 0 &&
+    nativeCore.indexOf('grid-template-columns:minmax(165px,205px) minmax(285px,340px) 0!important') >= 0,
+    "A hidden output pane must keep fixed geometry throughout internal renders without opening or width animation.");
+assert.ok(nativeCore.indexOf("applyDetailsPreference(panel);\n                var effective") >= 0,
+    "The persistent hidden geometry must be applied before the Quick toolbar and browser are rebuilt.");
 
-console.log("Exact-width dual-collapse Quick Commands layout and hidden-output attention: OK");
+console.log("Exact-width stable Quick Commands layout and hidden-output attention: OK");
