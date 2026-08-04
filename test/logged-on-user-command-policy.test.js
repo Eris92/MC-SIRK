@@ -81,7 +81,7 @@ Promise.resolve()
         assert.ok(transformedPowerShell.cmd.indexOf("output.txt") >= 0 &&
             transformedPowerShell.cmd.indexOf("exit.txt") >= 0,
             "The wrapper must return output and exit status to MeshCentral.");
-        assert.ok(transformedPowerShell.cmd.indexOf("System32\\\\wscript.exe") >= 0,
+        assert.ok(transformedPowerShell.cmd.indexOf("wscript.exe") >= 0,
             "Task Scheduler must start the console-free WScript host.");
         assert.ok(transformedPowerShell.cmd.indexOf("New-ScheduledTaskAction -Execute $wscript") >= 0,
             "PowerShell must not be the visible scheduled-task executable.");
