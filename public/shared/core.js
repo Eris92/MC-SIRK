@@ -188,13 +188,15 @@
         if (!item || !item.classList) return;
         item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2", "sirk-native-menu-selected");
         item.removeAttribute("aria-current");
-        item.removeAttribute("data-sirk-inline-menu-selected");
-        item.style.removeProperty("background-color");
-        item.style.removeProperty("border-radius");
-        item.style.removeProperty("outline");
-        item.style.removeProperty("box-shadow");
-        item.style.removeProperty("opacity");
-        item.style.removeProperty("width");
+        if (item.getAttribute("data-sirk-inline-menu-selected") === "1") {
+            item.style.removeProperty("background-color");
+            item.style.removeProperty("border-radius");
+            item.style.removeProperty("outline");
+            item.style.removeProperty("box-shadow");
+            item.style.removeProperty("opacity");
+            item.style.removeProperty("width");
+            item.removeAttribute("data-sirk-inline-menu-selected");
+        }
     }
 
     core.clearNativeMenuSelection = function () {
