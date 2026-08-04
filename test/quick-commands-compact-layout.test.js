@@ -38,5 +38,16 @@ assert.ok(nativeCore.indexOf("__sirkPreserveQuickOutput") >= 0 &&
 assert.ok(nativeCore.indexOf("observer.observe(previousStatus") >= 0 &&
     nativeCore.indexOf("attributeFilter: [\"class\"]") >= 0,
     "Output preservation must continue while an in-flight command updates the detached result node.");
+assert.ok(nativeCore.indexOf('mc-sirk-quickcommands-first-collapsed') >= 0,
+    "Quick Commands must use a dedicated persistent first-column state key.");
+assert.ok(nativeCore.indexOf("saveCollapsedPreference(currentCollapsed(panel))") >= 0,
+    "Every collapse or expand action must save the resulting layout state.");
+assert.ok(nativeCore.indexOf("readCollapsedPreference()") >= 0 &&
+    nativeCore.indexOf("restoreCollapsedPreference(panel)") >= 0 &&
+    nativeCore.indexOf("button.click()") >= 0,
+    "The saved collapsed state must be restored when a new Quick Commands panel is mounted.");
+assert.ok(nativeCore.indexOf("LEGACY_COLLAPSED_KEYS") >= 0 &&
+    nativeCore.indexOf("shared.quickCollapsed") >= 0,
+    "Existing saved Quick Commands preferences must migrate to the dedicated key.");
 
-console.log("Exact-width adaptive Quick commands output layout: OK");
+console.log("Exact-width persistent Quick Commands layout: OK");
