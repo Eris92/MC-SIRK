@@ -66,6 +66,32 @@
         });
     };
 
+    core.enterNativeDevicePage = function () {
+        if (!core.workspaceState && typeof window.go === "function") {
+            window.go(1);
+            return true;
+        }
+        if (typeof window.go === "function") {
+            window.go(1);
+            return true;
+        }
+        return false;
+    };
+
+    core.setLogicalView = function (viewMode) {
+        if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
+    };
+
+    core.updateWorkspaceUrl = function (viewMode, enabled) {
+        try {
+            var url = new URL(window.location.href);
+            if (enabled) url.searchParams.set("viewmode", String(viewMode));
+            else if (Number(url.searchParams.get("viewmode")) === Number(viewMode)) url.searchParams.delete("viewmode");
+            if (url.hash === "#") url.hash = "";
+            window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+        } catch (error) {}
+    };
+
     core.preparePluginMenuItem = function (item) {
         if (!item) return item;
         var handler = item.onclick || item.onmouseup;
