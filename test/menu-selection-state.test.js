@@ -31,7 +31,10 @@ assert.ok(core.indexOf("[id^='MainMenu']") < 0 && core.indexOf("[id^='LeftMenu']
     "SIRK must not clear arbitrary menu entries belonging to unrelated plugins.");
 assert.ok(core.indexOf("core.installNativeRestoreGuard") < 0,
     "SIRK must not intercept pointer events from other plugins or native navigation.");
-assert.ok(core.indexOf('if (!core.workspaceState && typeof window.go === "function"') < 0,
+var workspaceStart = core.indexOf("core.showWorkspace = function");
+var workspaceEnd = core.indexOf("core.element = function", workspaceStart);
+assert.ok(workspaceStart >= 0 && workspaceEnd > workspaceStart &&
+    core.slice(workspaceStart, workspaceEnd).indexOf("window.go(") < 0,
     "The shared workspace renderer must not call MeshCentral navigation on its own.");
 
 assert.ok(shell.indexOf("if (typeof window.go === \"function\") window.go(1)") >= 0,
