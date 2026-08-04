@@ -64,5 +64,20 @@ assert.ok(nativeCore.indexOf("__sirkQuickToggleInProgress") >= 0,
 assert.ok(nativeCore.indexOf("LEGACY_COLLAPSED_KEYS") >= 0 &&
     nativeCore.indexOf("shared.quickCollapsed") >= 0,
     "Existing saved Quick Commands preferences must migrate to the dedicated key.");
+assert.ok(nativeCore.indexOf('mc-sirk-quickcommands-details-preferred-collapsed') >= 0 &&
+    nativeCore.indexOf('mc-sirk-quickcommands-details-attention') >= 0,
+    "Quick must keep user output visibility separate from its internal render state.");
+assert.ok(nativeCore.indexOf("reconcileDetailsPreference(panel") >= 0 &&
+    nativeCore.indexOf("detailsPreferredCollapsed() && currentOutput") >= 0 &&
+    nativeCore.indexOf("button.click()") >= 0,
+    "A hidden output pane must be restored after an internal render without losing new-output detection.");
+assert.ok(nativeCore.indexOf("sirk-quick-command-details-toggle") >= 0 &&
+    nativeCore.indexOf("has-attention") >= 0 &&
+    nativeCore.indexOf("setDetailsAttention(false)") >= 0,
+    "The output button must show subtle attention only for unseen hidden output and clear it after opening.");
+assert.ok(nativeCore.indexOf("transientOutput") >= 0 &&
+    nativeCore.indexOf("Ładowanie poleceń") >= 0 &&
+    nativeCore.indexOf("Command sent to the agent") >= 0,
+    "Loading and submission progress must not be treated as completed hidden output.");
 
-console.log("Exact-width dual-collapse Quick Commands layout: OK");
+console.log("Exact-width dual-collapse Quick Commands layout and hidden-output attention: OK");
