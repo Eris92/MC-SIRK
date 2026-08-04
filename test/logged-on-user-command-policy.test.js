@@ -81,6 +81,14 @@ Promise.resolve()
         assert.ok(transformedPowerShell.cmd.indexOf("output.txt") >= 0 &&
             transformedPowerShell.cmd.indexOf("exit.txt") >= 0,
             "The wrapper must return output and exit status to MeshCentral.");
+        assert.ok(transformedPowerShell.cmd.indexOf("wscript.exe") >= 0,
+            "Task Scheduler must start the console-free WScript host.");
+        assert.ok(transformedPowerShell.cmd.indexOf("New-ScheduledTaskAction -Execute $wscript") >= 0,
+            "PowerShell must not be the visible scheduled-task executable.");
+        assert.ok(transformedPowerShell.cmd.indexOf("launch-command.txt") >= 0,
+            "The hidden launcher must read the PowerShell command from a protected file.");
+        assert.ok(policy.hiddenLauncherSource().indexOf("shell.Run(commandLine, 0, True)") >= 0,
+            "The WScript helper must launch PowerShell hidden and wait for completion.");
         assert.ok(decodedPayloads(transformedPowerShell.cmd).some(function (value) {
             return value.indexOf("Write-Output $env:APPDATA") >= 0;
         }), "The original PowerShell body must be embedded without changing user-profile variables.");
