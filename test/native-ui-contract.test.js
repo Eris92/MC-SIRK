@@ -126,13 +126,17 @@ assert.ok(desktopCommands.indexOf('(data.catalog || []).forEach') >= 0,
     "Desktop Commands must include Network, System and Other alongside Scripts.");
 assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
     "Desktop Commands must use command-specific icons matching My Commands.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if ((value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
+assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if (!(value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
     "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
-assert.ok(/state\.detail = value;\s*render\(panel\);\s*submit\(value/.test(desktopCommands) && desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
-    "Selecting a variable-free Quick command must clear the previous details pane before automatic execution.");
+assert.ok(desktopCommands.indexOf("state.detail = value;") >= 0 &&
+    desktopCommands.indexOf("writeDetailsCollapsed(false);") >= 0 &&
+    desktopCommands.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0 &&
+    desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
+    "Selecting a variable-free Quick command must open the details pane, clear old output and execute automatically.");
 assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
     "Desktop Commands must reserve the third column for variable fields and their Run action.");
-assert.ok(desktopCommands.indexOf('details.appendChild(element("div", "sirk-quick-command-status"))') >= 0 &&
+assert.ok(desktopCommands.indexOf('var status = element("div", "sirk-quick-command-status", state.output)') >= 0 &&
+    desktopCommands.indexOf("details.appendChild(status)") >= 0 &&
     desktopCommands.indexOf('panel.appendChild(element("div", "sirk-quick-command-status"))') < 0 &&
     desktopCommandsCss.indexOf('.sirk-quick-command-details>.sirk-quick-command-status:not(:empty)') >= 0,
     "Desktop command output must render inside the scrollable third column instead of a full-width footer.");
