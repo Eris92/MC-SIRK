@@ -6,6 +6,7 @@ var path = require("path");
 
 var root = path.join(__dirname, "..");
 var css = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
 var adminView = fs.readFileSync(path.join(root, "views", "SIRK-Portal.handlebars"), "utf8");
 
@@ -17,8 +18,9 @@ assert.ok(css.indexOf("--sirk-button-bg:var(--bs-tertiary-bg") >= 0 &&
     css.indexOf("--sirk-button-text:var(--bs-body-color") >= 0,
     "Buttons must inherit the active MeshCentral Bootstrap theme variables.");
 assert.ok(css.indexOf('[data-bs-theme="dark"]') >= 0 &&
-    css.indexOf("body.night") >= 0 && css.indexOf("body.dark") >= 0,
-    "Buttons must react to both Bootstrap and legacy MeshCentral theme switches.");
+    css.indexOf("body.night") >= 0 && css.indexOf("body.dark") >= 0 &&
+    css.indexOf('[data-host-theme="dark"]') >= 0,
+    "Buttons must react to Bootstrap, legacy and administration host theme switches.");
 assert.ok(css.indexOf(".mc-command-run-button") >= 0 &&
     css.indexOf(".mc-shared-toolbar-button") >= 0 &&
     css.indexOf(".mc-tree-script-action") >= 0,
@@ -36,6 +38,10 @@ assert.ok(toolbarApi.indexOf('key === "favorites" ? false : value === false') >=
     "Show favorites must remain clickable while Results is active.");
 assert.ok(toolbarApi.indexOf('/^Show all\\b/i.test(item.title)') >= 0,
     "The favorites toolbar state must remain visible while Results is active.");
+assert.ok(toolbar.indexOf('definition.key === "favorites" && resultsActive()') >= 0 &&
+    toolbar.indexOf("leaveResultsAfterFavoritesRender") >= 0 &&
+    toolbar.indexOf("if (catalogRoot) catalogRoot.click()") >= 0,
+    "Show favorites must leave Results immediately, including after an empty filter is cleared.");
 
 var adminCssIndex = adminView.indexOf("asset=admin.css");
 var sharedCssIndex = adminView.indexOf("asset=main.css");
