@@ -15,14 +15,22 @@ assert.ok(core.indexOf("core.workspaceState.menuSelection = peers.map") >= 0,
 assert.ok(core.indexOf("item.element.className = item.className") >= 0,
     "Leaving the SIRK workspace must restore the original native menu classes.");
 
+assert.ok(helper.indexOf("function activeSirkViewMode()") >= 0,
+    "Active navigation must be resolved independently from the stale URL query string.");
+assert.ok(helper.indexOf("core && core.workspaceState && core.workspaceState.viewMode") >= 0,
+    "The rendered SIRK workspace state must be the primary active-module source.");
 assert.ok(helper.indexOf("function syncActiveSirkMenu()") >= 0,
     "The active SIRK menu must be re-applied after MeshCentral redraws navigation.");
 assert.ok(helper.indexOf("document.querySelectorAll('[id^=\"MainMenu\"],[id^=\"LeftMenu\"]')") >= 0,
     "All native and plugin menu entries must be considered, not only direct siblings.");
 assert.ok(helper.indexOf('left ? "lbbuttonsel2" : "fullselect"') >= 0,
     "Legacy left navigation must use MeshCentral's actual selected class lbbuttonsel2.");
-assert.ok(helper.indexOf('attributeFilter: ["class"]') >= 0,
-    "Native class changes must trigger menu re-synchronization.");
+assert.ok(helper.indexOf("sirk-native-menu-selected") >= 0,
+    "The selected SIRK menu item must have a deterministic plugin-owned visual state.");
+assert.ok(helper.indexOf('"background:#f4f6f8!important') >= 0,
+    "The active legacy menu item must receive the same light filled visual as a native selected item.");
+assert.ok(helper.indexOf('attributeFilter: ["class", "style"]') >= 0,
+    "Native class and inline-style redraws must trigger menu re-synchronization.");
 assert.ok(helper.indexOf("window.setTimeout(scan, 250)") >= 0,
     "The active state must be re-applied after delayed native go(1) rendering.");
 assert.ok(helper.indexOf('item.setAttribute("aria-current", "page")') >= 0,
