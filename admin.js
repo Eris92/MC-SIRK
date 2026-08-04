@@ -16,6 +16,7 @@ module.exports.admin = function (plugin) {
         "main.css": ["public/shared/styles/main.css", "text/css; charset=utf-8"],
         "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
         "desktop-commands.js": ["public/native/desktop-commands.js", "text/javascript; charset=utf-8"],
+        "quick-output-state.js": ["public/native/quick-output-state.js", "text/javascript; charset=utf-8"],
         "desktop-commands.css": ["public/native/desktop-commands.css", "text/css; charset=utf-8"],
         "approvalcenter.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
         "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
