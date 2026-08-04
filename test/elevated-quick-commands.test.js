@@ -55,8 +55,13 @@ Promise.resolve()
             "The SYSTEM launcher must execute through PowerShell.");
         assert.ok(captured[0].command.cmd.indexOf("SirkInteractiveSystemLauncher") >= 0,
             "Interactive Quick commands must use the SYSTEM interactive-session launcher.");
-        assert.ok(captured[0].command.cmd.indexOf("CreateProcessAsUser") >= 0,
+        var sourceMatch = captured[0].command.cmd.match(/FromBase64String\('([^']+)'\)/);
+        assert.ok(sourceMatch, "The launcher must embed its C# implementation.");
+        var csharpSource = Buffer.from(sourceMatch[1], "base64").toString("utf8");
+        assert.ok(csharpSource.indexOf("CreateProcessAsUser") >= 0,
             "The launcher must create the process with the SYSTEM token in the user session.");
+        assert.ok(csharpSource.indexOf("Process.GetProcessesByName(\"winlogon\")") >= 0,
+            "The launcher must obtain the target session's LocalSystem token from winlogon.");
         assert.ok(captured[0].command.cmd.indexOf("NT AUTHORITY\\SYSTEM") >= 0,
             "Successful output must identify the effective SYSTEM account.");
         assert.ok(captured[0].command.cmd.indexOf("New-ScheduledTaskPrincipal") < 0,
