@@ -153,18 +153,19 @@
         });
     }
 
+    function commandPage() {
+        return document.querySelector(".mc-shared-page-mycommands");
+    }
+
     function currentRunButtons() {
-        return Array.prototype.slice.call(document.querySelectorAll(
-            ".mc-shared-page-mycommands .mc-command-run-button"
-        ));
+        var page = commandPage();
+        return page ? Array.prototype.slice.call(page.querySelectorAll(".mc-command-run-button")) : [];
     }
 
     function newRunButton(previousButtons) {
         var buttons = currentRunButtons();
         for (var index = buttons.length - 1; index >= 0; index -= 1) {
-            if (buttons[index].isConnected && previousButtons.indexOf(buttons[index]) < 0) {
-                return buttons[index];
-            }
+            if (buttons[index].isConnected && previousButtons.indexOf(buttons[index]) < 0) return buttons[index];
         }
         return null;
     }
@@ -185,7 +186,7 @@
 
         var button = newRunButton(previousButtons);
         if (!button) {
-            if (attempt < 160) {
+            if (attempt < 200) {
                 window.setTimeout(function () {
                     scheduleSelectedRun(sequence, previousButtons, attempt + 1);
                 }, 50);
@@ -195,9 +196,8 @@
 
         if (hasRuntimeVariables(button)) return;
         if (button.getAttribute("data-sirk-auto-run") === String(sequence)) return;
-
         if (button.disabled) {
-            if (attempt < 160) {
+            if (attempt < 200) {
                 window.setTimeout(function () {
                     scheduleSelectedRun(sequence, previousButtons, attempt + 1);
                 }, 50);
@@ -209,13 +209,37 @@
         button.click();
     }
 
-    function beginSelectedRun() {
+    function beginSelectedRun(previousButtons) {
         ensureCommandRunStyle();
-        var previousButtons = currentRunButtons();
         var sequence = ++commandSelectionSequence;
+        previousButtons = Array.isArray(previousButtons) ? previousButtons : currentRunButtons();
         window.setTimeout(function () {
             scheduleSelectedRun(sequence, previousButtons, 0);
         }, 0);
+    }
+
+    function installCommandsCatalogHook() {
+        var catalog = window.SharedCatalogView;
+        if (!catalog || typeof catalog.mount !== "function" || catalog.mount.__sirkCommandAutoRunWrapped) return false;
+
+        var original = catalog.mount;
+        var wrapped = function (options) {
+            var effectiveOptions = options;
+            if (options && typeof options.onScript === "function") {
+                effectiveOptions = Object.assign({}, options);
+                var originalOnScript = options.onScript;
+                effectiveOptions.onScript = function (item) {
+                    var previousButtons = currentRunButtons();
+                    var result = originalOnScript(item);
+                    beginSelectedRun(previousButtons);
+                    return result;
+                };
+            }
+            return original.call(catalog, effectiveOptions);
+        };
+        wrapped.__sirkCommandAutoRunWrapped = true;
+        catalog.mount = wrapped;
+        return true;
     }
 
     document.addEventListener("click", function (event) {
@@ -224,15 +248,16 @@
             : null;
         if (!target) return;
 
-        // Capture phase runs before SharedDirectoryTree replaces the clicked DOM subtree.
-        // That guarantees the newly rendered Run action can be located afterwards.
-        beginSelectedRun();
+        // Fallback for a Commands tree mounted before the catalog hook was installed.
+        // A later wrapped callback increments the sequence and cancels this attempt.
+        beginSelectedRun(currentRunButtons());
     }, true);
 
     function scan() {
         ensureCommandRunStyle();
         normalizeRunAsEditors();
         installMountHook();
+        installCommandsCatalogHook();
         document.querySelectorAll(".mc-results-viewer, .mc-script-output, .mc-shared-result").forEach(enhanceHost);
     }
 
