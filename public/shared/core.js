@@ -137,6 +137,61 @@
             core.placeMenuItem(left, leftAnchor, definition.order);
         }
     };
+
+    function modernMenuItem(item) {
+        return !!item && (String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link"));
+    }
+
+    function menuPeers(item) {
+        if (!item || !item.parentNode) return [];
+        return Array.prototype.filter.call(item.parentNode.children, function (candidate) {
+            return /^(MainMenu|LeftMenu)/.test(String(candidate.id || ""));
+        });
+    }
+
+    function clearMenuSelection(item) {
+        if (!item || !item.classList) return;
+        item.classList.remove("fullselect", "semiselect", "active", "lbbuttonsel", "lbbuttonsel2");
+        item.removeAttribute("aria-current");
+    }
+
+    function selectMenuItem(item, isLeft) {
+        if (!item || !item.classList) return;
+        clearMenuSelection(item);
+        item.classList.add(modernMenuItem(item) ? "active" : (isLeft ? "lbbuttonsel" : "fullselect"));
+        item.setAttribute("aria-current", "page");
+    }
+
+    core.activateMenu = function (viewMode) {
+        var value = String(viewMode == null ? "" : viewMode);
+        var main = document.querySelector('[id^="MainMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]');
+        var left = document.querySelector('[id^="LeftMenuSirkPlatform-"][data-sirk-platform-viewmode="' + value + '"]');
+        var targets = [main, left].filter(Boolean);
+        if (!targets.length || !core.workspaceState) return false;
+
+        var peers = [];
+        targets.forEach(function (target) {
+            menuPeers(target).forEach(function (peer) {
+                if (peers.indexOf(peer) < 0) peers.push(peer);
+            });
+        });
+
+        if (!core.workspaceState.menuSelection) {
+            core.workspaceState.menuSelection = peers.map(function (item) {
+                return {
+                    element: item,
+                    className: item.className,
+                    ariaCurrent: item.getAttribute("aria-current")
+                };
+            });
+        }
+
+        peers.forEach(clearMenuSelection);
+        selectMenuItem(main, false);
+        selectMenuItem(left, true);
+        return true;
+    };
+
     core.restoreWorkspace = function () {
         var state = core.workspaceState;
         if (state) {
@@ -144,6 +199,12 @@
             (state.hidden || []).forEach(function (item) {
                 item.element.style.cssText = item.cssText;
                 item.element.hidden = item.hidden;
+            });
+            (state.menuSelection || []).forEach(function (item) {
+                if (!item.element || !item.element.isConnected) return;
+                item.element.className = item.className;
+                if (item.ariaCurrent == null) item.element.removeAttribute("aria-current");
+                else item.element.setAttribute("aria-current", item.ariaCurrent);
             });
             var workspace = document.getElementById("SirkPlatformWorkspace");
             if (workspace) {
@@ -209,6 +270,8 @@
         // SIRK workspaces reuse MeshCentral page p1. Mark the logical view as
         // custom so a later native go(1) is not discarded as a same-page no-op.
         if (typeof window.xxcurrentView !== "undefined") window.xxcurrentView = Number(viewMode);
+        core.workspaceState.viewMode = Number(viewMode);
+        core.activateMenu(viewMode);
         heading.textContent = title;
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
         workspace.style.display = "block";
