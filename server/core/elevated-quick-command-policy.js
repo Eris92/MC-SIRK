@@ -97,12 +97,22 @@ function buildSystemLauncher(commandLine, label) {
     ].join(";");
 }
 
+function normalizeCommandRunAs(command) {
+    if (!command) return command;
+    if (Number(command.runAsUser) !== 1) return command;
+
+    // MeshAgent value 1 means UserOrAgent and may silently fall back to the
+    // service account. SIRK's Logged-on user mode must be strict, so use 2.
+    return Object.assign({}, command, { runAsUser: 2 });
+}
+
 function transformCommand(command) {
-    if (!command || Number(command.runAsUser) !== 0 || Number(command.type) !== 2) return command;
-    var commandLine = extractInteractiveCommand(command.cmd);
-    if (!commandLine) return command;
-    return Object.assign({}, command, {
-        cmd: buildSystemLauncher(commandLine, command.label),
+    var effective = normalizeCommandRunAs(command);
+    if (!effective || Number(effective.runAsUser) !== 0 || Number(effective.type) !== 2) return effective;
+    var commandLine = extractInteractiveCommand(effective.cmd);
+    if (!commandLine) return effective;
+    return Object.assign({}, effective, {
+        cmd: buildSystemLauncher(commandLine, effective.label),
         runAsUser: 0,
         type: 2
     });
@@ -121,4 +131,5 @@ function apply(plugin) {
 module.exports.apply = apply;
 module.exports.buildSystemLauncher = buildSystemLauncher;
 module.exports.extractInteractiveCommand = extractInteractiveCommand;
+module.exports.normalizeCommandRunAs = normalizeCommandRunAs;
 module.exports.transformCommand = transformCommand;
