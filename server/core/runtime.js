@@ -10,7 +10,7 @@ var folderAccess = require("./folder-access.js");
 
 var VERSION = require("../../config.json").version;
 var DEFAULTS = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     modules: {
         myscripts: { enabled: true, accessGroupIds: [], folderPermissions: {} },
         mycommands: {
@@ -241,38 +241,48 @@ module.exports.createRuntime = function (options) {
 
         try {
             settings.updateSync(function (current) {
-            Object.keys(modules).forEach(function (key) {
-                if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
-                    current.modules[key].enabled = moduleValues[key] === true;
-                }
-            });
-            current.modules.mycommands.showInMenu = false;
-            current.modules.moverequests.menuEnabled = false;
-            if (moduleOptions.approvals) {
-                var approvalOptions = moduleOptions.approvals;
-                var approvals = current.modules.approvals || (current.modules.approvals = { retentionDays: 365, providers: {} });
-                approvals.retentionDays = Math.max(1, Math.min(3650, Number(approvalOptions.retentionDays) || 365));
-                approvals.providers = approvals.providers || {};
-                ["moverequests", "mycommands", "myscripts"].forEach(function (key) {
-                    if (!approvalOptions.providers || !Object.prototype.hasOwnProperty.call(approvalOptions.providers, key)) return;
-                    var existing = approvals.providers[key] || {};
-                    var provider = approvalOptions.providers[key] || {};
-                    existing.enabled = provider.enabled !== false;
-                    existing.showTab = provider.showTab !== false;
-                    existing.showOverview = provider.showOverview !== false;
-                    existing.allowNoApproval = provider.allowNoApproval === true;
-                    existing.levels = existing.levels || {};
-                    [1, 2, 3].forEach(function (level) {
-                        var selected = provider.levels && (provider.levels[level] || provider.levels[String(level)]);
-                        existing.levels[level] = (Array.isArray(selected) ? selected : []).map(String).filter(function (id, index, all) {
-                            return knownGroups.indexOf(id) >= 0 && all.indexOf(id) === index;
-                        });
-                    });
-                    approvals.providers[key] = existing;
+                Object.keys(modules).forEach(function (key) {
+                    if (Object.prototype.hasOwnProperty.call(moduleValues, key)) {
+                        current.modules[key].enabled = moduleValues[key] === true;
+                    }
                 });
-            }
-            if (moduleOptions.moverequests) current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
-            if (moduleOptions.mycommands) current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
+                current.modules.mycommands.showInMenu = false;
+                current.modules.moverequests.menuEnabled = false;
+                if (moduleOptions.approvals) {
+                    var approvalOptions = moduleOptions.approvals;
+                    var approvals = current.modules.approvals || (current.modules.approvals = { retentionDays: 365, providers: {} });
+                    approvals.retentionDays = Math.max(1, Math.min(3650, Number(approvalOptions.retentionDays) || 365));
+                    approvals.providers = approvals.providers || {};
+                    ["moverequests", "mycommands", "myscripts"].forEach(function (key) {
+                        if (!approvalOptions.providers || !Object.prototype.hasOwnProperty.call(approvalOptions.providers, key)) return;
+                        var existing = approvals.providers[key] || {};
+                        var provider = approvalOptions.providers[key] || {};
+                        existing.enabled = provider.enabled !== false;
+                        existing.showTab = provider.showTab !== false;
+                        existing.showOverview = provider.showOverview !== false;
+                        existing.allowNoApproval = provider.allowNoApproval === true;
+                        existing.levels = existing.levels || {};
+                        [1, 2, 3].forEach(function (level) {
+                            var selected = provider.levels && (provider.levels[level] || provider.levels[String(level)]);
+                            existing.levels[level] = (Array.isArray(selected) ? selected : []).map(String).filter(function (id, index, all) {
+                                return knownGroups.indexOf(id) >= 0 && all.indexOf(id) === index;
+                            });
+                        });
+                        approvals.providers[key] = existing;
+                    });
+                }
+                if (moduleOptions.permissions) {
+                    ["mycommands", "myscripts"].forEach(function (key) {
+                        var source = moduleOptions.permissions[key];
+                        if (!source || typeof source !== "object" || Array.isArray(source)) return;
+                        var target = current.modules[key] || (current.modules[key] = {});
+                        target.accessGroupIds = normalizeGroups(source.accessGroupIds, knownGroups);
+                        var allowedFolderKeys = moduleFolders(key).map(function (item) { return String(item.key); });
+                        target.folderPermissions = folderAccess.normalizeRules(source.folderPermissions, allowedFolderKeys, knownGroups);
+                    });
+                }
+                if (moduleOptions.moverequests) current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
+                if (moduleOptions.mycommands) current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
                 return current;
             });
             return Promise.resolve(adminSnapshot(user));
