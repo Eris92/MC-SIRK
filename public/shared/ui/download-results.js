@@ -114,6 +114,45 @@
         (document.head || document.documentElement).appendChild(style);
     }
 
+    function addRunAsOption(select, value, label) {
+        var option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        select.appendChild(option);
+    }
+
+    function normalizeRunAsEditors() {
+        document.querySelectorAll(
+            ".mc-shared-page-mycommands .mc-script-definition-form .mc-definition-section"
+        ).forEach(function (section) {
+            if (section.getAttribute("data-sirk-run-as-fixed") === "1") return;
+            var heading = section.querySelector("h4");
+            if (!heading || String(heading.textContent || "").trim().toLowerCase() !== "execution") return;
+
+            var select = section.querySelector("select.mc-definition-type, select.mc-definition-input, select");
+            if (!select) return;
+            var values = Array.prototype.map.call(select.options || [], function (option) {
+                return String(option.value);
+            });
+            if (values.indexOf("0") < 0 || (values.indexOf("1") < 0 && values.indexOf("2") < 0)) return;
+
+            var selected = String(select.value) === "0" ? "0" : "2";
+            select.innerHTML = "";
+            addRunAsOption(select, "0", "SYSTEM");
+            addRunAsOption(select, "2", language() === "pl" ? "Zalogowany użytkownik" : "Logged-on user");
+            select.value = selected;
+            select.setAttribute("data-sirk-run-as-mode", "system-or-user-only");
+
+            var note = document.createElement("div");
+            note.className = "mc-shared-muted sirk-run-as-note";
+            note.textContent = language() === "pl"
+                ? "SYSTEM uruchamia skrypt jako konto usługi MeshAgent. Zalogowany użytkownik wymaga aktywnej sesji i nie przechodzi awaryjnie na SYSTEM."
+                : "SYSTEM runs through the MeshAgent service account. Logged-on user requires an active session and never falls back to SYSTEM.";
+            section.appendChild(note);
+            section.setAttribute("data-sirk-run-as-fixed", "1");
+        });
+    }
+
     function currentRunButtons() {
         return Array.prototype.slice.call(document.querySelectorAll(
             ".mc-shared-page-mycommands .mc-command-run-button"
@@ -192,6 +231,7 @@
 
     function scan() {
         ensureCommandRunStyle();
+        normalizeRunAsEditors();
         installMountHook();
         document.querySelectorAll(".mc-results-viewer, .mc-script-output, .mc-shared-result").forEach(enhanceHost);
     }
