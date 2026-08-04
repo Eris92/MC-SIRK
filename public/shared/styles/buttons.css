@@ -1,0 +1,207 @@
+/*
+ * One shared action-button contract for every SIRK surface.
+ * Navigation rows, tree rows and accordion headers intentionally keep their
+ * own layout-specific appearance.
+ */
+#SirkPlatformWorkspace,
+.mc-results-viewer,
+.mc-move-dialog,
+#sirk-platform-admin {
+    --sirk-button-bg: var(--bs-secondary, #6c757d);
+    --sirk-button-border: var(--bs-secondary, #6c757d);
+    --sirk-button-hover-bg: #5c636a;
+    --sirk-button-hover-border: #565e64;
+    --sirk-button-active-bg: #51585e;
+    --sirk-button-text: #fff;
+    --sirk-button-focus: rgba(108, 117, 125, .35);
+}
+
+#SirkPlatformWorkspace :is(
+    .sirk-button,
+    .btn,
+    .mc-command-run-button,
+    .mc-shared-toolbar-button,
+    .mc-tree-script-action,
+    .mc-results-view-button,
+    .mc-results-copy-button,
+    .mc-definition-remove
+),
+.mc-results-viewer :is(.sirk-button, .btn, button),
+.mc-move-dialog .mc-move-dialog-actions button,
+html body #sirk-platform-admin :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-management-tool,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+),
+html body #sirk-platform-admin #sirk-platform-admin-content :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+) {
+    appearance: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    min-height: 32px !important;
+    padding: 5px 10px !important;
+    border: 1px solid var(--sirk-button-border) !important;
+    border-radius: 4px !important;
+    background: var(--sirk-button-bg) !important;
+    color: var(--sirk-button-text) !important;
+    box-shadow: none !important;
+    font: inherit !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#SirkPlatformWorkspace :is(
+    .sirk-button,
+    .btn,
+    .mc-command-run-button,
+    .mc-shared-toolbar-button,
+    .mc-tree-script-action,
+    .mc-results-view-button,
+    .mc-results-copy-button,
+    .mc-definition-remove
+):hover,
+.mc-results-viewer :is(.sirk-button, .btn, button):hover,
+.mc-move-dialog .mc-move-dialog-actions button:hover,
+html body #sirk-platform-admin :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-management-tool,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+):hover {
+    border-color: var(--sirk-button-hover-border) !important;
+    background: var(--sirk-button-hover-bg) !important;
+    color: var(--sirk-button-text) !important;
+}
+
+#SirkPlatformWorkspace :is(
+    .sirk-button,
+    .btn,
+    .mc-command-run-button,
+    .mc-shared-toolbar-button,
+    .mc-tree-script-action,
+    .mc-results-view-button,
+    .mc-results-copy-button,
+    .mc-definition-remove
+):active,
+#SirkPlatformWorkspace :is(.mc-shared-toolbar-button.is-active, .mc-tree-script-action.active),
+.mc-results-viewer :is(.sirk-button, .btn, button):active,
+.mc-move-dialog .mc-move-dialog-actions button:active,
+html body #sirk-platform-admin :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-management-tool,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+):active,
+html body #sirk-platform-admin .mc-admin-management-tool.is-active {
+    border-color: var(--sirk-button-hover-border) !important;
+    background: var(--sirk-button-active-bg) !important;
+    color: var(--sirk-button-text) !important;
+}
+
+#SirkPlatformWorkspace :is(
+    .sirk-button,
+    .btn,
+    .mc-command-run-button,
+    .mc-shared-toolbar-button,
+    .mc-tree-script-action,
+    .mc-results-view-button,
+    .mc-results-copy-button,
+    .mc-definition-remove
+):focus-visible,
+.mc-results-viewer :is(.sirk-button, .btn, button):focus-visible,
+.mc-move-dialog .mc-move-dialog-actions button:focus-visible,
+html body #sirk-platform-admin :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-management-tool,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+):focus-visible {
+    outline: 0 !important;
+    box-shadow: 0 0 0 3px var(--sirk-button-focus) !important;
+}
+
+#SirkPlatformWorkspace :is(
+    .sirk-button,
+    .btn,
+    .mc-command-run-button,
+    .mc-shared-toolbar-button,
+    .mc-tree-script-action,
+    .mc-results-view-button,
+    .mc-results-copy-button,
+    .mc-definition-remove
+):disabled,
+#SirkPlatformWorkspace :is(.sirk-button, .btn).disabled,
+.mc-results-viewer :is(.sirk-button, .btn, button):disabled,
+.mc-move-dialog .mc-move-dialog-actions button:disabled,
+html body #sirk-platform-admin :is(
+    .sirk-button,
+    .mc-admin-primary,
+    .mc-admin-secondary,
+    .mc-admin-management-tool,
+    .mc-admin-actions button,
+    .mc-admin-toolbar button,
+    .mc-admin-inline-actions button,
+    .mc-admin-table-actions button
+):disabled {
+    opacity: .65 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+/* Native compact icon actions use the same dimensions as MeshCentral toolbar buttons. */
+#SirkPlatformWorkspace :is(.mc-shared-toolbar-button, .mc-tree-script-action, .mc-definition-remove),
+html body #sirk-platform-admin .mc-admin-management-tool {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 32px !important;
+    padding: 0 !important;
+}
+
+#SirkPlatformWorkspace :is(.btn-sm, .sirk-button.btn-sm),
+.mc-results-viewer :is(.btn-sm, .sirk-button.btn-sm) {
+    min-height: 28px !important;
+    padding: 3px 8px !important;
+    font-size: 12px !important;
+}
+
+/* Deliberate exclusions: these are navigation controls, not action buttons. */
+#SirkPlatformWorkspace :is(
+    .mc-shared-nav-item,
+    .mc-tree-folder-header,
+    .mc-tree-script,
+    .mc-shared-settings-header,
+    .mc-shared-tab
+) {
+    font-weight: inherit;
+}
