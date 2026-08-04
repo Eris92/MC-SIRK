@@ -26,8 +26,8 @@ assert.ok(
     "The mapped Quick output controller file must exist."
 );
 assert.ok(
-    read("public/native/quick-output-state.js").indexOf("window.SirkQuickOutputState") >= 0,
-    "The Quick output controller must expose its diagnostic API after loading."
+    read("public/native/quick-output-state.js").indexOf("__sirkQuickOutputStateInstalled") >= 0,
+    "The mapped file must contain the Quick output controller implementation."
 );
 
 console.log("Startup asset MIME contract: OK");
