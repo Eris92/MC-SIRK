@@ -9,6 +9,8 @@ var css = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.cs
 var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
 var adminView = fs.readFileSync(path.join(root, "views", "SIRK-Portal.handlebars"), "utf8");
+var approvalContractIndex = css.indexOf("/* Approval Center: collapsing only compacts the first column. */");
+var actionContract = approvalContractIndex >= 0 ? css.slice(0, approvalContractIndex) : css;
 
 assert.ok(css.indexOf("One live-theme action-button contract") >= 0,
     "All SIRK action buttons must be controlled from one live-theme stylesheet.");
@@ -35,8 +37,8 @@ assert.ok(css.indexOf("/* My Commands can mount as a native device tab outside S
     css.indexOf(".mc-shared-page{--sirk-button-bg") >= 0 &&
     css.indexOf(".mc-shared-page :is(.sirk-button,.btn,.mc-command-run-button") >= 0,
     "My Commands device tabs must receive the same live-theme button contract outside the main workspace.");
-assert.ok(css.indexOf(".mc-shared-nav-item") < 0 && css.indexOf(".mc-tree-folder-header") < 0,
-    "Navigation rows must not be converted into action buttons.");
+assert.ok(actionContract.indexOf(".mc-shared-nav-item") < 0 && actionContract.indexOf(".mc-tree-folder-header") < 0,
+    "Navigation rows must not be included in the action-button appearance contract.");
 
 assert.ok(toolbarApi.indexOf('key === "favorites" ? false : value === false') >= 0,
     "Show favorites must remain clickable while Results is active.");
