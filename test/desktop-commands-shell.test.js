@@ -30,10 +30,10 @@ assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&
     "Quick commands must expose the same semantic three-column structure as Commands.");
 assert.ok(script.indexOf('mc-command-run-button sirk-quick-command-submit') >= 0,
     "Quick commands Run must use the same action-button class as My Commands.");
-assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(420px,1fr)!important") >= 0,
-    "Quick commands normal columns must match the My Commands geometry.");
-assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(420px,1fr)!important") >= 0,
-    "Quick commands collapsed columns must match the My Commands geometry.");
+assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(320px,420px)!important") >= 0,
+    "Quick commands must keep the My Commands first two columns and use a compact details column.");
+assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(320px,420px)!important") >= 0,
+    "Quick commands collapsed layout must keep the compact details column.");
 assert.ok(css.indexOf(".sirk-quick-command-label") >= 0 &&
     css.indexOf("white-space:normal") >= 0 &&
     css.indexOf("overflow-wrap:anywhere") >= 0,
@@ -42,4 +42,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick commands toolbar and Commands-style columns: OK");
+console.log("Quick commands toolbar and compact Commands-style columns: OK");
