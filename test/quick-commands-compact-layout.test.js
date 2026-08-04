@@ -12,10 +12,18 @@ assert.ok(css.indexOf(".sirk-quick-command-header{display:none!important}") >= 0
 assert.ok(css.indexOf("grid-template-rows:auto minmax(0,1fr)") >= 0,
     "The panel must contain only the toolbar row and the browser row.");
 assert.ok(css.indexOf("width:min(1000px,calc(100% - 52px))") >= 0,
-    "The Quick commands panel must be narrower than the previous 1120px shell.");
+    "The Quick commands panel must remain compact.");
 assert.ok(css.indexOf("minmax(320px,420px)") >= 0,
-    "The third details column must be capped instead of consuming all remaining width.");
+    "The third details column must retain its compact width cap.");
 assert.ok(css.indexOf("minmax(165px,205px) minmax(285px,340px)") >= 0,
     "The first two columns must retain the My Commands geometry.");
+assert.ok(css.indexOf(":has(.sirk-quick-command-browser.is-collapsed){width:min(860px") >= 0,
+    "Collapsing categories must also shrink the panel instead of leaving an empty strip.");
+assert.ok(css.indexOf("height:100%!important") >= 0 &&
+    css.indexOf(".sirk-quick-command-details{display:flex;flex-direction:column") >= 0,
+    "The details pane must fill the browser row and provide adaptive vertical layout.");
+assert.ok(css.indexOf(".sirk-quick-command-status:not(:empty){display:block;flex:1 1 auto") >= 0 &&
+    css.indexOf("max-width:none") >= 0 && css.indexOf("overflow:auto") >= 0,
+    "Command output must fill the available details pane and scroll inside its own box.");
 
-console.log("Compact Quick commands layout: OK");
+console.log("Adaptive Quick commands output layout: OK");
