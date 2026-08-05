@@ -252,7 +252,12 @@
         var state = core.workspaceState;
         document.documentElement.classList.remove("sirk-platform-workspace-active");
         if (state) {
-            if (state.heading) state.heading.textContent = state.headingText;
+            if (state.titleHost) {
+                while (state.titleHost.firstChild) state.titleHost.removeChild(state.titleHost.firstChild);
+                (state.titleChildren || []).forEach(function (child) {
+                    state.titleHost.appendChild(child);
+                });
+            }
             (state.hidden || []).forEach(function (item) {
                 item.element.style.cssText = item.cssText;
                 item.element.hidden = item.hidden;
@@ -278,7 +283,6 @@
             page.appendChild(workspace);
         }
 
-        var heading = titleHost.querySelector("h1,h2,h3,.title,b,strong") || titleHost;
         if (!core.workspaceState) {
             var hidden = [];
             for (var child = page.firstElementChild; child; child = child.nextElementSibling) {
@@ -287,12 +291,26 @@
                 child.hidden = true;
                 child.style.setProperty("display", "none", "important");
             }
-            core.workspaceState = { heading: heading, headingText: heading.textContent, hidden: hidden, viewMode: Number(viewMode) };
+
+            var titleChildren = [];
+            while (titleHost.firstChild) titleChildren.push(titleHost.removeChild(titleHost.firstChild));
+            var heading = document.createElement("h1");
+            heading.textContent = title;
+            titleHost.appendChild(heading);
+
+            core.workspaceState = {
+                titleHost: titleHost,
+                titleChildren: titleChildren,
+                heading: heading,
+                hidden: hidden,
+                viewMode: Number(viewMode)
+            };
+        } else if (core.workspaceState.heading) {
+            core.workspaceState.heading.textContent = title;
         }
 
         core.workspaceState.viewMode = Number(viewMode);
         document.documentElement.classList.add("sirk-platform-workspace-active");
-        heading.textContent = title;
         while (workspace.firstChild) workspace.removeChild(workspace.firstChild);
         workspace.style.display = "block";
         render(workspace);
