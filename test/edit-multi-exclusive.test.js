@@ -30,7 +30,7 @@ function createBaseTools() {
             toolbar.setActive("multi", this.state.multiPickMode);
             if (onChange) onChange();
         },
-        scriptActions: function (script) {
+        scriptActions: function () {
             if (!this.state.editMode) return [];
             return [{
                 key: "favorite",
@@ -41,6 +41,12 @@ function createBaseTools() {
         copyText: function () { return Promise.resolve(true); }
     };
     return tools;
+}
+
+function actionKeys(tools, script, config) {
+    return Array.from(tools.scriptActions(script, config), function (item) {
+        return item.key;
+    });
 }
 
 var appendedStyles = [];
@@ -92,7 +98,7 @@ assert.strictEqual(tools.state.multiPickMode, false, "Activating Edit must disab
 assert.strictEqual(active.manage, true, "The Edit toolbar button must be active.");
 assert.strictEqual(active.multi, false, "The Multi toolbar button must be inactive in Edit mode.");
 assert.deepStrictEqual(
-    tools.scriptActions(script, config).map(function (item) { return item.key; }),
+    actionKeys(tools, script, config),
     ["credentials", "favorite", "link", "edit"],
     "Edit mode must show only Edit actions."
 );
@@ -103,7 +109,7 @@ assert.strictEqual(tools.state.multiPickMode, true, "Multi must activate.");
 assert.strictEqual(active.manage, false, "The Edit toolbar button must be inactive in Multi mode.");
 assert.strictEqual(active.multi, true, "The Multi toolbar button must be active.");
 assert.deepStrictEqual(
-    tools.scriptActions(script, config).map(function (item) { return item.key; }),
+    actionKeys(tools, script, config),
     ["multi"],
     "Multi mode must show only the multi-device action."
 );
@@ -114,7 +120,7 @@ assert.strictEqual(tools.state.multiPickMode, false, "Reactivating Edit must dis
 assert.strictEqual(active.manage, true, "The Edit toolbar button must be active again.");
 assert.strictEqual(active.multi, false, "The Multi toolbar button must be inactive again.");
 assert.deepStrictEqual(
-    tools.scriptActions(script, config).map(function (item) { return item.key; }),
+    actionKeys(tools, script, config),
     ["credentials", "favorite", "link", "edit"],
     "Returning to Edit must remove the multi-device action."
 );
