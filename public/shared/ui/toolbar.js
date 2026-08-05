@@ -2,6 +2,11 @@
     "use strict";
 
     var QUICK_PREFERENCES_KEY = "sirkPlatform.mycommands.preferences";
+    var QUICK_OUTPUT_HIDDEN_KEY = "mc-sirk-quickcommands-output-hidden-v2";
+    var QUICK_OUTPUT_ATTENTION_KEY = "mc-sirk-quickcommands-output-attention-v2";
+    var QUICK_OUTPUT_LEGACY_HIDDEN_KEY = "mc-sirk-quickcommands-details-collapsed";
+    var QUICK_OUTPUT_OLD_PREFERRED_KEY = "mc-sirk-quickcommands-details-preferred-collapsed";
+    var QUICK_OUTPUT_OLD_ATTENTION_KEY = "mc-sirk-quickcommands-details-attention";
 
     function resolve(value) {
         return typeof value === "string"
@@ -11,6 +16,82 @@
 
     function isQuickToolbar(host) {
         return !!(host && host.classList && host.classList.contains("sirk-quick-command-toolbar-host"));
+    }
+
+    function parseStoredBoolean(value) {
+        if (value == null || value === "") return null;
+        if (/^(1|true|yes|on)$/i.test(String(value))) return true;
+        if (/^(0|false|no|off)$/i.test(String(value))) return false;
+        return null;
+    }
+
+    function readStoredBoolean(key, fallback) {
+        try {
+            var value = parseStoredBoolean(window.localStorage.getItem(key));
+            return value == null ? fallback : value;
+        } catch (error) {
+            return fallback;
+        }
+    }
+
+    function writeStoredBoolean(key, value) {
+        try { window.localStorage.setItem(key, value === true ? "1" : "0"); }
+        catch (error) {}
+    }
+
+    function quickOutputHidden() {
+        return readStoredBoolean(
+            QUICK_OUTPUT_HIDDEN_KEY,
+            readStoredBoolean(QUICK_OUTPUT_LEGACY_HIDDEN_KEY, false)
+        );
+    }
+
+    function disableLegacyQuickOutputController() {
+        writeStoredBoolean(QUICK_OUTPUT_OLD_PREFERRED_KEY, false);
+        writeStoredBoolean(QUICK_OUTPUT_OLD_ATTENTION_KEY, false);
+    }
+
+    function setQuickOutputHidden(value) {
+        var hidden = value === true;
+        writeStoredBoolean(QUICK_OUTPUT_HIDDEN_KEY, hidden);
+        writeStoredBoolean(QUICK_OUTPUT_LEGACY_HIDDEN_KEY, hidden);
+        if (!hidden) writeStoredBoolean(QUICK_OUTPUT_ATTENTION_KEY, false);
+        disableLegacyQuickOutputController();
+        return hidden;
+    }
+
+    function quickOutputPanel(host) {
+        return host && typeof host.closest === "function"
+            ? host.closest(".sirk-desktop-commands-panel")
+            : null;
+    }
+
+    function actualQuickOutputHidden(panel) {
+        var browser = panel && panel.querySelector(".sirk-quick-command-browser");
+        return !!(browser && browser.classList.contains("is-details-collapsed"));
+    }
+
+    function applyQuickOutputLayout(panel, hidden) {
+        if (!panel) return;
+        if (hidden) panel.setAttribute("data-sirk-output-hidden", "1");
+        else panel.removeAttribute("data-sirk-output-hidden");
+    }
+
+    function quickOutputTitle(hidden, current) {
+        var english = /^(Hide output|Show output)$/i.test(String(current || "").trim());
+        if (hidden) return english ? "Show output" : "Pokaż wynik";
+        return english ? "Hide output" : "Ukryj wynik";
+    }
+
+    function syncQuickOutputButton(item, hidden) {
+        if (!item) return;
+        var title = quickOutputTitle(hidden, item.title);
+        item.title = title;
+        item.setAttribute("aria-label", title);
+        item.setAttribute("aria-pressed", hidden ? "false" : "true");
+        item.classList.add("sirk-quick-command-details-toggle");
+        item.classList.add("sirk-quick-command-output-toggle");
+        item.classList.toggle("is-active", !hidden);
     }
 
     function readQuickPreferences() {
@@ -194,6 +275,14 @@
             var host = resolve(options.container);
             if (!host) throw new Error("Toolbar container not found.");
             var quickToolbar = isQuickToolbar(host);
+            var outputPanel = quickToolbar ? quickOutputPanel(host) : null;
+            var outputHidden = quickToolbar ? quickOutputHidden() : false;
+
+            if (quickToolbar) {
+                disableLegacyQuickOutputController();
+                writeStoredBoolean(QUICK_OUTPUT_LEGACY_HIDDEN_KEY, outputHidden);
+                applyQuickOutputLayout(outputPanel, outputHidden);
+            }
 
             var root = document.createElement("div");
             root.className = "mc-shared-toolbar mc-portal-toolbar";
@@ -230,14 +319,43 @@
             var handlers = options.handlers || {};
 
             function add(definition) {
+                if (quickToolbar && definition && definition.key === "details") {
+                    definition = cloneDefinition(definition);
+                    definition.title = quickOutputTitle(outputHidden, definition.title);
+                }
+
                 var item = button(definition);
                 context.buttons[definition.key] = item;
                 var group = context.groups[definition.side] || right;
                 group.appendChild(item);
+                if (quickToolbar && definition.key === "details") syncQuickOutputButton(item, outputHidden);
+
                 item.onclick = function (event) {
                     if (definition.search) {
                         api.showSearch(!context.state.searchVisible);
                         return;
+                    }
+
+                    var handler = definition.onClick || handlers[definition.handler];
+                    if (quickToolbar && definition.key === "details") {
+                        var targetHidden = !quickOutputHidden();
+                        var actualHidden = actualQuickOutputHidden(outputPanel);
+                        setQuickOutputHidden(targetHidden);
+                        applyQuickOutputLayout(outputPanel, targetHidden);
+                        syncQuickOutputButton(item, targetHidden);
+
+                        var outputResult;
+                        if (actualHidden !== targetHidden && typeof handler === "function") {
+                            outputResult = handler(api, event, definition);
+                        }
+
+                        disableLegacyQuickOutputController();
+                        window.setTimeout(function () {
+                            var current = outputPanel && outputPanel.querySelector(".sirk-quick-command-details-toggle");
+                            applyQuickOutputLayout(outputPanel, quickOutputHidden());
+                            syncQuickOutputButton(current, quickOutputHidden());
+                        }, 0);
+                        return outputResult;
                     }
 
                     var quickFavorites = quickToolbar && definition.key === "favorites";
@@ -246,7 +364,6 @@
                     var catalogRoot = favoriteFromResults ? firstCatalogRoot() : null;
                     if (catalogRoot) catalogRoot.click();
 
-                    var handler = definition.onClick || handlers[definition.handler];
                     if (typeof handler === "function") handler(api, event, definition);
                     if (quickFavorites) writeQuickFavoritesOnly(nextQuickFavorites);
 
