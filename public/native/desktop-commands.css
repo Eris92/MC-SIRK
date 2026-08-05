@@ -29,7 +29,7 @@
 .sirk-quick-command-categories,.sirk-quick-command-tree{border-right:1px solid var(--sdc-border)}
 .sirk-quick-command-browser button{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start;width:100%;min-width:0;min-height:36px;margin:0 0 3px;padding:8px;border:0;border-radius:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer;box-sizing:border-box}
 .sirk-quick-command-tree button{padding-left:calc(8px + var(--sdc-depth,0) * 12px)}
-.sirk-quick-command-tree button.sirk-quick-command-folder{grid-template-columns:14px 20px minmax(0,1fr)}
+.sirk-quick-command-tree button.sirk-quick-command-folder{grid-template-columns:20px minmax(0,1fr)}
 .sirk-quick-command-browser button:hover{background:var(--sdc-hover)}
 .sirk-quick-command-browser button.is-active{background:var(--sdc-active);box-shadow:inset 3px 0 0 #4f7df3;font-weight:600}
 .sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories{padding:8px 6px;overflow:hidden}
@@ -37,7 +37,7 @@
 .sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories .sirk-quick-command-label{display:none}
 .sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories .sirk-quick-command-icon{width:28px;height:28px}
 .sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories .sirk-quick-command-icon svg{width:24px;height:24px}
-.sirk-quick-command-arrow{display:grid;place-items:center;width:14px;min-width:14px;color:var(--sdc-muted);font-size:10px;line-height:20px}
+.sirk-quick-command-arrow{display:none!important}
 .sirk-quick-command-icon{display:grid;place-items:center;width:20px;height:20px;min-width:20px;object-fit:contain;color:#3f7fdb}
 .sirk-quick-command-icon svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sirk-quick-command-copy{display:block;min-width:0}
