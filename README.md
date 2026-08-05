@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.7.21
+# SIRK Management Platform 1.7.22
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
