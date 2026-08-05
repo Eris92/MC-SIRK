@@ -101,14 +101,22 @@
         }, 0);
     }
 
-    function orderedDefinitions(options) {
+    function cloneDefinition(definition) {
+        var value = {};
+        Object.keys(definition || {}).forEach(function (key) {
+            value[key] = definition[key];
+        });
+        return value;
+    }
+
+    function quickDefinitions(options) {
         var definitions = window.SharedToolbarConfig.resolve(
             options.preset,
             options.buttons
         ).slice();
 
         (options.customButtons || []).forEach(function (definition, index) {
-            var value = Object.assign({}, definition);
+            var value = cloneDefinition(definition);
             value.side = value.side || "right";
             value.key = value.key || ("custom-" + (definitions.length + index));
             definitions.push(value);
@@ -118,6 +126,21 @@
             return Number(a.order || 500) - Number(b.order || 500);
         });
         return definitions;
+    }
+
+    function addStableDefinitions(options, add, context) {
+        window.SharedToolbarConfig.resolve(
+            options.preset,
+            options.buttons
+        ).forEach(add);
+
+        (options.customButtons || []).sort(function (a, b) {
+            return Number(a.order || 500) - Number(b.order || 500);
+        }).forEach(function (definition) {
+            definition.side = definition.side || "right";
+            definition.key = definition.key || ("custom-" + Object.keys(context.buttons).length);
+            add(definition);
+        });
     }
 
     function keepQuickToolbarOnOneLine(root, left, right, searchWrap, searchInput) {
@@ -143,21 +166,25 @@
         var originalSetActive = api.setActive;
         var originalSetIcon = api.setIcon;
 
-        api.setActive = function (key, value) {
-            if (key === "collapse") return originalSetActive.call(api, key, false);
-            return originalSetActive.call(api, key, value);
-        };
+        if (typeof originalSetActive === "function") {
+            api.setActive = function (key, value) {
+                if (key === "collapse") return originalSetActive.call(api, key, false);
+                return originalSetActive.call(api, key, value);
+            };
+        }
 
-        api.setIcon = function (key, value) {
-            if (key === "collapse") {
-                var definition = window.SharedToolbarConfig && window.SharedToolbarConfig.definitions && window.SharedToolbarConfig.definitions.collapse;
-                if (definition) {
-                    if (value === definition.icon) value = definition.expandIcon;
-                    else if (value === definition.expandIcon) value = definition.icon;
+        if (typeof originalSetIcon === "function") {
+            api.setIcon = function (key, value) {
+                if (key === "collapse") {
+                    var definition = window.SharedToolbarConfig && window.SharedToolbarConfig.definitions && window.SharedToolbarConfig.definitions.collapse;
+                    if (definition) {
+                        if (value === definition.icon) value = definition.expandIcon;
+                        else if (value === definition.expandIcon) value = definition.icon;
+                    }
                 }
-            }
-            return originalSetIcon.call(api, key, value);
-        };
+                return originalSetIcon.call(api, key, value);
+            };
+        }
         return api;
     }
 
@@ -231,7 +258,8 @@
                 return item;
             }
 
-            orderedDefinitions(options).forEach(add);
+            if (quickToolbar) quickDefinitions(options).forEach(add);
+            else addStableDefinitions(options, add, context);
 
             if (context.buttons.search) left.appendChild(searchWrap);
             if (quickToolbar) keepQuickToolbarOnOneLine(root, left, right, searchWrap, searchInput);

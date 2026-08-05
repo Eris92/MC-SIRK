@@ -8,11 +8,15 @@ var root = path.join(__dirname, "..");
 var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 var quick = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
 
-assert.ok(toolbar.indexOf("function orderedDefinitions(options)") >= 0 &&
+assert.ok(toolbar.indexOf("function quickDefinitions(options)") >= 0 &&
     toolbar.indexOf("definitions.push(value)") >= 0 &&
     toolbar.indexOf("definitions.sort(function (a, b)") >= 0 &&
-    toolbar.indexOf("orderedDefinitions(options).forEach(add)") >= 0,
-    "Standard and custom toolbar buttons must be sorted together by order.");
+    toolbar.indexOf("if (quickToolbar) quickDefinitions(options).forEach(add)") >= 0,
+    "Quick standard and custom toolbar buttons must be sorted together by order.");
+assert.ok(toolbar.indexOf("function addStableDefinitions(options, add, context)") >= 0 &&
+    toolbar.indexOf("else addStableDefinitions(options, add, context)") >= 0 &&
+    toolbar.indexOf("window.SharedToolbarConfig.resolve(\n            options.preset,\n            options.buttons\n        ).forEach(add)") >= 0,
+    "Non-Quick modules must retain the stable 1.7.7 toolbar mounting path.");
 assert.ok(quick.indexOf('key: "details"') >= 0 && quick.indexOf("order: 65") >= 0 &&
     quick.indexOf('search: { title: text("search"), side: "left", order: 70 }') >= 0,
     "Quick output must appear before Search, with Search as the final left-side button.");
@@ -36,4 +40,4 @@ assert.ok(toolbar.indexOf("if (value === definition.icon) value = definition.exp
     toolbar.indexOf("else if (value === definition.expandIcon) value = definition.icon") >= 0,
     "Quick collapse and expand icons must use the corrected opposite direction without changing MyScripts.");
 
-console.log("Quick toolbar order, direction and neutral collapse style: OK");
+console.log("Quick-only toolbar behavior and stable shared-module mounting: OK");
