@@ -29,6 +29,11 @@ var windowObject = {
         api: function (moduleName, assetName, options) {
             return new Promise(function (resolve, reject) {
                 var signal = options && options.signal;
+                var method = String(options && options.method || "GET").toUpperCase();
+                if (method !== "GET") {
+                    resolve({ ok: true, hasSignal: !!signal });
+                    return;
+                }
                 if (!signal) return;
                 if (signal.aborted) {
                     abortedRequests += 1;
@@ -100,15 +105,21 @@ cancelled.then(function (value) {
     assert.strictEqual(value, null, "Changing the view must swallow the expected AbortError.");
     assert.ok(abortedRequests >= 1, "Closing a module must abort its pending render request.");
 
+    return windowObject.SirkPlatformCore.api("approvalcenter", "decision", { method: "POST" }, null);
+}).then(function (result) {
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.hasSignal, false,
+        "Write requests must not receive the read-only timeout controller.");
+
     return windowObject.SirkPlatformCore.api("myscripts", "tree", null, null).then(function () {
-        throw new Error("The unresolved API call should have timed out.");
+        throw new Error("The unresolved GET should have timed out.");
     }, function (error) {
         assert.strictEqual(error.name, "SirkApiTimeoutError");
         assert.ok(error.message.indexOf("myscripts/tree") >= 0,
             "The timeout must identify the blocked module and asset.");
     });
 }).then(function () {
-    console.log("Runtime API timeout and stale render cancellation: OK");
+    console.log("Runtime GET timeout, stale render cancellation and unbounded writes: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
