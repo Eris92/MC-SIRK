@@ -11,11 +11,11 @@
             ".mc-shared-page .mc-tree-script-row{align-items:flex-start!important;min-width:0!important}",
             ".mc-shared-page .mc-tree-script{min-width:0!important;flex:1 1 auto!important}",
             ".mc-shared-page .mc-tree-script-actions{flex:0 0 auto!important;align-self:flex-start!important}",
-            ".mc-shared-page-mycommands:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:96px minmax(480px,52%) minmax(260px,1fr)!important}",
-            ".mc-shared-page-myscripts:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:minmax(180px,240px) minmax(480px,48%) minmax(260px,1fr)!important}",
-            ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts):is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:minmax(140px,220px) minmax(440px,48%) minmax(260px,1fr)!important}",
-            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:56px minmax(480px,52%) minmax(260px,1fr)!important}",
-            "@media(max-width:1100px){.mc-shared-page-mycommands:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:82px minmax(380px,55%) minmax(220px,1fr)!important}.mc-shared-page-myscripts:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:minmax(150px,200px) minmax(380px,52%) minmax(220px,1fr)!important}.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:56px minmax(380px,55%) minmax(220px,1fr)!important}}"
+            ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:96px minmax(480px,52%) minmax(260px,1fr)!important}",
+            ".mc-shared-page-myscripts.is-multi-mode .mc-shared-layout{grid-template-columns:minmax(180px,240px) minmax(480px,48%) minmax(260px,1fr)!important}",
+            ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts).is-multi-mode .mc-shared-layout{grid-template-columns:minmax(140px,220px) minmax(440px,48%) minmax(260px,1fr)!important}",
+            ".mc-shared-page.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:56px minmax(480px,52%) minmax(260px,1fr)!important}",
+            "@media(max-width:1100px){.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:82px minmax(380px,55%) minmax(220px,1fr)!important}.mc-shared-page-myscripts.is-multi-mode .mc-shared-layout{grid-template-columns:minmax(150px,200px) minmax(380px,52%) minmax(220px,1fr)!important}.mc-shared-page.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:56px minmax(380px,55%) minmax(220px,1fr)!important}}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
