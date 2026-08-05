@@ -8,6 +8,7 @@ var vm = require("vm");
 var source = fs.readFileSync(path.join(__dirname, "..", "public", "native", "quick-output-state.js"), "utf8");
 var values = {
     "mc-sirk-quickcommands-output-hidden-v2": "1",
+    "mc-sirk-quickcommands-output-attention-v2": "1",
     "mc-sirk-quickcommands-details-collapsed": "0"
 };
 
@@ -30,12 +31,13 @@ var button = {
 button.classList.add("is-active");
 
 var browser = { classList: classList() };
+var status = { textContent: "Polecenie zostało wykonane." };
 var panel = {
     attributes: {},
     querySelector: function (selector) {
         if (selector === ".sirk-quick-command-details-toggle") return null;
         if (selector === ".sirk-quick-command-browser") return browser;
-        if (selector === ".sirk-quick-command-status") return null;
+        if (selector === ".sirk-quick-command-status") return status;
         return null;
     },
     querySelectorAll: function () { return [button]; },
@@ -49,6 +51,7 @@ var documentObject = {
     querySelectorAll: function () { return [panel]; },
     createElement: function () { return {}; }
 };
+var observerCallback = null;
 var windowObject = {
     localStorage: {
         getItem: function (key) { return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null; },
@@ -60,7 +63,10 @@ var windowObject = {
 var context = {
     Array: Array,
     document: documentObject,
-    MutationObserver: function () { this.observe = function () {}; },
+    MutationObserver: function (callback) {
+        observerCallback = callback;
+        this.observe = function () {};
+    },
     window: windowObject
 };
 windowObject.document = documentObject;
@@ -78,6 +84,17 @@ assert.strictEqual(button.classList.contains("is-active"), false,
     "A hidden result pane must not leave the output button highlighted on first render.");
 assert.strictEqual(button.attributes["aria-pressed"], "false",
     "A hidden result pane must expose aria-pressed=false on first render.");
+assert.strictEqual(button.classList.contains("has-output-attention"), true,
+    "A completed hidden result may mark the output button red.");
+
+status.textContent = "";
+observerCallback();
+assert.strictEqual(values["mc-sirk-quickcommands-output-attention-v2"], "0",
+    "Clearing output during a Quick category or script change must clear attention.");
+assert.strictEqual(button.classList.contains("has-output-attention"), false,
+    "An empty output must leave the button visually neutral in the same scan.");
+assert.strictEqual(panel.__sirkStableOutputPending, false,
+    "An empty output must also clear the pending-result marker.");
 
 button.onclick();
 assert.strictEqual(button.title, "Ukryj wynik",
@@ -87,4 +104,4 @@ assert.strictEqual(button.classList.contains("is-active"), true,
     "An open result pane may show the output button as active.");
 assert.strictEqual(button.attributes["aria-pressed"], "true");
 
-console.log("Quick output first-render label and active-state synchronization: OK");
+console.log("Quick output label, active state and empty-output attention reset: OK");
