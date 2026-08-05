@@ -12,18 +12,15 @@
             ".mc-shared-page .mc-tree-script-row{align-items:flex-start!important;min-width:0!important}",
             ".mc-shared-page .mc-tree-script{min-width:0!important;flex:1 1 auto!important}",
             ".mc-shared-page .mc-tree-script-actions{flex:0 0 auto!important;align-self:flex-start!important}",
-            ".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page.is-edit-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page.is-edit-mode .mc-shared-secondary{width:auto!important;min-width:0!important;max-width:none!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-row{display:grid!important;grid-template-columns:var(--sirk-mode-row-width,316px) var(--sirk-actions-width)!important;column-gap:var(--sirk-actions-column-gap)!important;width:100%!important;min-width:0!important;align-items:start!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;flex:none!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-actions{display:flex!important;width:var(--sirk-actions-width)!important;min-width:var(--sirk-actions-width)!important;flex:0 0 var(--sirk-actions-width)!important;gap:var(--sirk-actions-gap)!important;justify-content:flex-start!important;align-self:start!important;box-sizing:border-box!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-actions button{width:var(--sirk-actions-button-width)!important;min-width:var(--sirk-actions-button-width)!important;flex:0 0 var(--sirk-actions-button-width)!important;box-sizing:border-box!important}",
-            ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts).is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(440px,48%) var(--sirk-edit-details-track)!important}",
-            "@media(max-width:1000px){.mc-shared-page{--sirk-edit-details-track:minmax(220px,1fr)}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,190px) minmax(380px,55%) var(--sirk-edit-details-track)!important}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(380px,55%) var(--sirk-edit-details-track)!important}}",
-            "@media(max-width:800px){.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout,.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}.mc-shared-page.is-edit-mode .mc-shared-secondary,.mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;max-width:none!important}.mc-shared-page.is-edit-mode .mc-tree-script-row{grid-template-columns:minmax(0,1fr)!important;width:100%!important}.mc-shared-page.is-edit-mode .mc-tree-script-actions{width:auto!important;min-width:0!important;flex-wrap:wrap!important;margin-top:4px}}"
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-secondary{width:auto!important;min-width:0!important;max-width:none!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-row{display:grid!important;grid-template-columns:var(--sirk-mode-row-width,316px) var(--sirk-actions-width)!important;column-gap:var(--sirk-actions-column-gap)!important;width:100%!important;min-width:0!important;align-items:start!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script{width:100%!important;min-width:0!important;flex:none!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-actions{display:flex!important;width:var(--sirk-actions-width)!important;min-width:var(--sirk-actions-width)!important;flex:0 0 var(--sirk-actions-width)!important;gap:var(--sirk-actions-gap)!important;justify-content:flex-start!important;align-self:start!important;box-sizing:border-box!important}",
+            ".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-actions button{width:var(--sirk-actions-button-width)!important;min-width:var(--sirk-actions-button-width)!important;flex:0 0 var(--sirk-actions-button-width)!important;box-sizing:border-box!important}",
+            "@media(max-width:1000px){.mc-shared-page{--sirk-edit-details-track:minmax(220px,1fr)}}",
+            "@media(max-width:800px){.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout,.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-secondary,.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script{width:100%!important;min-width:0!important;max-width:none!important}.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-row{grid-template-columns:minmax(0,1fr)!important;width:100%!important}.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-actions{width:auto!important;min-width:0!important;flex-wrap:wrap!important;margin-top:4px}}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
@@ -96,8 +93,15 @@
         return widest > 0 ? Math.ceil(widest + 16) : 0;
     }
 
+    function isActionMode(page) {
+        return !!(page && page.classList && (
+            page.classList.contains("is-edit-mode") ||
+            page.classList.contains("is-multi-mode")
+        ));
+    }
+
     function measureActionGeometry(page) {
-        if (!page || !page.classList || !page.classList.contains("is-edit-mode")) return 0;
+        if (!isActionMode(page)) return 0;
         var width = measuredActionWidth(page);
         if (width > 0) setGeometryProperty(page, "--sirk-actions-width", width);
         return width;
@@ -118,7 +122,7 @@
         function run() {
             attempts++;
             var width = measureActionGeometry(page);
-            if (!width && attempts < 3 && page.classList.contains("is-edit-mode")) {
+            if (!width && attempts < 3 && isActionMode(page)) {
                 nextFrame(run);
                 return;
             }
@@ -157,7 +161,7 @@
         var alreadyActive = page.classList.contains(className);
         if (active && !alreadyActive) captureModeGeometry(page);
         page.classList.toggle(className, active);
-        if (active && className === "is-edit-mode") scheduleActionGeometry(page);
+        if (active) scheduleActionGeometry(page);
 
         if (!active &&
             !page.classList.contains("is-edit-mode") &&

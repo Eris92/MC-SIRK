@@ -34,25 +34,28 @@ function styleStore() {
     };
 }
 
+var rowWidth = 282;
+var primaryWidth = 218;
+var secondaryWidth = 306;
 var row = {
-    getBoundingClientRect: function () { return { width: 282 }; }
+    getBoundingClientRect: function () { return { width: rowWidth }; }
 };
 var layout = {
     classList: classList([])
 };
 var primary = {
-    getBoundingClientRect: function () { return { width: 218 }; }
+    getBoundingClientRect: function () { return { width: primaryWidth }; }
 };
-var actionButtons = [0, 1, 2, 3].map(function () {
+function actionButton() {
     return {
         getBoundingClientRect: function () { return { width: 36 }; }
     };
-});
+}
 var actionGroup = {
-    children: actionButtons
+    children: [actionButton(), actionButton(), actionButton(), actionButton()]
 };
 var secondary = {
-    getBoundingClientRect: function () { return { width: 306 }; },
+    getBoundingClientRect: function () { return { width: secondaryWidth }; },
     querySelector: function (selector) {
         return selector === ".mc-tree-script-row" ? row : null;
     }
@@ -71,11 +74,15 @@ var page = {
         return selector === ".mc-tree-script-actions" ? [actionGroup] : [];
     }
 };
-var button = {
-    classList: classList([]),
-    setAttribute: function () {},
-    querySelector: function () { return null; }
-};
+function toolbarButton() {
+    return {
+        classList: classList([]),
+        setAttribute: function () {},
+        querySelector: function () { return null; }
+    };
+}
+var manageButton = toolbarButton();
+var multiButton = toolbarButton();
 var toolbarRoot = {
     closest: function (selector) {
         return selector === ".mc-shared-page" ? page : null;
@@ -116,7 +123,7 @@ vm.runInNewContext(source, context, { filename: "toolbar-api.js" });
 
 var api = context.window.SharedToolbarApi.create({
     root: toolbarRoot,
-    buttons: { manage: button },
+    buttons: { manage: manageButton, multi: multiButton },
     groups: {},
     state: {},
     searchInput: {},
@@ -133,15 +140,15 @@ assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
 assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
     "Edit must retain the exact rendered script-row width so wrapping does not change.");
 assert.strictEqual(pageStyle.values["--sirk-actions-width"], "172px",
-    "Four 36 px buttons, three 4 px gaps and the safety gutter must all fit without clipping.");
+    "Four 36 px Edit buttons, three 4 px gaps and the safety gutter must fit without clipping.");
 assert.strictEqual(page.classList.contains("is-edit-mode"), true,
     "Edit class must be added after the normal geometry is captured.");
 assert.strictEqual(page.__sirkModeGeometryCaptured, true,
     "The captured normal geometry must not be overwritten by later Edit rerenders.");
 
-primary.getBoundingClientRect = function () { return { width: 300 }; };
-secondary.getBoundingClientRect = function () { return { width: 620 }; };
-row.getBoundingClientRect = function () { return { width: 430 }; };
+primaryWidth = 300;
+secondaryWidth = 620;
+rowWidth = 430;
 api.setActive("manage", true);
 flushFrames();
 assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
@@ -151,11 +158,35 @@ assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
 assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
     "Repeated toolbar synchronization must keep the original normal text width.");
 assert.strictEqual(pageStyle.values["--sirk-actions-width"], "172px",
-    "Repeated action measurement must remain stable and must not grow on every render.");
+    "Repeated Edit action measurement must remain stable.");
 
 api.setActive("manage", false);
 assert.strictEqual(page.classList.contains("is-edit-mode"), false,
     "Closing Edit must remove the mode class.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,
+    "Closing Edit must release the measured action width.");
+
+primaryWidth = 218;
+secondaryWidth = 306;
+rowWidth = 282;
+actionGroup.children = [actionButton()];
+api.setActive("multi", true);
+flushFrames();
+
+assert.strictEqual(page.classList.contains("is-multi-mode"), true,
+    "Multi class must be added after the normal geometry is captured.");
+assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
+    "Multi must keep the exact same first-column width as normal mode.");
+assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
+    "Multi must keep the exact normal second-column width.");
+assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
+    "Multi must keep script label wrapping identical to normal mode.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "52px",
+    "One 36 px Multi button and the 16 px safety gutter must fit without changing text width.");
+
+api.setActive("multi", false);
+assert.strictEqual(page.classList.contains("is-multi-mode"), false,
+    "Closing Multi must remove the mode class.");
 assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], undefined,
     "Closing the last active mode must release the captured first-column width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], undefined,
@@ -163,10 +194,10 @@ assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], undefined,
 assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], undefined,
     "Closing the last active mode must release the captured text width.");
 assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,
-    "Closing Edit must release the measured action width.");
+    "Closing Multi must release the measured action width.");
 
 assert.ok(source.indexOf("box-sizing:border-box!important") >= 0,
-    "Edit action buttons must include borders and padding inside their reserved width.");
+    "Edit and Multi action buttons must include borders and padding inside their reserved width.");
 assert.strictEqual(appendedStyles.length, 1,
     "The shared mode stylesheet must be installed exactly once.");
-console.log("Edit live geometry and measured four-button action width: OK");
+console.log("Edit and Multi live geometry with measured action widths: OK");
