@@ -8,3 +8,10 @@
 .mc-shared-primary,.mc-shared-secondary,.mc-shared-details{min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .mc-shared-details{scrollbar-gutter:stable}
 @media(max-width:800px){.mc-shared-layout,.mc-shared-layout.is-collapsed{height:auto;max-height:none;overflow:visible}.mc-shared-primary,.mc-shared-secondary,.mc-shared-details{overflow:visible}}
+
+/* Every shared module owns one theme surface. Commands used to inherit the
+   native device-page surface while My Scripts and Approval inherited the p1
+   background, which made the same shared layout look different. */
+.mc-shared-page{--mc-shared-page-surface:var(--bs-body-bg,var(--background-color,#fff));background-color:var(--mc-shared-page-surface);color:var(--bs-body-color,inherit)}
+[data-bs-theme="dark"] .mc-shared-page,body.night .mc-shared-page,body.dark .mc-shared-page{--mc-shared-page-surface:var(--bs-body-bg,#212529)}
+.mc-shared-page>.mc-shared-tabs,.mc-shared-page>.mc-shared-toolbar-host,.mc-shared-page>.mc-shared-layout-host,.mc-shared-page .mc-shared-layout{background-color:inherit}
