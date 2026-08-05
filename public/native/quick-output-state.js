@@ -16,7 +16,10 @@
             var request = {};
             Object.keys(options || {}).forEach(function (key) { request[key] = options[key]; });
             var sourceSignal = request.signal || null;
-            var controller = typeof AbortController === "function" ? new AbortController() : null;
+            var boundedRead = String(request.method || "GET").toUpperCase() === "GET";
+            var controller = (sourceSignal || boundedRead) && typeof AbortController === "function"
+                ? new AbortController()
+                : null;
             var timeoutMs = Math.max(1000, Number(core.requestTimeoutMs) || 15000);
             var timedOut = false;
             var externallyAborted = false;
@@ -52,10 +55,12 @@
                     }
                 }
                 request.signal = controller.signal;
-                timer = window.setTimeout(function () {
-                    timedOut = true;
-                    if (!controller.signal.aborted) controller.abort();
-                }, timeoutMs);
+                if (boundedRead) {
+                    timer = window.setTimeout(function () {
+                        timedOut = true;
+                        if (!controller.signal.aborted) controller.abort();
+                    }, timeoutMs);
+                }
             }
 
             return Promise.resolve().then(function () {
