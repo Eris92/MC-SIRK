@@ -297,15 +297,20 @@
         var pending = panel && panel.__sirkStableOutputPending === true;
 
         if (panel) panel.__sirkStableLastOutput = current;
+        if (!current) {
+            setAttention(false);
+            if (panel) panel.__sirkStableOutputPending = false;
+            return;
+        }
         if (transientOutput(current)) {
             if (panel) panel.__sirkStableOutputPending = true;
             return;
         }
 
-        if (userHidden() && current && (pending || current !== previous)) {
+        if (userHidden() && (pending || current !== previous)) {
             setAttention(true);
         }
-        if (panel && current) panel.__sirkStableOutputPending = false;
+        if (panel) panel.__sirkStableOutputPending = false;
     }
 
     function scanPanel(panel) {
