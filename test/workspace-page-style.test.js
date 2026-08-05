@@ -5,33 +5,63 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.join(__dirname, "..");
-var css = fs.readFileSync(path.join(root, "public", "modules", "automation", "style.css"), "utf8");
+var core = fs.readFileSync(path.join(root, "public", "shared", "core.js"), "utf8");
+var approval = fs.readFileSync(path.join(root, "public", "native", "approval.css"), "utf8");
+var automation = fs.readFileSync(path.join(root, "public", "modules", "automation", "style.css"), "utf8");
+var main = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.css"), "utf8");
+var sharedUi = fs.readFileSync(path.join(root, "public", "shared", "ui", "shared-ui.css"), "utf8");
 
 assert.ok(
-    css.indexOf("html.sirk-platform-workspace-active #p1title{") >= 0 &&
-    css.indexOf("font-size:24px!important") >= 0 &&
-    css.indexOf("font-weight:700!important") >= 0,
-    "SIRK workspace titles must use the native large page-heading treatment."
+    core.indexOf('document.createElement("h1")') >= 0,
+    "Workspace pages must use the native MeshCentral h1 title structure."
+);
+assert.ok(
+    core.indexOf("titleChildren.push(titleHost.removeChild(titleHost.firstChild))") >= 0 &&
+    core.indexOf("state.titleHost.appendChild(child)") >= 0,
+    "The native My Devices title DOM must be detached and restored without cloning or destroying handlers."
+);
+assert.strictEqual(
+    core.indexOf("state.heading.textContent = state.headingText"),
+    -1,
+    "Workspace restore must not use the legacy text-only title replacement."
+);
+
+assert.strictEqual(
+    automation.indexOf("#p1title"),
+    -1,
+    "My Scripts must not own or imitate the native MeshCentral page title style."
+);
+assert.strictEqual(
+    automation.indexOf("#SirkPlatformWorkspace"),
+    -1,
+    "My Scripts must not own the shared workspace geometry."
+);
+assert.strictEqual(
+    approval.indexOf(".mc-shared-toolbar"),
+    -1,
+    "Approval Center must inherit SharedToolbar instead of overriding it."
+);
+assert.strictEqual(
+    approval.indexOf(".mc-shared-layout"),
+    -1,
+    "Approval Center must inherit SharedLayout instead of defining separate columns."
+);
+assert.strictEqual(
+    main.indexOf(".mc-module-approvalcenter .mc-shared-layout"),
+    -1,
+    "Global styles must not contain an Approval-only layout exception."
 );
 
 assert.ok(
-    css.indexOf("html.sirk-platform-workspace-active #SirkPlatformWorkspace{") >= 0 &&
-    css.indexOf("padding:0 12px 20px!important") >= 0,
-    "All SIRK workspace modules must use the same horizontal page padding."
+    toolbar.indexOf(".mc-shared-toolbar{") >= 0 &&
+    toolbar.indexOf(".mc-shared-layout{") >= 0,
+    "Both modules must continue to receive toolbar and layout geometry from shared UI assets."
 );
-
 assert.ok(
-    css.indexOf(":is(.mc-shared-page-myscripts,.mc-shared-page-approvalcenter) .mc-shared-toolbar{") >= 0 &&
-    css.indexOf("min-height:38px!important") >= 0 &&
-    css.indexOf("margin:0 0 10px!important") >= 0 &&
-    css.indexOf("padding:0!important") >= 0,
-    "My Scripts and Approval Center must share one toolbar geometry."
+    sharedUi.indexOf(".mc-approval-card-grid") >= 0 &&
+    sharedUi.indexOf(".mc-approval-request-actions") >= 0,
+    "Approval-specific content semantics must remain in the shared UI stylesheet."
 );
 
-assert.ok(
-    css.indexOf(":is(.mc-shared-page-myscripts,.mc-shared-page-approvalcenter) .mc-shared-layout{") >= 0 &&
-    css.indexOf("border-top:1px solid rgba(127,127,127,.35)!important") >= 0,
-    "My Scripts and Approval Center must begin their content layout with the same separator."
-);
-
-console.log("Native workspace title and shared module toolbar style: OK");
+console.log("Native MeshCentral heading and shared module inheritance: OK");
