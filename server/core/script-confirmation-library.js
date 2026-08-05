@@ -5,6 +5,7 @@ var shared = require("./shared.js");
 
 var CONFIRM_DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
 var RUN_AS_DIRECTIVE = /^\s*#\s*runAsUser\s*:\s*([012])\s*$/i;
+var DECORATED_TREE_CACHE_MS = 5000;
 
 function normalizeRunAsUser(value) {
     // MeshAgent semantics:
@@ -102,17 +103,34 @@ function decorateTree(base, node) {
 module.exports.createScriptLibrary = function (options) {
     var base = baseFactory.createScriptLibrary(options);
     var wrapper = {};
+    var decoratedTreeCache = { value: null, expiresAt: 0 };
+
+    function invalidateDecoratedTree() {
+        decoratedTreeCache = { value: null, expiresAt: 0 };
+    }
 
     Object.keys(base).forEach(function (key) {
         wrapper[key] = base[key];
     });
+
+    wrapper.invalidate = function () {
+        invalidateDecoratedTree();
+        return base.invalidate.apply(base, arguments);
+    };
 
     wrapper.getScript = function (relativePath, includeBody) {
         return decorateScript(base, base.getScript(relativePath, includeBody));
     };
 
     wrapper.getTree = function () {
-        return decorateTree(base, base.getTree());
+        if (decoratedTreeCache.value && decoratedTreeCache.expiresAt > Date.now()) {
+            return shared.copy(decoratedTreeCache.value);
+        }
+        decoratedTreeCache = {
+            value: decorateTree(base, base.getTree()),
+            expiresAt: Date.now() + DECORATED_TREE_CACHE_MS
+        };
+        return shared.copy(decoratedTreeCache.value);
     };
 
     wrapper.getRoots = function () {
@@ -129,6 +147,12 @@ module.exports.createScriptLibrary = function (options) {
         return definition;
     };
 
+    wrapper.saveSource = function () {
+        var result = base.saveSource.apply(base, arguments);
+        invalidateDecoratedTree();
+        return result;
+    };
+
     wrapper.saveDefinition = function (relativePath, definition) {
         definition = definition && typeof definition === "object" ? definition : {};
         var enabled = definition.confirmExecution === true;
@@ -143,6 +167,7 @@ module.exports.createScriptLibrary = function (options) {
         var updated = updateConfirmDirective(source.text, enabled);
         updated = updateRunAsDirective(updated, runAsUser);
         base.saveSource(relativePath, updated);
+        invalidateDecoratedTree();
 
         return {
             script: wrapper.getScript(relativePath, true),
