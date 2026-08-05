@@ -131,7 +131,7 @@ function createSerializedStartupHook(version, pin) {
             var scopedEntries = [];
 
             function isQuickGlobalSource(sourceUrl) {
-                return /(?:mesh-plugin-core|quick-output-state)\.js(?:[?#]|$)/i.test(String(sourceUrl || ""));
+                return /(?:mesh-plugin-core|quick-output-state)\.js(?:[?&#]|$)/i.test(String(sourceUrl || ""));
             }
 
             function quickPanel() {
