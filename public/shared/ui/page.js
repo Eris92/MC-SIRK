@@ -72,7 +72,8 @@
                 left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
                 left.removeAttribute("aria-current");
                 if (active) {
-                    left.classList.add(isModern(left) ? "active" : "lbbuttonsel");
+                    if (isModern(left)) left.classList.add("active", "lbbuttonsel2");
+                    else left.classList.add("lbbuttonsel");
                     left.setAttribute("aria-current", "page");
                 }
             }
