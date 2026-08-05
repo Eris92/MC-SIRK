@@ -16,7 +16,7 @@
     };
 
     var presets = {
-        myscripts: { collapse: true, favorites: true, link: false, manage: true, refresh: true, multi: true, search: true, clear: false, settings: false },
+        myscripts: { collapse: true, favorites: true, link: false, manage: true, refresh: true, multi: false, search: true, clear: false, settings: false },
         mycommands: { collapse: true, favorites: true, link: true, manage: true, refresh: true, multi: true, search: true, clear: false, settings: false },
         standard: { collapse: false, link: true, manage: false, refresh: true, multi: false, search: true, clear: false, favorites: false, settings: true },
         minimal: { collapse: false, refresh: true, search: true }
@@ -26,156 +26,6 @@
         var result = {};
         Object.keys(value || {}).forEach(function (key) { result[key] = value[key]; });
         return result;
-    }
-
-    function language() {
-        try { return window.localStorage.getItem("sirkPortal.language") === "en" ? "en" : "pl"; }
-        catch (error) { return "pl"; }
-    }
-
-    function myScriptsShell() {
-        var module = window.SirkPlatformModules && window.SirkPlatformModules.myscripts;
-        return module && module.api || null;
-    }
-
-    function currentNode(shell) {
-        return String(
-            shell && shell.state && shell.state.nodeId ||
-            window.SirkPlatformRuntime && window.SirkPlatformRuntime.state && window.SirkPlatformRuntime.state.nodeId ||
-            window.selectedNode ||
-            ""
-        );
-    }
-
-    function renderMultiSummary(shell, script, response) {
-        var host = shell && shell.state && shell.state.page && shell.state.page.details;
-        if (!host) return response;
-        host.innerHTML = "";
-        var polish = language() === "pl";
-        var card = shell.card(
-            polish ? "Wynik wykonania na wielu urządzeniach" : "Multi-device result",
-            script && (script.label || script.name || script.path) || ""
-        );
-        card.classList.add("mc-multi-editor-card");
-        var pre = document.createElement("pre");
-        pre.className = "mc-shared-output";
-        pre.textContent = JSON.stringify({
-            total: Number(response && response.total) || 0,
-            submitted: Number(response && response.submitted) || 0,
-            pending: Number(response && response.pending) || 0,
-            failed: Number(response && response.failed) || 0
-        }, null, 2);
-        card.appendChild(pre);
-        if (response && Number(response.failed) > 0) card.classList.add("mc-shared-error");
-        host.appendChild(card);
-        return response;
-    }
-
-    var myScriptsTools = null;
-
-    function runMyScriptsMulti(script) {
-        var shell = myScriptsShell();
-        if (!shell || !myScriptsTools || !script || script.multiHost !== true) return;
-        myScriptsTools.openMultiExecution(shell, script, currentNode(shell), function (ids) {
-            return shell.post("multi-execute", {
-                nodeIds: ids,
-                scriptPath: script.path,
-                label: script.label || script.name || script.path,
-                variableValues: {},
-                confirmedExecution: script.confirmExecution === true,
-                language: language(),
-                note: ""
-            }).then(function (response) {
-                myScriptsTools.state.multiPickMode = false;
-                if (shell.state.page && shell.state.page.toolbar) {
-                    shell.state.page.toolbar.setActive("multi", false);
-                }
-                return renderMultiSummary(shell, script, response);
-            });
-        });
-    }
-
-    function installMyScriptsTools(value) {
-        if (!value || typeof value.create !== "function" || value.__sirkMyScriptsMultiWrapped) return;
-        value.__sirkMyScriptsMultiWrapped = true;
-        var originalCreate = value.create;
-        value.create = function (options) {
-            var tools = originalCreate.call(value, options);
-            if (!options || options.storageKey !== "sirkPlatform.myscripts.preferences") return tools;
-            myScriptsTools = tools;
-
-            var originalSyncToolbar = tools.syncToolbar;
-            tools.syncToolbar = function (toolbar, mode, selectedScript, config) {
-                var effective = clone(config || {});
-                effective.enableMulti = true;
-                return originalSyncToolbar.call(tools, toolbar, mode, selectedScript, effective);
-            };
-
-            var originalScriptActions = tools.scriptActions;
-            tools.scriptActions = function (script, config) {
-                var effective = clone(config || {});
-                effective.enableMulti = !!(script && script.multiHost === true);
-                if (effective.enableMulti && typeof effective.onMulti !== "function") {
-                    effective.onMulti = runMyScriptsMulti;
-                }
-                return originalScriptActions.call(tools, script, effective);
-            };
-            return tools;
-        };
-    }
-
-    function installMyScriptsModuleShell(value) {
-        if (!value || typeof value.create !== "function" || value.__sirkMyScriptsMultiWrapped) return;
-        value.__sirkMyScriptsMultiWrapped = true;
-        var originalCreate = value.create;
-        value.create = function (definition) {
-            if (!definition || definition.key !== "myscripts") {
-                return originalCreate.call(value, definition);
-            }
-            var effective = clone(definition);
-            effective.buttons = clone(definition.buttons || {});
-            effective.buttons.multi = {
-                title: "Multi-device execution",
-                side: "left",
-                order: 60,
-                onClick: function (toolbar) {
-                    if (!myScriptsTools) return;
-                    myScriptsTools.toggleMulti(toolbar, function () {
-                        var shell = myScriptsShell();
-                        if (shell && typeof shell.render === "function") shell.render();
-                    });
-                }
-            };
-            return originalCreate.call(value, effective);
-        };
-    }
-
-    function interceptGlobal(name, installer) {
-        var stored = window[name];
-        if (stored) {
-            installer(stored);
-            return;
-        }
-        try {
-            Object.defineProperty(window, name, {
-                configurable: true,
-                enumerable: true,
-                get: function () { return stored; },
-                set: function (value) {
-                    stored = value;
-                    installer(value);
-                }
-            });
-        } catch (error) {
-            var attempts = 0;
-            var timer = window.setInterval(function () {
-                attempts += 1;
-                if (window[name]) {
-                    window.clearInterval(timer);
-                    installer(window[name]);
-                } else if (attempts >= 100) window.clearInterval(timer);
-            }, 25);
-        }
     }
 
     window.SharedToolbarConfig = {
@@ -197,7 +47,4 @@
             });
         }
     };
-
-    interceptGlobal("SharedScriptTools", installMyScriptsTools);
-    interceptGlobal("SirkPlatformModuleShell", installMyScriptsModuleShell);
 }());
