@@ -8,7 +8,7 @@
         var style = document.createElement("style");
         style.id = "sirk-platform-fixed-edit-actions-style";
         style.textContent =
-            ".mc-tree-script-actions{width:132px;min-width:132px;justify-content:flex-end}" +
+            ".mc-tree-script-actions{width:var(--sirk-actions-width,156px);min-width:var(--sirk-actions-width,156px);justify-content:flex-start}" +
             ".mc-tree-action-disabled{opacity:.28!important;filter:grayscale(1);cursor:not-allowed!important;pointer-events:none}" +
             ".mc-tree-credential-action:not(.mc-tree-action-disabled){color:#e0a800}";
         (document.head || document.documentElement).appendChild(style);
@@ -32,6 +32,17 @@
             ));
         }
 
+        function syncModeSwitch(toolbar) {
+            if (!toolbar || typeof toolbar.setVisible !== "function") return;
+            var edit = tools.state.editMode === true;
+            var multi = tools.state.multiPickMode === true;
+
+            // Neutral mode shows both choices. Once a mode is active, keep only
+            // that mode button visible. Turning it off restores both choices.
+            toolbar.setVisible("manage", !multi);
+            toolbar.setVisible("multi", !edit);
+        }
+
         function copyLink(script) {
             var url = new URL(window.location.href);
             if (typeof window.xxcurrentView !== "undefined") {
@@ -53,6 +64,7 @@
             if (typeof toolbar.setVisible === "function") toolbar.setVisible("link", false);
             if (typeof toolbar.setEnabled === "function") toolbar.setEnabled("link", false);
             if (typeof toolbar.setActive === "function") toolbar.setActive("link", false);
+            syncModeSwitch(toolbar);
         };
 
         tools.toggleLink = function () {
@@ -61,7 +73,9 @@
 
         tools.toggleEdit = function (toolbar, onChange) {
             tools.state.linkPickMode = false;
-            return originalToggleEdit.call(tools, toolbar, onChange);
+            var result = originalToggleEdit.call(tools, toolbar, onChange);
+            syncModeSwitch(toolbar);
+            return result;
         };
 
         tools.toggleMulti = function (toolbar, onChange) {
@@ -69,7 +83,9 @@
             if (toolbar && typeof toolbar.setActive === "function") {
                 toolbar.setActive("manage", false);
             }
-            return originalToggleMulti.call(tools, toolbar, onChange);
+            var result = originalToggleMulti.call(tools, toolbar, onChange);
+            syncModeSwitch(toolbar);
+            return result;
         };
 
         tools.scriptActions = function (script, config) {
