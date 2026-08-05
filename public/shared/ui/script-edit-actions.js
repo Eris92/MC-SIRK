@@ -21,6 +21,7 @@
         var tools = originalCreate.call(window.SharedScriptTools, options);
         var originalSyncToolbar = tools.syncToolbar;
         var originalToggleEdit = tools.toggleEdit;
+        var originalToggleMulti = tools.toggleMulti;
         var originalScriptActions = tools.scriptActions;
         var deepLinkParameter = options.deepLinkParameter || "script";
 
@@ -61,6 +62,14 @@
         tools.toggleEdit = function (toolbar, onChange) {
             tools.state.linkPickMode = false;
             return originalToggleEdit.call(tools, toolbar, onChange);
+        };
+
+        tools.toggleMulti = function (toolbar, onChange) {
+            tools.state.editMode = false;
+            if (toolbar && typeof toolbar.setActive === "function") {
+                toolbar.setActive("manage", false);
+            }
+            return originalToggleMulti.call(tools, toolbar, onChange);
         };
 
         tools.scriptActions = function (script, config) {
@@ -129,7 +138,7 @@
                 }
             }
 
-            if (tools.state.multiPickMode && config.enableMulti === true) {
+            if (!tools.state.editMode && tools.state.multiPickMode && config.enableMulti === true) {
                 actions.push({
                     key: "multi",
                     icon: "⟳",
