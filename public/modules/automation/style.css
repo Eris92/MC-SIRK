@@ -1,1 +1,40 @@
 .myscripts-body{width:100%;box-sizing:border-box}.myscripts-panel{width:100%}.myscripts-layout{display:grid}.myscripts-root-menu,.myscripts-tree,.myscripts-details{min-width:0}.myscripts-toolbar-button{min-width:34px}.myscripts-settings-section{margin:0 0 8px}.myscripts-settings-content{padding:8px}.myscripts-search input{min-height:30px}
+
+/* Native MeshCentral workspace contract shared by My Scripts and Approval Center. */
+html.sirk-platform-workspace-active #p1title{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:44px!important;
+  margin:0!important;
+  padding:8px 12px 6px!important;
+  overflow:visible!important;
+  font-family:"Segoe UI",Arial,sans-serif!important;
+  font-size:24px!important;
+  font-weight:700!important;
+  line-height:1.25!important;
+}
+html.sirk-platform-workspace-active #p1title :is(h1,h2,h3,.title,b,strong){
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  font:700 24px/1.25 "Segoe UI",Arial,sans-serif!important;
+}
+html.sirk-platform-workspace-active #SirkPlatformWorkspace{
+  width:100%!important;
+  box-sizing:border-box!important;
+  padding:0 12px 20px!important;
+}
+html.sirk-platform-workspace-active #SirkPlatformWorkspace :is(.mc-shared-page-myscripts,.mc-shared-page-approvalcenter) .mc-shared-toolbar{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:8px!important;
+  min-height:38px!important;
+  margin:0 0 10px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+}
+html.sirk-platform-workspace-active #SirkPlatformWorkspace :is(.mc-shared-page-myscripts,.mc-shared-page-approvalcenter) .mc-shared-layout{
+  border-top:1px solid rgba(127,127,127,.35)!important;
+}
