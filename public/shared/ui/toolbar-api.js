@@ -6,27 +6,72 @@
         var style = document.createElement("style");
         style.id = "sirk-script-mode-layout-styles";
         style.textContent = [
-            ".mc-shared-page{--sirk-primary-track:minmax(220px,300px);--sirk-primary-collapsed-track:64px;--sirk-edit-details-track:minmax(260px,1fr);--sirk-scripts-text-width:clamp(280px,32vw,430px);--sirk-scripts-padding:28px;--sirk-actions-button-width:36px;--sirk-actions-gap:4px;--sirk-actions-width:calc((var(--sirk-actions-button-width) * 4) + (var(--sirk-actions-gap) * 3));--sirk-actions-column-gap:12px;--sirk-scripts-normal-width:calc(var(--sirk-scripts-text-width) + var(--sirk-scripts-padding));--sirk-scripts-edit-width:calc(var(--sirk-scripts-text-width) + var(--sirk-scripts-padding) + var(--sirk-actions-width) + var(--sirk-actions-column-gap))}",
+            ".mc-shared-page{--sirk-primary-collapsed-track:64px;--sirk-edit-details-track:minmax(260px,1fr);--sirk-actions-button-width:36px;--sirk-actions-gap:4px;--sirk-actions-width:calc((var(--sirk-actions-button-width) * 4) + (var(--sirk-actions-gap) * 3));--sirk-actions-column-gap:12px}",
             ".mc-shared-page .mc-tree-label{min-width:0!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:break-word!important;line-height:1.28!important}",
             ".mc-shared-page :is(.mc-tree-script,.mc-tree-folder-header,.mc-tree-root,.mc-catalog-results){height:auto!important;min-height:36px!important;align-items:flex-start!important}",
             ".mc-shared-page .mc-tree-script-row{align-items:flex-start!important;min-width:0!important}",
             ".mc-shared-page .mc-tree-script{min-width:0!important;flex:1 1 auto!important}",
             ".mc-shared-page .mc-tree-script-actions{flex:0 0 auto!important;align-self:flex-start!important}",
-            ".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-primary-track) var(--sirk-scripts-edit-width) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page.is-edit-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-scripts-edit-width) var(--sirk-edit-details-track)!important}",
+            ".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
+            ".mc-shared-page.is-edit-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)!important}",
             ".mc-shared-page.is-edit-mode .mc-shared-secondary{width:auto!important;min-width:0!important;max-width:none!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-row{display:grid!important;grid-template-columns:var(--sirk-scripts-text-width) var(--sirk-actions-width)!important;column-gap:var(--sirk-actions-column-gap)!important;width:100%!important;min-width:0!important;align-items:start!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script{width:auto!important;min-width:0!important;flex:none!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script .mc-tree-label{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}",
+            ".mc-shared-page.is-edit-mode .mc-tree-script-row{display:grid!important;grid-template-columns:var(--sirk-mode-row-width,316px) var(--sirk-actions-width)!important;column-gap:var(--sirk-actions-column-gap)!important;width:100%!important;min-width:0!important;align-items:start!important}",
+            ".mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;flex:none!important}",
             ".mc-shared-page.is-edit-mode .mc-tree-script-actions{display:flex!important;width:var(--sirk-actions-width)!important;min-width:var(--sirk-actions-width)!important;flex:0 0 var(--sirk-actions-width)!important;gap:var(--sirk-actions-gap)!important;justify-content:flex-start!important;align-self:start!important}",
             ".mc-shared-page.is-edit-mode .mc-tree-script-actions button{width:var(--sirk-actions-button-width)!important;min-width:var(--sirk-actions-button-width)!important;flex:0 0 var(--sirk-actions-button-width)!important}",
-            ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-primary-track) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
+            ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
             ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
-            ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts).is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-primary-track) minmax(440px,48%) var(--sirk-edit-details-track)!important}",
-            "@media(max-width:1000px){.mc-shared-page{--sirk-primary-track:minmax(190px,260px);--sirk-edit-details-track:minmax(220px,1fr);--sirk-scripts-text-width:clamp(260px,36vw,380px)}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-primary-track) minmax(380px,55%) var(--sirk-edit-details-track)!important}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(380px,55%) var(--sirk-edit-details-track)!important}}",
-            "@media(max-width:800px){.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout,.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}.mc-shared-page.is-edit-mode .mc-shared-secondary,.mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;max-width:none!important}.mc-shared-page.is-edit-mode .mc-tree-script-row{grid-template-columns:minmax(0,1fr)!important;width:100%!important}.mc-shared-page.is-edit-mode .mc-tree-script-actions{width:auto!important;min-width:0!important;flex-wrap:wrap!important;margin-top:4px}.mc-shared-page.is-edit-mode .mc-tree-script .mc-tree-label{white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}}"
+            ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts).is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(440px,48%) var(--sirk-edit-details-track)!important}",
+            "@media(max-width:1000px){.mc-shared-page{--sirk-edit-details-track:minmax(220px,1fr)}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,190px) minmax(380px,55%) var(--sirk-edit-details-track)!important}.mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(380px,55%) var(--sirk-edit-details-track)!important}}",
+            "@media(max-width:800px){.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout,.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}.mc-shared-page.is-edit-mode .mc-shared-secondary,.mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;max-width:none!important}.mc-shared-page.is-edit-mode .mc-tree-script-row{grid-template-columns:minmax(0,1fr)!important;width:100%!important}.mc-shared-page.is-edit-mode .mc-tree-script-actions{width:auto!important;min-width:0!important;flex-wrap:wrap!important;margin-top:4px}}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
+    }
+
+    function cssPixels(value) {
+        value = Number(value);
+        if (!isFinite(value) || value <= 0) return "";
+        return String(Math.round(value * 100) / 100) + "px";
+    }
+
+    function setGeometryProperty(page, name, value) {
+        value = cssPixels(value);
+        if (value && page.style && typeof page.style.setProperty === "function") {
+            page.style.setProperty(name, value);
+        }
+    }
+
+    function captureModeGeometry(page) {
+        if (!page || page.__sirkModeGeometryCaptured) return;
+        var layout = page.querySelector && page.querySelector(".mc-shared-layout");
+        var primary = page.querySelector && page.querySelector(".mc-shared-primary");
+        var secondary = page.querySelector && page.querySelector(".mc-shared-secondary");
+        if (!layout || !primary || !secondary) return;
+
+        var primaryRect = primary.getBoundingClientRect ? primary.getBoundingClientRect() : null;
+        var secondaryRect = secondary.getBoundingClientRect ? secondary.getBoundingClientRect() : null;
+        var row = secondary.querySelector && secondary.querySelector(".mc-tree-script-row");
+        var rowRect = row && row.getBoundingClientRect ? row.getBoundingClientRect() : null;
+
+        // The collapsed track is always controlled by the shared 64 px contract.
+        // Store the live expanded width only when the navigation is currently open.
+        if (!(layout.classList && layout.classList.contains("is-collapsed"))) {
+            setGeometryProperty(page, "--sirk-mode-primary-width", primaryRect && primaryRect.width);
+        }
+        setGeometryProperty(page, "--sirk-mode-secondary-width", secondaryRect && secondaryRect.width);
+        setGeometryProperty(page, "--sirk-mode-row-width", rowRect && rowRect.width);
+        page.__sirkModeGeometryCaptured = true;
+    }
+
+    function clearModeGeometry(page) {
+        if (!page) return;
+        if (page.style && typeof page.style.removeProperty === "function") {
+            page.style.removeProperty("--sirk-mode-primary-width");
+            page.style.removeProperty("--sirk-mode-secondary-width");
+            page.style.removeProperty("--sirk-mode-row-width");
+        }
+        try { delete page.__sirkModeGeometryCaptured; }
+        catch (error) { page.__sirkModeGeometryCaptured = false; }
     }
 
     function updateModeClass(context, key, active) {
@@ -34,8 +79,23 @@
             ? context.root.closest(".mc-shared-page")
             : null;
         if (!page) return;
-        if (key === "manage") page.classList.toggle("is-edit-mode", active);
-        if (key === "multi") page.classList.toggle("is-multi-mode", active);
+
+        var className = key === "manage"
+            ? "is-edit-mode"
+            : key === "multi"
+                ? "is-multi-mode"
+                : "";
+        if (!className) return;
+
+        var alreadyActive = page.classList.contains(className);
+        if (active && !alreadyActive) captureModeGeometry(page);
+        page.classList.toggle(className, active);
+
+        if (!active &&
+            !page.classList.contains("is-edit-mode") &&
+            !page.classList.contains("is-multi-mode")) {
+            clearModeGeometry(page);
+        }
     }
 
     function markQuickOutputOwner(key, item) {
