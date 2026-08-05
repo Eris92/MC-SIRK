@@ -17,8 +17,8 @@
             ".mc-shared-page.is-edit-mode .mc-shared-secondary{width:auto!important;min-width:0!important;max-width:none!important}",
             ".mc-shared-page.is-edit-mode .mc-tree-script-row{display:grid!important;grid-template-columns:var(--sirk-mode-row-width,316px) var(--sirk-actions-width)!important;column-gap:var(--sirk-actions-column-gap)!important;width:100%!important;min-width:0!important;align-items:start!important}",
             ".mc-shared-page.is-edit-mode .mc-tree-script{width:100%!important;min-width:0!important;flex:none!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-actions{display:flex!important;width:var(--sirk-actions-width)!important;min-width:var(--sirk-actions-width)!important;flex:0 0 var(--sirk-actions-width)!important;gap:var(--sirk-actions-gap)!important;justify-content:flex-start!important;align-self:start!important}",
-            ".mc-shared-page.is-edit-mode .mc-tree-script-actions button{width:var(--sirk-actions-button-width)!important;min-width:var(--sirk-actions-button-width)!important;flex:0 0 var(--sirk-actions-button-width)!important}",
+            ".mc-shared-page.is-edit-mode .mc-tree-script-actions{display:flex!important;width:var(--sirk-actions-width)!important;min-width:var(--sirk-actions-width)!important;flex:0 0 var(--sirk-actions-width)!important;gap:var(--sirk-actions-gap)!important;justify-content:flex-start!important;align-self:start!important;box-sizing:border-box!important}",
+            ".mc-shared-page.is-edit-mode .mc-tree-script-actions button{width:var(--sirk-actions-button-width)!important;min-width:var(--sirk-actions-button-width)!important;flex:0 0 var(--sirk-actions-button-width)!important;box-sizing:border-box!important}",
             ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
             ".mc-shared-page-mycommands.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) minmax(480px,52%) var(--sirk-edit-details-track)!important}",
             ".mc-shared-page:not(.mc-shared-page-mycommands):not(.mc-shared-page-myscripts).is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) minmax(440px,48%) var(--sirk-edit-details-track)!important}",
@@ -63,15 +63,82 @@
         page.__sirkModeGeometryCaptured = true;
     }
 
+    function measuredActionWidth(page) {
+        if (!page || typeof page.querySelectorAll !== "function") return 0;
+        var groups = page.querySelectorAll(".mc-tree-script-actions") || [];
+        var widest = 0;
+
+        for (var i = 0; i < groups.length; i++) {
+            var group = groups[i];
+            var children = group && group.children ? group.children : [];
+            if (!children.length) continue;
+
+            var gap = 4;
+            try {
+                if (window.getComputedStyle) {
+                    var computed = window.getComputedStyle(group);
+                    var parsedGap = parseFloat(computed.columnGap || computed.gap || "");
+                    if (isFinite(parsedGap) && parsedGap >= 0) gap = parsedGap;
+                }
+            } catch (error) {}
+
+            var width = 0;
+            for (var j = 0; j < children.length; j++) {
+                var child = children[j];
+                var rect = child && child.getBoundingClientRect ? child.getBoundingClientRect() : null;
+                width += rect && rect.width ? rect.width : 36;
+            }
+            if (children.length > 1) width += gap * (children.length - 1);
+            widest = Math.max(widest, width);
+        }
+
+        // Keep a small gutter for borders, focus rings and scrollbar rounding.
+        return widest > 0 ? Math.ceil(widest + 16) : 0;
+    }
+
+    function measureActionGeometry(page) {
+        if (!page || !page.classList || !page.classList.contains("is-edit-mode")) return 0;
+        var width = measuredActionWidth(page);
+        if (width > 0) setGeometryProperty(page, "--sirk-actions-width", width);
+        return width;
+    }
+
+    function nextFrame(callback) {
+        if (window.requestAnimationFrame) return window.requestAnimationFrame(callback);
+        if (typeof setTimeout === "function") return setTimeout(callback, 0);
+        callback();
+        return 0;
+    }
+
+    function scheduleActionGeometry(page) {
+        if (!page || page.__sirkActionMeasureScheduled) return;
+        page.__sirkActionMeasureScheduled = true;
+        var attempts = 0;
+
+        function run() {
+            attempts++;
+            var width = measureActionGeometry(page);
+            if (!width && attempts < 3 && page.classList.contains("is-edit-mode")) {
+                nextFrame(run);
+                return;
+            }
+            page.__sirkActionMeasureScheduled = false;
+        }
+
+        nextFrame(run);
+    }
+
     function clearModeGeometry(page) {
         if (!page) return;
         if (page.style && typeof page.style.removeProperty === "function") {
             page.style.removeProperty("--sirk-mode-primary-width");
             page.style.removeProperty("--sirk-mode-secondary-width");
             page.style.removeProperty("--sirk-mode-row-width");
+            page.style.removeProperty("--sirk-actions-width");
         }
         try { delete page.__sirkModeGeometryCaptured; }
         catch (error) { page.__sirkModeGeometryCaptured = false; }
+        page.__sirkActionMeasureScheduled = false;
     }
 
     function updateModeClass(context, key, active) {
@@ -90,6 +157,7 @@
         var alreadyActive = page.classList.contains(className);
         if (active && !alreadyActive) captureModeGeometry(page);
         page.classList.toggle(className, active);
+        if (active && className === "is-edit-mode") scheduleActionGeometry(page);
 
         if (!active &&
             !page.classList.contains("is-edit-mode") &&
