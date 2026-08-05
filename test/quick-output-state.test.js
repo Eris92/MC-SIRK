@@ -29,6 +29,14 @@ assert.ok(controller.indexOf('if (wasHidden)') >= 0 &&
     controller.indexOf('if (actualCollapsed) result = original.call(button, event)') >= 0 &&
     controller.indexOf('if (!actualCollapsed) result = original.call(button, event)') >= 0,
     "Opening and hiding output must call the native toggle only when its internal state actually needs changing.");
+assert.ok(controller.indexOf('function clearAttentionForNativeNavigation()') >= 0 &&
+    controller.indexOf('setAttention(false)') >= 0 &&
+    controller.indexOf('acknowledgeCurrentOutput(panel)') >= 0,
+    "Changing a native tab must clear attention and acknowledge the disappearing output.");
+assert.ok(controller.indexOf('panel.__sirkStableOutputPending = false') >= 0 &&
+    controller.indexOf('runtime.onNativePageStart = function ()') >= 0 &&
+    controller.indexOf('original.apply(runtime, arguments)') >= 0,
+    "The navigation reset must clear pending state while preserving the original runtime lifecycle.");
 assert.ok(controller.indexOf('attributeFilter') < 0 &&
     controller.indexOf('MainDev') < 0 && controller.indexOf('p19') < 0,
     "The controller must not observe style/class changes or touch device-tab routing.");

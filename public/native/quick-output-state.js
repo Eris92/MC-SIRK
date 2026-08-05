@@ -280,9 +280,19 @@
         syncButton(panel, button);
     }
 
-    function inspectOutput(panel) {
+    function currentOutput(panel) {
         var status = panel && panel.querySelector(".sirk-quick-command-status");
-        var current = status ? String(status.textContent || "").trim() : "";
+        return status ? String(status.textContent || "").trim() : "";
+    }
+
+    function acknowledgeCurrentOutput(panel) {
+        if (!panel) return;
+        panel.__sirkStableLastOutput = currentOutput(panel);
+        panel.__sirkStableOutputPending = false;
+    }
+
+    function inspectOutput(panel) {
+        var current = currentOutput(panel);
         var previous = String(panel && panel.__sirkStableLastOutput || "");
         var pending = panel && panel.__sirkStableOutputPending === true;
 
@@ -313,6 +323,29 @@
         );
     }
 
+    function clearAttentionForNativeNavigation() {
+        setAttention(false);
+        Array.prototype.forEach.call(
+            document.querySelectorAll(".sirk-desktop-commands-panel"),
+            function (panel) {
+                acknowledgeCurrentOutput(panel);
+                syncButton(panel);
+            }
+        );
+    }
+
+    function installNativeNavigationReset() {
+        var runtime = window.SirkPlatformRuntime;
+        if (!runtime || runtime.__sirkQuickOutputNavigationResetInstalled) return false;
+        var original = runtime.onNativePageStart;
+        runtime.__sirkQuickOutputNavigationResetInstalled = true;
+        runtime.onNativePageStart = function () {
+            clearAttentionForNativeNavigation();
+            return typeof original === "function" ? original.apply(runtime, arguments) : undefined;
+        };
+        return true;
+    }
+
     var style = document.getElementById("sirk-quick-output-state-style");
     if (!style) {
         style = document.createElement("style");
@@ -332,7 +365,10 @@
     }
 
     disableLegacyController();
+    installNativeNavigationReset();
     scan();
+    window.setTimeout(installNativeNavigationReset, 0);
+    window.setTimeout(installNativeNavigationReset, 100);
     window.setTimeout(scan, 0);
     window.setTimeout(scan, 100);
     window.setTimeout(scan, 500);
