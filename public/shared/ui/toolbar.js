@@ -138,6 +138,29 @@
         searchInput.style.minWidth = "0";
     }
 
+    function alignQuickCollapseWithMyScripts(api) {
+        if (!api) return api;
+        var originalSetActive = api.setActive;
+        var originalSetIcon = api.setIcon;
+
+        api.setActive = function (key, value) {
+            if (key === "collapse") return originalSetActive.call(api, key, false);
+            return originalSetActive.call(api, key, value);
+        };
+
+        api.setIcon = function (key, value) {
+            if (key === "collapse") {
+                var definition = window.SharedToolbarConfig && window.SharedToolbarConfig.definitions && window.SharedToolbarConfig.definitions.collapse;
+                if (definition) {
+                    if (value === definition.icon) value = definition.expandIcon;
+                    else if (value === definition.expandIcon) value = definition.icon;
+                }
+            }
+            return originalSetIcon.call(api, key, value);
+        };
+        return api;
+    }
+
     window.SharedToolbar = {
         mount: function (options) {
             options = options || {};
@@ -176,6 +199,7 @@
                 onSearch: options.handlers && options.handlers.onSearch
             };
             var api = window.SharedToolbarApi.create(context);
+            if (quickToolbar) alignQuickCollapseWithMyScripts(api);
             var handlers = options.handlers || {};
 
             function add(definition) {
