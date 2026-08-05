@@ -9,6 +9,8 @@ var tree = fs.readFileSync(path.join(root, "public", "shared", "ui", "tree.js"),
 var statusNav = fs.readFileSync(path.join(root, "public", "shared", "ui", "status-nav.js"), "utf8");
 var approvals = fs.readFileSync(path.join(root, "public", "modules", "approvals", "index.js"), "utf8");
 var mainCss = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
+var toolbarCss = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.css"), "utf8");
+var sharedUi = fs.readFileSync(path.join(root, "public", "shared", "ui", "shared-ui.css"), "utf8");
 
 assert.ok(tree.indexOf('graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon"') >= 0,
     "Nested My Scripts/My Commands directories without custom artwork must use the shared folder icon.");
@@ -41,14 +43,23 @@ assert.ok(statusNav.indexOf(".sirk-action-reject") >= 0 && statusNav.indexOf("#d
 assert.ok(approvals.indexOf("mc-approval-request-status-") >= 0,
     "Approval cards must color the request status as well as navigation and tables.");
 
-assert.ok(mainCss.indexOf("Approval Center: collapsing only compacts the first column") >= 0,
-    "Approval Center must have an explicit collapsed-layout contract.");
-assert.ok(mainCss.indexOf("grid-template-columns:56px minmax(280px,340px) minmax(320px,1fr)") >= 0,
-    "Collapsing Approval Center must retain a stable second navigation column.");
-assert.ok(mainCss.indexOf(".mc-shared-secondary .mc-shared-nav-item{display:grid!important;grid-template-columns:24px minmax(0,1fr)") >= 0,
-    "Collapsed Approval Center status/provider rows must keep the normal icon-and-label layout.");
-assert.ok(mainCss.indexOf(".mc-shared-secondary .mc-approval-label{display:block!important") >= 0 &&
-    mainCss.indexOf("text-align:left!important") >= 0,
-    "Collapsing the first column must not center or hide second-column labels.");
+assert.strictEqual(
+    mainCss.indexOf(".mc-module-approvalcenter .mc-shared-layout"),
+    -1,
+    "Approval Center must not have a module-specific collapsed-layout exception."
+);
+assert.ok(
+    toolbarCss.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:64px minmax(255px,305px) minmax(520px,1fr)!important}") >= 0,
+    "The shared collapsed layout must retain stable second and third columns for every module."
+);
+assert.ok(
+    sharedUi.indexOf(".mc-shared-layout.is-collapsed .mc-shared-primary") >= 0,
+    "Only the shared primary column may be compacted by the collapsed layout."
+);
+assert.strictEqual(
+    sharedUi.indexOf(".mc-shared-secondary .mc-approval-label{display:none"),
+    -1,
+    "Collapsing the first column must not hide Approval Center second-column labels."
+);
 
-console.log("Folder and semantic approval visual contract: OK");
+console.log("Folder, semantic approval and shared collapsed-layout contract: OK");
