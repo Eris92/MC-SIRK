@@ -2,6 +2,142 @@
     "use strict";
 
     if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    function installRuntimeRequestGuard() {
+        var core = window.SirkPlatformCore;
+        var shell = window.SirkPlatformModuleShell;
+        if (!core || !shell || typeof core.api !== "function" || typeof shell.create !== "function") return false;
+
+        var originalApi = core.__sirkRuntimeRequestGuardOriginalApi || core.api;
+        core.__sirkRuntimeRequestGuardOriginalApi = originalApi;
+        core.requestTimeoutMs = Math.max(1000, Number(core.requestTimeoutMs) || 15000);
+
+        core.api = function (moduleName, assetName, options, parameters) {
+            var request = {};
+            Object.keys(options || {}).forEach(function (key) { request[key] = options[key]; });
+            var sourceSignal = request.signal || null;
+            var controller = typeof AbortController === "function" ? new AbortController() : null;
+            var timeoutMs = Math.max(1000, Number(core.requestTimeoutMs) || 15000);
+            var timedOut = false;
+            var externallyAborted = false;
+            var timer = null;
+
+            function abortFromSource() {
+                externallyAborted = true;
+                if (controller && !controller.signal.aborted) controller.abort();
+            }
+            function cleanup() {
+                if (timer != null) window.clearTimeout(timer);
+                if (sourceSignal && typeof sourceSignal.removeEventListener === "function") {
+                    sourceSignal.removeEventListener("abort", abortFromSource);
+                }
+            }
+            function timeoutError() {
+                var target = String(moduleName || "runtime") + "/" + String(assetName || "request");
+                var error = new Error("SIRK API timeout: " + target + " did not respond within " + timeoutMs + " ms.");
+                error.name = "SirkApiTimeoutError";
+                return error;
+            }
+            function cancelledError() {
+                var error = new Error("SIRK API request cancelled because the view changed.");
+                error.name = "AbortError";
+                return error;
+            }
+
+            if (controller) {
+                if (sourceSignal) {
+                    if (sourceSignal.aborted) abortFromSource();
+                    else if (typeof sourceSignal.addEventListener === "function") {
+                        sourceSignal.addEventListener("abort", abortFromSource, { once: true });
+                    }
+                }
+                request.signal = controller.signal;
+                timer = window.setTimeout(function () {
+                    timedOut = true;
+                    if (!controller.signal.aborted) controller.abort();
+                }, timeoutMs);
+            }
+
+            return Promise.resolve().then(function () {
+                return originalApi.call(core, moduleName, assetName, request, parameters);
+            }).then(function (result) {
+                cleanup();
+                if (timedOut) throw timeoutError();
+                return result;
+            }, function (error) {
+                cleanup();
+                if (timedOut) throw timeoutError();
+                if (externallyAborted || (controller && controller.signal.aborted && error && error.name === "AbortError")) {
+                    throw cancelledError();
+                }
+                throw error;
+            });
+        };
+
+        var originalCreate = shell.__sirkRuntimeRequestGuardOriginalCreate || shell.create;
+        shell.__sirkRuntimeRequestGuardOriginalCreate = originalCreate;
+        shell.create = function (definition) {
+            var module = originalCreate.call(shell, definition);
+            if (!module || !module.api) return module;
+
+            var api = module.api;
+            var renderController = null;
+            var originalRender = api.render;
+            var originalClose = module.close;
+            var originalNativePageStart = module.onNativePageStart;
+            var originalDefinitionRender = definition && definition.render;
+
+            function cancelRenderRequest() {
+                if (renderController && !renderController.signal.aborted) renderController.abort();
+                renderController = null;
+            }
+
+            if (typeof originalDefinitionRender === "function") {
+                definition.render = function (shellApi) {
+                    return Promise.resolve().then(function () {
+                        return originalDefinitionRender.call(definition, shellApi);
+                    }).catch(function (error) {
+                        if (error && error.name === "AbortError") return null;
+                        throw error;
+                    });
+                };
+            }
+
+            api.api = function (asset, parameters) {
+                return core.api(
+                    definition.key,
+                    asset,
+                    renderController ? { signal: renderController.signal } : null,
+                    parameters
+                );
+            };
+
+            api.render = function () {
+                cancelRenderRequest();
+                if (typeof AbortController === "function") renderController = new AbortController();
+                return originalRender.apply(api, arguments);
+            };
+            module.render = api.render;
+
+            module.close = function () {
+                cancelRenderRequest();
+                return typeof originalClose === "function" ? originalClose.apply(module, arguments) : undefined;
+            };
+            module.onNativePageStart = function () {
+                cancelRenderRequest();
+                return typeof originalNativePageStart === "function"
+                    ? originalNativePageStart.apply(module, arguments)
+                    : undefined;
+            };
+            return module;
+        };
+        return true;
+    }
+
+    installRuntimeRequestGuard();
+    window.setTimeout(installRuntimeRequestGuard, 0);
+    window.setTimeout(installRuntimeRequestGuard, 100);
+
     if (window.__sirkQuickOutputStateInstalled) return;
     window.__sirkQuickOutputStateInstalled = true;
 
