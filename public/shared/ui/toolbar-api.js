@@ -29,6 +29,13 @@
         if (key === "multi") page.classList.toggle("is-multi-mode", active);
     }
 
+    function markQuickOutputOwner(key, item) {
+        if (key !== "details" || !item || typeof item.closest !== "function") return;
+        if (item.closest(".sirk-quick-command-toolbar-host")) {
+            item.__sirkStableOutputState = true;
+        }
+    }
+
     window.SharedToolbarApi = {
         create: function (context) {
             ensureModeStyles();
@@ -49,6 +56,7 @@
                 setActive: function (key, value) {
                     var item = context.buttons[key];
                     if (!item) return;
+                    markQuickOutputOwner(key, item);
                     var active = value === true;
                     item.classList.toggle("is-active", active);
                     item.setAttribute("aria-pressed", active ? "true" : "false");
@@ -57,6 +65,7 @@
                 setTitle: function (key, value) {
                     var item = context.buttons[key];
                     if (!item) return;
+                    markQuickOutputOwner(key, item);
                     item.title = String(value || "");
                     item.setAttribute("aria-label", item.title);
                     // syncToolbar updates the title after the active state. Preserve the
