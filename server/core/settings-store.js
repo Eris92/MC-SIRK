@@ -3,6 +3,8 @@
 var shared = require("./shared.js");
 var atomicJson = require("./atomic-json.js");
 
+var READ_CACHE_MS = 1000;
+
 function isObject(value) {
     return value && typeof value === "object" && !Array.isArray(value);
 }
@@ -35,9 +37,25 @@ module.exports.createSettingsStore = function (options) {
     var activeFilePath = fallbackPath && fs.existsSync(fallbackPath) ? fallbackPath : filePath;
     var defaults = shared.copy(options.defaults || {});
     var queue = Promise.resolve();
+    var readCache = { value: null, expiresAt: 0 };
+
+    function cache(value) {
+        readCache = {
+            value: shared.copy(value),
+            expiresAt: Date.now() + READ_CACHE_MS
+        };
+        return shared.copy(readCache.value);
+    }
+
+    function invalidate() {
+        readCache = { value: null, expiresAt: 0 };
+    }
 
     function read() {
-        return merge(defaults, shared.readJson(fs, activeFilePath, {}));
+        if (readCache.value && readCache.expiresAt > Date.now()) {
+            return shared.copy(readCache.value);
+        }
+        return cache(merge(defaults, shared.readJson(fs, activeFilePath, {})));
     }
 
     function canFallback(error) {
@@ -49,11 +67,12 @@ module.exports.createSettingsStore = function (options) {
         return atomicJson.write(fs, path, activeFilePath, normalized).catch(function (error) {
             if (!canFallback(error)) throw error;
             activeFilePath = fallbackPath;
+            invalidate();
             return atomicJson.write(fs, path, activeFilePath, normalized);
-        })
-            .then(function () {
-                return normalized;
-            });
+        }).then(function () {
+            cache(normalized);
+            return shared.copy(normalized);
+        });
     }
 
     function update(mutator) {
@@ -78,9 +97,11 @@ module.exports.createSettingsStore = function (options) {
         catch (error) {
             if (!canFallback(error)) throw error;
             activeFilePath = fallbackPath;
+            invalidate();
             shared.writeJsonAtomic(fs, path, activeFilePath, normalized);
         }
-        return normalized;
+        cache(normalized);
+        return shared.copy(normalized);
     }
 
     function isModuleEnabled(key) {
