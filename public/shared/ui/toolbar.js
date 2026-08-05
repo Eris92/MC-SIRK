@@ -101,6 +101,43 @@
         }, 0);
     }
 
+    function orderedDefinitions(options) {
+        var definitions = window.SharedToolbarConfig.resolve(
+            options.preset,
+            options.buttons
+        ).slice();
+
+        (options.customButtons || []).forEach(function (definition, index) {
+            var value = Object.assign({}, definition);
+            value.side = value.side || "right";
+            value.key = value.key || ("custom-" + (definitions.length + index));
+            definitions.push(value);
+        });
+
+        definitions.sort(function (a, b) {
+            return Number(a.order || 500) - Number(b.order || 500);
+        });
+        return definitions;
+    }
+
+    function keepQuickToolbarOnOneLine(root, left, right, searchWrap, searchInput) {
+        root.style.flexWrap = "nowrap";
+        root.style.alignItems = "center";
+        left.style.flex = "1 1 auto";
+        left.style.flexWrap = "nowrap";
+        left.style.width = "auto";
+        left.style.minWidth = "0";
+        right.style.flex = "0 0 auto";
+        right.style.flexWrap = "nowrap";
+        right.style.width = "auto";
+        right.style.marginLeft = "auto";
+        searchWrap.style.flex = "1 1 120px";
+        searchWrap.style.minWidth = "80px";
+        searchWrap.style.maxWidth = "300px";
+        searchInput.style.width = "100%";
+        searchInput.style.minWidth = "0";
+    }
+
     window.SharedToolbar = {
         mount: function (options) {
             options = options || {};
@@ -170,20 +207,10 @@
                 return item;
             }
 
-            window.SharedToolbarConfig.resolve(
-                options.preset,
-                options.buttons
-            ).forEach(add);
-
-            (options.customButtons || []).sort(function (a, b) {
-                return Number(a.order || 500) - Number(b.order || 500);
-            }).forEach(function (definition) {
-                definition.side = definition.side || "right";
-                definition.key = definition.key || ("custom-" + Object.keys(context.buttons).length);
-                add(definition);
-            });
+            orderedDefinitions(options).forEach(add);
 
             if (context.buttons.search) left.appendChild(searchWrap);
+            if (quickToolbar) keepQuickToolbarOnOneLine(root, left, right, searchWrap, searchInput);
             api.addButton = add;
 
             var timer = 0;
