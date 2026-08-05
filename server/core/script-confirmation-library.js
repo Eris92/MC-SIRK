@@ -5,6 +5,7 @@ var shared = require("./shared.js");
 
 var CONFIRM_DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
 var RUN_AS_DIRECTIVE = /^\s*#\s*runAsUser\s*:\s*([012])\s*$/i;
+var MULTI_HOST_DIRECTIVE = /^\s*#\s*MultiHost\s*:\s*(true|false)\s*$/i;
 var DECORATED_TREE_CACHE_MS = 5000;
 
 function normalizeRunAsUser(value) {
@@ -15,18 +16,28 @@ function normalizeRunAsUser(value) {
     return Number(value) === 0 ? 0 : 2;
 }
 
-function parseEnabled(source) {
+function headerBoolean(source, directive, defaultValue) {
     var lines = String(source && source.text || source || "").replace(/^\uFEFF/, "").split(/\r?\n/);
-    var enabled = false;
+    var enabled = defaultValue === true;
     for (var index = 0; index < lines.length; index++) {
         var line = String(lines[index] || "");
         var trimmed = line.trim();
         if (!trimmed) continue;
         if (trimmed.charAt(0) !== "#") break;
-        var match = line.match(CONFIRM_DIRECTIVE);
+        var match = line.match(directive);
         if (match) enabled = String(match[1]).toLowerCase() === "true";
     }
     return enabled;
+}
+
+function parseEnabled(source) {
+    return headerBoolean(source, CONFIRM_DIRECTIVE, false);
+}
+
+function parseMultiHost(source) {
+    // My Commands is an operator-invoked device surface. Existing scripts
+    // are therefore eligible for multi-device execution unless they opt out.
+    return headerBoolean(source, MULTI_HOST_DIRECTIVE, true);
 }
 
 function splitHeader(sourceText) {
@@ -46,6 +57,17 @@ function splitHeader(sourceText) {
         header: lines.slice(0, boundary),
         body: lines.slice(boundary)
     };
+}
+
+function updateBooleanDirective(sourceText, directive, line) {
+    var parts = splitHeader(sourceText);
+    var header = parts.header.filter(function (value) {
+        return !directive.test(String(value || ""));
+    });
+    var insertAt = header.length;
+    while (insertAt > 0 && !String(header[insertAt - 1] || "").trim()) insertAt--;
+    header.splice(insertAt, 0, line);
+    return header.concat(parts.body).join(parts.newline);
 }
 
 function updateConfirmDirective(sourceText, enabled) {
@@ -81,11 +103,20 @@ function updateRunAsDirective(sourceText, runAsUser) {
     return header.concat(parts.body).join(parts.newline);
 }
 
+function updateMultiHostDirective(sourceText, enabled) {
+    return updateBooleanDirective(
+        sourceText,
+        MULTI_HOST_DIRECTIVE,
+        "# MultiHost: " + (enabled === false ? "false" : "true")
+    );
+}
+
 function decorateScript(base, script) {
     if (!script || script.type !== "script") return script;
     var result = shared.copy(script);
     var source = base.getSource(result.path);
     result.confirmExecution = parseEnabled(source);
+    result.multiHost = parseMultiHost(source);
     result.runAsUser = normalizeRunAsUser(result.runAsUser);
     return result;
 }
@@ -142,7 +173,9 @@ module.exports.createScriptLibrary = function (options) {
     wrapper.getDefinition = function (relativePath) {
         var definition = base.getDefinition(relativePath);
         if (!definition) return null;
-        definition.confirmExecution = parseEnabled(base.getSource(relativePath));
+        var source = base.getSource(relativePath);
+        definition.confirmExecution = parseEnabled(source);
+        definition.multiHost = parseMultiHost(source);
         definition.runAsUser = normalizeRunAsUser(definition.runAsUser);
         return definition;
     };
@@ -157,8 +190,10 @@ module.exports.createScriptLibrary = function (options) {
         definition = definition && typeof definition === "object" ? definition : {};
         var enabled = definition.confirmExecution === true;
         var runAsUser = normalizeRunAsUser(definition.runAsUser);
+        var multiHost = definition.multiHost !== false;
         definition = shared.copy(definition);
         definition.runAsUser = runAsUser;
+        definition.multiHost = multiHost;
 
         base.saveDefinition(relativePath, definition);
         var source = base.getSource(relativePath);
@@ -166,6 +201,7 @@ module.exports.createScriptLibrary = function (options) {
 
         var updated = updateConfirmDirective(source.text, enabled);
         updated = updateRunAsDirective(updated, runAsUser);
+        updated = updateMultiHostDirective(updated, multiHost);
         base.saveSource(relativePath, updated);
         invalidateDecoratedTree();
 
@@ -179,4 +215,6 @@ module.exports.createScriptLibrary = function (options) {
 };
 
 module.exports.normalizeRunAsUser = normalizeRunAsUser;
+module.exports.parseMultiHost = parseMultiHost;
 module.exports.updateRunAsDirective = updateRunAsDirective;
+module.exports.updateMultiHostDirective = updateMultiHostDirective;
