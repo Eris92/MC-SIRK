@@ -238,6 +238,8 @@
         button.title = title;
         button.setAttribute("aria-label", title);
         button.classList.add("sirk-quick-command-output-toggle");
+        button.classList.toggle("is-active", !hidden);
+        button.setAttribute("aria-pressed", hidden ? "false" : "true");
         button.classList.toggle("has-output-attention", hidden && attention());
     }
 

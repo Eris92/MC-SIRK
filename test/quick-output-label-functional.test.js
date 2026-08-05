@@ -24,9 +24,11 @@ var button = {
     title: "Ukryj wynik",
     onclick: function () {},
     classList: classList(),
-    attributes: {},
+    attributes: { "aria-pressed": "true" },
     setAttribute: function (name, value) { this.attributes[name] = String(value); }
 };
+button.classList.add("is-active");
+
 var browser = { classList: classList() };
 var panel = {
     attributes: {},
@@ -72,10 +74,17 @@ assert.strictEqual(button.title, "Pokaż wynik",
     "A hidden result pane must show the Show output action on first render.");
 assert.strictEqual(button.attributes["aria-label"], "Pokaż wynik",
     "The accessible button label must match the first-render action.");
+assert.strictEqual(button.classList.contains("is-active"), false,
+    "A hidden result pane must not leave the output button highlighted on first render.");
+assert.strictEqual(button.attributes["aria-pressed"], "false",
+    "A hidden result pane must expose aria-pressed=false on first render.");
 
 button.onclick();
 assert.strictEqual(button.title, "Ukryj wynik",
     "After opening the result pane the action must switch to Hide output.");
 assert.strictEqual(button.attributes["aria-label"], "Ukryj wynik");
+assert.strictEqual(button.classList.contains("is-active"), true,
+    "An open result pane may show the output button as active.");
+assert.strictEqual(button.attributes["aria-pressed"], "true");
 
-console.log("Quick output first-render label synchronization: OK");
+console.log("Quick output first-render label and active-state synchronization: OK");
