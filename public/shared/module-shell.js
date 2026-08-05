@@ -60,6 +60,50 @@
         };
     }
 
+    function isInteractiveDeviceTitleElement(node) {
+        var tag = String(node && node.tagName || "").toLowerCase();
+        return tag === "a" || tag === "button" || tag === "input" ||
+            tag === "select" || tag === "textarea" || tag === "script" ||
+            tag === "style" || tag === "svg";
+    }
+
+    function collectDeviceTitleTextNodes(root, output) {
+        output = output || [];
+        if (!root || !root.childNodes) return output;
+        for (var index = 0; index < root.childNodes.length; index += 1) {
+            var node = root.childNodes[index];
+            if (!node) continue;
+            if (node.nodeType === 3 && String(node.nodeValue || "").trim()) {
+                output.push(node);
+            } else if (node.nodeType === 1 && !isInteractiveDeviceTitleElement(node)) {
+                collectDeviceTitleTextNodes(node, output);
+            }
+        }
+        return output;
+    }
+
+    function findDeviceTitleTextNode(root) {
+        var nodes = collectDeviceTitleTextNodes(root, []);
+        for (var index = 0; index < nodes.length; index += 1) {
+            var value = String(nodes[index].nodeValue || "").trim();
+            if (/^(?:Wtyczki|Plugins|Commands)\b/i.test(value) || value.indexOf(" - ") >= 0) {
+                return nodes[index];
+            }
+        }
+        return nodes[0] || null;
+    }
+
+    function formatDeviceTitle(nativeText, replacement) {
+        var value = String(nativeText == null ? "" : nativeText);
+        var leading = (value.match(/^\s*/) || [""])[0];
+        var trailing = (value.match(/\s*$/) || [""])[0];
+        var bodyEnd = value.length - trailing.length;
+        var body = value.slice(leading.length, bodyEnd < leading.length ? leading.length : bodyEnd);
+        var separator = body.indexOf(" - ");
+        body = String(replacement || "Commands") + (separator >= 0 ? body.slice(separator) : "");
+        return leading + body + trailing;
+    }
+
     function createDeviceIntegration(definition, state, api, mountPage) {
         var options = definition.deviceTab || null;
         if (!options) return null;
@@ -152,17 +196,22 @@
         }
         function setDeviceTitle(active) {
             var host = document.querySelector("#p19title h1") || document.getElementById("p19title");
-            if (!host || !host.childNodes) return;
-            var textNode = null;
-            for (var index = 0; index < host.childNodes.length; index += 1) {
-                if (host.childNodes[index] && host.childNodes[index].nodeType === 3 && String(host.childNodes[index].nodeValue || "").trim()) {
-                    textNode = host.childNodes[index];
-                    break;
-                }
-            }
+            if (!host) return;
+            var textNode = findDeviceTitleTextNode(host);
             if (!textNode) return;
-            if (host.__sirkNativeDeviceTitleText == null) host.__sirkNativeDeviceTitleText = textNode.nodeValue;
-            textNode.nodeValue = active ? String(title) : String(host.__sirkNativeDeviceTitleText || "Plugins");
+            var current = String(textNode.nodeValue || "");
+
+            if (active) {
+                if (host.__sirkNativeDeviceTitleText == null ||
+                    !/^\s*Commands(?:\s+-\s+|\s*$)/i.test(current)) {
+                    host.__sirkNativeDeviceTitleText = current;
+                }
+                textNode.nodeValue = formatDeviceTitle(host.__sirkNativeDeviceTitleText, title);
+            } else if (host.__sirkNativeDeviceTitleText != null) {
+                textNode.nodeValue = String(host.__sirkNativeDeviceTitleText);
+                try { delete host.__sirkNativeDeviceTitleText; }
+                catch (error) { host.__sirkNativeDeviceTitleText = null; }
+            }
         }
         function enabled() {
             if (options.enabled === false) return false;
@@ -350,6 +399,8 @@
 
     window.SirkPlatformModuleShell = {
         routeState: routeState,
+        findDeviceTitleTextNode: findDeviceTitleTextNode,
+        formatDeviceTitle: formatDeviceTitle,
         create: function (definition) {
             definition.viewMode = Number(definition.viewMode || VIEW_MODES[definition.key] || 960);
             var state = {
