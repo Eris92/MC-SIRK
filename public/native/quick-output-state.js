@@ -217,6 +217,12 @@
             );
     }
 
+    function outputButtonTitle(hidden, current) {
+        var english = /^(Hide output|Show output)$/i.test(String(current || "").trim());
+        if (hidden) return english ? "Show output" : "Pokaż wynik";
+        return english ? "Hide output" : "Ukryj wynik";
+    }
+
     function applyLayout(panel) {
         if (!panel) return;
         disableLegacyController();
@@ -227,8 +233,12 @@
     function syncButton(panel, button) {
         button = button || detailsButton(panel);
         if (!button) return;
+        var hidden = userHidden();
+        var title = outputButtonTitle(hidden, button.title);
+        button.title = title;
+        button.setAttribute("aria-label", title);
         button.classList.add("sirk-quick-command-output-toggle");
-        button.classList.toggle("has-output-attention", userHidden() && attention());
+        button.classList.toggle("has-output-attention", hidden && attention());
     }
 
     function wrapButton(panel) {
