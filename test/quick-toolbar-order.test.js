@@ -28,5 +28,12 @@ assert.ok(toolbar.indexOf('searchWrap.style.flex = "1 1 120px"') >= 0 &&
     "The opened Quick search field must shrink within the toolbar instead of wrapping below it.");
 assert.ok(toolbar.indexOf("if (context.buttons.search) left.appendChild(searchWrap)") >= 0,
     "The search field must stay directly after the final Search button.");
+assert.ok(toolbar.indexOf("function alignQuickCollapseWithMyScripts(api)") >= 0 &&
+    toolbar.indexOf('if (key === "collapse") return originalSetActive.call(api, key, false)') >= 0 &&
+    toolbar.indexOf("if (quickToolbar) alignQuickCollapseWithMyScripts(api)") >= 0,
+    "Quick collapse must use the neutral MyScripts button style instead of remaining highlighted.");
+assert.ok(toolbar.indexOf("if (value === definition.icon) value = definition.expandIcon") >= 0 &&
+    toolbar.indexOf("else if (value === definition.expandIcon) value = definition.icon") >= 0,
+    "Quick collapse and expand icons must use the corrected opposite direction without changing MyScripts.");
 
-console.log("Quick toolbar Search order and single-line layout: OK");
+console.log("Quick toolbar order, direction and neutral collapse style: OK");
