@@ -25,9 +25,23 @@ assert.ok(/background:var\(--sdc-panel-alt\)!important/.test(neutralRule),
 assert.ok(/border-color:var\(--sdc-border\)!important/.test(neutralRule),
     "The hidden transient state must not keep the active border.");
 
+var pointerFocusSelector = ".sirk-desktop-commands .mc-shared-toolbar-button:focus:not(:focus-visible)";
+var pointerFocusStart = desktopCss.indexOf(pointerFocusSelector);
+var pointerFocusEnd = desktopCss.indexOf("}", pointerFocusStart);
+var pointerFocusRule = desktopCss.slice(pointerFocusStart, pointerFocusEnd + 1);
+assert.ok(pointerFocusStart >= 0 && /outline:0!important/.test(pointerFocusRule) && /box-shadow:none!important/.test(pointerFocusRule),
+    "Pointer clicks must not leave a Bootstrap focus frame around Quick toolbar buttons.");
+
+var keyboardFocusSelector = ".sirk-desktop-commands .mc-shared-toolbar-button:focus-visible";
+var keyboardFocusStart = desktopCss.indexOf(keyboardFocusSelector);
+var keyboardFocusEnd = desktopCss.indexOf("}", keyboardFocusStart);
+var keyboardFocusRule = desktopCss.slice(keyboardFocusStart, keyboardFocusEnd + 1);
+assert.ok(keyboardFocusStart >= 0 && /box-shadow:0 0 0 3px var\(--sdc-focus\)!important/.test(keyboardFocusRule),
+    "Keyboard navigation must retain a visible focus indicator.");
+
 assert.ok(/\.sirk-quick-command-output-toggle\.has-output-attention\{[^}]*background:[^}]*!important/.test(outputState),
     "The red attention state must retain important precedence over normal toolbar styles.");
 assert.ok(/button\.classList\.toggle\("has-output-attention", hidden && attention\(\)\)/.test(outputState),
     "Attention must only be shown while the output is hidden.");
 
-console.log("Quick hidden-output attention visual precedence: OK");
+console.log("Quick attention precedence and pointer focus contract: OK");

@@ -16,7 +16,8 @@
 .sirk-desktop-commands .mc-shared-toolbar-button:hover,.sirk-quick-command-fallback-close:hover{border-color:var(--sdc-active-border);background:var(--sdc-hover);color:var(--sdc-text)}
 .sirk-desktop-commands .mc-shared-toolbar-button.is-active{border-color:var(--sdc-active-border);background:var(--sdc-active);color:var(--sdc-text)}
 .sirk-desktop-commands-panel[data-sirk-output-hidden="1"] .sirk-quick-command-output-toggle.is-active:not(.has-output-attention){border-color:var(--sdc-border)!important;background:var(--sdc-panel-alt)!important;color:var(--sdc-text)!important}
-.sirk-desktop-commands .mc-shared-toolbar-button:focus-visible,.sirk-quick-command-fallback-close:focus-visible{outline:0;box-shadow:0 0 0 3px var(--sdc-focus)}
+.sirk-desktop-commands .mc-shared-toolbar-button:focus:not(:focus-visible),.sirk-quick-command-fallback-close:focus:not(:focus-visible){outline:0!important;box-shadow:none!important}
+.sirk-desktop-commands .mc-shared-toolbar-button:focus-visible,.sirk-quick-command-fallback-close:focus-visible{outline:0!important;box-shadow:0 0 0 3px var(--sdc-focus)!important}
 .sirk-desktop-commands .mc-shared-toolbar-button[title*="ulubione"].is-active,.sirk-desktop-commands .mc-shared-toolbar-button[title*="favorite" i].is-active{color:var(--sdc-favorite)}
 .sirk-desktop-commands .mc-shared-toolbar-search input{width:min(300px,34vw);min-height:32px;box-sizing:border-box;padding:5px 9px;border:1px solid var(--sdc-border);border-radius:4px;background:var(--sdc-panel-alt);color:var(--sdc-text)}
 .sirk-desktop-commands .mc-shared-toolbar-search input:focus{outline:0;border-color:var(--sdc-active-border);box-shadow:0 0 0 3px var(--sdc-focus)}
