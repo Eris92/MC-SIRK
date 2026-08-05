@@ -123,6 +123,160 @@ function createSerializedStartupHook(version, pin) {
             (document.head || document.documentElement).appendChild(link);
         }
 
+        function installQuickObserverScope() {
+            if (window.__sirkQuickObserverScopeInstalled || typeof window.MutationObserver !== "function") return;
+            window.__sirkQuickObserverScopeInstalled = true;
+
+            var NativeMutationObserver = window.MutationObserver;
+            var scopedEntries = [];
+
+            function isQuickGlobalSource(sourceUrl) {
+                return /(?:mesh-plugin-core|quick-output-state)\.js(?:[?#]|$)/i.test(String(sourceUrl || ""));
+            }
+
+            function quickPanel() {
+                return document.getElementById("SirkDesktopCommandsPanel") ||
+                    document.querySelector(".sirk-desktop-commands-panel");
+            }
+
+            function removeEntry(entry) {
+                var index = scopedEntries.indexOf(entry);
+                if (index >= 0) scopedEntries.splice(index, 1);
+            }
+
+            function attachEntry(entry) {
+                if (!entry || entry.disabled) return false;
+                var panel = quickPanel();
+                if (!panel || entry.panel === panel) return false;
+                try {
+                    entry.nativeDisconnect();
+                    entry.nativeObserve(panel, entry.options);
+                    entry.panel = panel;
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            function attachAll() {
+                scopedEntries.slice().forEach(attachEntry);
+            }
+
+            function ScopedMutationObserver(callback) {
+                var sourceUrl = String(document.currentScript && document.currentScript.src || "");
+                var observer = new NativeMutationObserver(callback);
+                if (!isQuickGlobalSource(sourceUrl)) return observer;
+
+                var nativeObserve = observer.observe.bind(observer);
+                var nativeDisconnect = observer.disconnect.bind(observer);
+                var entry = null;
+
+                observer.observe = function (target, options) {
+                    if (target === document.documentElement) {
+                        if (!entry) {
+                            entry = {
+                                observer: observer,
+                                nativeObserve: nativeObserve,
+                                nativeDisconnect: nativeDisconnect,
+                                options: Object.assign({}, options || {}),
+                                panel: null,
+                                disabled: false
+                            };
+                            scopedEntries.push(entry);
+                        } else {
+                            entry.options = Object.assign({}, options || {});
+                            entry.disabled = false;
+                        }
+                        window.setTimeout(function () { attachEntry(entry); }, 0);
+                        return;
+                    }
+                    return nativeObserve(target, options);
+                };
+
+                observer.disconnect = function () {
+                    if (entry) {
+                        entry.disabled = true;
+                        entry.panel = null;
+                        removeEntry(entry);
+                    }
+                    return nativeDisconnect();
+                };
+                return observer;
+            }
+
+            ScopedMutationObserver.prototype = NativeMutationObserver.prototype;
+            try { Object.setPrototypeOf(ScopedMutationObserver, NativeMutationObserver); }
+            catch (error) {}
+
+            window.MutationObserver = ScopedMutationObserver;
+            if (window.WebKitMutationObserver === NativeMutationObserver) {
+                window.WebKitMutationObserver = ScopedMutationObserver;
+            }
+
+            window.__sirkAttachQuickObservers = attachAll;
+            document.addEventListener("click", function (event) {
+                var target = event && event.target;
+                if (!target || typeof target.closest !== "function") return;
+                if (target.closest("#SirkDesktopCommandsButton,.sirk-desktop-commands-panel")) {
+                    window.setTimeout(attachAll, 0);
+                }
+            }, true);
+        }
+
+        function installCommandsTitleSync() {
+            if (window.__sirkCommandsTitleSyncInstalled) return;
+            window.__sirkCommandsTitleSyncInstalled = true;
+            var pageId = "sirk-platform-mycommands-device-page";
+            var tabId = "MainDevSirkPlatform-Commands";
+
+            function storedPage() {
+                try {
+                    if (typeof window.getstore === "function") return String(window.getstore("_curPluginPage", "") || "");
+                } catch (error) {}
+                try { return String(window.localStorage.getItem("_curPluginPage") || ""); }
+                catch (error2) { return ""; }
+            }
+
+            function isActive() {
+                if (Number(window.xxcurrentView || 0) !== 19) return false;
+                var tab = document.getElementById(tabId);
+                var header = document.getElementById("p19ph-" + pageId);
+                var activeHeader = document.querySelector("#p19headers .on");
+                return storedPage() === pageId || activeHeader === header ||
+                    !!(tab && tab.classList.contains("style3sel"));
+            }
+
+            function syncNow() {
+                if (!isActive()) return false;
+                var host = document.querySelector("#p19title h1") || document.getElementById("p19title");
+                if (!host || !host.childNodes) return false;
+                for (var index = 0; index < host.childNodes.length; index += 1) {
+                    var node = host.childNodes[index];
+                    if (node && node.nodeType === 3 && String(node.nodeValue || "").trim()) {
+                        if (String(node.nodeValue || "").trim() !== "Commands") node.nodeValue = "Commands";
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function schedule() {
+                [0, 25, 100, 300, 750].forEach(function (delay) {
+                    window.setTimeout(syncNow, delay);
+                });
+            }
+
+            window.__sirkScheduleCommandsTitle = schedule;
+            document.addEventListener("click", function (event) {
+                var target = event && event.target;
+                if (!target || typeof target.closest !== "function") return;
+                if (target.closest("#" + tabId + ",#MainDevPlugins")) schedule();
+            }, true);
+        }
+
+        installQuickObserverScope();
+        installCommandsTitleSync();
+
         style("sirk-platform-main-style", "main.css");
         style("sirk-platform-automation-style", "myscripts.css");
         style("sirk-platform-shared-style", "shared-ui/shared-ui.css");
@@ -160,6 +314,7 @@ function createSerializedStartupHook(version, pin) {
         scripts.reduce(function (chain, item) {
             return chain.then(function () { return load(item[0], asset(item[1])); });
         }, Promise.resolve()).then(function () {
+            if (typeof window.__sirkAttachQuickObservers === "function") window.__sirkAttachQuickObservers();
             if (!window.SirkPlatformRuntime || typeof window.SirkPlatformRuntime.initialize !== "function") {
                 throw new Error("SIRK Platform browser runtime was not loaded.");
             }
@@ -168,6 +323,7 @@ function createSerializedStartupHook(version, pin) {
                 if (nodeId && typeof window.SirkPlatformRuntime.onDeviceRefreshEnd === "function") {
                     window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId);
                 }
+                if (typeof window.__sirkScheduleCommandsTitle === "function") window.__sirkScheduleCommandsTitle();
             });
         }).catch(function (error) {
             if (window.console) console.error("SIRK Platform browser startup failed", error);
@@ -219,10 +375,16 @@ function createPlugin(parent, shortName) {
     obj.goPageStart = function (view) {
         var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageStart === "function") runtime.onNativePageStart(view);
+        if (typeof window !== "undefined" && typeof window.__sirkScheduleCommandsTitle === "function") {
+            window.__sirkScheduleCommandsTitle();
+        }
     };
     obj.goPageEnd = function (view) {
         var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
+        if (typeof window !== "undefined" && typeof window.__sirkScheduleCommandsTitle === "function") {
+            window.__sirkScheduleCommandsTitle();
+        }
     };
     obj.onDeviceRefreshEnd = function (nodeId) {
         if (typeof window === "undefined") return;
@@ -232,6 +394,7 @@ function createPlugin(parent, shortName) {
         if (runtime && typeof runtime.onDeviceRefreshEnd === "function") {
             runtime.onDeviceRefreshEnd(currentNodeId || String(window.__SIRK_CURRENT_NODE_ID__ || ""));
         }
+        if (typeof window.__sirkScheduleCommandsTitle === "function") window.__sirkScheduleCommandsTitle();
     };
     obj.commandResult = function (server, message) {
         var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
