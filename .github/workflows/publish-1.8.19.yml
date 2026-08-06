@@ -1,6 +1,8 @@
 name: Publish SIRK 1.8.19
 
 on:
+  schedule:
+    - cron: '*/5 * * * *'
   issues:
     types:
       - opened
@@ -15,7 +17,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.issue.title == 'Publish SIRK 1.8.19'
+    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -24,6 +26,17 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Stop when already published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v1.8.19 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "SIRK 1.8.19 is already published."
+            exit 0
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -96,6 +109,8 @@ jobs:
         run: |
           set -euo pipefail
           rm -f scripts/patches/apply-1.8.19.part[0-9][0-9]
+          rm -f .github/workflows/apply-ui-admin-audit-1.8.19.yml
+          rm -f .github/workflows/finalize-1.8.19.yml
           rm -f .github/workflows/publish-1.8.19.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -113,4 +128,10 @@ jobs:
           git tag -a v1.8.19 -m "SIRK Management Platform 1.8.19"
           git push origin v1.8.19
           gh release create v1.8.19 --repo "$GITHUB_REPOSITORY" --title "SIRK Management Platform 1.8.19" --notes-file docs/releases/1.8.19.md --latest
-          gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany."
+
+      - name: Close trigger issue
+        if: github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany."
