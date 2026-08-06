@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.3
+# SIRK Management Platform 1.8.5
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -68,6 +68,8 @@ Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierani
 Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts używają jednego kontraktu hover i selected opartego na natywnych zmiennych bieżącego motywu MeshCentral. Wiersze nie zmieniają geometrii po najechaniu ani kliknięciu.
 
 Quick zachowuje stałą geometrię podczas hover i active. Panel, toolbar, kolumna Output oraz elementy list nie dziedziczą transformacji powiększających z motywów MeshCentral. Po ukryciu Output grid jest rzeczywiście dwukolumnowy, bez pustego trzeciego tracku, a zawartość zaczyna się bezpośrednio pod toolbarem.
+
+Gdy Output jest ukryty i pojawi się nowy końcowy wynik wykonania, jego przycisk otrzymuje subtelny czerwony stan attention z natywnych tokenów Bootstrap MeshCentral. Otwarcie Output natychmiast zeruje attention; przy otwartej kolumnie kolor nie jest zmieniany.
 
 ## Entry pointy i loadery
 
