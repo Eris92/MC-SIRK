@@ -49,3 +49,150 @@
         }
     };
 }());
+
+(function () {
+    "use strict";
+
+    var ITEM_SELECTOR = [
+        ".mc-shared-page-approvalcenter button.mc-shared-nav-item",
+        ".mc-shared-page-approvalcenter button.mc-tree-folder-header",
+        ".mc-shared-page-approvalcenter button.mc-tree-script",
+        ".mc-shared-page-mycommands button.mc-shared-nav-item",
+        ".mc-shared-page-mycommands button.mc-tree-folder-header",
+        ".mc-shared-page-mycommands button.mc-tree-script",
+        ".mc-shared-page-myscripts button.mc-shared-nav-item",
+        ".mc-shared-page-myscripts button.mc-tree-folder-header",
+        ".mc-shared-page-myscripts button.mc-tree-script",
+        ".sirk-quick-command-browser nav > button"
+    ].join(",");
+    var ICON_SELECTOR = [
+        ".sirk-shared-list-icon",
+        ".sirk-quick-command-icon",
+        ".mc-nav-icon",
+        ".mc-approval-nav-icon",
+        ".mc-portal-nav-icon",
+        ".sirk-management-item-icon",
+        ".mc-tree-fallback-icon",
+        ".mc-tree-folder-icon",
+        ".mc-tree-icon",
+        "img"
+    ].join(",");
+    var LABEL_SELECTOR = [
+        ".sirk-shared-list-label",
+        ".sirk-quick-command-label",
+        ".mc-approval-label",
+        ".mc-approval-nav-label",
+        ".mc-portal-nav-label",
+        ".mc-tree-label"
+    ].join(",");
+    var STATUS_CLASSES = ["text-warning", "text-info", "text-success", "text-danger", "text-primary"];
+    var scheduled = false;
+    var pendingRoot = null;
+
+    function statusClass(element) {
+        var value = String(element && element.className || "");
+        if (/pending/i.test(value)) return "text-warning";
+        if (/executing/i.test(value)) return "text-info";
+        if (/(approved|completed|ready)/i.test(value)) return "text-success";
+        if (/(failed|rejected|error)/i.test(value)) return "text-danger";
+        if (/sirk-result-status-all/i.test(value)) return "text-primary";
+        return "";
+    }
+
+    function moveStatusToIcon(element) {
+        if (!element || !element.classList) return;
+        var icon = typeof element.querySelector === "function" ? element.querySelector(ICON_SELECTOR) : null;
+        var desired = statusClass(element);
+        STATUS_CLASSES.forEach(function (name) {
+            element.classList.remove(name);
+            if (icon && name !== desired) icon.classList.remove(name);
+        });
+        if (icon && desired) icon.classList.add(desired);
+    }
+
+    function normalizeItem(element) {
+        if (!element || !element.classList) return element;
+        var selected = element.classList.contains("active") ||
+            element.classList.contains("is-active") ||
+            element.getAttribute("aria-selected") === "true" ||
+            element.getAttribute("aria-current") === "page";
+        var icon = typeof element.querySelector === "function" ? element.querySelector(ICON_SELECTOR) : null;
+        var label = typeof element.querySelector === "function" ? element.querySelector(LABEL_SELECTOR) : null;
+
+        element.classList.add("sirk-shared-list-item");
+        element.classList.toggle("active", selected);
+        element.classList.toggle("is-active", selected);
+        element.setAttribute("aria-selected", selected ? "true" : "false");
+        if (icon) icon.classList.add("sirk-shared-list-icon");
+        if (label) label.classList.add("sirk-shared-list-label");
+
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
+            window.MeshThemeAdapter.nav(element);
+        }
+        moveStatusToIcon(element);
+        return element;
+    }
+
+    function normalize(root) {
+        if (!root || typeof root.querySelectorAll !== "function") return root;
+        if (root.matches && root.matches(ITEM_SELECTOR)) normalizeItem(root);
+        Array.prototype.forEach.call(root.querySelectorAll(ITEM_SELECTOR), normalizeItem);
+        return root;
+    }
+
+    function schedule(root) {
+        if (root && (!pendingRoot || root === document)) pendingRoot = root;
+        if (scheduled) return;
+        scheduled = true;
+        Promise.resolve().then(function () {
+            var target = pendingRoot || document;
+            pendingRoot = null;
+            scheduled = false;
+            normalize(target);
+        });
+    }
+
+    function wrapThemeAdapter() {
+        var adapter = window.MeshThemeAdapter;
+        if (!adapter || adapter.__sirkSharedListContract) return;
+        adapter.__sirkSharedListContract = true;
+
+        var originalRefresh = adapter.refresh;
+        var originalStatus = adapter.status;
+        adapter.refresh = function (root) {
+            var result = typeof originalRefresh === "function" ? originalRefresh.call(adapter, root) : root;
+            normalize(root || document);
+            return result;
+        };
+        adapter.status = function (element) {
+            var result = typeof originalStatus === "function" ? originalStatus.call(adapter, element) : element;
+            if (element && element.classList && element.classList.contains("sirk-shared-list-item")) {
+                moveStatusToIcon(element);
+            }
+            return result;
+        };
+        adapter.listItem = normalizeItem;
+    }
+
+    function install() {
+        wrapThemeAdapter();
+        normalize(document);
+        if (window.__sirkSharedListObserver || typeof MutationObserver !== "function") return;
+        var observer = new MutationObserver(function (records) {
+            records.forEach(function (record) {
+                Array.prototype.forEach.call(record.addedNodes || [], function (node) {
+                    if (node && node.nodeType === 1) schedule(node);
+                });
+            });
+        });
+        observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+        window.__sirkSharedListObserver = observer;
+    }
+
+    window.SirkSharedListContract = {
+        normalize: normalize,
+        normalizeItem: normalizeItem,
+        schedule: schedule
+    };
+    install();
+}());
