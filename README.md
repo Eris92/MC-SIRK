@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.9
+# SIRK Management Platform 1.8.16
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -65,7 +65,7 @@ CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral ni
 
 Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierania danych. Szybkie kliknięcia są łączone i kolejkowane, dzięki czemu Approval Center, Commands, My Scripts oraz Move Requests nie przechodzą przez pusty stan pomiędzy renderami.
 
-Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts korzystają z jednego kontraktu zaczerpniętego z Quick: `165–205 px / 285–340 px`, a na węższym desktopie `150–185 px / 250–300 px`. Wspólne są także padding 12 px, wiersze 36 px, odstęp 3 px, hover, selected i brak transformacji. `toolbar.css` nie może definiować drugiego układu zależnego od obecności akcji.
+Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts korzystają z jednego kontraktu zaczerpniętego z Quick: `165–205 px / 285–340 px`, a na węższym desktopie `150–185 px / 250–300 px`. Wspólne są także padding 12 px, wiersze 36 px, odstęp 3 px, hover, selected i brak transformacji. W Commands i My Scripts przyciski Results oraz rooty katalogu są bezpośrednimi dziećmi rzeczywistej `.mc-shared-primary`, bez pośrednich kontenerów `mc-catalog-navigation` i `mc-catalog-roots`. `toolbar.css` nie może definiować drugiego układu zależnego od obecności akcji.
 
 Podczas otwartego workspace Approval Center lub My Scripts natywne `devListToolbarViewIcons` są ukrywane. Po wyjściu z workspace klasa jest usuwana, więc ikony widoku urządzeń wracają i nie są wyłączane globalnie.
 
