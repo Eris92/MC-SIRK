@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var CATALOG_CONTRACT_VERSION = "1.8.16";
+
     function createResultsButton(host, active, onClick) {
         var button = document.createElement("button");
         button.type = "button";
@@ -66,6 +68,7 @@
 
             host.innerHTML = "";
             host.classList.add("sirk-shared-catalog-primary");
+            host.setAttribute("data-sirk-catalog-contract-version", CATALOG_CONTRACT_VERSION);
 
             var rootAnchor = document.createComment("sirk-catalog-roots");
             function addResults() {
