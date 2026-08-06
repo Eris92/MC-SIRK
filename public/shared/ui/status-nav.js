@@ -1,7 +1,10 @@
 (function () {
     "use strict";
 
-    function svg(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + path + "</svg>"; }
+    function svg(path) {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + path + "</svg>";
+    }
+
     var statuses = [
         { key: "", title: "All", icon: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/>') },
         { key: "pending", title: "Pending", icon: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') },
@@ -19,7 +22,12 @@
     window.SharedStatusNav = {
         list: function (counts) {
             return statuses.map(function (item) {
-                return { key: item.key, title: item.title, icon: item.icon, badge: counts && counts[item.key] };
+                return {
+                    key: item.key,
+                    title: item.title,
+                    icon: item.icon,
+                    badge: counts && counts[item.key]
+                };
             });
         },
         mount: function (host, options) {
@@ -29,12 +37,15 @@
                 var button = document.createElement("button");
                 button.type = "button";
                 button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-result-status sirk-result-status-" + (item.key || "all");
+
                 var icon = document.createElement("span");
                 icon.className = "sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon";
                 icon.innerHTML = item.icon;
+
                 var label = document.createElement("span");
                 label.className = "mc-portal-nav-label";
                 label.textContent = item.title + (item.badge == null ? "" : " (" + item.badge + ")");
+
                 button.appendChild(icon);
                 button.appendChild(label);
                 button.classList.toggle("active", item.key === options.selected);
@@ -65,6 +76,7 @@
         ".mc-shared-page-myscripts button.mc-tree-script",
         ".sirk-quick-command-browser nav > button"
     ].join(",");
+
     var ICON_SELECTOR = [
         ".sirk-shared-list-icon",
         ".sirk-quick-command-icon",
@@ -77,6 +89,7 @@
         ".mc-tree-icon",
         "img"
     ].join(",");
+
     var LABEL_SELECTOR = [
         ".sirk-shared-list-label",
         ".sirk-quick-command-label",
@@ -85,6 +98,8 @@
         ".mc-portal-nav-label",
         ".mc-tree-label"
     ].join(",");
+
+    var COPY_SELECTOR = ".sirk-shared-list-copy,.sirk-quick-command-copy";
     var STATUS_CLASSES = ["text-warning", "text-info", "text-success", "text-danger", "text-primary"];
     var scheduled = false;
     var pendingRoot = null;
@@ -97,6 +112,39 @@
         if (/(failed|rejected|error)/i.test(value)) return "text-danger";
         if (/sirk-result-status-all/i.test(value)) return "text-primary";
         return "";
+    }
+
+    function directApprovalIndicator(element) {
+        if (!element || !element.children) return null;
+        for (var index = 0; index < element.children.length; index += 1) {
+            var child = element.children[index];
+            if (child && child.classList && child.classList.contains("mc-tree-approval")) return child;
+        }
+        return null;
+    }
+
+    function ensureCopy(element, icon, label) {
+        if (!element || !label) return null;
+        var copy = typeof element.querySelector === "function" ? element.querySelector(COPY_SELECTOR) : null;
+        if (!copy) {
+            copy = document.createElement("span");
+            copy.className = "sirk-shared-list-copy sirk-quick-command-copy";
+            if (icon && icon.parentNode === element) {
+                element.insertBefore(copy, icon.nextSibling);
+            } else {
+                element.insertBefore(copy, label);
+            }
+        } else {
+            copy.classList.add("sirk-shared-list-copy", "sirk-quick-command-copy");
+        }
+
+        if (label.parentNode !== copy) copy.appendChild(label);
+
+        var approval = directApprovalIndicator(element) ||
+            (typeof copy.querySelector === "function" ? copy.querySelector(".mc-tree-approval") : null);
+        if (approval && approval.parentNode !== copy) copy.appendChild(approval);
+        copy.classList.toggle("has-approval", !!approval);
+        return copy;
     }
 
     function moveStatusToIcon(element) {
@@ -112,6 +160,7 @@
 
     function normalizeItem(element) {
         if (!element || !element.classList) return element;
+
         var selected = element.classList.contains("active") ||
             element.classList.contains("is-active") ||
             element.getAttribute("aria-selected") === "true" ||
@@ -123,8 +172,12 @@
         element.classList.toggle("active", selected);
         element.classList.toggle("is-active", selected);
         element.setAttribute("aria-selected", selected ? "true" : "false");
+
         if (icon) icon.classList.add("sirk-shared-list-icon");
-        if (label) label.classList.add("sirk-shared-list-label");
+        if (label) {
+            label.classList.add("sirk-shared-list-label", "sirk-quick-command-label");
+            ensureCopy(element, icon, label);
+        }
 
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
             window.MeshThemeAdapter.nav(element);
@@ -152,6 +205,37 @@
         });
     }
 
+    function installExactQuickStyle() {
+        var existing = document.getElementById("sirk-exact-quick-list-contract");
+        if (existing) return existing;
+
+        var style = document.createElement("style");
+        style.id = "sirk-exact-quick-list-contract";
+        style.textContent = [
+            ".sirk-shared-list-item{display:grid!important;grid-template-columns:24px minmax(0,1fr)!important;gap:8px!important;align-items:start!important;width:100%!important;min-width:0!important;min-height:36px!important;margin:0 0 3px!important;padding:8px!important;box-sizing:border-box!important;text-align:left!important;cursor:pointer!important;font:inherit!important;font-size:inherit!important;font-weight:inherit!important;white-space:normal!important;transform:none!important;scale:none!important;zoom:1!important}",
+            ".sirk-shared-list-item.list-group-item-action:hover,.sirk-shared-list-item.list-group-item-action:focus-visible{background-color:var(--bs-list-group-action-hover-bg)!important;color:var(--bs-list-group-action-hover-color)!important;transform:none!important;scale:none!important;zoom:1!important}",
+            ".sirk-shared-list-item.active,.sirk-shared-list-item.is-active,.sirk-shared-list-item[aria-selected=\"true\"]{outline:1px solid var(--bs-list-group-active-border-color,currentColor)!important;outline-offset:-1px!important;transform:none!important;scale:none!important;zoom:1!important}",
+            ".sirk-shared-list-icon{display:grid!important;place-items:center!important;width:20px!important;min-width:20px!important;max-width:20px!important;height:20px!important;flex:0 0 20px!important;object-fit:contain!important}",
+            ".sirk-shared-list-icon svg{display:block!important;width:20px!important;height:20px!important}",
+            ".sirk-shared-list-copy{display:block!important;min-width:0!important}",
+            ".sirk-shared-list-copy.has-approval{display:flex!important;align-items:flex-start!important;gap:6px!important}",
+            ".sirk-shared-list-label{display:block!important;min-width:0!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:break-word!important;line-height:1.28!important;color:inherit!important;flex:0 1 auto!important}",
+            ".sirk-shared-list-copy .mc-tree-approval{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;margin:0!important;padding:0!important;line-height:1.28!important;white-space:nowrap!important}",
+            ".mc-tree-folder-header.sirk-shared-list-item{grid-template-columns:20px minmax(0,1fr)!important;padding-left:calc(8px + (var(--mc-tree-depth,0) * 12px))!important}",
+            ".mc-tree-script.sirk-shared-list-item{padding-left:calc(8px + (var(--mc-tree-depth,0) * 12px))!important}",
+            ".mc-tree-script-row{margin:0!important;transform:none!important;scale:none!important;zoom:1!important}",
+            ".mc-tree-script-row>.sirk-shared-list-item{flex:1 1 auto!important;min-width:0!important;margin:0 0 3px!important}",
+            ".mc-shared-page[data-mesh-ui=\"modern\"] :is(.mc-shared-primary,.mc-shared-secondary,.mc-shared-details){background-color:var(--bs-body-bg)!important;color:inherit!important}",
+            ".mc-approval-provider.sirk-shared-list-item,.mc-approval-status.sirk-shared-list-item{font:inherit!important;font-size:inherit!important;font-weight:inherit!important}",
+            ".mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>.sirk-shared-list-item{display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;min-width:48px!important;height:42px!important;min-height:42px!important;margin:0 auto 3px!important;padding:6px!important;font-size:0!important}",
+            ".mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-copy,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-copy{display:none!important}",
+            ".mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon{width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;flex-basis:28px!important}",
+            ".mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon svg,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon svg{width:24px!important;height:24px!important}"
+        ].join("");
+        (document.head || document.documentElement).appendChild(style);
+        return style;
+    }
+
     function wrapThemeAdapter() {
         var adapter = window.MeshThemeAdapter;
         if (!adapter || adapter.__sirkSharedListContract) return;
@@ -175,9 +259,11 @@
     }
 
     function install() {
+        installExactQuickStyle();
         wrapThemeAdapter();
         normalize(document);
         if (window.__sirkSharedListObserver || typeof MutationObserver !== "function") return;
+
         var observer = new MutationObserver(function (records) {
             records.forEach(function (record) {
                 Array.prototype.forEach.call(record.addedNodes || [], function (node) {
@@ -192,7 +278,8 @@
     window.SirkSharedListContract = {
         normalize: normalize,
         normalizeItem: normalizeItem,
-        schedule: schedule
+        schedule: schedule,
+        installStyle: installExactQuickStyle
     };
     install();
 }());
