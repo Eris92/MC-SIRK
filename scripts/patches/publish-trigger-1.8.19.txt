@@ -1,0 +1,1 @@
+Trigger PR synchronize after enabling the final 1.8.19 publisher.
