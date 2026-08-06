@@ -94,14 +94,23 @@
         var definitions = typeof options.scriptActions === "function" ? options.scriptActions(script) || [] : [];
         if (!definitions.length) return;
         var actions = document.createElement("span");
+        var renderedKeys = Object.create(null);
         actions.className = "mc-tree-script-actions";
-        definitions.forEach(function (definition) {
+        definitions.forEach(function (definition, index) {
             if (!definition || definition.hidden === true) return;
+            var key = text(definition.key).trim();
+            var identity = key || "__anonymous_" + index;
+            if (renderedKeys[identity]) return;
+            renderedKeys[identity] = true;
+
             var action = document.createElement("button");
+            var active = definition.active === true;
             action.type = "button";
             action.className = "mc-tree-script-action";
             if (definition.className) action.classList.add(definition.className);
-            action.classList.toggle("active", definition.active === true);
+            action.classList.toggle("active", active);
+            action.classList.toggle("is-active", active);
+            action.setAttribute("aria-pressed", active ? "true" : "false");
             action.title = definition.title || definition.key || "Action";
             action.setAttribute("aria-label", action.title);
             action.textContent = definition.icon || "•";
