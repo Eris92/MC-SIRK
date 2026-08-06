@@ -230,7 +230,7 @@
     }
 
     window.__sirkInstallStableModuleRendering = installStableModuleRendering;
-    if (!installStableModuleRendering()) {
+    if (!installStableModuleRendering() && typeof window.setTimeout === "function") {
         var attempts = 0;
         (function retryStableRendering() {
             attempts += 1;
