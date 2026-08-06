@@ -4,55 +4,45 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-var desktopCss = fs.readFileSync(
-    path.join(__dirname, "..", "public", "native", "desktop-commands.css"),
-    "utf8"
-);
-var toolbarCss = fs.readFileSync(
-    path.join(__dirname, "..", "public", "shared", "ui", "toolbar.css"),
-    "utf8"
-);
-var outputState = fs.readFileSync(
-    path.join(__dirname, "..", "public", "native", "quick-output-state.js"),
-    "utf8"
-);
+var root = path.join(__dirname, "..");
+function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
-assert.ok(/\.mc-shared-toolbar-button\.is-active\{outline:1px solid currentColor\}/.test(toolbarCss),
-    "The shared toolbar may retain its normal active outline for real toggle buttons.");
+var desktopCss = read("public/native/desktop-commands.css");
+var outputState = read("public/native/quick-output-state.js");
+var lifecycle = read("public/shared/ui/settings.js");
+var adapter = read("public/shared/ui/toolbar-config.js");
 
-var neutralSelector = ".sirk-desktop-commands .sirk-quick-command-output-toggle.is-active:not(.has-output-attention)";
-assert.ok(desktopCss.indexOf(neutralSelector) >= 0,
-    "Quick output must override the shared active outline even when a stale renderer state re-adds is-active.");
-
-var neutralRuleStart = desktopCss.indexOf(neutralSelector);
-var neutralRuleEnd = desktopCss.indexOf("}", neutralRuleStart);
-var neutralRule = desktopCss.slice(neutralRuleStart, neutralRuleEnd + 1);
-assert.ok(/outline:0!important/.test(neutralRule),
-    "Clicking a Quick category or script must not draw the shared active outline around Show output.");
-assert.ok(/background:var\(--sdc-panel-alt\)!important/.test(neutralRule),
-    "The transient output state must use the neutral toolbar background with important precedence.");
-assert.ok(/border-color:var\(--sdc-border\)!important/.test(neutralRule),
-    "The transient output state must not keep the active border.");
-assert.ok(neutralSelector.indexOf("data-sirk-output-hidden") < 0,
-    "The output action must remain visually neutral both while hidden and while open.");
-
-var pointerFocusSelector = ".sirk-desktop-commands .mc-shared-toolbar-button:focus:not(:focus-visible)";
-var pointerFocusStart = desktopCss.indexOf(pointerFocusSelector);
-var pointerFocusEnd = desktopCss.indexOf("}", pointerFocusStart);
-var pointerFocusRule = desktopCss.slice(pointerFocusStart, pointerFocusEnd + 1);
-assert.ok(pointerFocusStart >= 0 && /outline:0!important/.test(pointerFocusRule) && /box-shadow:none!important/.test(pointerFocusRule),
-    "Pointer clicks must not leave a Bootstrap focus frame around Quick toolbar buttons.");
-
-var keyboardFocusSelector = ".sirk-desktop-commands .mc-shared-toolbar-button:focus-visible";
-var keyboardFocusStart = desktopCss.indexOf(keyboardFocusSelector);
-var keyboardFocusEnd = desktopCss.indexOf("}", keyboardFocusStart);
-var keyboardFocusRule = desktopCss.slice(keyboardFocusStart, keyboardFocusEnd + 1);
-assert.ok(keyboardFocusStart >= 0 && /box-shadow:0 0 0 3px var\(--sdc-focus\)!important/.test(keyboardFocusRule),
-    "Keyboard navigation must retain a visible focus indicator.");
-
-assert.ok(/\.sirk-quick-command-output-toggle\.has-output-attention\{[^}]*background:[^}]*!important/.test(outputState),
-    "The red attention state must retain important precedence over normal toolbar styles.");
 assert.ok(/button\.classList\.toggle\("has-output-attention", hidden && attention\(\)\)/.test(outputState),
     "Attention must only be shown while the output is hidden.");
+assert.ok(outputState.indexOf('button.classList.toggle("is-active", !hidden)') >= 0 &&
+    outputState.indexOf('button.setAttribute("aria-pressed", hidden ? "false" : "true")') >= 0,
+    "The logical output state must remain available for behavior and accessibility.");
 
-console.log("Quick output active-outline, attention and focus contract: OK");
+assert.ok(lifecycle.indexOf('button.classList.contains("sirk-quick-command-output-toggle")') >= 0 &&
+    lifecycle.indexOf('button.classList.remove("is-active")') >= 0 &&
+    lifecycle.indexOf('button.setAttribute("aria-pressed", "false")') >= 0,
+    "The native theme lifecycle must apply a neutral visual class to Show/Hide output.");
+assert.ok(lifecycle.indexOf("if (outputActive) button.classList.add(\"is-active\")") >= 0 &&
+    lifecycle.indexOf('button.setAttribute("aria-pressed", outputPressed == null ? "false" : outputPressed)') >= 0,
+    "Neutral styling must not destroy the logical output state.");
+assert.ok(lifecycle.indexOf('button.classList.toggle("text-danger", modern && attention)') >= 0 &&
+    lifecycle.indexOf('button.classList.toggle("border-danger", modern && attention)') >= 0,
+    "Modern output attention must use MeshCentral's native danger classes.");
+assert.ok(lifecycle.indexOf("sirk-quick-output-state-style") >= 0 &&
+    lifecycle.indexOf("sirk-quick-command-output-toggle\\.has-output-attention") >= 0,
+    "Historical hard-coded output attention colors must be removed from generated styles.");
+assert.ok(adapter.indexOf('element.classList.add("btn", "btn-" +') >= 0 &&
+    adapter.indexOf('element.classList.add(active(element) ? "style10s" : "style10")') >= 0,
+    "Output actions must return to native Modern or Classic button styling.");
+
+[
+    [desktopCss, "--sdc-focus", "Quick-owned focus palette"],
+    [desktopCss, "has-output-attention{", "Quick-owned attention colors"],
+    [desktopCss, "box-shadow:inset 3px", "Quick-only active stripe"],
+    [desktopCss, "outline:1px solid currentColor", "plugin-owned active outline"]
+].forEach(function (entry) {
+    assert.strictEqual(entry[0].indexOf(entry[1]), -1,
+        "Native Quick output contract forbids " + entry[2] + ".");
+});
+
+console.log("Quick output neutral native state and semantic attention precedence: OK");
