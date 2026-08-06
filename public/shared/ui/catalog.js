@@ -1,7 +1,39 @@
 (function () {
     "use strict";
 
-    var CATALOG_CONTRACT_VERSION = "1.8.16";
+    var CATALOG_CONTRACT_VERSION = "1.8.18";
+
+    function selectResultsRow(button) {
+        var host = button && button.parentNode;
+        if (!button || !button.classList) return;
+        Array.prototype.slice.call(host && host.children || []).forEach(function (item) {
+            if (!item || !item.classList) return;
+            var selected = item === button;
+            item.classList.toggle("active", selected);
+            item.classList.toggle("is-active", selected);
+            item.setAttribute("aria-selected", selected ? "true" : "false");
+            item.setAttribute("data-sirk-list-selected", selected ? "1" : "0");
+        });
+    }
+
+    function bindResultsClick(button, onClick) {
+        var handler = function (event) {
+            if (event && typeof event.preventDefault === "function") event.preventDefault();
+            if (event && typeof event.stopPropagation === "function") event.stopPropagation();
+            if (button.disabled) return false;
+            selectResultsRow(button);
+            if (typeof onClick === "function") onClick(event, button);
+            return false;
+        };
+
+        button.setAttribute("data-sirk-catalog-action", "results");
+        button.__sirkCatalogResultsHandler = handler;
+        if (typeof button.addEventListener === "function") {
+            button.addEventListener("click", handler, true);
+        } else {
+            button.onclick = handler;
+        }
+    }
 
     function createResultsButton(host, active, onClick) {
         var button = document.createElement("button");
@@ -22,7 +54,9 @@
 
         button.classList.toggle("active", active === true);
         button.classList.toggle("is-active", active === true);
-        button.onclick = onClick;
+        button.setAttribute("aria-selected", active === true ? "true" : "false");
+        button.setAttribute("data-sirk-list-selected", active === true ? "1" : "0");
+        bindResultsClick(button, onClick);
         host.appendChild(button);
         return button;
     }
@@ -72,8 +106,8 @@
 
             var rootAnchor = document.createComment("sirk-catalog-roots");
             function addResults() {
-                return createResultsButton(host, options.resultsActive, function () {
-                    if (typeof options.onResults === "function") options.onResults();
+                return createResultsButton(host, options.resultsActive, function (event, button) {
+                    if (typeof options.onResults === "function") options.onResults(event, button);
                 });
             }
 
