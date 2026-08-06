@@ -27,16 +27,40 @@
         return node.closest ? node.closest(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog") : null;
     }
 
+    function sanitizeGeneratedStyles() {
+        var quick = document.getElementById("sirk-quick-commands-layout-contract");
+        if (quick && quick.textContent && quick.getAttribute("data-native-theme-sanitized") !== "1") {
+            quick.textContent = quick.textContent
+                .replace(/\.sirk-desktop-commands \.sirk-quick-command-details-toggle\.has-attention\{[^}]*\}/g, "")
+                .replace(/\[data-bs-theme=dark\][^{]*\.sirk-quick-command-details-toggle\.has-attention[^}]*\}/g, "");
+            quick.setAttribute("data-native-theme-sanitized", "1");
+        }
+        var edit = document.getElementById("sirk-platform-fixed-edit-actions-style");
+        if (edit && edit.textContent && edit.getAttribute("data-native-theme-sanitized") !== "1") {
+            edit.textContent = edit.textContent.replace(/\.mc-tree-credential-action:not\(\.mc-tree-action-disabled\)\{[^}]*\}/g, "");
+            edit.setAttribute("data-native-theme-sanitized", "1");
+        }
+    }
+
     function syncNativeContainers(root) {
         var adapter = window.MeshThemeAdapter;
         if (!adapter || !root) return;
         var modern = adapter.isModern();
+        sanitizeGeneratedStyles();
         adapter.refresh(root);
 
         Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-toolbar-button,.mc-tree-script-action,.sirk-desktop-commands-toggle,.sirk-quick-command-fallback-close"), function (button) {
             if (modern) button.classList.toggle("active", button.classList.contains("is-active") || button.getAttribute("aria-pressed") === "true");
             else button.classList.remove("active");
             adapter.button(button);
+        });
+        Array.prototype.forEach.call(root.querySelectorAll(".sirk-quick-command-details-toggle"), function (button) {
+            var attention = button.classList.contains("has-attention");
+            button.classList.toggle("text-danger", modern && attention);
+            button.classList.toggle("border-danger", modern && attention);
+        });
+        Array.prototype.forEach.call(root.querySelectorAll(".mc-tree-credential-action:not(.mc-tree-action-disabled)"), function (button) {
+            button.classList.toggle("text-warning", modern);
         });
         Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-tabs"), function (tabs) {
             tabs.classList.toggle("nav", modern);
@@ -61,6 +85,7 @@
         pending = true;
         window.setTimeout(function () {
             pending = false;
+            sanitizeGeneratedStyles();
             var targets = root ? [root] : Array.prototype.slice.call(document.querySelectorAll(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog"));
             targets.forEach(syncNativeContainers);
         }, 0);
@@ -84,6 +109,9 @@
             attributes: true,
             attributeFilter: ["class", "aria-pressed", "aria-selected", "data-bs-theme"]
         });
+        if (document.head) {
+            new MutationObserver(function () { sanitizeGeneratedStyles(); }).observe(document.head, { childList: true, subtree: true });
+        }
     }
     schedule();
 }());
