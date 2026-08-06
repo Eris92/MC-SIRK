@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.6
+# SIRK Management Platform 1.8.7
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -73,7 +73,7 @@ Przyciski Edit i Multi-device pozostają jednocześnie widoczne, gdy użytkownik
 
 Quick zachowuje stałą geometrię podczas hover i active. Panel, toolbar, kolumna Output oraz elementy list nie dziedziczą transformacji powiększających z motywów MeshCentral. Po ukryciu Output grid jest rzeczywiście dwukolumnowy, bez pustego trzeciego tracku, a zawartość zaczyna się bezpośrednio pod toolbarem.
 
-Gdy Output jest ukryty i pojawi się nowy końcowy wynik wykonania, jego przycisk otrzymuje subtelny czerwony stan attention z natywnych tokenów Bootstrap MeshCentral. Otwarcie Output natychmiast zeruje attention; przy otwartej kolumnie kolor nie jest zmieniany.
+Stan ukrycia Output jest synchronizowany pomiędzy renderem Quick i kontrolerem attention. Gdy ukryty Output otrzyma nowy końcowy wynik, przycisk otrzymuje czerwony stan z natywnych tokenów Bootstrap MeshCentral. Otwarcie Output natychmiast zeruje attention, a komunikaty ładowania, wysłania i odświeżenia listy pozostają neutralne. Toolbar ma dolny odstęp przed rozpoczęciem pionowych separatorów kolumn.
 
 ## Entry pointy i loadery
 
