@@ -12,6 +12,7 @@
     var scheduled = false;
 
     function isModern() {
+        if (typeof document === "undefined") return false;
         var anchor = document.getElementById("LeftMenuMyDevices") || document.querySelector("#page_leftbar .nav-link");
         if (anchor) return String(anchor.tagName || "").toLowerCase() === "a" || anchor.classList.contains("nav-link");
         return !!document.querySelector(".navbar,.nav-link[data-bs-toggle],body[data-bs-theme]");
@@ -129,6 +130,7 @@
     }
 
     function refresh(root) {
+        if (!root && typeof document === "undefined") return null;
         root = root || document;
         var modern = isModern();
         queryAll(root, ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel", function (element) {
@@ -146,13 +148,17 @@
     }
 
     function schedule(root) {
+        if (!root && typeof document === "undefined") return;
         if (scheduled) return;
         scheduled = true;
-        window.setTimeout(function () { scheduled = false; refresh(root || document); }, 0);
+        window.setTimeout(function () {
+            scheduled = false;
+            refresh(root || (typeof document !== "undefined" ? document : null));
+        }, 0);
     }
 
     function installObserver() {
-        if (window.__sirkMeshThemeObserver || typeof MutationObserver !== "function") return;
+        if (typeof document === "undefined" || window.__sirkMeshThemeObserver || typeof MutationObserver !== "function") return;
         var target = document.body || document.documentElement;
         if (!target) return;
         window.__sirkMeshThemeObserver = new MutationObserver(function (records) {
@@ -181,8 +187,10 @@
         table: applyTable,
         status: applyStatus
     };
-    installObserver();
-    schedule(document);
+    if (typeof document !== "undefined") {
+        installObserver();
+        schedule(document);
+    }
 }());
 
 (function () {
