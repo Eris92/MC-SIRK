@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply patch
+      - name: Apply corrected atomic patch
         shell: bash
         run: |
           python - <<'PY'
@@ -57,4 +57,4 @@ jobs:
           git commit -m "Fix UI admin actions and audit logging for 1.8.19"
           git push origin HEAD:fix/ui-admin-audit-1.8.19
 
-# Temporary workflow removed before merge.
+# Temporary workflow removed before merge. Corrected atomic execution revision 2.
