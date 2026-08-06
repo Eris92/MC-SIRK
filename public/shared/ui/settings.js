@@ -55,6 +55,31 @@
         }
     }
 
+    function syncNativeButton(button) {
+        var adapter = window.MeshThemeAdapter;
+        if (!adapter || !button) return;
+        var modern = adapter.isModern();
+        var outputToggle = button.classList.contains("sirk-quick-command-output-toggle");
+        var outputActive = outputToggle && button.classList.contains("is-active");
+        var outputPressed = outputToggle ? button.getAttribute("aria-pressed") : null;
+
+        if (modern) {
+            button.classList.toggle("active", !outputToggle && (button.classList.contains("is-active") || button.getAttribute("aria-pressed") === "true"));
+        } else {
+            button.classList.remove("active");
+        }
+
+        if (outputToggle) {
+            button.classList.remove("is-active");
+            button.setAttribute("aria-pressed", "false");
+        }
+        adapter.button(button);
+        if (outputToggle) {
+            if (outputActive) button.classList.add("is-active");
+            button.setAttribute("aria-pressed", outputPressed == null ? "false" : outputPressed);
+        }
+    }
+
     function syncNativeContainers(root) {
         var adapter = window.MeshThemeAdapter;
         if (!adapter || !root) return;
@@ -62,27 +87,7 @@
         sanitizeGeneratedStyles();
         adapter.refresh(root);
 
-        Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-toolbar-button,.mc-tree-script-action,.sirk-desktop-commands-toggle,.sirk-quick-command-fallback-close"), function (button) {
-            var outputToggle = button.classList.contains("sirk-quick-command-output-toggle");
-            var outputActive = outputToggle && button.classList.contains("is-active");
-            var outputPressed = outputToggle ? button.getAttribute("aria-pressed") : null;
-
-            if (modern) {
-                button.classList.toggle("active", !outputToggle && (button.classList.contains("is-active") || button.getAttribute("aria-pressed") === "true"));
-            } else {
-                button.classList.remove("active");
-            }
-
-            if (outputToggle) {
-                button.classList.remove("is-active");
-                button.setAttribute("aria-pressed", "false");
-            }
-            adapter.button(button);
-            if (outputToggle) {
-                if (outputActive) button.classList.add("is-active");
-                button.setAttribute("aria-pressed", outputPressed == null ? "false" : outputPressed);
-            }
-        });
+        Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-toolbar-button,.mc-tree-script-action,.sirk-desktop-commands-toggle,.sirk-quick-command-fallback-close"), syncNativeButton);
         Array.prototype.forEach.call(root.querySelectorAll(".sirk-quick-command-output-toggle,.sirk-quick-command-details-toggle"), function (button) {
             var attention = button.classList.contains("has-output-attention") || button.classList.contains("has-attention");
             button.classList.toggle("text-danger", modern && attention);
@@ -109,6 +114,32 @@
         });
     }
 
+    function installSynchronousToolbarTheme() {
+        var toolbarApi = window.SharedToolbarApi;
+        if (!toolbarApi || typeof toolbarApi.create !== "function" || toolbarApi.create.__sirkNativeStateSync) return;
+        var originalCreate = toolbarApi.create;
+        var wrappedCreate = function (context) {
+            var api = originalCreate.call(toolbarApi, context);
+            var originalSetActive = api.setActive;
+            var originalSetTitle = api.setTitle;
+
+            api.setActive = function (key, value) {
+                var result = originalSetActive.call(api, key, value);
+                syncNativeButton(api.buttons && api.buttons[key]);
+                return result;
+            };
+            api.setTitle = function (key, value) {
+                var result = originalSetTitle.call(api, key, value);
+                if (key === "favorites") syncNativeButton(api.buttons && api.buttons[key]);
+                return result;
+            };
+            return api;
+        };
+        wrappedCreate.__sirkNativeStateSync = true;
+        wrappedCreate.originalCreate = originalCreate;
+        toolbarApi.create = wrappedCreate;
+    }
+
     function addPendingRoot(root) {
         if (!root) return;
         if (pendingRoots.indexOf(root) < 0) pendingRoots.push(root);
@@ -127,8 +158,10 @@
         });
     }
 
+    window.__sirkSyncNativeButton = syncNativeButton;
     window.__sirkSyncNativeContainers = syncNativeContainers;
     window.__sirkScheduleNativeContainers = schedule;
+    installSynchronousToolbarTheme();
 
     if (typeof MutationObserver === "function") {
         new MutationObserver(function (records) {
