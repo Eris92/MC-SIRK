@@ -162,7 +162,6 @@
                 graphic = document.createElement("span");
                 graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon";
                 graphic.innerHTML = lineIcon("folder");
-                graphic.style.color = "var(--bs-primary,#3b82f6)";
                 header.appendChild(graphic);
             }
 

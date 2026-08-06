@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.7.43
+# SIRK Management Platform 1.8.0
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -48,15 +48,20 @@ Szczegółowe mapy znajdują się w lokalnych plikach `INDEX.md` poszczególnych
 - Automation;
 - Commands;
 - Approvals;
-- Device Transfers;
+- Device Transfers.
 
 Backend modułów znajduje się w `server/modules/`, a pojedyncze renderery frontendowe w `public/modules/`.
 
-## Wspólny kontrakt UI Portalu
+## Natywny kontrakt UI MeshCentral
 
-Wszystkie widoki SIRK Portal korzystają ze wspólnego systemu klas `mc-portal-*` dla powierzchni, kart, toolbarów, przycisków, pól formularzy, statusów, list i typografii.
+Plugin nie posiada własnej palety kolorów ani niezależnego motywu. `MeshThemeAdapter` przypisuje komponentom istniejące klasy aktywnego interfejsu MeshCentral:
 
-Widok Devices zachowuje własną geometrię listy urządzeń, szczegółów hosta i workspace aktywnej sesji, ale korzysta z tych samych komponentów wizualnych co Overview oraz pozostałe zakładki.
+- Classic: `style10`, `style10s`, `style3x`, `style3sel` oraz natywne kontrolki formularzy;
+- Modern: klasy Bootstrap używane przez MeshCentral, między innymi `btn-*`, `nav-link`, `list-group-item`, `card`, `form-control`, `form-select` i `table`.
+
+Dotyczy to Approval Center, Commands, My Scripts, Move Requests, Quick, wyników, formularzy, dialogów i panelu administracyjnego. Klasy są ponownie synchronizowane po renderach asynchronicznych oraz zmianie motywu.
+
+CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral nie zapewnia: układ trzech kolumn, geometrię Edit/Multi, pozycję panelu Quick, przewijanie i responsywność. Powierzchnie, przyciski, listy, zaznaczenia, karty, formularze, tabele i statusy pozostają własnością MeshCentral.
 
 ## Entry pointy i loadery
 
@@ -124,4 +129,4 @@ meshcentral-data/plugins/SIRKPortal
 npm test
 ```
 
-Walidator struktury blokuje niebezpieczny identyfikator z myślnikiem, stare entrypointy i widoki `MyCompany`, backend poza `server/`, płaskie assety aplikacyjne w `public/`, `public/shared-ui/`, podwójne renderery i niekanoniczne ścieżki loaderów.
+Walidator struktury blokuje niebezpieczny identyfikator z myślnikiem, stare entrypointy i widoki `MyCompany`, backend poza `server/`, płaskie assety aplikacyjne w `public/`, `public/shared-ui/`, podwójne renderery i niekanoniczne ścieżki loaderów. Test natywnego motywu blokuje ponowne dodanie prywatnych palet, powierzchni i stanów aktywnych niezależnych od MeshCentral.

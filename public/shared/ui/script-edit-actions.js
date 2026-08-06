@@ -9,8 +9,7 @@
         style.id = "sirk-platform-fixed-edit-actions-style";
         style.textContent =
             ".mc-tree-script-actions{width:var(--sirk-actions-width,156px);min-width:var(--sirk-actions-width,156px);justify-content:flex-start}" +
-            ".mc-tree-action-disabled{opacity:.28!important;filter:grayscale(1);cursor:not-allowed!important;pointer-events:none}" +
-            ".mc-tree-credential-action:not(.mc-tree-action-disabled){color:#e0a800}";
+            ".mc-tree-action-disabled{opacity:.28!important;filter:grayscale(1);cursor:not-allowed!important;pointer-events:none}";
         (document.head || document.documentElement).appendChild(style);
     }
 
