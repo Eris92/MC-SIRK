@@ -15,6 +15,8 @@ assert.ok(css.indexOf(".sirk-desktop-commands-panel:hover") >= 0 &&
     "Quick panel, output column and rows must not inherit host hover scaling.");
 assert.ok(css.indexOf('background-color:var(--bs-body-bg)!important') >= 0,
     "Modern Quick surfaces must use the active MeshCentral Bootstrap body background.");
+assert.ok(css.indexOf('.sirk-desktop-commands-panel[data-mesh-ui="modern"] .sirk-quick-command-toolbar-host{background-color:var(--bs-body-bg)!important}') >= 0,
+    "The padded Quick toolbar host must use the same opaque native surface as the columns below it.");
 assert.ok(css.indexOf("--bs-list-group-action-hover-bg") >= 0 &&
     css.indexOf("--bs-list-group-action-hover-color") >= 0,
     "First and second Quick columns must expose the native hover state.");
@@ -41,4 +43,4 @@ assert.strictEqual(css.indexOf("--sdc-hover"), -1,
 assert.strictEqual(css.indexOf("--sdc-active"), -1,
     "Quick interaction feedback must not restore a private active palette.");
 
-console.log("Quick native background, toolbar containment and exact collapsed geometry: OK");
+console.log("Quick native background, opaque toolbar, containment and exact collapsed geometry: OK");
