@@ -40,9 +40,9 @@ assert.ok(themeAdapter.indexOf("element.classList.add(desired)") >= 0,
     "The selected native semantic status class must be applied idempotently.");
 assert.ok(approvals.indexOf('className: "mc-approval-status sirk-result-status sirk-result-status-" + key') >= 0,
     "Approval Center status filters must expose semantic status classes.");
-assert.ok(approvals.indexOf('className: "sirk-action-approve"') >= 0 &&
-    approvals.indexOf('className: "sirk-action-reject"') >= 0,
-    "Approve and Reject must retain explicit semantic action roles.");
+assert.ok(approvals.indexOf("sirk-action-approve") >= 0 &&
+    approvals.indexOf("sirk-action-reject") >= 0,
+    "Approve and Reject must retain explicit semantic action roles alongside native button variants.");
 assert.ok(themeAdapter.indexOf('element.classList.contains("sirk-action-approve")') >= 0 &&
     themeAdapter.indexOf('return "success"') >= 0,
     "Modern Approve must use MeshCentral's native success button variant.");
