@@ -23,6 +23,7 @@
         var originalToggleMulti = tools.toggleMulti;
         var originalScriptActions = tools.scriptActions;
         var deepLinkParameter = options.deepLinkParameter || "script";
+        var modeCapabilities = { canEdit: false, enableMulti: false };
 
         function hasCredentials(script) {
             return !!(script && (
@@ -33,13 +34,8 @@
 
         function syncModeSwitch(toolbar) {
             if (!toolbar || typeof toolbar.setVisible !== "function") return;
-            var edit = tools.state.editMode === true;
-            var multi = tools.state.multiPickMode === true;
-
-            // Neutral mode shows both choices. Once a mode is active, keep only
-            // that mode button visible. Turning it off restores both choices.
-            toolbar.setVisible("manage", !multi);
-            toolbar.setVisible("multi", !edit);
+            toolbar.setVisible("manage", modeCapabilities.canEdit === true);
+            toolbar.setVisible("multi", modeCapabilities.enableMulti === true);
         }
 
         function copyLink(script) {
@@ -58,6 +54,9 @@
         }
 
         tools.syncToolbar = function (toolbar, mode, selectedScript, config) {
+            config = config || {};
+            modeCapabilities.canEdit = config.canEdit === true;
+            modeCapabilities.enableMulti = config.enableMulti === true;
             originalSyncToolbar.call(tools, toolbar, mode, selectedScript, config);
             if (!toolbar) return;
             if (typeof toolbar.setVisible === "function") toolbar.setVisible("link", false);
