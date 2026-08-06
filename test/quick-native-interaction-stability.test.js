@@ -21,6 +21,17 @@ assert.ok(css.indexOf("--bs-list-group-action-hover-bg") >= 0 &&
 assert.ok(css.indexOf("--bs-list-group-active-border-color") >= 0 &&
     css.indexOf("outline-offset:-1px") >= 0,
     "Selected Quick rows must remain visible without replacing the native active background.");
+assert.ok(css.indexOf(".sirk-quick-command-toolbar-host{padding:8px 10px 0;overflow:hidden;box-sizing:border-box}") >= 0,
+    "Quick content must start immediately below the toolbar and stay inside the panel outline.");
+assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-button:hover") >= 0,
+    "Quick toolbar controls, including Close, must not scale outside the panel outline.");
+assert.ok(css.indexOf('data-sirk-output-hidden="1"') >= 0 &&
+    css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,1fr)!important") >= 0 &&
+    css.indexOf("grid-template-columns:64px minmax(285px,1fr)!important") >= 0,
+    "Hidden Quick output must use a real two-column grid instead of retaining a zero-width third track.");
+var hiddenOverrides = css.slice(css.lastIndexOf('html .sirk-desktop-commands-panel[data-sirk-output-hidden="1"]'));
+assert.strictEqual(hiddenOverrides.indexOf("minmax(285px,340px) 0!important"), -1,
+    "The final hidden-output override must not declare the obsolete third track.");
 assert.strictEqual(css.indexOf("--bs-list-group-active-bg"), -1,
     "Quick must not own the active-row background.");
 assert.strictEqual(css.indexOf("--bs-list-group-active-color"), -1,
@@ -30,4 +41,4 @@ assert.strictEqual(css.indexOf("--sdc-hover"), -1,
 assert.strictEqual(css.indexOf("--sdc-active"), -1,
     "Quick interaction feedback must not restore a private active palette.");
 
-console.log("Quick native background, hover, selection and fixed geometry: OK");
+console.log("Quick native background, toolbar containment and exact collapsed geometry: OK");
