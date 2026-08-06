@@ -6,7 +6,9 @@
             var header = document.createElement("button"); header.type = "button"; header.className = "mc-shared-settings-header"; header.textContent = title;
             var panel = document.createElement("div"); panel.className = "mc-shared-settings-content"; panel.hidden = expanded !== true;
             if (content) panel.appendChild(content); header.onclick = function () { panel.hidden = !panel.hidden; };
-            root.appendChild(header); root.appendChild(panel); return root;
+            root.appendChild(header); root.appendChild(panel);
+            if (window.MeshThemeAdapter) window.MeshThemeAdapter.button(header);
+            return root;
         },
         form: function (title) { var form = document.createElement("div"); form.className = "mc-shared-settings-form"; if (title) { var h = document.createElement("h3"); h.textContent = title; form.appendChild(h); } return form; }
     };
@@ -18,13 +20,19 @@
     if (window.__sirkNativeThemeLifecycleInstalled) return;
     window.__sirkNativeThemeLifecycleInstalled = true;
     var pending = false;
+    var pendingRoots = [];
+    var ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog";
 
     function pluginRoot(node) {
         if (!node) return null;
         if (node.nodeType !== 1) node = node.parentElement;
         if (!node) return null;
-        if (node.matches && node.matches(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog")) return node;
-        return node.closest ? node.closest(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog") : null;
+        if (node.matches && node.matches(ROOT_SELECTOR)) return node;
+        if (node.closest) {
+            var parent = node.closest(ROOT_SELECTOR);
+            if (parent) return parent;
+        }
+        return node.querySelector ? node.querySelector(ROOT_SELECTOR) : null;
     }
 
     function sanitizeQuickAttentionStyle(style) {
@@ -65,8 +73,6 @@
                 button.classList.remove("active");
             }
 
-            // Show/Hide output is a status action, not a selected navigation mode.
-            // Keep its logical state for accessibility but apply a neutral native button class.
             if (outputToggle) {
                 button.classList.remove("is-active");
                 button.setAttribute("aria-pressed", "false");
@@ -103,34 +109,39 @@
         });
     }
 
+    function addPendingRoot(root) {
+        if (!root) return;
+        if (pendingRoots.indexOf(root) < 0) pendingRoots.push(root);
+    }
+
     function schedule(root) {
+        if (root) addPendingRoot(root);
         if (pending) return;
         pending = true;
-        window.setTimeout(function () {
+        Promise.resolve().then(function () {
             pending = false;
             sanitizeGeneratedStyles();
-            var targets = root ? [root] : Array.prototype.slice.call(document.querySelectorAll(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog"));
+            var targets = pendingRoots.splice(0);
+            if (!targets.length) targets = Array.prototype.slice.call(document.querySelectorAll(ROOT_SELECTOR));
             targets.forEach(syncNativeContainers);
-        }, 0);
+        });
     }
+
+    window.__sirkSyncNativeContainers = syncNativeContainers;
+    window.__sirkScheduleNativeContainers = schedule;
 
     if (typeof MutationObserver === "function") {
         new MutationObserver(function (records) {
-            var root = null;
-            records.some(function (record) {
-                root = pluginRoot(record.target);
-                if (root) return true;
-                return Array.prototype.some.call(record.addedNodes || [], function (node) {
-                    root = pluginRoot(node);
-                    return !!root;
+            records.forEach(function (record) {
+                Array.prototype.forEach.call(record.addedNodes || [], function (node) {
+                    var root = pluginRoot(node);
+                    if (root) addPendingRoot(root);
                 });
             });
-            if (root) schedule(root);
+            if (pendingRoots.length) schedule();
         }).observe(document.body || document.documentElement, {
             childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ["class", "aria-pressed", "aria-selected", "data-bs-theme"]
+            subtree: true
         });
         if (document.head) {
             new MutationObserver(function () { sanitizeGeneratedStyles(); }).observe(document.head, { childList: true, subtree: true });
