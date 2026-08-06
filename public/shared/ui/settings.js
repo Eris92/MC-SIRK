@@ -96,6 +96,12 @@
         Array.prototype.forEach.call(root.querySelectorAll(".mc-tree-credential-action:not(.mc-tree-action-disabled)"), function (button) {
             button.classList.toggle("text-warning", modern);
         });
+        Array.prototype.forEach.call(root.querySelectorAll(".mc-tree-favorite-action"), function (button) {
+            var selected = button.classList.contains("active") ||
+                button.classList.contains("is-active") ||
+                button.getAttribute("aria-pressed") === "true";
+            button.classList.toggle("text-warning", modern && selected);
+        });
         Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-tabs"), function (tabs) {
             tabs.classList.toggle("nav", modern);
             tabs.classList.toggle("nav-tabs", modern);
