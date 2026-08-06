@@ -89,3 +89,5 @@ jobs:
           git tag -a v1.8.19 -m "SIRK Management Platform 1.8.19"
           git push origin v1.8.19
           gh release create v1.8.19 --repo "$GITHUB_REPOSITORY" --title "SIRK Management Platform 1.8.19" --notes-file docs/releases/1.8.19.md --latest
+
+# trigger final publication
