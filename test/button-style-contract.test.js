@@ -11,6 +11,8 @@ var mainCss = read("public/shared/styles/main.css");
 var themeAdapter = read("public/shared/ui/toolbar-config.js");
 var toolbar = read("public/shared/ui/toolbar.js");
 var toolbarApi = read("public/shared/ui/toolbar-api.js");
+var tree = read("public/shared/ui/tree.js");
+var lifecycle = read("public/shared/ui/settings.js");
 var adminView = read("views/SIRK-Portal.handlebars");
 
 assert.ok(themeAdapter.indexOf("window.MeshThemeAdapter") >= 0,
@@ -45,10 +47,20 @@ assert.ok(toolbar.indexOf("leaveResultsAfterFavoritesRender") >= 0 &&
     toolbar.indexOf("if (catalogRoot) catalogRoot.click()") >= 0,
     "Show favorites must leave Results immediately, including after an empty filter is cleared.");
 
+assert.ok(tree.indexOf("var renderedKeys = Object.create(null)") >= 0 &&
+    tree.indexOf("if (renderedKeys[identity]) return") >= 0,
+    "Tree rows must render at most one action for each action key.");
+assert.ok(tree.indexOf('action.classList.toggle("is-active", active)') >= 0 &&
+    tree.indexOf('action.setAttribute("aria-pressed", active ? "true" : "false")') >= 0,
+    "Favorite state must survive the native button synchronization lifecycle.");
+assert.ok(lifecycle.indexOf('root.querySelectorAll(".mc-tree-favorite-action")') >= 0 &&
+    lifecycle.indexOf('button.classList.toggle("text-warning", modern && selected)') >= 0,
+    "Selected favorites must use the native MeshCentral warning color like credential keys.");
+
 var adapterIndex = adminView.indexOf("asset=shared-ui/toolbar-config.js");
 var lifecycleIndex = adminView.indexOf("asset=shared-ui/settings.js");
 var adminJsIndex = adminView.indexOf("asset=admin.js");
 assert.ok(adapterIndex >= 0 && lifecycleIndex > adapterIndex && adminJsIndex > lifecycleIndex,
     "Administration must load the shared native adapter and lifecycle before rendering its controls.");
 
-console.log("Native MeshCentral buttons, favorites and Commands device-page behavior: OK");
+console.log("Native MeshCentral buttons, unique favorites and Commands device-page behavior: OK");
