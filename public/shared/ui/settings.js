@@ -22,6 +22,8 @@
     var pending = false;
     var pendingRoots = [];
     var ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog";
+    var QUICK_OUTPUT_HIDDEN_KEY = "mc-sirk-quickcommands-output-hidden-v2";
+    var QUICK_OUTPUT_ATTENTION_KEY = "mc-sirk-quickcommands-output-attention-v2";
 
     function pluginRoot(node) {
         if (!node) return null;
@@ -55,6 +57,70 @@
         }
     }
 
+    function readQuickBoolean(key, fallback) {
+        try {
+            var value = window.localStorage.getItem(key);
+            if (value == null || value === "") return fallback;
+            return /^(1|true|yes|on)$/i.test(String(value));
+        } catch (error) { return fallback; }
+    }
+
+    function writeQuickBoolean(key, value) {
+        try { window.localStorage.setItem(key, value === true ? "1" : "0"); }
+        catch (error) {}
+    }
+
+    function actualQuickOutputHidden(panel) {
+        if (!panel) return false;
+        var browser = panel.querySelector(".sirk-quick-command-browser");
+        return panel.getAttribute("data-sirk-output-hidden") === "1" ||
+            !!(browser && browser.classList.contains("is-details-collapsed"));
+    }
+
+    function transientQuickOutput(value) {
+        return /^(Ładowanie poleceń|Loading commands|Polecenie wysłano do agenta|Command sent to the agent|Lista poleceń została odświeżona|Command list refreshed)/i.test(String(value || "").trim());
+    }
+
+    function quickOutputButton(panel) {
+        if (!panel) return null;
+        return panel.querySelector(".sirk-quick-command-output-toggle,.sirk-quick-command-details-toggle") ||
+            Array.prototype.find.call(
+                panel.querySelectorAll(".sirk-quick-command-toolbar-host .mc-shared-toolbar-button"),
+                function (button) {
+                    return /^(Ukryj wynik|Pokaż wynik|Hide output|Show output)$/i.test(String(button.title || "").trim());
+                }
+            );
+    }
+
+    function syncQuickOutputAttention(panel) {
+        if (!panel) return;
+        var hidden = actualQuickOutputHidden(panel);
+        var status = panel.querySelector(".sirk-quick-command-status");
+        var current = status ? String(status.textContent || "").trim() : "";
+        var previous = String(panel.__sirkNativeLastQuickOutput || "");
+        var pendingOutput = panel.__sirkNativeQuickOutputPending === true;
+        var active = readQuickBoolean(QUICK_OUTPUT_ATTENTION_KEY, false);
+        var button = quickOutputButton(panel);
+
+        writeQuickBoolean(QUICK_OUTPUT_HIDDEN_KEY, hidden);
+        panel.__sirkNativeLastQuickOutput = current;
+
+        if (!current) {
+            pendingOutput = false;
+            active = false;
+        } else if (transientQuickOutput(current)) {
+            pendingOutput = true;
+        } else {
+            if (hidden && (pendingOutput || current !== previous)) active = true;
+            pendingOutput = false;
+        }
+
+        if (!hidden) active = false;
+        panel.__sirkNativeQuickOutputPending = pendingOutput;
+        writeQuickBoolean(QUICK_OUTPUT_ATTENTION_KEY, active);
+        if (button) button.classList.toggle("has-output-attention", active);
+    }
+
     function syncNativeButton(button) {
         var adapter = window.MeshThemeAdapter;
         if (!adapter || !button) return;
@@ -85,6 +151,8 @@
         if (!adapter || !root) return;
         var modern = adapter.isModern();
         sanitizeGeneratedStyles();
+        if (root.matches && root.matches(".sirk-desktop-commands-panel")) syncQuickOutputAttention(root);
+        Array.prototype.forEach.call(root.querySelectorAll(".sirk-desktop-commands-panel"), syncQuickOutputAttention);
         adapter.refresh(root);
 
         Array.prototype.forEach.call(root.querySelectorAll(".mc-shared-toolbar-button,.mc-tree-script-action,.sirk-desktop-commands-toggle,.sirk-quick-command-fallback-close"), syncNativeButton);
@@ -172,6 +240,10 @@
     if (typeof MutationObserver === "function") {
         new MutationObserver(function (records) {
             records.forEach(function (record) {
+                if (record.type === "characterData") {
+                    var changedRoot = pluginRoot(record.target);
+                    if (changedRoot) addPendingRoot(changedRoot);
+                }
                 Array.prototype.forEach.call(record.addedNodes || [], function (node) {
                     var root = pluginRoot(node);
                     if (root) addPendingRoot(root);
@@ -180,7 +252,8 @@
             if (pendingRoots.length) schedule();
         }).observe(document.body || document.documentElement, {
             childList: true,
-            subtree: true
+            subtree: true,
+            characterData: true
         });
         if (document.head) {
             new MutationObserver(function () { sanitizeGeneratedStyles(); }).observe(document.head, { childList: true, subtree: true });
