@@ -15,3 +15,13 @@
 .mc-shared-page{--mc-shared-page-surface:var(--bs-body-bg,var(--background-color,#fff));background-color:var(--mc-shared-page-surface);color:var(--bs-body-color,inherit)}
 [data-bs-theme="dark"] .mc-shared-page,body.night .mc-shared-page,body.dark .mc-shared-page{--mc-shared-page-surface:var(--bs-body-bg,#212529)}
 .mc-shared-page>.mc-shared-tabs,.mc-shared-page>.mc-shared-toolbar-host,.mc-shared-page>.mc-shared-layout-host,.mc-shared-page .mc-shared-layout{background-color:inherit}
+
+/* Quick and the shared module trees use one selection palette. Keep this
+   contract here so theme changes affect Commands, My Scripts, Approval and
+   the desktop Quick panel together. */
+.mc-shared-page,.sirk-desktop-commands{--mc-shared-selection-bg:rgba(80,120,200,.18);--mc-shared-selection-hover:rgba(80,120,200,.12);--mc-shared-selection-icon:var(--bs-primary,#3f7fdb)}
+.mc-shared-nav-item:hover,.mc-shared-nav-item.active{background:var(--mc-shared-selection-bg)}
+.mc-tree-folder-header:hover{background:var(--mc-shared-selection-hover)}
+.sirk-desktop-commands .sirk-quick-command-browser button:hover{background:var(--mc-shared-selection-hover)!important;color:inherit!important}
+.sirk-desktop-commands .sirk-quick-command-browser button.is-active{background:var(--mc-shared-selection-bg)!important;color:inherit!important;box-shadow:none!important;font-weight:inherit!important}
+.sirk-desktop-commands .sirk-quick-command-icon{color:var(--mc-shared-selection-icon)!important}
