@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.1
+# SIRK Management Platform 1.8.2
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -64,6 +64,8 @@ Dotyczy to Approval Center, Commands, My Scripts, Move Requests, Quick, wyników
 CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral nie zapewnia: układ trzech kolumn, geometrię Edit/Multi, pozycję panelu Quick, przewijanie i responsywność. Powierzchnie, przyciski, listy, zaznaczenia, karty, formularze, tabele i statusy pozostają własnością MeshCentral.
 
 Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierania danych. Szybkie kliknięcia są łączone i kolejkowane, dzięki czemu Approval Center, Commands, My Scripts oraz Move Requests nie przechodzą przez pusty stan pomiędzy renderami.
+
+Quick zachowuje stałą geometrię podczas hover i active. Panel, kolumna Output oraz elementy list nie dziedziczą transformacji powiększających z motywów MeshCentral, a tło, hover i selected korzystają z natywnych zmiennych aktywnego motywu.
 
 ## Entry pointy i loadery
 
