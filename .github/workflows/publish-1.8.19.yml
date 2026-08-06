@@ -8,6 +8,11 @@ on:
       - opened
       - synchronize
       - reopened
+  workflow_run:
+    workflows:
+      - Test
+    types:
+      - completed
   schedule:
     - cron: '*/5 * * * *'
   issues:
@@ -20,12 +25,12 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: publish-sirk-1.8.19-v4
+  group: publish-sirk-1.8.19-v5
   cancel-in-progress: true
 
 jobs:
   publish:
-    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19' || github.event.pull_request.head.ref == 'publish/1.8.19-final' || github.event.pull_request.head.ref == 'fix/ui-admin-audit-1.8.19'
+    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19' || github.event.pull_request.head.ref == 'publish/1.8.19-final' || github.event.pull_request.head.ref == 'fix/ui-admin-audit-1.8.19' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'fix/ui-admin-audit-1.8.19')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -106,6 +111,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f scripts/patches/apply-1.8.19.part[0-9][0-9]
+          rm -f scripts/patches/publish-trigger-1.8.19.txt
           rm -f .github/workflows/apply-ui-admin-audit-1.8.19.yml
           rm -f .github/workflows/finalize-1.8.19.yml
           rm -f .github/workflows/publish-1.8.19.yml
