@@ -31,11 +31,12 @@ assert.ok(statusNav.indexOf("window.MeshThemeAdapter.status") >= 0,
     "Status rows must delegate their appearance to the native MeshCentral adapter.");
 assert.strictEqual(statusNav.indexOf("--sirk-status"), -1,
     "Status navigation must not own a private color palette.");
-assert.ok(themeAdapter.indexOf('element.classList.add("text-warning")') >= 0 &&
-    themeAdapter.indexOf('element.classList.add("text-info")') >= 0 &&
-    themeAdapter.indexOf('element.classList.add("text-success")') >= 0 &&
-    themeAdapter.indexOf('element.classList.add("text-danger")') >= 0,
-    "Modern status colors must use native Bootstrap semantic classes.");
+["text-warning", "text-info", "text-success", "text-danger"].forEach(function (name) {
+    assert.ok(themeAdapter.indexOf('desired = "' + name + '"') >= 0,
+        "Modern status state must map to native Bootstrap class " + name + ".");
+});
+assert.ok(themeAdapter.indexOf("element.classList.add(desired)") >= 0,
+    "The selected native semantic status class must be applied idempotently.");
 assert.ok(approvals.indexOf('className: "mc-approval-status sirk-result-status sirk-result-status-" + key') >= 0,
     "Approval Center status filters must expose semantic status classes.");
 assert.ok(approvals.indexOf('className: "sirk-action-approve"') >= 0 &&
