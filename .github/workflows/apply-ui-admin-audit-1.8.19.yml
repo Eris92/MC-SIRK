@@ -32,8 +32,17 @@ jobs:
           from pathlib import Path
           import base64
           import zlib
+
           payload = Path('scripts/patches/apply-1.8.19.py.b64').read_text(encoding='utf-8').strip()
-          Path('/tmp/apply_patch.py').write_bytes(zlib.decompress(base64.b64decode(payload)))
+          target = Path('/tmp/apply_patch.py')
+          source = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
+          old = "replace_once('public/shared/ui/status-nav.js', '        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n')"
+          new = "text = read('public/shared/ui/status-nav.js')\nif text.count('        moveStatusToIcon(element);\\n') != 2:\n    raise RuntimeError('public/shared/ui/status-nav.js: expected two moveStatusToIcon calls')\nwrite('public/shared/ui/status-nav.js', text.replace('        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n'))"
+          if source.count(old) != 1:
+              raise RuntimeError('Unable to update duplicate moveStatusToIcon patch target')
+          source = source.replace(old, new, 1)
+          source = source.replace('color:#8b5cf6!important', 'color:var(--bs-secondary,#6c757d)!important')
+          target.write_text(source, encoding='utf-8')
           PY
           python /tmp/apply_patch.py
       - name: Run full test suite
