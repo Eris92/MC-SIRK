@@ -1,14 +1,13 @@
 name: Publish SIRK 1.8.19
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/publish-1.8.19.yml
+  issues:
+    types:
+      - opened
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: publish-sirk-1.8.19
@@ -16,7 +15,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.issue.title == 'Publish SIRK 1.8.19'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -114,5 +113,4 @@ jobs:
           git tag -a v1.8.19 -m "SIRK Management Platform 1.8.19"
           git push origin v1.8.19
           gh release create v1.8.19 --repo "$GITHUB_REPOSITORY" --title "SIRK Management Platform 1.8.19" --notes-file docs/releases/1.8.19.md --latest
-
-# Trigger publication after workflow registration.
+          gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany."
