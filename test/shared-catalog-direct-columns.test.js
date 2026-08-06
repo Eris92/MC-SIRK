@@ -143,6 +143,8 @@ assert.deepStrictEqual(elementLabels(primary), ["Results", "Scripts", "System"],
     "Results and catalog roots must be direct primary-column children in the default order.");
 assert.ok(primary.classList.contains("sirk-shared-catalog-primary"),
     "The real primary host must own the shared catalog contract.");
+assert.strictEqual(primary.getAttribute("data-sirk-catalog-contract-version"), "1.8.16",
+    "The rendered primary column must expose the active direct-catalog contract version.");
 assert.strictEqual(primary.children.some(function (item) {
     return item.classList.contains("mc-catalog-navigation") || item.classList.contains("mc-catalog-roots");
 }), false, "The shared column must not recreate historical wrapper elements.");
