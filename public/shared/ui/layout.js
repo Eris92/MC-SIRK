@@ -229,12 +229,13 @@
         return true;
     }
 
+    window.__sirkInstallStableModuleRendering = installStableModuleRendering;
     if (!installStableModuleRendering()) {
         var attempts = 0;
         (function retryStableRendering() {
             attempts += 1;
-            if (installStableModuleRendering() || attempts >= 40) return;
-            window.setTimeout(retryStableRendering, 0);
+            if (installStableModuleRendering() || attempts >= 400) return;
+            window.setTimeout(retryStableRendering, 25);
         }());
     }
 }());
