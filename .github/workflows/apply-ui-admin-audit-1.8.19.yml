@@ -36,11 +36,33 @@ jobs:
           payload = Path('scripts/patches/apply-1.8.19.py.b64').read_text(encoding='utf-8').strip()
           target = Path('/tmp/apply_patch.py')
           source = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
+
           old = "replace_once('public/shared/ui/status-nav.js', '        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n')"
           new = "text = read('public/shared/ui/status-nav.js')\nif text.count('        moveStatusToIcon(element);\\n') != 2:\n    raise RuntimeError('public/shared/ui/status-nav.js: expected two moveStatusToIcon calls')\nwrite('public/shared/ui/status-nav.js', text.replace('        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n'))"
-          if source.count(old) != 1:
-              raise RuntimeError('Unable to update duplicate moveStatusToIcon patch target')
-          source = source.replace(old, new, 1)
+          if source.count(old) == 1:
+              source = source.replace(old, new, 1)
+
+          marker = source.index('# Quick command artwork and tone metadata.')
+          first = source.index('replace_once(', marker)
+          second = source.index('replace_once(', first + 1)
+          third = source.index('replace_once(', second + 1)
+          replacement = """replace_once(
+              'public/native/desktop-commands.js',
+              '''            system: '<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1\"/>',
+          ''',
+              '''            system: '<path d=\"M12 2.8 14 4l2.3-.4.9 2.1 2.1.9-.4 2.3 1.2 2-1.2 2 .4 2.3-2.1.9-.9 2.1-2.3-.4-2 1.2-2-1.2-2.3.4-.9-2.1-2.1-.9.4-2.3-1.2-2 1.2-2-.4-2.3 2.1-.9.9-2.1 2.3.4 2-1.2Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>',
+          '''
+          )
+          replace_once(
+              'public/native/desktop-commands.js',
+              '''        artwork[\"netstat-port\"] = '<path d=\"M4 5h16v14H4zM8 9h8M8 13h5\"/><circle cx=\"17\" cy=\"16\" r=\"2\"/>';
+          ''',
+              '''        artwork[\"netstat-port\"] = '<path d=\"M4 5h16v14H4zM8 9h8M8 13h5\"/><circle cx=\"17\" cy=\"16\" r=\"2\"/>';
+                  artwork[\"network-settings\"] = '<rect x=\"3\" y=\"5\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 21h8M12 17v4M7 10h4M15 9v4M13 11h4\"/>';
+          '''
+          )
+          """
+          source = source[:first] + replacement + source[third:]
           source = source.replace('color:#8b5cf6!important', 'color:var(--bs-secondary,#6c757d)!important')
           target.write_text(source, encoding='utf-8')
           PY
@@ -57,4 +79,4 @@ jobs:
           git commit -m "Fix UI admin actions and audit logging for 1.8.19"
           git push origin HEAD:fix/ui-admin-audit-1.8.19
 
-# Temporary workflow removed before merge. Corrected atomic execution revision 2.
+# Temporary workflow removed before merge. Corrected atomic execution revision 3.
