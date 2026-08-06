@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    var CATALOG_CONTRACT_VERSION = "1.8.16";
+
     function createResultsButton(host, active, onClick) {
         var button = document.createElement("button");
         button.type = "button";
@@ -25,6 +27,39 @@
         return button;
     }
 
+    function removeDirectRoots(host) {
+        Array.prototype.slice.call(host && host.children || []).forEach(function (child) {
+            if (child && child.getAttribute && child.getAttribute("data-sirk-catalog-root") === "1") {
+                host.removeChild(child);
+            }
+        });
+    }
+
+    function directRootHost(host, anchor) {
+        var roots = {
+            appendChild: function (button) {
+                if (!button) return button;
+                button.setAttribute("data-sirk-catalog-root", "1");
+                button.classList.add("sirk-shared-catalog-root");
+                host.insertBefore(button, anchor);
+                return button;
+            }
+        };
+
+        Object.defineProperty(roots, "innerHTML", {
+            configurable: false,
+            enumerable: true,
+            get: function () { return ""; },
+            set: function (value) {
+                if (String(value || "") !== "") {
+                    throw new Error("Shared catalog root host accepts only a clear operation.");
+                }
+                removeDirectRoots(host);
+            }
+        });
+        return roots;
+    }
+
     window.SharedCatalogView = {
         mount: function (options) {
             options = options || {};
@@ -32,24 +67,21 @@
             if (!host) throw new Error("Catalog primary container not found.");
 
             host.innerHTML = "";
-            var navigation = document.createElement("div");
-            navigation.className = "mc-catalog-navigation";
-            host.appendChild(navigation);
+            host.classList.add("sirk-shared-catalog-primary");
+            host.setAttribute("data-sirk-catalog-contract-version", CATALOG_CONTRACT_VERSION);
 
+            var rootAnchor = document.createComment("sirk-catalog-roots");
             function addResults() {
-                return createResultsButton(navigation, options.resultsActive, function () {
+                return createResultsButton(host, options.resultsActive, function () {
                     if (typeof options.onResults === "function") options.onResults();
                 });
             }
 
             if (options.resultsPosition !== "end") addResults();
-
-            var roots = document.createElement("div");
-            roots.className = "mc-catalog-roots";
-            navigation.appendChild(roots);
-
+            host.appendChild(rootAnchor);
             if (options.resultsPosition === "end") addResults();
 
+            var roots = directRootHost(host, rootAnchor);
             var treeContainer = options.treeContainer || document.createElement("div");
             var state = window.SharedDirectoryTree.mount({
                 rootsContainer: roots,
@@ -70,9 +102,15 @@
             });
 
             if (options.resultsActive) {
-                roots.querySelectorAll(".mc-tree-root.active").forEach(function (button) {
+                Array.prototype.slice.call(host.children || []).forEach(function (button) {
+                    if (!button || !button.classList || button.getAttribute("data-sirk-catalog-root") !== "1") return;
                     button.classList.remove("active", "is-active");
+                    button.setAttribute("aria-selected", "false");
+                    button.setAttribute("data-sirk-list-selected", "0");
                 });
+            }
+            if (window.SirkSharedListContract && typeof window.SirkSharedListContract.schedule === "function") {
+                window.SirkSharedListContract.schedule(host);
             }
             return state;
         }
