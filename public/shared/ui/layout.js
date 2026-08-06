@@ -31,12 +31,17 @@
         var style = document.createElement("style");
         style.id = "sirk-shared-column-alignment";
         style.textContent = [
-            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts){--sirk-shared-primary-track:220px;--sirk-primary-collapsed-track:64px;--sirk-shared-secondary-track:minmax(240px,340px);--sirk-shared-details-track:minmax(420px,1fr)}",
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts){--sirk-shared-primary-track:minmax(165px,205px);--sirk-primary-collapsed-track:64px;--sirk-shared-secondary-track:minmax(285px,340px);--sirk-shared-details-track:minmax(420px,1fr)}",
             ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout-host{width:100%;margin:0!important;padding:0!important;box-sizing:border-box}",
             ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout{width:100%;margin:0!important;grid-template-columns:var(--sirk-shared-primary-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important}",
             ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important}",
-            "@media(max-width:1000px){.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts){--sirk-shared-primary-track:190px;--sirk-shared-secondary-track:minmax(210px,300px);--sirk-shared-details-track:minmax(360px,1fr)}}",
-            "@media(max-width:800px){.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout,.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}}"
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) :is(.mc-shared-primary,.mc-shared-secondary){min-width:0;min-height:0;padding:12px!important;overflow:auto;overscroll-behavior:contain;box-sizing:border-box}",
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) :is(.mc-catalog-navigation,.mc-catalog-roots){display:flex;flex-direction:column;gap:0;min-width:0}",
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) :is(.mc-shared-primary,.mc-shared-secondary) :is(.mc-shared-nav-item,.mc-tree-folder-header,.mc-tree-script){width:100%;min-width:0;min-height:36px;margin:0 0 3px;padding:8px;box-sizing:border-box;transform:none!important;scale:none!important;zoom:1!important}",
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-tree-script-row{margin:0 0 3px;transform:none!important;scale:none!important;zoom:1!important}",
+            ".mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-tree-script-row>.mc-tree-script{margin:0}",
+            "@media(max-width:1100px){.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts){--sirk-shared-primary-track:minmax(150px,185px);--sirk-shared-secondary-track:minmax(250px,300px);--sirk-shared-details-track:minmax(360px,1fr)}}",
+            "@media(max-width:760px){.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout,.mc-shared-page:is(.mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts) .mc-shared-layout.is-collapsed{grid-template-columns:1fr!important}}"
         ].join("");
         (document.head || document.documentElement).appendChild(style);
     }
@@ -96,6 +101,12 @@
             var key = storageKey(host, options.storageKey || "");
             var collapsed = false;
             var sharedEntry = null;
+
+            if (sharedColumns) {
+                root.classList.add("sirk-shared-quick-columns");
+                primary.classList.add("sirk-shared-quick-primary");
+                secondary.classList.add("sirk-shared-quick-secondary");
+            }
 
             try {
                 collapsed = key && window.localStorage.getItem(key) === "collapsed";
