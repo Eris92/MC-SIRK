@@ -13,6 +13,7 @@ var approvals = read("public/modules/approvals/index.js");
 var themeAdapter = read("public/shared/ui/toolbar-config.js");
 var mainCss = read("public/shared/styles/main.css");
 var toolbarCss = read("public/shared/ui/toolbar.css");
+var layout = read("public/shared/ui/layout.js");
 var sharedUi = read("public/shared/ui/shared-ui.css");
 
 assert.ok(tree.indexOf('graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon"') >= 0,
@@ -53,11 +54,16 @@ assert.ok(approvals.indexOf("mc-approval-request-status-") >= 0,
 
 assert.strictEqual(mainCss.indexOf(".mc-module-approvalcenter .mc-shared-layout"), -1,
     "Approval Center must not have a module-specific collapsed-layout exception.");
-assert.ok(toolbarCss.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:64px minmax(255px,305px) minmax(520px,1fr)!important}") >= 0,
-    "The shared collapsed layout must retain stable second and third columns for every module.");
+assert.ok(layout.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
+    "The canonical collapsed layout must retain stable Quick-aligned second and third columns for every module.");
+assert.ok(layout.indexOf("--sirk-primary-collapsed-track:64px") >= 0 &&
+    layout.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
+    "The collapsed shared layout must retain the Quick first and second-column tracks.");
+assert.strictEqual(toolbarCss.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:"), -1,
+    "Toolbar CSS must not reintroduce a competing collapsed-layout definition.");
 assert.ok(sharedUi.indexOf(".mc-shared-layout.is-collapsed .mc-shared-primary") >= 0,
     "Only the shared primary column may be compacted by the collapsed layout.");
 assert.strictEqual(sharedUi.indexOf(".mc-shared-secondary .mc-approval-label{display:none"), -1,
     "Collapsing the first column must not hide Approval Center second-column labels.");
 
-console.log("Native semantic statuses, approval actions and shared collapsed layout: OK");
+console.log("Native semantic statuses, approval actions and canonical collapsed layout: OK");

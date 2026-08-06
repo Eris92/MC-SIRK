@@ -9,32 +9,47 @@ var source = fs.readFileSync(
     path.join(__dirname, "..", "public", "shared", "ui", "layout.js"),
     "utf8"
 );
+var toolbarSource = fs.readFileSync(
+    path.join(__dirname, "..", "public", "shared", "ui", "toolbar.css"),
+    "utf8"
+);
 
 assert.ok(
     source.indexOf(".mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts") >= 0,
     "Approval, Commands and My Scripts must use one shared column selector."
 );
 assert.ok(
-    source.indexOf("--sirk-shared-primary-track:220px") >= 0 &&
-    source.indexOf("--sirk-primary-collapsed-track:64px") >= 0,
-    "The shared desktop and collapsed primary tracks must have exact widths."
+    source.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >= 0 &&
+    source.indexOf("--sirk-primary-collapsed-track:64px") >= 0 &&
+    source.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
+    "The shared desktop tracks must match the Quick primary and secondary geometry."
 );
 assert.ok(
     source.indexOf("grid-template-columns:var(--sirk-shared-primary-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
-    "Every expanded module must start its second column after the same primary track."
+    "Every expanded module must use the same shared tracks."
 );
 assert.ok(
     source.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
     "Every collapsed module must start its second column after the same 64 px track."
 );
 assert.ok(
-    source.indexOf("--sirk-shared-primary-track:190px") >= 0,
-    "The narrower desktop breakpoint must remain shared by all three modules."
+    source.indexOf("--sirk-shared-primary-track:minmax(150px,185px)") >= 0 &&
+    source.indexOf("--sirk-shared-secondary-track:minmax(250px,300px)") >= 0,
+    "The narrower desktop breakpoint must match Quick for all three modules."
+);
+assert.ok(
+    source.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
+    "Shared primary and secondary rows must use the Quick row geometry."
 );
 assert.strictEqual(
-    source.indexOf("minmax(220px,300px)"),
+    toolbarSource.indexOf(".mc-shared-layout:has(.mc-tree-script-actions:not(:empty))"),
     -1,
-    "The primary track must not remain content-dependent."
+    "Toolbar CSS must not create a second column system based on action buttons."
+);
+assert.strictEqual(
+    toolbarSource.indexOf(".mc-shared-layout{grid-template-columns:"),
+    -1,
+    "Toolbar CSS must not override the canonical shared layout tracks."
 );
 assert.ok(
     source.indexOf('var SHARED_SCRIPT_LAYOUT_KEY = "sirkPlatform.layout.shared-script-columns.collapsed"') >= 0,
@@ -52,6 +67,9 @@ ClassList.prototype.toggle = function (name, enabled) {
     var index = this.values.indexOf(name);
     if (enabled === true && index < 0) this.values.push(name);
     if (enabled === false && index >= 0) this.values.splice(index, 1);
+};
+ClassList.prototype.add = function (name) {
+    this.toggle(name, true);
 };
 
 function Element(tagName, classes) {
@@ -127,6 +145,13 @@ function mount(preset, legacyValue) {
 var approval = mount("approvalcenter", "collapsed");
 assert.strictEqual(approval.layout.isCollapsed(), true,
     "The first mounted module must migrate its existing Collapse state.");
+assert.strictEqual(approval.layout.root.classList.contains("sirk-shared-quick-columns"), true,
+    "Approval must use the canonical Quick-aligned column contract.");
+assert.strictEqual(approval.layout.primary.classList.contains("sirk-shared-quick-primary"), true,
+    "The first column must expose the shared Quick-aligned role.");
+assert.strictEqual(approval.layout.secondary.classList.contains("sirk-shared-quick-secondary"), true,
+    "The second column must expose the shared Quick-aligned role."
+);
 
 var commands = mount("mycommands", "expanded");
 var scripts = mount("myscripts", "expanded");
@@ -158,4 +183,4 @@ assert.ok(styles[0].textContent.indexOf("margin:0!important;padding:0!important"
     "Every layout host must use the same zero inset before the first track."
 );
 
-console.log("Approval, Commands and My Scripts second-column alignment: OK");
+console.log("Approval, Commands and My Scripts use the Quick column contract: OK");
