@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.8
+# SIRK Management Platform 1.8.9
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -65,7 +65,9 @@ CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral ni
 
 Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierania danych. Szybkie kliknięcia są łączone i kolejkowane, dzięki czemu Approval Center, Commands, My Scripts oraz Move Requests nie przechodzą przez pusty stan pomiędzy renderami.
 
-Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts używają jednego kontraktu hover i selected opartego na natywnych zmiennych bieżącego motywu MeshCentral. Wiersze nie zmieniają geometrii po najechaniu ani kliknięciu.
+Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts korzystają z jednego kontraktu zaczerpniętego z Quick: `165–205 px / 285–340 px`, a na węższym desktopie `150–185 px / 250–300 px`. Wspólne są także padding 12 px, wiersze 36 px, odstęp 3 px, hover, selected i brak transformacji. `toolbar.css` nie może definiować drugiego układu zależnego od obecności akcji.
+
+Podczas otwartego workspace Approval Center lub My Scripts natywne `devListToolbarViewIcons` są ukrywane. Po wyjściu z workspace klasa jest usuwana, więc ikony widoku urządzeń wracają i nie są wyłączane globalnie.
 
 Każdy wiersz drzewa może zawierać dokładnie jeden bezpośredni kontener `.mc-tree-script-actions`. Renderer oznacza swój zestaw jako kanoniczny, usuwa starsze kontenery dodane przez nakładające się warstwy i ponownie wymusza kontrakt po asynchronicznych mutacjach DOM. Wewnątrz zestawu nadal obowiązuje deduplikacja po `key`, dlatego built-in Commands nie pokazują drugiej gwiazdki ani drugiej akcji Multi. Aktywna gwiazdka korzysta z natywnej klasy `text-warning`, tak jak aktywny klucz poświadczeń.
 
