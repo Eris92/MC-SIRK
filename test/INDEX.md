@@ -9,5 +9,6 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | folder permissions | `folder-access.test.js` |
 | wspólny wygląd wierszy Approval, Commands, My Scripts i Quick | `shared-list-quick-style.test.js` |
 | bezpośrednia struktura pierwszej kolumny Commands i My Scripts | `shared-catalog-direct-columns.test.js` |
+| lekkie wcięcie kolejnych poziomów folderów i skryptów | `tree-indent.test.js` |
 
 Po teście celowanym uruchom `npm test`, jeżeli zmiana wpływa na wiele warstw albo wspólny kontrakt.
