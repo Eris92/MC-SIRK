@@ -14,7 +14,7 @@ permissions:
 jobs:
   apply:
     if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-22.04
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,15 +26,16 @@ jobs:
         with:
           node-version: 24
       - name: Apply corrected atomic patch
-        shell: bash
+        shell: pwsh
         run: |
-          python - <<'PY'
+          $code = @'
           from pathlib import Path
           import base64
+          import os
           import zlib
 
           payload = Path('scripts/patches/apply-1.8.19.py.b64').read_text(encoding='utf-8').strip()
-          target = Path('/tmp/apply_patch.py')
+          target = Path(os.environ['RUNNER_TEMP']) / 'apply_patch.py'
           source = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
 
           old = "replace_once('public/shared/ui/status-nav.js', '        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n')"
@@ -65,12 +66,14 @@ jobs:
           source = source[:first] + replacement + source[third:]
           source = source.replace('color:#8b5cf6!important', 'color:var(--bs-secondary,#6c757d)!important')
           target.write_text(source, encoding='utf-8')
-          PY
-          python /tmp/apply_patch.py
+          '@
+          $code | python -
+          python "$env:RUNNER_TEMP\apply_patch.py"
       - name: Run full test suite
+        shell: pwsh
         run: npm test
       - name: Commit patch
-        shell: bash
+        shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -79,4 +82,4 @@ jobs:
           git commit -m "Fix UI admin actions and audit logging for 1.8.19"
           git push origin HEAD:fix/ui-admin-audit-1.8.19
 
-# Temporary workflow removed before merge. Corrected atomic execution revision 4.
+# Temporary workflow removed before merge. Corrected atomic execution revision 5.
