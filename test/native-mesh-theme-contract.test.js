@@ -15,6 +15,8 @@ var toolbar = read("public/shared/ui/toolbar.css");
 var quick = read("public/native/desktop-commands.css");
 var admin = read("web/admin/admin.css");
 var status = read("public/shared/ui/status-nav.js");
+var editActions = read("public/shared/ui/script-edit-actions.js");
+var tree = read("public/shared/ui/tree.js");
 var view = read("views/SIRK-Portal.handlebars");
 
 ["style10", "style10s", "style3x", "style3sel"].forEach(function (name) {
@@ -45,7 +47,11 @@ assert.ok(settings.indexOf("data-native-theme-sanitized") >= 0,
     [admin, "prefers-color-scheme", "administration system-theme emulation"],
     [status, "--sirk-status", "private semantic status palette"],
     [status, "#198754", "hard-coded approval success color"],
-    [status, "#dc3545", "hard-coded approval danger color"]
+    [status, "#dc3545", "hard-coded approval danger color"],
+    [editActions, "#e0a800", "generated credential color"],
+    [editActions, "#d39e00", "legacy generated credential color"],
+    [tree, "var(--bs-primary,#3b82f6)", "inline Bootstrap-only folder color"],
+    [tree, "graphic.style.color", "inline tree icon color assignment"]
 ].forEach(function (entry) {
     assert.strictEqual(entry[0].indexOf(entry[1]), -1,
         "Native theme contract forbids " + entry[2] + ".");
