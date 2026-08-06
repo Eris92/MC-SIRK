@@ -144,4 +144,97 @@
             };
         }
     };
+
+    function installStableModuleRendering() {
+        if (window.__sirkStableModuleRenderingInstalled) return true;
+        var shell = window.SirkPlatformModuleShell;
+        if (!shell || typeof shell.create !== "function") return false;
+        window.__sirkStableModuleRenderingInstalled = true;
+
+        var originalCreate = shell.create;
+        shell.create = function (definition) {
+            definition = definition || {};
+            var originalDefinitionRender = definition.render;
+            var renderRunning = false;
+            var renderQueued = false;
+            var renderPromise = Promise.resolve();
+
+            if (typeof originalDefinitionRender === "function") {
+                definition.render = function (api) {
+                    if (renderRunning) {
+                        renderQueued = true;
+                        return renderPromise;
+                    }
+
+                    renderRunning = true;
+                    renderPromise = Promise.resolve().then(function () {
+                        return originalDefinitionRender(api);
+                    }).then(function (value) {
+                        renderRunning = false;
+                        if (renderQueued) {
+                            renderQueued = false;
+                            return definition.render(api);
+                        }
+                        return value;
+                    }, function (error) {
+                        renderRunning = false;
+                        if (renderQueued) {
+                            renderQueued = false;
+                            return definition.render(api);
+                        }
+                        throw error;
+                    });
+                    return renderPromise;
+                };
+            }
+
+            var instance = originalCreate.call(shell, definition);
+            var api = instance && instance.api;
+            if (!api || typeof api.render !== "function") return instance;
+
+            var originalRender = api.render;
+            var scheduled = false;
+            var scheduledPromise = Promise.resolve();
+
+            function invokeRender(args) {
+                var page = api.state && api.state.page;
+                var layout = page && page.layout;
+                var clear = layout && layout.clear;
+
+                if (typeof clear === "function") layout.clear = function () {};
+                try {
+                    return originalRender.apply(api, args || []);
+                } finally {
+                    if (typeof clear === "function") layout.clear = clear;
+                }
+            }
+
+            function stableRender() {
+                var args = Array.prototype.slice.call(arguments);
+                if (scheduled) return scheduledPromise;
+                scheduled = true;
+                scheduledPromise = Promise.resolve().then(function () {
+                    scheduled = false;
+                    return invokeRender(args);
+                });
+                return scheduledPromise;
+            }
+
+            stableRender.__sirkStableRender = true;
+            stableRender.originalRender = originalRender;
+            api.render = stableRender;
+            instance.render = stableRender;
+            return instance;
+        };
+        return true;
+    }
+
+    if (!installStableModuleRendering()) {
+        var attempts = 0;
+        (function retryStableRendering() {
+            attempts += 1;
+            if (installStableModuleRendering() || attempts >= 40) return;
+            window.setTimeout(retryStableRendering, 0);
+        }());
+    }
 }());
