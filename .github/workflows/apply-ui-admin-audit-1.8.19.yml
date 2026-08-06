@@ -85,3 +85,5 @@ jobs:
           git diff --cached --check
           git commit -m "Fix UI admin actions and audit logging for 1.8.19"
           git push origin HEAD:fix/ui-admin-audit-1.8.19
+
+# Retry after GitHub Actions recovery.
