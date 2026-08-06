@@ -156,12 +156,12 @@
         actions.className = "mc-approval-request-actions";
 
         [
-            { title: "Approve", approved: true, className: "sirk-action-approve" },
-            { title: "Reject", approved: false, className: "sirk-action-reject" }
+            { title: "Approve", approved: true, className: "btn-success sirk-action-approve" },
+            { title: "Reject", approved: false, className: "btn-danger sirk-action-reject" }
         ].forEach(function (definition) {
             var button = document.createElement("button");
             button.type = "button";
-            button.className = "btn " + definition.className;
+            button.className = "btn btn-sm " + definition.className;
             button.textContent = definition.title;
             button.onclick = function () {
                 button.disabled = true;
