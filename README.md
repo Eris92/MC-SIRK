@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.7
+# SIRK Management Platform 1.8.8
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -67,7 +67,7 @@ Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierani
 
 Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts używają jednego kontraktu hover i selected opartego na natywnych zmiennych bieżącego motywu MeshCentral. Wiersze nie zmieniają geometrii po najechaniu ani kliknięciu.
 
-Renderer drzewa dopuszcza tylko jedną akcję o danym `key` w pojedynczym wierszu, dlatego Favorite nie może zostać zdublowany przez nakładające się warstwy Commands i współdzielonego Edit. Aktywna gwiazdka korzysta z natywnej klasy `text-warning`, tak jak aktywny klucz poświadczeń.
+Każdy wiersz drzewa może zawierać dokładnie jeden bezpośredni kontener `.mc-tree-script-actions`. Renderer oznacza swój zestaw jako kanoniczny, usuwa starsze kontenery dodane przez nakładające się warstwy i ponownie wymusza kontrakt po asynchronicznych mutacjach DOM. Wewnątrz zestawu nadal obowiązuje deduplikacja po `key`, dlatego built-in Commands nie pokazują drugiej gwiazdki ani drugiej akcji Multi. Aktywna gwiazdka korzysta z natywnej klasy `text-warning`, tak jak aktywny klucz poświadczeń.
 
 Przyciski Edit i Multi-device pozostają jednocześnie widoczne, gdy użytkownik ma odpowiednie uprawnienia. Aktywny może być tylko jeden tryb; kliknięcie drugiego przełącza bezpośrednio z Edit na Multi lub z Multi na Edit.
 
