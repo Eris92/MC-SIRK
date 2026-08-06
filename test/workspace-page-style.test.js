@@ -11,6 +11,7 @@ var approval = fs.readFileSync(path.join(root, "public", "native", "approval.css
 var automation = fs.readFileSync(path.join(root, "public", "modules", "automation", "style.css"), "utf8");
 var main = fs.readFileSync(path.join(root, "public", "shared", "styles", "main.css"), "utf8");
 var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.css"), "utf8");
+var layout = fs.readFileSync(path.join(root, "public", "shared", "ui", "layout.js"), "utf8");
 var sharedUi = fs.readFileSync(path.join(root, "public", "shared", "ui", "shared-ui.css"), "utf8");
 
 assert.ok(
@@ -267,8 +268,13 @@ assert.strictEqual(
 );
 assert.ok(
     toolbar.indexOf(".mc-shared-toolbar{") >= 0 &&
-    toolbar.indexOf(".mc-shared-layout{") >= 0,
-    "Both modules must continue to receive toolbar and layout geometry from shared UI assets."
+    layout.indexOf(".mc-shared-layout{") >= 0,
+    "Both modules must receive toolbar geometry from toolbar.css and the single canonical layout from layout.js."
+);
+assert.strictEqual(
+    toolbar.indexOf(".mc-shared-layout{grid-template-columns:"),
+    -1,
+    "Toolbar CSS must not own a second shared layout definition."
 );
 assert.ok(
     sharedUi.indexOf(".mc-approval-card-grid") >= 0 &&
@@ -276,4 +282,4 @@ assert.ok(
     "Approval-specific content semantics must remain in the shared UI stylesheet."
 );
 
-console.log("Native MeshCentral title node identity and shared module inheritance: OK");
+console.log("Native MeshCentral title node identity and canonical shared module inheritance: OK");
