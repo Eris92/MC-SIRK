@@ -18,10 +18,13 @@ assert.ok(css.indexOf('background-color:var(--bs-body-bg)!important') >= 0,
 assert.ok(css.indexOf("--bs-list-group-action-hover-bg") >= 0 &&
     css.indexOf("--bs-list-group-action-hover-color") >= 0,
     "First and second Quick columns must expose the native hover state.");
-assert.ok(css.indexOf("--bs-list-group-active-bg") >= 0 &&
-    css.indexOf("--bs-list-group-active-color") >= 0 &&
-    css.indexOf("--bs-list-group-active-border-color") >= 0,
-    "Selected Quick rows must expose the native active state.");
+assert.ok(css.indexOf("--bs-list-group-active-border-color") >= 0 &&
+    css.indexOf("outline-offset:-1px") >= 0,
+    "Selected Quick rows must remain visible without replacing the native active background.");
+assert.strictEqual(css.indexOf("--bs-list-group-active-bg"), -1,
+    "Quick must not own the active-row background.");
+assert.strictEqual(css.indexOf("--bs-list-group-active-color"), -1,
+    "Quick must not own the active-row text color.");
 assert.strictEqual(css.indexOf("--sdc-hover"), -1,
     "Quick interaction feedback must not restore a private hover palette.");
 assert.strictEqual(css.indexOf("--sdc-active"), -1,
