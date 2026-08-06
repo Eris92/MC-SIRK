@@ -7,6 +7,7 @@ on:
     types:
       - opened
       - synchronize
+      - reopened
   schedule:
     - cron: '*/5 * * * *'
   issues:
@@ -19,12 +20,12 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: publish-sirk-1.8.19-v3
+  group: publish-sirk-1.8.19-v4
   cancel-in-progress: true
 
 jobs:
   publish:
-    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19' || github.event.pull_request.head.ref == 'publish/1.8.19-final'
+    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19' || github.event.pull_request.head.ref == 'publish/1.8.19-final' || github.event.pull_request.head.ref == 'fix/ui-admin-audit-1.8.19'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
