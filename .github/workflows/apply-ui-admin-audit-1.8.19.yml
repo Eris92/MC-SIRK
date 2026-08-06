@@ -4,19 +4,21 @@ on:
   push:
     branches:
       - fix/ui-admin-audit-1.8.19
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: write
+
+concurrency:
+  group: sirk-1.8.19-final
+  cancel-in-progress: true
 
 jobs:
   apply:
     if: github.actor != 'github-actions[bot]'
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Checkout current branch head
         uses: actions/checkout@v4
         with:
           ref: fix/ui-admin-audit-1.8.19
@@ -25,54 +27,56 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply corrected atomic patch
+      - name: Rebuild and verify patch payload
         shell: pwsh
         run: |
           $code = @'
           from pathlib import Path
           import base64
+          import hashlib
           import os
           import zlib
 
-          payload = Path('scripts/patches/apply-1.8.19.py.b64').read_text(encoding='utf-8').strip()
-          target = Path(os.environ['RUNNER_TEMP']) / 'apply_patch.py'
-          source = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
-
-          old = "replace_once('public/shared/ui/status-nav.js', '        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n')"
-          new = "text = read('public/shared/ui/status-nav.js')\nif text.count('        moveStatusToIcon(element);\\n') != 2:\n    raise RuntimeError('public/shared/ui/status-nav.js: expected two moveStatusToIcon calls')\nwrite('public/shared/ui/status-nav.js', text.replace('        moveStatusToIcon(element);\\n', '        moveStatusToIcon(element, label);\\n'))"
-          if source.count(old) == 1:
-              source = source.replace(old, new, 1)
-
-          marker = source.index('# Quick command artwork and tone metadata.')
-          first = source.index('replace_once(', marker)
-          second = source.index('replace_once(', first + 1)
-          third = source.index('replace_once(', second + 1)
-          replacement = """replace_once(
-              'public/native/desktop-commands.js',
-              '''            system: '<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1\"/>',
-          ''',
-              '''            system: '<path d=\"M12 2.8 14 4l2.3-.4.9 2.1 2.1.9-.4 2.3 1.2 2-1.2 2 .4 2.3-2.1.9-.9 2.1-2.3-.4-2 1.2-2-1.2-2.3.4-.9-2.1-2.1-.9.4-2.3-1.2-2 1.2-2-.4-2.3 2.1-.9.9-2.1 2.3.4 2-1.2Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>',
-          '''
-          )
-          replace_once(
-              'public/native/desktop-commands.js',
-              '''        artwork[\"netstat-port\"] = '<path d=\"M4 5h16v14H4zM8 9h8M8 13h5\"/><circle cx=\"17\" cy=\"16\" r=\"2\"/>';
-          ''',
-              '''        artwork[\"netstat-port\"] = '<path d=\"M4 5h16v14H4zM8 9h8M8 13h5\"/><circle cx=\"17\" cy=\"16\" r=\"2\"/>';
-                  artwork[\"network-settings\"] = '<rect x=\"3\" y=\"5\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 21h8M12 17v4M7 10h4M15 9v4M13 11h4\"/>';
-          '''
-          )
-          """
-          source = source[:first] + replacement + source[third:]
-          source = source.replace('color:#8b5cf6!important', 'color:var(--bs-secondary,#6c757d)!important')
-          target.write_text(source, encoding='utf-8')
+          parts = sorted(Path('scripts/patches').glob('apply-1.8.19.part*'))
+          if len(parts) != 10:
+              raise RuntimeError(f'Expected 10 patch parts, got {len(parts)}')
+          payload = ''.join(path.read_text(encoding='utf-8').strip() for path in parts)
+          if len(payload) != 16608:
+              raise RuntimeError(f'Unexpected patch payload length: {len(payload)}')
+          expected = '396668bc86fff78eec27390f79121f4853d8fc9d6753f6c2c70cb0a1e4d0010'
+          actual = hashlib.sha256(payload.encode('ascii')).hexdigest()
+          if actual != expected:
+              raise RuntimeError(f'Patch payload SHA256 mismatch: {actual}')
+          source = zlib.decompress(base64.b64decode(payload))
+          target = Path(os.environ['RUNNER_TEMP']) / 'apply-1.8.19.py'
+          target.write_bytes(source)
+          print(f'Patch payload OK: {actual}; source bytes: {len(source)}')
           '@
           $code | python -
-          python "$env:RUNNER_TEMP\apply_patch.py"
+          python "$env:RUNNER_TEMP\apply-1.8.19.py"
+      - name: Validate changed JavaScript
+        shell: pwsh
+        run: |
+          git diff --check
+          node --check web/admin/admin.js
+          node --check server/core/audit-log.js
+          node --check server/core/runtime.js
+          node --check server/core/device-service.js
+          node --check server/modules/commands/index.js
+          node --check public/shared/runtime.js
+          node --check public/shared/ui/page.js
+          node --check public/shared/ui/status-nav.js
+          node --check public/shared/ui/tree.js
+          node --check public/modules/commands/index.js
+          node --check public/native/desktop-commands.js
+          node --check admin.js
+          node --check test/audit-log.test.js
+          node --check test/commands-multi-builtins.test.js
+          node --check test/ui-regression-1.8.19.test.js
       - name: Run full test suite
         shell: pwsh
         run: npm test
-      - name: Commit patch
+      - name: Commit verified source
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
@@ -81,5 +85,3 @@ jobs:
           git diff --cached --check
           git commit -m "Fix UI admin actions and audit logging for 1.8.19"
           git push origin HEAD:fix/ui-admin-audit-1.8.19
-
-# Temporary workflow removed before merge. Corrected atomic execution revision 6.
