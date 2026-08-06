@@ -19,6 +19,25 @@ assert.ok(outputState.indexOf('button.classList.toggle("is-active", !hidden)') >
     outputState.indexOf('button.setAttribute("aria-pressed", hidden ? "false" : "true")') >= 0,
     "The logical output state must remain available for behavior and accessibility.");
 
+assert.ok(lifecycle.indexOf('var QUICK_OUTPUT_HIDDEN_KEY = "mc-sirk-quickcommands-output-hidden-v2"') >= 0 &&
+    lifecycle.indexOf('var QUICK_OUTPUT_ATTENTION_KEY = "mc-sirk-quickcommands-output-attention-v2"') >= 0,
+    "The native lifecycle and the Quick state controller must share one hidden and attention state.");
+assert.ok(lifecycle.indexOf("function actualQuickOutputHidden(panel)") >= 0 &&
+    lifecycle.indexOf('browser.classList.contains("is-details-collapsed")') >= 0 &&
+    lifecycle.indexOf('panel.getAttribute("data-sirk-output-hidden") === "1"') >= 0,
+    "The visible collapsed Output state must be detected from both supported controllers.");
+assert.ok(lifecycle.indexOf("function syncQuickOutputAttention(panel)") >= 0 &&
+    lifecycle.indexOf("writeQuickBoolean(QUICK_OUTPUT_HIDDEN_KEY, hidden)") >= 0 &&
+    lifecycle.indexOf("writeQuickBoolean(QUICK_OUTPUT_ATTENTION_KEY, active)") >= 0 &&
+    lifecycle.indexOf('button.classList.toggle("has-output-attention", active)') >= 0,
+    "A final hidden result must synchronize persistence and the visible button class.");
+assert.ok(lifecycle.indexOf("pendingOutput || current !== previous") >= 0 &&
+    lifecycle.indexOf("if (!hidden) active = false") >= 0,
+    "Attention must appear for a new final result and clear immediately after Output is opened.");
+assert.ok(lifecycle.indexOf("Lista poleceń została odświeżona") >= 0 &&
+    lifecycle.indexOf("Command list refreshed") >= 0,
+    "A list refresh must remain neutral and must not create a result alert.");
+
 assert.ok(lifecycle.indexOf('button.classList.contains("sirk-quick-command-output-toggle")') >= 0 &&
     lifecycle.indexOf('button.classList.remove("is-active")') >= 0 &&
     lifecycle.indexOf('button.setAttribute("aria-pressed", "false")') >= 0,
@@ -44,6 +63,8 @@ assert.ok(toolbarCss.indexOf("rgba(var(--bs-danger-rgb),.18)") >= 0 &&
     toolbarCss.indexOf("border-color:var(--bs-danger)!important") >= 0 &&
     toolbarCss.indexOf("color:var(--bs-danger)!important") >= 0,
     "Quick output attention must use the active MeshCentral Bootstrap danger tokens.");
+assert.ok(toolbarCss.indexOf('.sirk-desktop-commands-panel .sirk-quick-command-toolbar-host{padding:8px 10px 10px!important}') >= 0,
+    "Quick toolbar buttons must have a bottom gutter before the column divider lines begin.");
 [
     "#b42318", "#fca5a5", "rgba(220,38,38", "rgba(248,113,113"
 ].forEach(function (value) {
@@ -61,4 +82,4 @@ assert.ok(toolbarCss.indexOf("rgba(var(--bs-danger-rgb),.18)") >= 0 &&
         "Native Quick output contract forbids " + entry[2] + ".");
 });
 
-console.log("Quick output attention is visible, hidden-only and based on native danger tokens: OK");
+console.log("Quick output attention is visible, synchronized with the real collapsed state and spaced from dividers: OK");
