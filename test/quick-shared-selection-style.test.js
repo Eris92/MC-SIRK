@@ -14,12 +14,14 @@ var lifecycle = read("public/shared/ui/settings.js");
 
 assert.ok(adapter.indexOf(".sirk-quick-command-browser button") >= 0,
     "Quick rows must be included in the same native navigation adapter as shared module rows.");
-assert.ok(adapter.indexOf('element.classList.add("list-group-item", "list-group-item-action")') >= 0,
+assert.ok(adapter.indexOf('syncOwnedClasses(element, ["list-group-item", "list-group-item-action"])') >= 0,
     "Modern Quick and module rows must use native MeshCentral list-group action classes.");
-assert.ok(adapter.indexOf('element.classList.add(active(element) ? "style10s" : "style10")') >= 0,
+assert.ok(adapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
     "Classic Quick and module rows must use native MeshCentral style10/style10s classes.");
 assert.ok(adapter.indexOf('element.classList.contains("is-active")') >= 0,
     "The native adapter must preserve the functional Quick selected state.");
+assert.ok(adapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
+    "Quick and module rows must not reset valid native classes during synchronization.");
 assert.ok(lifecycle.indexOf("syncNativeContainers") >= 0,
     "Quick native row classes must be restored after each asynchronous render.");
 
