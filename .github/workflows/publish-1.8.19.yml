@@ -1,6 +1,12 @@
 name: Publish SIRK 1.8.19
 
 on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
   schedule:
     - cron: '*/5 * * * *'
   issues:
@@ -10,15 +16,16 @@ on:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 concurrency:
-  group: publish-sirk-1.8.19
+  group: publish-sirk-1.8.19-v3
   cancel-in-progress: true
 
 jobs:
   publish:
-    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19'
-    runs-on: ubuntu-24.04
+    if: github.event_name == 'schedule' || github.event.issue.title == 'Publish SIRK 1.8.19' || github.event.pull_request.head.ref == 'publish/1.8.19-final'
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout main
@@ -26,17 +33,6 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-
-      - name: Stop when already published
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if gh release view v1.8.19 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "SIRK 1.8.19 is already published."
-            exit 0
-          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -112,6 +108,8 @@ jobs:
           rm -f .github/workflows/apply-ui-admin-audit-1.8.19.yml
           rm -f .github/workflows/finalize-1.8.19.yml
           rm -f .github/workflows/publish-1.8.19.yml
+          rm -f .github/workflows/publish-final-1.8.19.yml
+          rm -f tmp.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
@@ -129,9 +127,14 @@ jobs:
           git push origin v1.8.19
           gh release create v1.8.19 --repo "$GITHUB_REPOSITORY" --title "SIRK Management Platform 1.8.19" --notes-file docs/releases/1.8.19.md --latest
 
-      - name: Close trigger issue
-        if: github.event_name == 'issues'
+      - name: Close trigger
+        if: github.event_name == 'issues' || github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany."
+        run: |
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            gh issue close "${{ github.event.issue.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany."
+          else
+            gh pr close "${{ github.event.pull_request.number }}" --repo "$GITHUB_REPOSITORY" --comment "SIRK Management Platform 1.8.19 został opublikowany bezpośrednio do main."
+          fi
