@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.0
+# SIRK Management Platform 1.8.1
 
 **Repozytorium:** `SIRK-Portal`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -62,6 +62,8 @@ Plugin nie posiada własnej palety kolorów ani niezależnego motywu. `MeshTheme
 Dotyczy to Approval Center, Commands, My Scripts, Move Requests, Quick, wyników, formularzy, dialogów i panelu administracyjnego. Klasy są ponownie synchronizowane po renderach asynchronicznych oraz zmianie motywu.
 
 CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral nie zapewnia: układ trzech kolumn, geometrię Edit/Multi, pozycję panelu Quick, przewijanie i responsywność. Powierzchnie, przyciski, listy, zaznaczenia, karty, formularze, tabele i statusy pozostają własnością MeshCentral.
+
+Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierania danych. Szybkie kliknięcia są łączone i kolejkowane, dzięki czemu Approval Center, Commands, My Scripts oraz Move Requests nie przechodzą przez pusty stan pomiędzy renderami.
 
 ## Entry pointy i loadery
 

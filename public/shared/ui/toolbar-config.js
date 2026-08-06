@@ -9,7 +9,10 @@
         "alert", "alert-info", "alert-danger"
     ];
     var CLASSIC_CLASSES = ["style3x", "style3sel", "style10", "style10s", "bar", "sbar"];
+    var OWNED_CLASSES = MODERN_CLASSES.concat(CLASSIC_CLASSES);
+    var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog";
     var scheduled = false;
+    var scheduledRoot = null;
 
     function isModern() {
         if (typeof document === "undefined") return false;
@@ -18,14 +21,19 @@
         return !!document.querySelector(".navbar,.nav-link[data-bs-toggle],body[data-bs-theme]");
     }
 
-    function removeClasses(element, names) {
-        if (!element || !element.classList) return;
-        names.forEach(function (name) { element.classList.remove(name); });
-    }
+    function syncOwnedClasses(element, desired) {
+        if (!element || !element.classList) return element;
+        desired = desired || [];
+        var wanted = Object.create(null);
+        desired.forEach(function (name) { wanted[name] = true; });
 
-    function reset(element) {
-        removeClasses(element, MODERN_CLASSES);
-        removeClasses(element, CLASSIC_CLASSES);
+        OWNED_CLASSES.forEach(function (name) {
+            if (!wanted[name] && element.classList.contains(name)) element.classList.remove(name);
+        });
+        desired.forEach(function (name) {
+            if (!element.classList.contains(name)) element.classList.add(name);
+        });
+        return element;
     }
 
     function active(element) {
@@ -47,79 +55,84 @@
 
     function applyButton(element, variant) {
         if (!element) return element;
-        reset(element);
-        if (isModern()) element.classList.add("btn", "btn-" + (variant || buttonVariant(element)), "btn-sm");
-        else element.classList.add(active(element) ? "style10s" : "style10");
+        var selected = active(element);
+        if (isModern()) syncOwnedClasses(element, ["btn", "btn-" + (variant || buttonVariant(element)), "btn-sm"]);
+        else syncOwnedClasses(element, [selected ? "style10s" : "style10"]);
         return element;
     }
 
     function applyNav(element) {
         if (!element) return element;
-        reset(element);
+        var selected = active(element);
         if (isModern()) {
-            element.classList.add("list-group-item", "list-group-item-action");
-            element.classList.toggle("active", active(element));
+            syncOwnedClasses(element, ["list-group-item", "list-group-item-action"]);
+            element.classList.toggle("active", selected);
         } else {
-            element.classList.add(active(element) ? "style10s" : "style10");
+            syncOwnedClasses(element, [selected ? "style10s" : "style10"]);
         }
         return element;
     }
 
     function applyTab(element) {
         if (!element) return element;
-        reset(element);
+        var selected = active(element);
         if (isModern()) {
-            element.classList.add("nav-link");
-            element.classList.toggle("active", active(element));
+            syncOwnedClasses(element, ["nav-link"]);
+            element.classList.toggle("active", selected);
         } else {
-            element.classList.add(active(element) ? "style3sel" : "style3x");
+            syncOwnedClasses(element, [selected ? "style3sel" : "style3x"]);
         }
         return element;
     }
 
     function applyCard(element) {
         if (!element) return element;
-        reset(element);
-        element.classList.add(isModern() ? "card" : "style10");
+        syncOwnedClasses(element, [isModern() ? "card" : "style10"]);
         return element;
     }
 
     function applyControl(element) {
         if (!element) return element;
-        reset(element);
         if (isModern()) {
             var type = String(element.type || "").toLowerCase();
-            if (type === "checkbox" || type === "radio") element.classList.add("form-check-input");
-            else if (String(element.tagName || "").toLowerCase() === "select") element.classList.add("form-select");
-            else element.classList.add("form-control");
+            if (type === "checkbox" || type === "radio") syncOwnedClasses(element, ["form-check-input"]);
+            else if (String(element.tagName || "").toLowerCase() === "select") syncOwnedClasses(element, ["form-select"]);
+            else syncOwnedClasses(element, ["form-control"]);
+        } else {
+            syncOwnedClasses(element, []);
         }
         return element;
     }
 
     function applyTable(element) {
         if (!element) return element;
-        reset(element);
-        if (isModern()) element.classList.add("table", "table-sm", "table-hover");
-        else element.classList.add("style10");
+        syncOwnedClasses(element, isModern() ? ["table", "table-sm", "table-hover"] : ["style10"]);
         return element;
     }
 
     function applyMuted(element) {
         if (!element) return element;
-        element.classList.remove("text-body-secondary");
-        if (isModern()) element.classList.add("text-body-secondary");
+        var modern = isModern();
+        if (modern && !element.classList.contains("text-body-secondary")) element.classList.add("text-body-secondary");
+        else if (!modern && element.classList.contains("text-body-secondary")) element.classList.remove("text-body-secondary");
         return element;
     }
 
     function applyStatus(element) {
         if (!element || !element.classList) return element;
-        ["text-warning", "text-info", "text-success", "text-danger", "text-primary"].forEach(function (name) { element.classList.remove(name); });
-        if (!isModern()) return element;
-        if (/pending/i.test(element.className)) element.classList.add("text-warning");
-        else if (/executing/i.test(element.className)) element.classList.add("text-info");
-        else if (/(approved|completed|ready)/i.test(element.className)) element.classList.add("text-success");
-        else if (/(failed|rejected|error)/i.test(element.className)) element.classList.add("text-danger");
-        else element.classList.add("text-primary");
+        var names = ["text-warning", "text-info", "text-success", "text-danger", "text-primary"];
+        var desired = "";
+        if (isModern()) {
+            if (/pending/i.test(element.className)) desired = "text-warning";
+            else if (/executing/i.test(element.className)) desired = "text-info";
+            else if (/(approved|completed|ready)/i.test(element.className)) desired = "text-success";
+            else if (/(failed|rejected|error)/i.test(element.className)) desired = "text-danger";
+            else desired = "text-primary";
+        }
+        names.forEach(function (name) {
+            if (name !== desired && element.classList.contains(name)) element.classList.remove(name);
+        });
+        if (desired && !element.classList.contains(desired)) element.classList.add(desired);
         return element;
     }
 
@@ -134,7 +147,8 @@
         root = root || document;
         var modern = isModern();
         queryAll(root, ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel", function (element) {
-            element.setAttribute("data-mesh-ui", modern ? "modern" : "classic");
+            var value = modern ? "modern" : "classic";
+            if (element.getAttribute("data-mesh-ui") !== value) element.setAttribute("data-mesh-ui", value);
         });
         queryAll(root, ".mc-shared-toolbar-button,.mc-tree-script-action,.mc-results-view-button,.mc-results-copy-button,.mc-definition-remove,.mc-command-run-button,.mc-admin-primary,.mc-admin-secondary,.mc-admin-toolbar button,.mc-admin-inline-actions button,.mc-admin-table-actions button,.mc-move-dialog-actions button,.sirk-quick-command-fallback-close,.sirk-quick-command-submit", function (element) { applyButton(element); });
         queryAll(root, ".mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button,.mc-admin-tabs>button,.mc-admin-settings-subnav button,.mc-admin-settings-nav button", applyNav);
@@ -149,30 +163,54 @@
 
     function schedule(root) {
         if (!root && typeof document === "undefined") return;
+        if (root === document || !scheduledRoot) scheduledRoot = root || document;
         if (scheduled) return;
         scheduled = true;
-        window.setTimeout(function () {
+        Promise.resolve().then(function () {
+            var target = scheduledRoot || (typeof document !== "undefined" ? document : null);
             scheduled = false;
-            refresh(root || (typeof document !== "undefined" ? document : null));
-        }, 0);
+            scheduledRoot = null;
+            refresh(target);
+        });
+    }
+
+    function pluginRoot(node) {
+        if (!node || node.nodeType !== 1) return null;
+        if (node.matches && node.matches(PLUGIN_ROOT_SELECTOR)) return node;
+        if (node.closest) {
+            var parent = node.closest(PLUGIN_ROOT_SELECTOR);
+            if (parent) return parent;
+        }
+        if (node.querySelector) return node.querySelector(PLUGIN_ROOT_SELECTOR);
+        return null;
     }
 
     function installObserver() {
         if (typeof document === "undefined" || window.__sirkMeshThemeObserver || typeof MutationObserver !== "function") return;
         var target = document.body || document.documentElement;
         if (!target) return;
-        window.__sirkMeshThemeObserver = new MutationObserver(function (records) {
-            var relevant = records.some(function (record) {
-                if (record.type === "attributes") return true;
-                return Array.prototype.some.call(record.addedNodes || [], function (node) {
-                    if (!node || node.nodeType !== 1) return false;
-                    if (node.matches && node.matches(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog")) return true;
-                    return !!(node.querySelector && node.querySelector(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog"));
+
+        var contentObserver = new MutationObserver(function (records) {
+            var roots = [];
+            records.forEach(function (record) {
+                Array.prototype.forEach.call(record.addedNodes || [], function (node) {
+                    var root = pluginRoot(node);
+                    if (root && roots.indexOf(root) < 0) roots.push(root);
                 });
             });
-            if (relevant) schedule(document);
+            roots.forEach(refresh);
         });
-        window.__sirkMeshThemeObserver.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+        contentObserver.observe(target, { childList: true, subtree: true });
+        window.__sirkMeshThemeObserver = contentObserver;
+
+        var themeObserver = new MutationObserver(function () { schedule(document); });
+        if (document.documentElement) {
+            themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+        }
+        if (document.body && document.body !== document.documentElement) {
+            themeObserver.observe(document.body, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+        }
+        window.__sirkMeshThemeAttributeObserver = themeObserver;
     }
 
     window.MeshThemeAdapter = {

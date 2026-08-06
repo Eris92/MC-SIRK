@@ -22,11 +22,13 @@ assert.ok(sharedUi.indexOf(".mc-shared-page>.mc-shared-toolbar-host") >= 0 &&
     "Toolbar and all workspace columns must not insert a competing plugin background.");
 assert.strictEqual(sharedUi.indexOf("--mc-shared-page-surface"), -1,
     "The removed plugin-owned workspace surface must not return.");
-assert.ok(themeAdapter.indexOf('element.classList.add(isModern() ? "card" : "style10")') >= 0,
+assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, [isModern() ? "card" : "style10"])') >= 0,
     "Panels and cards must use the active Modern or Classic MeshCentral surface class.");
 assert.ok(lifecycle.indexOf("syncNativeContainers") >= 0 &&
     lifecycle.indexOf(".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel") >= 0,
     "Native surface classes must be restored after every asynchronous module render.");
+assert.ok(themeAdapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
+    "Native surface classes must be updated idempotently without flicker.");
 [
     [approval, "background-color:#000", "Approval Center"],
     [automation, "background-color:#000", "My Scripts"],

@@ -15,16 +15,19 @@ var adminView = read("views/SIRK-Portal.handlebars");
 
 assert.ok(themeAdapter.indexOf("window.MeshThemeAdapter") >= 0,
     "All plugin controls must be decorated by one native MeshCentral adapter.");
-assert.ok(themeAdapter.indexOf('element.classList.add("btn", "btn-" +') >= 0,
+assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, ["btn", "btn-" +') >= 0,
     "Modern MeshCentral controls must use the host Bootstrap button classes.");
-assert.ok(themeAdapter.indexOf('element.classList.add(active(element) ? "style10s" : "style10")') >= 0,
+assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
     "Classic MeshCentral controls must use native style10/style10s classes.");
-assert.ok(themeAdapter.indexOf('element.classList.add("btn", "btn-" + (variant || buttonVariant(element)), "btn-sm")') >= 0,
+assert.ok(themeAdapter.indexOf('"btn-" + (variant || buttonVariant(element))') >= 0 &&
+    themeAdapter.indexOf('"btn-sm"') >= 0,
     "Run, Approval and administration actions must obtain their Modern variant from the adapter.");
 assert.ok(themeAdapter.indexOf('element.classList.contains("sirk-action-approve")') >= 0 &&
     themeAdapter.indexOf('element.classList.contains("sirk-action-reject")') >= 0 &&
     themeAdapter.indexOf('element.classList.contains("mc-command-run-button")') >= 0,
     "Semantic action variants must remain represented without a private color palette.");
+assert.ok(themeAdapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
+    "The native button adapter must update classes idempotently without repaint feedback.");
 assert.strictEqual(mainCss.indexOf("--sirk-button"), -1,
     "Plugin CSS must not reintroduce a private action-button palette.");
 assert.strictEqual(mainCss.indexOf("One live-theme action-button contract"), -1,

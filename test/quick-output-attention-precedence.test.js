@@ -31,9 +31,11 @@ assert.ok(lifecycle.indexOf('button.classList.toggle("text-danger", modern && at
 assert.ok(lifecycle.indexOf("sirk-quick-output-state-style") >= 0 &&
     lifecycle.indexOf("sirk-quick-command-output-toggle\\.has-output-attention") >= 0,
     "Historical hard-coded output attention colors must be removed from generated styles.");
-assert.ok(adapter.indexOf('element.classList.add("btn", "btn-" +') >= 0 &&
-    adapter.indexOf('element.classList.add(active(element) ? "style10s" : "style10")') >= 0,
+assert.ok(adapter.indexOf('syncOwnedClasses(element, ["btn", "btn-" +') >= 0 &&
+    adapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
     "Output actions must return to native Modern or Classic button styling.");
+assert.ok(adapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
+    "Output action styling must not reset valid native classes and trigger repaint loops.");
 
 [
     [desktopCss, "--sdc-focus", "Quick-owned focus palette"],
