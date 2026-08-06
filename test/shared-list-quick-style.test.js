@@ -13,6 +13,9 @@ var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.css"
         name + " must be normalized by the actual shared-list runtime.");
 });
 
+assert.ok(runtime.indexOf('var CONTRACT_VERSION = "1.8.15"') >= 0 &&
+    runtime.indexOf('document.documentElement.setAttribute("data-sirk-list-contract-version", CONTRACT_VERSION)') >= 0,
+    "The browser must expose the exact shared-list runtime version for diagnostics.");
 assert.ok(runtime.indexOf('element.classList.add("sirk-shared-list-item")') >= 0 &&
     runtime.indexOf('element.setAttribute("data-sirk-list-contract", "1")') >= 0,
     "Every real row must receive the canonical class and ownership marker.");
@@ -34,8 +37,12 @@ assert.ok(runtime.indexOf("moveStatusToIcon(element)") >= 0 &&
     runtime.indexOf("element.classList.remove(name)") >= 0,
     "Approval semantic status colors must be removed from the complete row and moved to its icon.");
 
-assert.ok(runtime.indexOf("button.sirk-shared-list-item.list-group-item.list-group-item-action[data-sirk-list-contract") >= 0,
-    "The final list style must have enough specificity to override historical module and Quick selectors.");
+assert.ok(runtime.indexOf('button.sirk-shared-list-item.sirk-shared-list-item[data-sirk-list-contract="1"][data-sirk-list-contract="1"]') >= 0,
+    "The final visual owner must depend only on the SIRK marker, not MeshCentral or Bootstrap item classes.");
+assert.strictEqual(runtime.indexOf("sirk-shared-list-item.list-group-item.list-group-item-action"), -1,
+    "The final visual selector must not require list-group-item classes.");
+assert.strictEqual(runtime.indexOf("sirk-shared-list-item.nav-link"), -1,
+    "The final visual selector must not require nav-link classes.");
 assert.ok(runtime.indexOf("grid-template-columns:24px minmax(0,1fr)!important") >= 0 &&
     quick.indexOf("grid-template-columns:24px minmax(0,1fr)") >= 0,
     "All rows must use the same icon and label tracks as Quick.");
@@ -54,7 +61,8 @@ assert.ok(runtime.indexOf(".sirk-quick-command-categories > button") >= 0 &&
     "Both Quick columns must be explicitly covered by the shared contract.");
 assert.ok(runtime.indexOf("background-color:var(--bs-body-bg)!important") >= 0,
     "The first, second and details columns must use the same native surface.");
-assert.ok(runtime.indexOf("new MutationObserver") >= 0 && runtime.indexOf("adapter.refresh = function") >= 0,
-    "The contract must be re-applied after asynchronous renders and theme refreshes.");
+assert.ok(runtime.indexOf("window.__sirkSharedListObserver.disconnect()") >= 0 &&
+    runtime.indexOf("adapter.__sirkSharedListContractVersion = CONTRACT_VERSION") >= 0,
+    "A new release must replace the previous observer and adapter contract instead of keeping stale runtime code.");
 
-console.log("Single Approval, Commands, My Scripts and Quick list interaction owner: OK");
+console.log("Class-independent Approval, Commands, My Scripts and Quick list interaction owner: OK");
