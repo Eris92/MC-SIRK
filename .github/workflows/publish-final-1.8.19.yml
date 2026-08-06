@@ -1,0 +1,91 @@
+name: Final publish SIRK 1.8.19
+
+on:
+  push:
+    branches:
+      - publish/1.8.19-final
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-sirk-1.8.19-final-v2
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fetch and apply verified patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin fix/ui-admin-audit-1.8.19
+          mapfile -t parts < <(git ls-tree -r --name-only origin/fix/ui-admin-audit-1.8.19 | grep '^scripts/patches/apply-1\.8\.19\.part[0-9][0-9]$' | sort)
+          test "${#parts[@]}" -eq 10
+          git checkout origin/fix/ui-admin-audit-1.8.19 -- "${parts[@]}"
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib, subprocess, sys, zlib
+          parts = sorted(Path('scripts/patches').glob('apply-1.8.19.part[0-9][0-9]'))
+          payload = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+          expected = '396668bc86fff78eec27390f79121f4853d8fc9d6753f6c2c70cb0a1e4d0010c'
+          actual = hashlib.sha256(payload.encode('ascii')).hexdigest()
+          if actual != expected: raise SystemExit('Patch SHA256 mismatch: ' + actual)
+          target = Path('/tmp/apply-1.8.19.py')
+          target.write_bytes(zlib.decompress(base64.b64decode(payload)))
+          subprocess.check_call([sys.executable, str(target)])
+          PY
+      - name: Validate and test
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./package.json').version")" = "1.8.19"
+          test "$(node -p "require('./config.json').version")" = "1.8.19"
+          git diff --check
+          node --check server/core/audit-log.js
+          node --check server/core/runtime.js
+          node --check server/modules/commands/index.js
+          node --check public/shared/runtime.js
+          node --check public/shared/ui/page.js
+          node --check public/shared/ui/status-nav.js
+          node --check public/shared/ui/tree.js
+          node --check public/modules/commands/index.js
+          node --check public/native/desktop-commands.js
+          node --check web/admin/admin.js
+          npm test
+      - name: Publish clean main
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f scripts/patches/apply-1.8.19.part[0-9][0-9]
+          rm -f .github/workflows/apply-ui-admin-audit-1.8.19.yml
+          rm -f .github/workflows/finalize-1.8.19.yml
+          rm -f .github/workflows/publish-1.8.19.yml
+          rm -f .github/workflows/publish-final-1.8.19.yml
+          rm -f tmp.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Release SIRK Management Platform 1.8.19"
+          git push origin HEAD:main
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag -a v1.8.19 -m "SIRK Management Platform 1.8.19"
+          git push origin v1.8.19
+          gh release create v1.8.19 --repo "$GITHUB_REPOSITORY" --title "SIRK Management Platform 1.8.19" --notes-file docs/releases/1.8.19.md --latest
