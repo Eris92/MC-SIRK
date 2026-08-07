@@ -193,13 +193,25 @@ var context = {
         SharedToolbarConfig: { definitions: { collapse: {} } },
         SharedPage: {
             mount: function (options) {
-                var details = new Element("div");
-                options.container.appendChild(details);
+                var root = options.container;
+                var primary = new Element("section");
+                var secondary = new Element("section");
+                var details = new Element("section");
+                primary.className = "mc-shared-primary";
+                secondary.className = "mc-shared-secondary";
+                details.className = "mc-shared-details";
+                root.appendChild(primary);
+                root.appendChild(secondary);
+                root.appendChild(details);
                 return {
+                    root: root,
+                    primary: primary,
+                    secondary: secondary,
                     details: details,
                     layout: { clear: function () {}, isCollapsed: function () { return false; }, toggleCollapsed: function () {} },
                     toolbar: { buttons: {}, setIcon: function () {}, setTitle: function () {}, clearSearch: function () {} },
-                    tabs: { select: function () {} }
+                    tabs: { select: function () {} },
+                    frontend: "meshcentral"
                 };
             }
         }
