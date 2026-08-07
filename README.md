@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.3
+# SIRK Management Platform 0.1.1-dev.4
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -35,7 +35,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.3.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.4.md)
 
 ## Warstwy
 
@@ -120,7 +120,7 @@ Przejście pomiędzy workspace SIRK nie wykonuje pośredniego `go(1)`, dzięki c
 
 Edit i Multi-device są wzajemnie wykluczające się, ale oba przyciski pozostają widoczne, jeżeli użytkownik ma wymagane uprawnienia.
 
-Action track jest mierzony na żywo przez `toolbar-api.js`, ale pozostaje **wewnątrz istniejącej szerokości drugiej kolumny**. Włączenie Edit/Multi nie może poszerzać `secondary`, przesuwać `details` ani blokować aktywacji przy zwiniętej pierwszej kolumnie. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
+Action track jest mierzony na żywo przez `toolbar-api.js`. Edit rozszerza `secondary` wyłącznie o zmierzoną szerokość action rail, Multi zachowuje bazową szerokość drugiej kolumny. Zmiana live geometrii Edit następuje po atomic render commit, dzięki czemu action DOM nie jest ściskany za labelami podczas przełączania trybu. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
 
 ## Quick
 

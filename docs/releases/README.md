@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.3`](0.1.1-dev.3.md) — bieżąca rewizja development z fixem Quick Search height do real MeshCentral re-smoke;
+- [`0.1.1-dev.4`](0.1.1-dev.4.md) — bieżąca rewizja development z atomic Edit lifecycle fix do real MeshCentral re-smoke;
+- [`0.1.1-dev.3`](0.1.1-dev.3.md) — poprzednia rewizja development z fixem Quick Search height;
 - [`0.1.1-dev.2`](0.1.1-dev.2.md) — poprzednia rewizja development do aktualizacji i real MeshCentral re-smoke;
 - [`0.1.1-dev.1`](0.1.1-dev.1.md) — poprzedni pre-1.0 development baseline.
 

@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.4",
+    "date": "2026-08-07",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current main.",
+      "Synchronize Edit action DOM removal/addition with live geometry changes after atomic render commit to prevent transient overlap behind script labels.",
+      "Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.3",
     "date": "2026-08-07",
     "changes": [
