@@ -18,7 +18,9 @@ assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", useModernIcon
 assert.ok(core.indexOf('if (!legacyIcon || leftModern)') >= 0,
     "Menu icons must have an explicit image fallback when the host does not expose legacy .lbtg markup.");
 
-var editStart = tools.indexOf("if (state.editMode) {");
+var actionsStart = tools.indexOf("scriptActions: function (script, config)");
+assert.ok(actionsStart >= 0, "Shared scriptActions owner must remain present.");
+var editStart = tools.indexOf("if (state.editMode) {", actionsStart);
 var editEnd = tools.indexOf("if (state.multiPickMode", editStart);
 var editBlock = tools.slice(editStart, editEnd);
 var credentials = editBlock.indexOf('key: "credentials"');

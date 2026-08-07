@@ -124,8 +124,8 @@ assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
     "Edit must retain the exact rendered first-column width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
     "Edit must retain the pre-mode second-column width as the non-cumulative baseline.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
-    "Four 36 px Edit buttons, three 4 px gaps and a 12 px gutter define the exact Edit expansion rail.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "156px",
+    "Four 36 px Edit buttons and three 4 px gaps define the exact Edit action track.");
 assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], undefined,
     "Edit must not preserve a separate old row width that pushes actions outside the second column.");
 assert.strictEqual(page.classList.contains("is-edit-mode"), true,
@@ -139,7 +139,7 @@ assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
     "Repeated toolbar synchronization must not recapture expanded geometry.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
     "Repeated toolbar synchronization must keep the original second-column baseline without cumulative growth.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "156px",
     "Repeated action measurement must remain stable.");
 
 api.setActive("manage", false);
@@ -161,8 +161,8 @@ assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
     "Multi must preserve the normal first-column width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
     "Multi must preserve the normal second-column width.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "48px",
-    "One 36 px Multi action and the 12 px gutter must fit inside the existing second column.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "36px",
+    "One 36 px Multi action defines the exact Multi action track without consuming text width.");
 api.setActive("multi", false);
 
 layout.classList.toggle("is-collapsed", true);
@@ -175,19 +175,17 @@ assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], undefined,
     "Collapsed Edit must keep the canonical collapsed first-column track instead of capturing a fake expanded width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
     "Collapsed Edit must preserve the same baseline before CSS adds the action rail.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "156px",
     "Collapsed Edit must still expose all action icons within the second column.");
 api.setActive("manage", false);
 
-assert.ok(toolbarCss.indexOf(".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)") >= 0,
-    "Edit must add exactly the measured action rail to the captured normal secondary width.");
-assert.ok(toolbarCss.indexOf(".mc-shared-page.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)") >= 0,
-    "Multi must retain the normal captured secondary width.");
+assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)") >= 0,
+    "Edit and Multi must expand outside the captured text track by the exact action track plus column gap.");
 assert.ok(toolbarCss.indexOf("grid-template-columns:minmax(0,1fr) var(--sirk-actions-width)") >= 0,
     "Action icons must consume space inside the existing second-column row.");
-assert.ok(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width))") >= 0,
-    "Edit expansion must be derived from one captured baseline plus one measured action rail.");
+assert.ok(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap))") >= 0,
+    "Both action modes must preserve the captured text width by adding action track and its column gap outside it.");
 assert.strictEqual(appendedStyles.length, 0,
     "Toolbar geometry must not inject a runtime stylesheet.");
 
-console.log("Edit and Multi keep fixed columns, visible actions and collapsed-mode activation: OK");
+console.log("Edit and Multi preserve text width while reserving exact external action tracks: OK");

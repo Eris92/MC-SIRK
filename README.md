@@ -120,7 +120,7 @@ Przejście pomiędzy workspace SIRK nie wykonuje pośredniego `go(1)`, dzięki c
 
 Edit i Multi-device są wzajemnie wykluczające się, ale oba przyciski pozostają widoczne, jeżeli użytkownik ma wymagane uprawnienia.
 
-Action track jest mierzony na żywo przez `toolbar-api.js`. Edit rozszerza `secondary` wyłącznie o zmierzoną szerokość action rail, Multi zachowuje bazową szerokość drugiej kolumny. Zmiana live geometrii Edit następuje po atomic render commit, dzięki czemu action DOM nie jest ściskany za labelami podczas przełączania trybu. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
+Action track jest mierzony na żywo przez `toolbar-api.js`. Edit i Multi zachowują identyczną szerokość bazowego text tracku; `secondary` rozszerza się tylko o rzeczywistą szerokość action rail oraz jego column gap. Zmiana live geometrii obu trybów następuje po atomic render commit, dzięki czemu pojawienie lub zniknięcie akcji nie zmienia wrappingu ani położenia labeli. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
 
 ## Quick
 

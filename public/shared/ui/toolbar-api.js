@@ -42,18 +42,18 @@
             try {
                 var computed = window.getComputedStyle && window.getComputedStyle(group);
                 var parsedGap = computed && parseFloat(computed.columnGap || computed.gap || "");
-                if (isFinite(parsedGap) && parsedGap >= 0) gap = parsedGap;
+                if (isFinite(parsedGap) && parsedGap >= 0) gap = Math.max(4, parsedGap);
             } catch (error) {}
 
             var width = 0;
             for (var j = 0; j < children.length; j += 1) {
                 var rect = children[j].getBoundingClientRect ? children[j].getBoundingClientRect() : null;
-                width += rect && rect.width ? rect.width : 36;
+                width += Math.max(rect && rect.width ? rect.width : 0, 36);
             }
             if (children.length > 1) width += gap * (children.length - 1);
             widest = Math.max(widest, width);
         }
-        return widest > 0 ? Math.ceil(widest + 12) : 0;
+        return widest > 0 ? Math.ceil(widest) : 0;
     }
 
     function isActionMode(page) {
@@ -99,7 +99,11 @@
         var className = key === "manage" ? "is-edit-mode" : key === "multi" ? "is-multi-mode" : "";
         if (!className) return;
 
-        if (active && !page.classList.contains(className)) captureModeGeometry(page);
+        if (active && !page.classList.contains(className)) {
+            captureModeGeometry(page);
+            var width = measuredActionWidth(page);
+            if (width > 0) setGeometryProperty(page, "--sirk-actions-width", width);
+        }
         page.classList.toggle(className, active);
         if (active) scheduleActionGeometry(page);
         if (!active && !page.classList.contains("is-edit-mode") && !page.classList.contains("is-multi-mode")) {

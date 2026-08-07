@@ -546,6 +546,7 @@
                 favorites: [], favoritesOnly: false, editMode: false,
                 linkPickMode: false, multiPickMode: false, deepLinkApplied: false
             };
+            var actionModeRenderPending = false;
 
             function readPreferences() {
                 try {
@@ -596,6 +597,43 @@
             function stopPickModes(except) {
                 if (except !== "link") state.linkPickMode = false;
                 if (except !== "multi") state.multiPickMode = false;
+            }
+            function syncActionModes(toolbar) {
+                if (!toolbar) return;
+                if (state.editMode) {
+                    toolbar.setActive("manage", true);
+                    toolbar.setActive("multi", false);
+                } else if (state.multiPickMode) {
+                    toolbar.setActive("multi", true);
+                    toolbar.setActive("manage", false);
+                } else {
+                    toolbar.setActive("manage", false);
+                    toolbar.setActive("multi", false);
+                }
+            }
+            function renderActionModeChange(toolbar, onChange) {
+                var change;
+                actionModeRenderPending = true;
+                try { change = onChange ? onChange() : null; }
+                catch (error) {
+                    actionModeRenderPending = false;
+                    syncActionModes(toolbar);
+                    throw error;
+                }
+                if (change && typeof change.then === "function") {
+                    return Promise.resolve(change).then(function (result) {
+                        actionModeRenderPending = false;
+                        syncActionModes(toolbar);
+                        return result;
+                    }, function (error) {
+                        actionModeRenderPending = false;
+                        syncActionModes(toolbar);
+                        throw error;
+                    });
+                }
+                actionModeRenderPending = false;
+                syncActionModes(toolbar);
+                return change;
             }
 
             function openCredentialsEditor(shell, script, onSaved) {
@@ -672,9 +710,11 @@
                 syncToolbar: function (toolbar, mode, selectedScript, config) {
                     if (!toolbar) return; config = config || {}; var scriptsMode = mode !== "results";
                     toolbar.setActive("favorites", state.favoritesOnly && scriptsMode);
-                    toolbar.setActive("manage", state.editMode && scriptsMode);
+                    if (!scriptsMode) {
+                        toolbar.setActive("manage", false);
+                        toolbar.setActive("multi", false);
+                    } else if (!actionModeRenderPending) syncActionModes(toolbar);
                     toolbar.setActive("link", state.linkPickMode && scriptsMode);
-                    toolbar.setActive("multi", state.multiPickMode && scriptsMode);
                     toolbar.setEnabled("favorites", scriptsMode); toolbar.setEnabled("manage", scriptsMode && config.canEdit === true);
                     toolbar.setEnabled("link", scriptsMode); toolbar.setEnabled("multi", scriptsMode && config.enableMulti === true);
                     toolbar.setVisible("manage", config.canEdit === true); toolbar.setVisible("multi", config.enableMulti === true);
@@ -685,31 +725,24 @@
                 },
                 toggleFavorites: function (toolbar, onChange) { state.favoritesOnly = !state.favoritesOnly; savePreferences(); if (toolbar) toolbar.setActive("favorites", state.favoritesOnly); if (onChange) onChange(); },
                 toggleEdit: function (toolbar, onChange) {
-          state.editMode = !state.editMode;
-          stopPickModes("edit");
-          if (toolbar) { toolbar.setActive("link", false); toolbar.setActive("multi", false); }
-          var change;
-          try { change = onChange ? onChange() : null; }
-          catch (error) { if (toolbar) toolbar.setActive("manage", state.editMode); throw error; }
-          if (change && typeof change.then === "function") {
-              return Promise.resolve(change).then(function (result) {
-                  if (toolbar) toolbar.setActive("manage", state.editMode);
-                  return result;
-              }, function (error) {
-                  if (toolbar) toolbar.setActive("manage", state.editMode);
-                  throw error;
-              });
-          }
-          if (toolbar) toolbar.setActive("manage", state.editMode);
-          return change;
-      },
+                    state.editMode = !state.editMode;
+                    stopPickModes("edit");
+                    if (toolbar) toolbar.setActive("link", false);
+                    return renderActionModeChange(toolbar, onChange);
+                },
                 toggleLink: function (toolbar, selectedScript, onChange, onCopied) {
                     if (selectedScript) return copyScriptLink(selectedScript).then(function () { if (toolbar) toolbar.setActive("link", true); setTimeout(function () { if (toolbar) toolbar.setActive("link", false); }, 900); if (onCopied) onCopied(selectedScript); return true; });
                     state.linkPickMode = !state.linkPickMode; stopPickModes(state.linkPickMode ? "link" : "");
                     if (toolbar) { toolbar.setActive("link", state.linkPickMode); toolbar.setActive("multi", false); }
                     if (onChange) onChange(); return Promise.resolve(false);
                 },
-                toggleMulti: function (toolbar, onChange) { state.multiPickMode = !state.multiPickMode; if (state.multiPickMode) state.editMode = false; stopPickModes(state.multiPickMode ? "multi" : ""); if (toolbar) { toolbar.setActive("multi", state.multiPickMode); toolbar.setActive("manage", false); toolbar.setActive("link", false); } if (onChange) onChange(); },
+                toggleMulti: function (toolbar, onChange) {
+                    state.multiPickMode = !state.multiPickMode;
+                    if (state.multiPickMode) state.editMode = false;
+                    stopPickModes(state.multiPickMode ? "multi" : "");
+                    if (toolbar) toolbar.setActive("link", false);
+                    return renderActionModeChange(toolbar, onChange);
+                },
                 openCredentialsEditor: openCredentialsEditor,
                 openMultiExecution: openMultiExecution,
                 scriptActions: function (script, config) {

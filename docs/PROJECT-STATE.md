@@ -74,7 +74,7 @@ secondary: 285–340 px
 collapsed primary: 64 px
 ```
 
-Edit i Multi są wzajemnie wykluczające. Edit może rozszerzyć `secondary` wyłącznie o zmierzoną szerokość action rail; Multi zachowuje bazową szerokość. Zmiana geometrii Edit następuje po atomic render commit, aby stary action DOM nie był ściskany podczas przełączenia.
+Edit i Multi są wzajemnie wykluczające i używają jednego kontraktu geometrii: bazowy text track drugiej kolumny pozostaje bez zmian, a `secondary` rośnie wyłącznie o zmierzoną szerokość action rail oraz jego column gap. Zmiana geometrii obu trybów następuje po atomic render commit, aby action DOM nie ściskał ani nie przestawiał labeli podczas przełączenia.
 
 Moduły renderują do odłączonych elementów i wykonują atomic commit. `renderSequence` odrzuca nieaktualny render. Przejście SIRK -> SIRK nie powinno przechodzić przez pusty stan ani odtwarzać Devices.
 
