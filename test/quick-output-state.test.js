@@ -25,17 +25,28 @@ assert.ok(desktop.indexOf('outputAttention: false') >= 0 && desktop.indexOf('out
 assert.ok(desktop.indexOf('function writeDetailsCollapsed(value)') >= 0 &&
     desktop.indexOf('writePreferences({ quickDetailsCollapsed: state.detailsCollapsed })') >= 0 &&
     desktop.indexOf('if (!state.detailsCollapsed) state.outputAttention = false') >= 0,
-    "The one output visibility mutator must persist collapse state and acknowledge output when opened.");
-assert.ok(desktop.indexOf('function setOutput(panel, value, isError)') >= 0 &&
+    "Opening Output must acknowledge the current result and persist visibility.");
+assert.ok(desktop.indexOf('function setOutput(panel, value, isError, executionOutput)') >= 0 &&
+    desktop.indexOf('var tracked = executionOutput === true') >= 0 &&
+    desktop.indexOf('} else if (tracked) {') >= 0 &&
     desktop.indexOf('if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true') >= 0,
-    "Completed output must raise attention only when the details pane is hidden.");
+    "Only the explicitly tracked execution lifecycle may create unseen-result attention.");
 assert.ok(desktop.indexOf('function transientOutput(value)') >= 0 &&
-    desktop.indexOf('else if (transientOutput(next))') >= 0 &&
     desktop.indexOf('state.outputPending = true') >= 0 &&
     desktop.indexOf('state.outputPending = false') >= 0,
-    "Loading/submission messages must mark output as pending and only final output may clear pending and raise unseen-result attention.");
+    "Execution loading/submission must remain pending until the real result arrives.");
+assert.ok(desktop.indexOf('setOutput(panel, text("loading"), false, true)') >= 0,
+    "Starting a command execution must arm the tracked execution lifecycle.");
+assert.ok(desktop.indexOf('setOutput(panel, text("loading"), false, false)') >= 0,
+    "Ordinary script loading/refresh activity must not arm result attention.");
+assert.ok(desktop.indexOf('setOutput(panel, response.output || text(failed ? "failed" : "completed"), failed, true)') >= 0,
+    "A completed execution result must be the event that can raise hidden-output attention.");
 assert.ok(desktop.indexOf('button.classList.toggle("has-output-attention", state.outputAttention === true)') >= 0,
     "The canonical details button must render unseen-output attention directly from renderer state.");
+
+assert.ok(desktop.indexOf('function applyQuickNav(button, active)') >= 0 &&
+    desktop.indexOf('window.MeshThemeAdapter.nav(button)') >= 0,
+    "Quick selections must apply native selected classes synchronously rather than waiting for an observer.");
 
 var renderStart = desktop.indexOf("function render(panel)");
 var renderEnd = desktop.indexOf("function load(panel)", renderStart);
@@ -62,4 +73,4 @@ assert.strictEqual(desktop.indexOf("data-sirk-output-hidden"), -1,
 assert.strictEqual(desktop.indexOf("MutationObserver"), -1,
     "Quick output state must not depend on DOM or navigation observers.");
 
-console.log("Canonical Quick output state machine: OK");
+console.log("Canonical Quick output attention is raised only by new execution results: OK");
