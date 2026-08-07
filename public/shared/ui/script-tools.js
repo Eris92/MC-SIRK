@@ -62,23 +62,6 @@
         return row;
     }
 
-    function directivesText(rows) {
-        return (rows || []).map(function (item) {
-            return text(item.directive) + ": " + text(item.value);
-        }).join("\n");
-    }
-
-    function parseDirectives(value) {
-        return text(value).split(/\r?\n/).map(function (line) {
-            var index = line.indexOf(":");
-            if (index < 1) return null;
-            return {
-                directive: line.slice(0, index).trim(),
-                value: line.slice(index + 1).trim()
-            };
-        }).filter(function (item) { return item && item.directive && item.value; });
-    }
-
     function nodeName(id) {
         var stores = [window.nodes, window.meshes, window.devices];
         for (var i = 0; i < stores.length; i++) {
