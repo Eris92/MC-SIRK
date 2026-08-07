@@ -4,63 +4,63 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-var root = path.join(__dirname, "..");
+var root = path.resolve(__dirname, "..");
 function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
-var mainCss = read("public/shared/styles/main.css");
-var themeAdapter = read("public/shared/ui/toolbar-config.js");
+var theme = read("public/shared/ui/toolbar-config.js");
 var toolbar = read("public/shared/ui/toolbar.js");
 var toolbarApi = read("public/shared/ui/toolbar-api.js");
+var tools = read("public/shared/ui/script-tools.js");
+var commands = read("public/modules/commands/index.js");
+var automation = read("public/modules/automation/index.js");
 var tree = read("public/shared/ui/tree.js");
-var lifecycle = read("public/shared/ui/settings.js");
-var adminView = read("views/SIRK-Portal.handlebars");
+var css = read("public/shared/ui/toolbar.css");
+var mainCss = read("public/shared/styles/main.css");
 
-assert.ok(themeAdapter.indexOf("window.MeshThemeAdapter") >= 0,
-    "All plugin controls must be decorated by one native MeshCentral adapter.");
-assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, ["btn", "btn-" +') >= 0,
-    "Modern MeshCentral controls must use the host Bootstrap button classes.");
-assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
-    "Classic MeshCentral controls must use native style10/style10s classes.");
-assert.ok(themeAdapter.indexOf('"btn-" + (variant || buttonVariant(element))') >= 0 &&
-    themeAdapter.indexOf('"btn-sm"') >= 0,
-    "Run, Approval and administration actions must obtain their Modern variant from the adapter.");
-assert.ok(themeAdapter.indexOf('element.classList.contains("sirk-action-approve")') >= 0 &&
-    themeAdapter.indexOf('element.classList.contains("sirk-action-reject")') >= 0 &&
-    themeAdapter.indexOf('element.classList.contains("mc-command-run-button")') >= 0,
-    "Semantic action variants must remain represented without a private color palette.");
-assert.ok(themeAdapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
-    "The native button adapter must update classes idempotently without repaint feedback.");
-assert.strictEqual(mainCss.indexOf("--sirk-button"), -1,
-    "Plugin CSS must not reintroduce a private action-button palette.");
-assert.strictEqual(mainCss.indexOf("One live-theme action-button contract"), -1,
-    "The removed SIRK-owned visual button contract must not return.");
+assert.ok(theme.indexOf('"btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-warning", "btn-sm"') >= 0,
+    "MeshThemeAdapter must own the native Bootstrap button variants used by the plugin.");
+assert.ok(theme.indexOf('element.classList.contains("mc-tree-favorite-action") && active(element)') >= 0 &&
+    theme.indexOf('return "warning"') >= 0,
+    "An active per-script Favorite action must use the native warning button variant.");
+assert.ok(theme.indexOf('element.classList.contains("sirk-action-approve")') >= 0 &&
+    theme.indexOf('return "success"') >= 0 &&
+    theme.indexOf('element.classList.contains("sirk-action-reject")') >= 0 &&
+    theme.indexOf('return "danger"') >= 0,
+    "Approval buttons must keep native success/danger variants.");
+assert.ok(theme.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
+    "Classic MeshCentral controls must still use native style10/style10s classes.");
 
-assert.ok(toolbarApi.indexOf('key === "favorites" ? false : value === false') >= 0,
-    "Show favorites must remain clickable while Results is active.");
-assert.ok(toolbarApi.indexOf('/^Show all\\b/i.test(item.title)') >= 0,
-    "The favorites toolbar state must remain visible while Results is active.");
-assert.ok(toolbar.indexOf("function activePage()") >= 0 &&
-    toolbar.indexOf('document.querySelectorAll(".mc-shared-page")') >= 0 &&
-    toolbar.indexOf('page.querySelector(".mc-catalog-results.active,.mc-catalog-results.is-active")') >= 0,
-    "Favorites and Results navigation must resolve the active module page, including Commands device tabs.");
-assert.ok(toolbar.indexOf("leaveResultsAfterFavoritesRender") >= 0 &&
-    toolbar.indexOf("if (catalogRoot) catalogRoot.click()") >= 0,
-    "Show favorites must leave Results immediately, including after an empty filter is cleared.");
+assert.ok(toolbar.indexOf('className = "btn btn-secondary btn-sm mc-shared-toolbar-button mc-portal-toolbar-button"') >= 0,
+    "Shared toolbar buttons must start from a neutral native button contract.");
+assert.ok(toolbarApi.indexOf('item.disabled = key === "favorites" ? false : value === false') >= 0,
+    "Favorites must remain clickable even when the current page is Results.");
+assert.ok(tools.indexOf('toolbar.setActive("favorites", scriptsMode && state.favoritesOnly)') >= 0 &&
+    tools.indexOf('toolbar.setTitle("favorites", state.favoritesOnly ? "Show all scripts" : "Favorites")') >= 0,
+    "SharedScriptTools must own Favorites state/title without a toolbar monkey-patch.");
+
+assert.ok(commands.indexOf('mode = "commands"; treeState.selectedScript = ""; module.api.render();') >= 0,
+    "Commands Favorites must leave Results and return to the command tree directly in the module.");
+assert.ok(automation.indexOf('tools.toggleFavorites(toolbar') >= 0 &&
+    automation.indexOf('mode = "scripts";') >= 0,
+    "My Scripts Favorites must leave Results and return to the script tree directly in the module.");
 
 assert.ok(tree.indexOf("var renderedKeys = Object.create(null)") >= 0 &&
     tree.indexOf("if (renderedKeys[identity]) return") >= 0,
     "Tree rows must render at most one action for each action key.");
 assert.ok(tree.indexOf('action.classList.toggle("is-active", active)') >= 0 &&
     tree.indexOf('action.setAttribute("aria-pressed", active ? "true" : "false")') >= 0,
-    "Favorite state must survive the native button synchronization lifecycle.");
-assert.ok(lifecycle.indexOf('root.querySelectorAll(".mc-tree-favorite-action")') >= 0 &&
-    lifecycle.indexOf('button.classList.toggle("text-warning", modern && selected)') >= 0,
-    "Selected favorites must use the native MeshCentral warning color like credential keys.");
+    "Per-script action state must be explicit and survive native theme synchronization.");
 
-var adapterIndex = adminView.indexOf("asset=shared-ui/toolbar-config.js");
-var lifecycleIndex = adminView.indexOf("asset=shared-ui/settings.js");
-var adminJsIndex = adminView.indexOf("asset=admin.js");
-assert.ok(adapterIndex >= 0 && lifecycleIndex > adapterIndex && adminJsIndex > lifecycleIndex,
-    "Administration must load the shared native adapter and lifecycle before rendering its controls.");
+assert.ok(css.indexOf(".mc-tree-script-action") >= 0 && css.indexOf(".mc-shared-toolbar-button") >= 0,
+    "Shared toolbar/script actions must have one static stylesheet owner.");
+assert.strictEqual(css.indexOf("#ff"), -1,
+    "Shared toolbar CSS must not introduce a private hard-coded palette.");
+assert.strictEqual(mainCss.indexOf("mc-tree-favorite-action"), -1,
+    "Favorite button state must be themed by MeshThemeAdapter, not by a duplicate main.css override.");
 
-console.log("Native MeshCentral buttons, unique favorites and Commands device-page behavior: OK");
+[theme, toolbar, toolbarApi, tools].forEach(function (source) {
+    assert.strictEqual(source.indexOf('document.createElement("style")'), -1,
+        "Button/theming modules must not inject runtime styles.");
+});
+
+console.log("Native button variants and direct Favorites behavior: OK");
