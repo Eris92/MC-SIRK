@@ -1,0 +1,48 @@
+name: Agent admin batch
+
+on:
+  push:
+    branches: [issues-121-122-admin]
+    paths:
+      - '.github/workflows/agent-admin-batch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: issues-121-122-admin
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply targeted patches
+        run: python3 .github/agent_admin_batch.py
+      - name: Syntax and targeted tests
+        run: |
+          node --check web/admin/admin.js
+          node --check public/shared/ui/settings.js
+          node --check public/shared/runtime.js
+          node --check public/shared/module-shell.js
+          node test/admin-settings-save.test.js
+          node test/admin-permissions-ui.test.js
+          node test/admin-permissions-settings.test.js
+          node test/admin-icon-mode-security.test.js
+          node test/admin-icon-mode-runtime-flow.test.js
+          node test/admin-disclosure-contract.test.js
+          node test/modern-left-menu-native-icon.test.js
+          node test/native-left-menu-contract.test.js
+          node test/workspace-native-view-icons.test.js
+      - name: Commit verified batch
+        run: |
+          rm .github/agent_admin_batch.py .github/workflows/agent-admin-batch.yml
+          git config user.name "Eris92"
+          git config user.email "43513086+Eris92@users.noreply.github.com"
+          git add web/admin/admin.js web/admin/admin.css public/shared/ui/settings.js public/shared/runtime.js public/shared/module-shell.js test .github/agent_admin_batch.py .github/workflows/agent-admin-batch.yml
+          git commit -m "fix: apply admin icon mode and disclosure contracts"
+          git push origin HEAD:issues-121-122-admin
