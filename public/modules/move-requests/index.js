@@ -102,6 +102,15 @@
         if (dialog && dialog.parentNode) dialog.parentNode.removeChild(dialog);
     }
 
+    function setDialogStatus(status, state, message) {
+        if (!status) return;
+        status.className = "mc-move-dialog-status" + (state ? " mc-results-status mc-results-status-" + state : "");
+        status.textContent = String(message || "");
+        if (state && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
+            window.MeshThemeAdapter.status(status);
+        }
+    }
+
     function openMoveDialog(nodeId) {
         nodeId = String(nodeId || "");
         if (!nodeId) {
@@ -162,7 +171,7 @@
 
             if (!select.options.length) {
                 select.disabled = true;
-                status.textContent = "No target group is available.";
+                setDialogStatus(status, "failed", "No target group is available.");
             }
 
             var actions = document.createElement("div");
@@ -180,15 +189,19 @@
             submit.className = "btn btn-primary";
             submit.textContent = "Submit request";
             submit.disabled = !select.options.length;
+            var submitting = false;
+            var submitted = false;
             submit.onclick = function () {
+                if (submitting || submitted) return;
                 var option = select.options[select.selectedIndex];
                 if (!option) {
-                    status.textContent = "Select a target group.";
+                    setDialogStatus(status, "failed", "Select a target group.");
                     return;
                 }
 
+                submitting = true;
                 submit.disabled = true;
-                status.textContent = "Submitting...";
+                setDialogStatus(status, "pending", "Submitting...");
 
                 module.api.post("submit", {
                     nodeId: nodeId,
@@ -198,11 +211,15 @@
                     targetMeshName: option.textContent,
                     note: note.value || ""
                 }).then(function () {
-                    closeDialog(overlay);
-                    window.alert("Move request was created in Approval Center.");
+                    submitting = false;
+                    submitted = true;
+                    submit.disabled = true;
+                    setDialogStatus(status, "completed", "Request sent.");
                 }).catch(function (error) {
-                    status.textContent = error.message || String(error);
-                    submit.disabled = false;
+                    submitting = false;
+                    submitted = false;
+                    setDialogStatus(status, "failed", error.message || String(error));
+                    submit.disabled = !select.options.length;
                 });
             };
             actions.appendChild(submit);
