@@ -684,7 +684,25 @@
                     updateTitle(toolbar, "multi", state.multiPickMode ? "Close multi-device mode" : "Show multi-device icons beside scripts");
                 },
                 toggleFavorites: function (toolbar, onChange) { state.favoritesOnly = !state.favoritesOnly; savePreferences(); if (toolbar) toolbar.setActive("favorites", state.favoritesOnly); if (onChange) onChange(); },
-                toggleEdit: function (toolbar, onChange) { state.editMode = !state.editMode; stopPickModes("edit"); if (toolbar) { toolbar.setActive("manage", state.editMode); toolbar.setActive("link", false); toolbar.setActive("multi", false); } if (onChange) onChange(); },
+                toggleEdit: function (toolbar, onChange) {
+          state.editMode = !state.editMode;
+          stopPickModes("edit");
+          if (toolbar) { toolbar.setActive("link", false); toolbar.setActive("multi", false); }
+          var change;
+          try { change = onChange ? onChange() : null; }
+          catch (error) { if (toolbar) toolbar.setActive("manage", state.editMode); throw error; }
+          if (change && typeof change.then === "function") {
+              return Promise.resolve(change).then(function (result) {
+                  if (toolbar) toolbar.setActive("manage", state.editMode);
+                  return result;
+              }, function (error) {
+                  if (toolbar) toolbar.setActive("manage", state.editMode);
+                  throw error;
+              });
+          }
+          if (toolbar) toolbar.setActive("manage", state.editMode);
+          return change;
+      },
                 toggleLink: function (toolbar, selectedScript, onChange, onCopied) {
                     if (selectedScript) return copyScriptLink(selectedScript).then(function () { if (toolbar) toolbar.setActive("link", true); setTimeout(function () { if (toolbar) toolbar.setActive("link", false); }, 900); if (onCopied) onCopied(selectedScript); return true; });
                     state.linkPickMode = !state.linkPickMode; stopPickModes(state.linkPickMode ? "link" : "");
