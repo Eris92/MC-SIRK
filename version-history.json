@@ -6,6 +6,9 @@
       "Complete the pre-handoff cleanup and remove legacy compatibility layers.",
       "Consolidate native MeshCentral theme, workspace layout, Collapse and Quick state ownership.",
       "Use atomic module rendering and avoid intermediate Devices redraws between SIRK workspaces.",
+      "Route SIRK action history through native MeshCentral Events without standalone audit storage or a Logs tab.",
+      "Persist General icon mode through the canonical admin endpoint and keep Approval semantic colors on icons only.",
+      "Stop SIRK from styling the native Devices toolbar and Plugins tab.",
       "Synchronize release metadata, documentation and CI with version 1.8.20 and Node.js 24.",
       "Reset the public version history to the verified 1.8.20 handoff baseline; earlier development history remains available in Git and docs/releases."
     ]
