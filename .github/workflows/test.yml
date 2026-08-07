@@ -40,6 +40,7 @@ jobs:
 
           state = Path('docs/PROJECT-STATE.md')
           text = state.read_text().replace('0.1.1-dev.3', '0.1.1-dev.4')
+          text = text.replace('Current version: `0.1.1-dev.4`  \n', 'Current version: `0.1.1-dev.4`\n', 1)
           old_state = 'Edit i Multi są wzajemnie wykluczające. Włączenie trybu nie może poszerzać `secondary` ani przesuwać `details`.'
           new_state = 'Edit i Multi są wzajemnie wykluczające. Edit może rozszerzyć `secondary` wyłącznie o zmierzoną szerokość action rail; Multi zachowuje bazową szerokość. Zmiana geometrii Edit następuje po atomic render commit, aby stary action DOM nie był ściskany podczas przełączenia.'
           if old_state not in text:
