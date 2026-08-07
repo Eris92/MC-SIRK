@@ -9,6 +9,7 @@ var adapter = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar
 var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
 var settings = fs.readFileSync(path.join(root, "public", "shared", "ui", "settings.js"), "utf8");
 var layout = fs.readFileSync(path.join(root, "public", "shared", "ui", "layout.js"), "utf8");
+var shell = fs.readFileSync(path.join(root, "public", "shared", "module-shell.js"), "utf8");
 
 assert.ok(adapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
     "The native adapter must update only classes whose desired state changed.");
@@ -35,9 +36,18 @@ assert.strictEqual(settings.indexOf("installSynchronousToolbarTheme"), -1,
 assert.strictEqual(settings.indexOf("MutationObserver"), -1,
     "Settings must not duplicate the canonical theme adapter observer.");
 
-assert.ok(layout.indexOf("layout.clear = function () {}") >= 0,
-    "Shared rendering must suppress the legacy blank-layout clear step.");
-assert.ok(layout.indexOf("renderQueued = true") >= 0,
-    "Overlapping clicks must queue one final render instead of repainting concurrently.");
+assert.ok(layout.indexOf("clear: function ()") >= 0 &&
+    layout.indexOf('primary.innerHTML = ""') >= 0 &&
+    layout.indexOf('secondary.innerHTML = ""') >= 0 &&
+    layout.indexOf('details.innerHTML = ""') >= 0,
+    "Layout clear must remain an explicit API operation instead of an implicit render side effect.");
+assert.ok(shell.indexOf('var nextSecondary = document.createElement("section")') >= 0 &&
+    shell.indexOf('var nextDetails = document.createElement("section")') >= 0,
+    "Module rendering must build secondary and details content off the live page.");
+assert.ok(shell.indexOf("replaceChildren(realSecondary, nextSecondary)") >= 0 &&
+    shell.indexOf("replaceChildren(realDetails, nextDetails)") >= 0,
+    "Atomic render commit must replace live content only after the next render is ready.");
+assert.ok(shell.indexOf("state.renderSequence") >= 0 && shell.indexOf("sequence !== state.renderSequence") >= 0,
+    "Stale overlapping renders must be discarded instead of repainting over newer state.");
 
-console.log("Native theme adapter and toolbar rendering have no observer feedback loop: OK");
+console.log("Native theme adapter and atomic module rendering have no feedback or blank-render loop: OK");
