@@ -1,5 +1,6 @@
-# SIRK Management Platform 1.8.21
+# SIRK Management Platform 0.1.1-dev.1
 
+**Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
 **Nazwa wyświetlana:** `SIRK Management Platform`  
@@ -8,6 +9,16 @@
 SIRK Management Platform jest pluginem działającym w natywnym interfejsie MeshCentral. Zawiera backend, panel administracyjny, My Scripts, Commands, Approval Center, Device Transfers, integracje i mechanizmy wykonywania poleceń na urządzeniach.
 
 Repozytorium nie utrzymuje kompatybilności z testową strukturą `MyCompany` ani historycznymi warstwami naprawczymi runtime/DOM.
+
+## Wersjonowanie
+
+Projekt nie osiągnął jeszcze `1.0.0`.
+
+Preferowana konwencja development to `0.1.1.X`. Ponieważ npm wymaga poprawnego SemVer, repo reprezentuje tę samą rewizję jako `0.1.1-dev.X`, np. `0.1.1.42 -> 0.1.1-dev.42`.
+
+Historyczne numery `1.8.x` były wewnętrzną numeracją developmentu i nie są podstawą kolejnych wersji. Pierwszy świadomie zaakceptowany kompletny produkt jest zarezerwowany dla `1.0.0`.
+
+Szczegóły: [`docs/agent/14-Agent-Wersjonowanie-Pre1.md`](docs/agent/14-Agent-Wersjonowanie-Pre1.md).
 
 ## Dokumentacja kanoniczna
 
@@ -24,12 +35,12 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Release notes 1.8.21](docs/releases/1.8.21.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.1-draft.md)
 
 ## Warstwy
 
 ```text
-backend Node/MeshCentral       -> server/
+backend Node/MeshCentral        -> server/
 natywna integracja MeshCentral -> public/native/
 frontend współdzielony         -> public/shared/
 renderery modułów              -> public/modules/
