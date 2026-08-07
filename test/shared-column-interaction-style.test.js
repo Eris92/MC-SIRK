@@ -17,7 +17,7 @@ assert.ok(adapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "s
 assert.ok(adapter.indexOf('.mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button') >= 0,
     "Approval, Commands, My Scripts and Quick rows must pass through the same native navigation adapter.");
 assert.ok(adapter.indexOf('element.classList.toggle("active", selected)') >= 0,
-    "Modern selected rows must expose the native active state instead of plugin-owned selection CSS.");
+    "Modern selected rows must expose the native active state instead of plugin-owned selection colors.");
 
 [
     [toolbar, "--bs-list-group-action-hover-bg", "duplicated Bootstrap hover styling in toolbar CSS"],
@@ -35,17 +35,16 @@ assert.ok(adapter.indexOf('element.classList.toggle("active", selected)') >= 0,
         "Native interaction contract forbids " + entry[2] + ".");
 });
 
-assert.strictEqual(toolbar.indexOf("transform:"), -1,
-    "Toolbar/shared-list styling must not move rows during hover or selection.");
-assert.strictEqual(toolbar.indexOf("scale:"), -1,
-    "Toolbar/shared-list styling must not resize rows during hover or selection.");
-assert.strictEqual(quick.indexOf(".sirk-quick-command-browser button:hover{transform"), -1,
-    "Quick row hover must not use a plugin-owned transform workaround.");
-assert.strictEqual(quick.indexOf(".sirk-quick-command-browser button:active{transform"), -1,
-    "Quick row active state must not use a plugin-owned transform workaround.");
-assert.strictEqual(quick.indexOf("scale:none"), -1,
-    "Quick row/button styling must not use the legacy scale reset workaround.");
+assert.ok(toolbar.indexOf('.mc-shared-page button,.mc-shared-page button:hover,.mc-shared-page button:focus,.mc-shared-page button:active{transform:none!important;scale:none!important;zoom:1!important}') >= 0,
+    "Shared plugin controls must neutralize host transforms that change column geometry.");
+assert.ok(quick.indexOf('.sirk-desktop-commands-panel button:hover') >= 0 &&
+    quick.indexOf('transform:none!important;scale:none!important;zoom:1!important') >= 0,
+    "Quick controls must neutralize host transforms that resize the panel on hover.");
+assert.strictEqual(toolbar.indexOf("--sirk-column-hover"), -1,
+    "Geometry guards must not become a plugin-owned hover palette.");
+assert.strictEqual(quick.indexOf(".sirk-quick-command-browser button:hover{background"), -1,
+    "Quick geometry guards must not own hover colors.");
 assert.ok(quick.indexOf("transform:translateY(-50%)") >= 0,
     "The Desktop edge toggle may retain its positioning transform because it is geometry, not row interaction styling.");
 
-console.log("Approval, Commands, My Scripts and Quick inherit native row interaction states: OK");
+console.log("Native row colors with scoped non-scaling geometry guards: OK");
