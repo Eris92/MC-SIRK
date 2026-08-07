@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8.21 — 2026-08-07
+
+- Restore visible Edit and Multi-device action icons.
+- Keep Edit/Multi actions inside the existing second-column width, including when the first column is collapsed.
+- Restrict Favorites highlighting to the star icon instead of coloring the entire action control.
+- Apply native MeshCentral selected states synchronously for shared trees and Quick rows.
+- Prevent MeshCentral hover transforms from resizing SIRK-owned Quick/shared surfaces while retaining native hover colors.
+- Make Quick hidden-output attention one-shot per new execution result; refresh, metadata loading and ordinary clicks do not re-arm it.
+- Persist General icon mode across a fresh runtime and prefer the freshly saved admin snapshot over a stale browser bootstrap.
+
+Detailed release notes: `docs/releases/1.8.21.md`.
+
 ## 1.8.20 — 2026-08-07
 
 - Complete the pre-handoff cleanup and remove legacy compatibility layers.
