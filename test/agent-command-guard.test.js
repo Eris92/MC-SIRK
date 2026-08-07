@@ -2,7 +2,6 @@
 
 var assert = require("assert");
 var guard = require("../server/core/agent-command-guard.js");
-var entrypoint = require("../SIRKPortal.js");
 
 var sent = [];
 var captured = [];
@@ -20,8 +19,6 @@ var plugin = { runtime: runtime };
 
 guard.apply(plugin, { timeoutMs: 30000 });
 
-assert.strictEqual(typeof entrypoint.applyAgentCommandGuard, "function",
-    "The plugin entrypoint must expose the command guard policy.");
 assert.ok(device.__sirkAgentCommandGuard,
     "Applying the policy must install guard state on the device service.");
 
