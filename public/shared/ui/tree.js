@@ -45,14 +45,17 @@
         var paths = kind === "script"
             ? '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>'
             : '<path d="M3 6h7l2 2h9v11H3V6Z"/>';
-        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
+        return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + "</svg>";
     }
 
     function createButton(options) {
         var button = document.createElement("button");
         button.type = "button";
         button.className = options.className || "mc-shared-nav-item";
-        button.classList.toggle("active", options.active === true);
+        var active = options.active === true;
+        button.classList.toggle("active", active);
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
 
         if (!appendIcon(button, options.node, options.iconClass)) {
             var fallback = document.createElement("span");
@@ -61,11 +64,15 @@
             button.appendChild(fallback);
         }
 
+        var copy = document.createElement("span");
+        copy.className = "sirk-shared-list-copy";
         var label = document.createElement("span");
         label.className = "mc-tree-label";
         label.textContent = options.title || "";
-        button.appendChild(label);
+        copy.appendChild(label);
+        button.appendChild(copy);
         button.onclick = options.onClick;
+        button.__sirkCopy = copy;
         return button;
     }
 
@@ -83,90 +90,22 @@
         if (!node) return null;
         if (text(node.path) === text(path)) return node;
         var children = node.children || [];
-        for (var index = 0; index < children.length; index++) {
+        for (var index = 0; index < children.length; index += 1) {
             var found = find(children[index], path);
             if (found) return found;
         }
         return null;
     }
 
-    function directActionContainers(row) {
-        var containers = [];
-        Array.prototype.forEach.call(row && row.children || [], function (child) {
-            if (child && child.classList && child.classList.contains("mc-tree-script-actions")) {
-                containers.push(child);
-            }
-        });
-        return containers;
-    }
-
-    function actionCount(container) {
-        if (!container || typeof container.querySelectorAll !== "function") return 0;
-        return container.querySelectorAll(".mc-tree-script-action").length;
-    }
-
-    function canonicalActionContainer(containers) {
-        var marked = containers.filter(function (container) {
-            return container && container.getAttribute &&
-                container.getAttribute("data-sirk-action-container") === "canonical";
-        });
-        var candidates = marked.length ? marked : containers;
-        var canonical = candidates[0] || null;
-        var count = actionCount(canonical);
-
-        candidates.slice(1).forEach(function (candidate) {
-            var candidateCount = actionCount(candidate);
-            if (candidateCount >= count) {
-                canonical = candidate;
-                count = candidateCount;
-            }
-        });
-        return canonical;
-    }
-
-    function normalizeActionContainers(row) {
-        var containers = directActionContainers(row);
-        if (containers.length <= 1) return containers[0] || null;
-
-        var canonical = canonicalActionContainer(containers);
-        containers.forEach(function (container) {
-            if (container !== canonical && container.parentNode === row) row.removeChild(container);
-        });
-        return canonical;
-    }
-
-    function normalizeActionRows(root) {
-        if (!root) return;
-        if (root.matches && root.matches(".mc-tree-script-row")) normalizeActionContainers(root);
-        if (typeof root.querySelectorAll === "function") {
-            Array.prototype.forEach.call(
-                root.querySelectorAll(".mc-tree-script-row"),
-                normalizeActionContainers
-            );
-        }
-    }
-
-    function installActionContainerGuard(root) {
-        if (!root || root.__sirkSingleActionContainerGuard || typeof MutationObserver !== "function") return;
-        var observer = new MutationObserver(function () {
-            normalizeActionRows(root);
-        });
-        observer.observe(root, { childList: true, subtree: true });
-        root.__sirkSingleActionContainerGuard = observer;
-    }
-
     function renderActions(host, script, options) {
         var definitions = typeof options.scriptActions === "function" ? options.scriptActions(script) || [] : [];
-        if (!definitions.length) {
-            normalizeActionContainers(host);
-            return;
-        }
+        var visible = definitions.filter(function (definition) { return definition && definition.hidden !== true; });
+        if (!visible.length) return;
+
         var actions = document.createElement("span");
-        var renderedKeys = Object.create(null);
         actions.className = "mc-tree-script-actions";
-        actions.setAttribute("data-sirk-action-container", "canonical");
-        definitions.forEach(function (definition, index) {
-            if (!definition || definition.hidden === true) return;
+        var renderedKeys = Object.create(null);
+        visible.forEach(function (definition, index) {
             var key = text(definition.key).trim();
             var identity = key || "__anonymous_" + index;
             if (renderedKeys[identity]) return;
@@ -192,7 +131,6 @@
             actions.appendChild(action);
         });
         if (actions.childNodes.length) host.appendChild(actions);
-        normalizeActionContainers(host);
     }
 
     function renderScript(host, script, options) {
@@ -212,20 +150,21 @@
         });
 
         if (script.requiresApproval) {
+            button.__sirkCopy.classList.add("has-approval");
             var indicator = document.createElement("span");
             indicator.className = "mc-tree-approval";
             indicator.textContent = "⌛";
             indicator.title = "Requires approval";
-            button.appendChild(indicator);
+            button.__sirkCopy.appendChild(indicator);
         }
+        delete button.__sirkCopy;
 
         row.appendChild(button);
         renderActions(row, script, options);
         host.appendChild(row);
-        normalizeActionContainers(row);
     }
 
-    function renderDirectory(host, directory, options, depth) {
+    function renderDirectory(host, directory, options) {
         var children = directory.children || [];
         var query = options.query;
 
@@ -234,41 +173,33 @@
         }).forEach(function (folder) {
             var section = document.createElement("section");
             section.className = "mc-tree-folder";
-            section.style.setProperty("--mc-tree-depth", String(depth));
-
-            var header = document.createElement("button");
-            header.type = "button";
-            header.className = "mc-tree-folder-header";
-            var graphic = appendIcon(header, folder, "mc-tree-folder-icon");
-            if (!graphic) {
-                graphic = document.createElement("span");
-                graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon";
-                graphic.innerHTML = lineIcon("folder");
-                header.appendChild(graphic);
-            }
-
-            var title = document.createElement("span");
-            title.className = "mc-tree-label";
-            title.textContent = folder.name;
-            header.appendChild(title);
 
             var body = document.createElement("div");
             body.className = "mc-tree-folder-body";
             var expanded = !!query || options.expanded[folder.path] === true;
             body.hidden = !expanded;
-            header.classList.toggle("is-expanded", expanded);
 
-            header.onclick = function () {
-                expanded = !expanded;
-                options.expanded[folder.path] = expanded;
-                body.hidden = !expanded;
-                header.classList.toggle("is-expanded", expanded);
-            };
+            var header = createButton({
+                className: "mc-tree-folder-header",
+                node: folder,
+                iconClass: "mc-tree-folder-icon",
+                title: folder.name,
+                fallbackKind: "folder",
+                fallbackMarkup: folder.iconMarkup || "",
+                onClick: function () {
+                    expanded = !expanded;
+                    options.expanded[folder.path] = expanded;
+                    body.hidden = !expanded;
+                    header.classList.toggle("is-expanded", expanded);
+                }
+            });
+            delete header.__sirkCopy;
+            header.classList.toggle("is-expanded", expanded);
 
             section.appendChild(header);
             section.appendChild(body);
             host.appendChild(section);
-            renderDirectory(body, folder, options, depth + 1);
+            renderDirectory(body, folder, options);
         });
 
         children.filter(function (item) {
@@ -279,14 +210,12 @@
     window.SharedDirectoryTree = {
         find: find,
         roots: rootNodes,
-        normalizeActionContainers: normalizeActionContainers,
         mount: function (options) {
             options = options || {};
             var rootsHost = options.rootsContainer;
             var treeHost = options.treeContainer;
             var state = options.state || {};
             state.expanded = state.expanded || {};
-            installActionContainerGuard(treeHost);
 
             var roots = rootNodes(options.tree);
             var query = normalize(options.search).trim();
@@ -300,10 +229,12 @@
                 return state;
             }
 
-            if (!state.selectedRoot || !visibleRoots.some(function (root) { return root.path === state.selectedRoot; })) state.selectedRoot = visibleRoots[0].path;
+            if (!state.selectedRoot || !visibleRoots.some(function (root) { return root.path === state.selectedRoot; })) {
+                state.selectedRoot = visibleRoots[0].path;
+            }
 
             visibleRoots.forEach(function (root) {
-                rootsHost.appendChild(createButton({
+                var button = createButton({
                     className: "mc-shared-nav-item mc-tree-root",
                     node: root,
                     title: root.name,
@@ -315,7 +246,9 @@
                         if (typeof options.onRootSelect === "function") options.onRootSelect(root);
                         window.SharedDirectoryTree.mount(options);
                     }
-                }));
+                });
+                delete button.__sirkCopy;
+                rootsHost.appendChild(button);
             });
 
             var selected = visibleRoots.filter(function (root) { return root.path === state.selectedRoot; })[0] || visibleRoots[0];
@@ -330,9 +263,8 @@
                     if (typeof options.onScript === "function") options.onScript(script);
                     window.SharedDirectoryTree.mount(options);
                 }
-            }, 0);
+            });
 
-            normalizeActionRows(treeHost);
             if (!treeHost.childNodes.length) treeHost.textContent = options.emptyFolderText || "This folder is empty.";
             return state;
         }
