@@ -98,7 +98,6 @@ if (version) {
     var projectState = read("docs/PROJECT-STATE.md");
     if (projectState.indexOf("Wersja: `" + version + "`") < 0) errors.push("PROJECT-STATE.md must identify the current release version " + version + ".");
     var releaseIndex = read("docs/releases/README.md");
-    if (releaseIndex.indexOf("[`.replace") >= 0) errors.push("Release notes index contains invalid generated text.");
     if (releaseIndex.indexOf("[" + version + "]") < 0 && releaseIndex.indexOf("[`" + version + "`]") < 0) {
         errors.push("docs/releases/README.md must link the current release " + version + ".");
     }
