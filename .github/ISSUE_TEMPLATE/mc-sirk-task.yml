@@ -1,0 +1,111 @@
+name: MC-SIRK Task
+about: Bug, feature, refactor, performance, security, investigation or release task
+labels: []
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - Bug
+        - Feature
+        - Refactor
+        - Performance
+        - Security
+        - Investigation
+        - Deployment
+        - Release
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend / API / Storage
+        - Native UI / Shared UI
+        - Quick Commands
+        - Commands
+        - My Scripts
+        - Approval Center
+        - Admin panel
+        - MeshCentral integration
+        - Build / CI / Release
+        - Security
+        - Cross-area
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: Jeden logiczny rezultat, który ma zostać osiągnięty.
+      placeholder: Co ma działać po wykonaniu tego Issue?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behavior / problem
+      description: Potwierdzony obecny stan, objaw, błąd lub technical debt.
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Oczekiwane zachowanie po zmianie.
+    validations:
+      required: true
+
+  - type: textarea
+    id: preserve
+    attributes:
+      label: Must preserve
+      description: Istniejące funkcje, UI, kontrakty i zachowania, których nie wolno zepsuć.
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security constraints
+      description: Auth, permissions, secrets, input validation, audit, isolation lub inne ograniczenia bezpieczeństwa.
+
+  - type: textarea
+    id: performance
+    attributes:
+      label: Performance / reuse constraints
+      description: Latency, CPU/RAM, request/render count, polling, handlers, observers, reuse shared owners/classes. Nie wymyślaj benchmarków bez pomiaru.
+
+  - type: textarea
+    id: attempts
+    attributes:
+      label: Previous attempts / evidence
+      description: Logi, screenshoty, wcześniejsze poprawki, nieskuteczne próby lub istotne obserwacje.
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Mierzalne lub obserwowalne warunki uznania zadania za zakończone.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / read constraints
+      description: Najwęższy sensowny start dla agenta: INDEX, entrypoint, bezpośredni owner/consumer i targeted tests. Nie lista całego repo.
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Targeted tests, failure/regression tests, manual verification i ewentualny npm test.
+    validations:
+      required: true
