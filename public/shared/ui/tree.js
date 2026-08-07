@@ -48,6 +48,18 @@
         return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + "</svg>";
     }
 
+    function applyNav(button) {
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
+            window.MeshThemeAdapter.nav(button);
+        }
+    }
+
+    function applyButton(button) {
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {
+            window.MeshThemeAdapter.button(button);
+        }
+    }
+
     function createButton(options) {
         var button = document.createElement("button");
         button.type = "button";
@@ -73,6 +85,7 @@
         button.appendChild(copy);
         button.onclick = options.onClick;
         button.__sirkCopy = copy;
+        applyNav(button);
         return button;
     }
 
@@ -122,12 +135,19 @@
             action.setAttribute("aria-pressed", active ? "true" : "false");
             action.title = definition.title || definition.key || "Action";
             action.setAttribute("aria-label", action.title);
-            action.textContent = definition.icon || "•";
+
+            var icon = document.createElement("span");
+            icon.className = "mc-tree-script-action-icon";
+            icon.classList.toggle("is-favorite-active", identity === "favorite" && active);
+            icon.textContent = definition.icon || "•";
+            action.appendChild(icon);
+
             action.onclick = function (event) {
                 event.preventDefault();
                 event.stopPropagation();
                 if (typeof definition.onClick === "function") definition.onClick(script, event, action);
             };
+            applyButton(action);
             actions.appendChild(action);
         });
         if (actions.childNodes.length) host.appendChild(actions);
