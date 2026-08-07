@@ -36,6 +36,7 @@ MC-SIRK/
 ├── server/
 │   ├── INDEX.md
 │   ├── core/
+│   │   └── mesh-events.js
 │   └── modules/
 │       ├── approval-center/
 │       ├── automation/
@@ -84,7 +85,8 @@ MC-SIRK/
 Cały kod backendu Node/MeshCentral znajduje się w `server/`.
 
 - `server/core/runtime.js` jest jedynym runtime backendu;
-- `server/core/` zawiera storage, security, audyt, integracje i wspólne usługi;
+- `server/core/mesh-events.js` jest jedynym adapterem zdarzeń SIRK do natywnego systemu MeshCentral Events;
+- `server/core/` zawiera storage, security, zdarzenia, integracje i wspólne usługi;
 - `server/modules/` zawiera moduły funkcjonalne;
 - katalogi `core/` i `modules/` w root są zabronione;
 - backend nie może znajdować się w `public/`.
@@ -94,6 +96,8 @@ Jedyny katalog danych runtime:
 ```text
 meshcentral-data/sirk-platform-data
 ```
+
+Plugin nie tworzy osobnego `audit.jsonl`. Akcje SIRK są przekazywane przez `MeshCentral.DispatchEvent()` i zapisywane przez natywny system Events. `audit-log.js` jest zabronioną warstwą równoległego storage.
 
 Plugin nie odczytuje i nie migruje `mycompany-data`.
 
@@ -207,6 +211,8 @@ download-results.js
 script-edit-actions.js
 mesh-plugin-core.js
 quick-output-state.js
+runtime-base.js
+audit-log.js
 ```
 
 ## Panel administracyjny
@@ -219,6 +225,8 @@ web/admin/admin.css
 ```
 
 Kanoniczny obiekt danych panelu to `window.SirkPlatformAdminData`.
+
+Panel nie ma osobnej zakładki Logs. Historia działań należy do natywnego MeshCentral Events.
 
 ## Testy i workflow
 
@@ -239,6 +247,8 @@ Walidatory blokują m.in.:
 - compatibility hot-patche i release-specific DOM contracts;
 - polling i runtime style injection;
 - globalne podmienianie `MutationObserver`;
+- osobny `audit-log.js`, `audit.jsonl` i Logs UI;
+- debugowe `console.log()` w kodzie backendu;
 - niekanoniczne ścieżki loaderów i assetów;
 - rozbieżność wersji `package.json` i `config.json`.
 
