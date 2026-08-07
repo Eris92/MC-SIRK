@@ -35,7 +35,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.1-draft.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.1.md)
 
 ## Warstwy
 

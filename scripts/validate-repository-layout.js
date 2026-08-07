@@ -84,7 +84,7 @@ if (config.name !== "SIRK Management Platform") errors.push("Plugin display name
 if (config.shortName !== "SIRKPortal") errors.push("MeshCentral plugin shortName must be SIRKPortal.");
 if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(config.shortName)) errors.push("MeshCentral plugin shortName must be JavaScript-safe.");
 if (packageJson.name !== "sirk-portal") errors.push("Package name must be sirk-portal.");
-if (!version) errors.push("package.json must contain a release version.");
+if (!version) errors.push("package.json must contain a development version.");
 if (String(config.version || "") !== version) errors.push("config.json and package.json versions must match.");
 if (packageJson.scripts && packageJson.scripts.test !== "node scripts/run-tests.js") {
     errors.push("npm test must delegate to the deterministic test discovery runner.");
@@ -92,22 +92,22 @@ if (packageJson.scripts && packageJson.scripts.test !== "node scripts/run-tests.
 
 if (version) {
     var releasePath = "docs/releases/" + version + ".md";
-    if (!exists(releasePath)) errors.push("Missing release notes for current version: " + releasePath);
+    if (!exists(releasePath)) errors.push("Missing development notes for current version: " + releasePath);
     var readme = read("README.md");
-    if (readme.indexOf(version) < 0) errors.push("README.md must identify the current release version " + version + ".");
+    if (readme.indexOf(version) < 0) errors.push("README.md must identify the current development version " + version + ".");
     var projectState = read("docs/PROJECT-STATE.md");
-    if (projectState.indexOf("Wersja: `" + version + "`") < 0) errors.push("PROJECT-STATE.md must identify the current release version " + version + ".");
+    if (projectState.indexOf("Current version: `" + version + "`") < 0) errors.push("PROJECT-STATE.md must identify the current development version " + version + ".");
     var releaseIndex = read("docs/releases/README.md");
     if (releaseIndex.indexOf("[" + version + "]") < 0 && releaseIndex.indexOf("[`" + version + "`]") < 0) {
-        errors.push("docs/releases/README.md must link the current release " + version + ".");
+        errors.push("docs/releases/README.md must link the current development version " + version + ".");
     }
     var changelog = read("changelog.md");
-    if (changelog.indexOf("## " + version) < 0) errors.push("changelog.md must contain the current release " + version + ".");
+    if (changelog.indexOf("## " + version) < 0) errors.push("changelog.md must contain the current development version " + version + ".");
     var versionHistory;
     try { versionHistory = JSON.parse(read("version-history.json")); }
     catch (error) { errors.push("version-history.json must contain valid JSON: " + error.message); versionHistory = []; }
     if (!Array.isArray(versionHistory) || !versionHistory.length || String(versionHistory[0].version || "") !== version) {
-        errors.push("version-history.json must start with the current release " + version + ".");
+        errors.push("version-history.json must start with the current development version " + version + ".");
     }
 }
 
@@ -200,7 +200,7 @@ if (errors.length) {
 
 console.log("Final repository layout validation: OK");
 console.log("SIRK Platform naming validation: OK");
-console.log("Current release metadata validation: OK");
+console.log("Current development metadata validation: OK");
 console.log("Single maintained workflow validation: OK");
 console.log("Canonical server/public loader validation: OK");
 console.log("Legacy and temporary path validation: OK");
