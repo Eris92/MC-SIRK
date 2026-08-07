@@ -232,7 +232,7 @@
         deviceTab: { title: "Commands", pageId: "sirk-platform-mycommands-device-page", topTabId: "MainDevSirkPlatform-Commands" },
         buttons: {
             collapse: { side: "left", order: 10 },
-            favorites: { side: "left", order: 20, onClick: function (toolbar) { tools.toggleFavorites(toolbar, function () { treeState.selectedScript = ""; module.api.render(); }); } },
+            favorites: { side: "left", order: 20, onClick: function (toolbar) { tools.toggleFavorites(toolbar, function () { mode = "commands"; treeState.selectedScript = ""; module.api.render(); }); } },
             link: false,
             manage: { title: "Edit", side: "left", order: 40, onClick: function (toolbar) { tools.toggleEdit(toolbar, module.api.render); } },
             refresh: { side: "left", order: 50, onClick: function () { refresh(module.api); } },

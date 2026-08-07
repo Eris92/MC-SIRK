@@ -2,7 +2,7 @@
     "use strict";
 
     var MODERN_CLASSES = [
-        "btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-sm",
+        "btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-warning", "btn-sm",
         "nav", "nav-tabs", "nav-link", "list-group", "list-group-item", "list-group-item-action",
         "card", "form-control", "form-select", "form-check-input", "table", "table-sm",
         "table-hover", "text-body-secondary", "border", "border-end", "border-bottom",
@@ -48,6 +48,7 @@
     function buttonVariant(element) {
         if (!element || !element.classList) return "secondary";
         if (element.classList.contains("sirk-action-approve")) return "success";
+        if (element.classList.contains("mc-tree-favorite-action") && active(element)) return "warning";
         if (element.classList.contains("sirk-action-reject") || element.classList.contains("mc-admin-error-action")) return "danger";
         if (element.classList.contains("mc-command-run-button") || element.classList.contains("mc-admin-primary") || element.classList.contains("sirk-primary-action")) return "primary";
         return "secondary";
