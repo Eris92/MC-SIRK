@@ -14,10 +14,32 @@
         return "—";
     }
 
+    function parseDownloadResult(value) {
+        var raw = String(value == null ? "" : value);
+        var downloadPath = "";
+        var lines = raw.split(/\r?\n/);
+        var visible = [];
+        lines.forEach(function (line) {
+            var trimmed = String(line || "").trim();
+            var match = /^CSV_DOWNLOAD:(.+)$/i.exec(trimmed);
+            if (match) {
+                if (!downloadPath) downloadPath = String(match[1] || "").trim();
+                return;
+            }
+            if (/^__(?:MYCOMMANDS|COMMANDTABS)_PROGRESS__/i.test(trimmed)) return;
+            if (/^Run as:/i.test(trimmed)) return;
+            visible.push(line);
+        });
+        return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath };
+    }
+
     function rawResult(row) {
         var result = row && row.result || {};
         var value = result.output || result.rawOutput || result.message || row.output || row.rawOutput;
-        if (value != null && value !== "") return typeof value === "string" ? value : JSON.stringify(value, null, 2);
+        if (value != null && value !== "") {
+            value = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+            return parseDownloadResult(value).visible;
+        }
         if (row.status === "pending") return "Waiting for approval.";
         if (row.status === "executing") return "Executing...";
         if (row.summary) return String(row.summary);
@@ -183,14 +205,44 @@
 
     function appendResult(host, raw, options) {
         options = options || {};
-        var data = parseStructured(raw);
-        var actions = document.createElement("div"); actions.className = "mc-results-viewer-actions mc-results-inline-actions";
-        var copy = document.createElement("button"); copy.type = "button"; copy.className = "btn btn-secondary btn-sm"; copy.textContent = "Copy"; copy.onclick = function () { copyResult(data, copy).catch(function () { copy.textContent = "Copy failed"; }); };
-        actions.appendChild(copy); host.appendChild(actions);
-        var content = document.createElement("div"); content.className = "mc-results-viewer-content mc-results-inline-content"; renderStructured(content, data);
-        var details = document.createElement("details"); details.className = "mc-results-debug";
-        var summary = document.createElement("summary"); summary.textContent = "Debug / raw output"; details.appendChild(summary);
-        var debug = document.createElement("pre"); debug.textContent = data.raw; details.appendChild(debug); content.appendChild(details); host.appendChild(content);
+        var parsedOutput = parseDownloadResult(raw);
+        var data = parseStructured(parsedOutput.visible);
+        data.downloadPath = parsedOutput.downloadPath;
+        var actions = document.createElement("div");
+        actions.className = "mc-results-viewer-actions mc-results-inline-actions";
+        var copy = document.createElement("button");
+        copy.type = "button";
+        copy.className = "btn btn-secondary btn-sm";
+        copy.textContent = "Copy";
+        copy.onclick = function () {
+            copyResult(data, copy).catch(function () { copy.textContent = "Copy failed"; });
+        };
+        actions.appendChild(copy);
+        if (parsedOutput.downloadPath) {
+            var download = document.createElement("button");
+            download.type = "button";
+            download.className = "btn btn-secondary btn-sm mc-results-download-button";
+            download.textContent = "Download CSV";
+            download.onclick = function () {
+                var url = window.SirkPlatformCore.assetUrl("", "download", { path: parsedOutput.downloadPath });
+                window.location.href = url;
+            };
+            actions.appendChild(download);
+        }
+        host.appendChild(actions);
+        var content = document.createElement("div");
+        content.className = "mc-results-viewer-content mc-results-inline-content";
+        renderStructured(content, data);
+        var details = document.createElement("details");
+        details.className = "mc-results-debug";
+        var summary = document.createElement("summary");
+        summary.textContent = "Debug / raw output";
+        details.appendChild(summary);
+        var debug = document.createElement("pre");
+        debug.textContent = parsedOutput.raw;
+        details.appendChild(debug);
+        content.appendChild(details);
+        host.appendChild(content);
         return data;
     }
 
@@ -210,11 +262,10 @@
     }
 
     function defaultColumns(kind) {
-        var columns = [
-            { title: "DateTime", value: function (row) { return row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"; } },
-            { title: kind === "commands" ? "Command" : "Script", value: function (row) { return row.title || valueAt(row, "result.command", "") || valueAt(row, "fields.script", "") || row.summary || "—"; } }
-        ];
-        if (kind === "commands") columns.push({ title: "Device", value: function (row) { return valueAt(row, "result.nodeName", "") || valueAt(row, "result.nodeId", "") || String(row.summary || "").replace(/^Device:\s*/i, "") || "—"; } });
+        var dateTime = { title: "DateTime", value: function (row) { return row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"; } };
+        var command = { title: kind === "commands" ? "Command" : "Script", value: function (row) { return row.title || valueAt(row, "result.command", "") || valueAt(row, "fields.script", "") || row.summary || "—"; } };
+        var device = { title: "Device", value: function (row) { return valueAt(row, "result.nodeName", "") || valueAt(row, "result.nodeId", "") || String(row.summary || "").replace(/^Device:\s*/i, "") || "—"; } };
+        var columns = kind === "commands" ? [dateTime, device, command] : [dateTime, command];
         columns.push(
             { title: "Requester", value: function (row) { return valueAt(row, "requester.name", "—"); } },
             { title: "Approver", value: approver },
@@ -233,6 +284,7 @@
 
     window.SharedResultsView = {
         parseStructured: parseStructured,
+        parseDownloadResult: parseDownloadResult,
         openViewer: openViewer,
         copyText: copyText,
         rawResult: rawResult,
@@ -262,7 +314,7 @@
                     var message = document.createElement("div"); message.className = "mc-shared-muted"; message.textContent = options.emptyText || "No results match the selected status or filter."; empty.appendChild(message); tableHost.appendChild(empty); return;
                 }
                 var wrapper = document.createElement("div"); wrapper.className = "mc-results-table-wrap";
-                var table = document.createElement("table"); table.className = "style1 mc-results-table"; wrapper.appendChild(table); tableHost.appendChild(wrapper);
+                var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-table-" + String(options.kind || "scripts"); wrapper.appendChild(table); tableHost.appendChild(wrapper);
                 var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.textContent = column.title; header.appendChild(cell); });
                 if (options.showView !== false) { var viewHead = document.createElement("th"); viewHead.textContent = "View"; header.appendChild(viewHead); }
                 if (typeof options.actions === "function") { var actionHead = document.createElement("th"); actionHead.textContent = "Actions"; header.appendChild(actionHead); }

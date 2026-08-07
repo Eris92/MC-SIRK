@@ -143,8 +143,6 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-tree", "shared-ui/tree.js"],
             ["sirk-platform-catalog", "shared-ui/catalog.js"],
             ["sirk-platform-results", "shared-ui/results.js"],
-            ["sirk-platform-download-results", "download-results.js"],
-            ["sirk-platform-result-layout", "shared-ui/result-layout.js"],
             ["sirk-platform-script-tools", "shared-ui/script-tools.js"],
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
