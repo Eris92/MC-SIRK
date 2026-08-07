@@ -4,6 +4,8 @@
 
 Operacje Git wykonuj świadomie na bieżącym repozytorium i aktualnej gałęzi. Nie zakładaj czystego working tree.
 
+Dla MC-SIRK każda operacja wersji/tag/release musi dodatkowo stosować `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
+
 ## Przed zmianą Git
 
 1. Ustal root repozytorium.
@@ -42,31 +44,35 @@ Automatyczne usunięcie dotyczy wyłącznie literalnych ścieżek z projektowej 
 
 ## Release
 
-Przed release:
+MC-SIRK nie ma jeszcze pierwszego pełnego product release.
 
-1. potwierdź źródło wersji i regułę jej zmiany,
-2. sprawdź spójność wersji we wszystkich wymaganych plikach,
-3. uruchom wymagane testy,
-4. sprawdź changelog lub release notes, jeśli projekt ich używa,
-5. nie twórz taga ani publikacji bez jawnego polecenia,
-6. po publikacji zweryfikuj rzeczywisty artefakt albo wpis release.
+Przed jakimkolwiek tagiem/GitHub Release:
 
-Nie zmieniaj wersji, taga i changeloga niezależnie, jeżeli projekt definiuje je jako jeden kontrakt.
+1. przeczytaj `docs/agent/14-Agent-Wersjonowanie-Pre1.md`;
+2. potwierdź źródło wersji i regułę jej zmiany;
+3. sprawdź spójność wersji we wszystkich wymaganych plikach;
+4. uruchom wymagane testy;
+5. sprawdź development/release notes;
+6. nie twórz taga ani publikacji bez jawnego polecenia użytkownika;
+7. nie używaj `1.0.0+` bez jawnego otwarcia release gate;
+8. po publikacji zweryfikuj rzeczywisty artefakt albo wpis release.
+
+Zwykły bump `0.1.1-dev.X` nie oznacza zgody na utworzenie taga/GitHub Release.
 
 ## Wersja pluginu MeshCentral
 
-Przy podnoszeniu wersji pluginu MeshCentral:
+Przy zmianie wersji pluginu:
 
 1. ustal root konkretnego pluginu i nie pomyl jego `config.json` z głównym `config.json` MeshCentral,
 2. odczytaj bieżące pole `version` z pluginowych `package.json` i `config.json`,
-3. ustal nową wersję zgodnie z regułą projektu; nie zgaduj poziomu major/minor/patch,
-4. jeżeli oba pliki istnieją, zmień `version` w obu w ramach tej samej zmiany,
-5. jeżeli istnieje tylko jeden z tych plików, nie twórz drugiego automatycznie; zastosuj potwierdzony format danego pluginu i odnotuj brak drugiego źródła,
-6. zaktualizuj historię wersji, changelog lub release notes, jeśli plugin ich używa,
-7. przed stagingiem, commitem, tagiem i push ponownie odczytaj oba pliki i potwierdź identyczną wersję,
-8. zatrzymaj publikację przy rozbieżności, braku oczekiwanej zmiany albo niejednoznacznym źródle wersji.
+3. dla MC-SIRK stosuj linię `0.1.1-dev.X`, odpowiadającą preferowanej konwencji `0.1.1.X`,
+4. nie kontynuuj historycznej numeracji `1.8.x`,
+5. jeżeli oba pliki istnieją, zmień `version` w obu w ramach tej samej zmiany,
+6. zaktualizuj `version-history.json`, `changelog.md` i bieżący development draft, jeśli zakres obejmuje bump,
+7. przed stagingiem, commitem, tagiem i push ponownie odczytaj oba źródła i potwierdź identyczną wersję,
+8. zatrzymaj publikację przy rozbieżności albo niejednoznacznym źródle wersji.
 
-Nie podnoś wersji automatycznie przy każdym zwykłym pushu, chyba że użytkownik albo reguły projektu wyraźnie tego wymagają. Jeżeli jednak zakres zadania obejmuje podniesienie wersji, commit/push/release ma zawierać wszystkie wymagane pliki wersji razem.
+Nie podnoś wersji automatycznie przy każdym zwykłym pushu. Dokumentacja-only zwykle nie wymaga bumpu.
 
 ## Konflikty
 
