@@ -39,6 +39,10 @@
         if (quick && typeof quick.refresh === "function") quick.refresh();
     }
 
+    runtime.refreshMenus = function () {
+        notify("refreshMenu");
+    };
+
     function configureModule(key, module) {
         if (!module || !module.api || !module.api.definition) return;
         module.api.definition.viewMode = viewModes[key] || module.api.definition.viewMode || 960;

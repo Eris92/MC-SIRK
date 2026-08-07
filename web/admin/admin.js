@@ -72,6 +72,14 @@
         return value;
     }
 
+    function disclosure(host, className, title, expanded) {
+        var details = element("details", (className || "") + " mc-admin-disclosure");
+        details.open = expanded === true;
+        details.appendChild(element("summary", "mc-admin-disclosure-summary", title));
+        host.appendChild(details);
+        return details;
+    }
+
     function settings() { return data.moduleSettings || {}; }
 
     function checked(host, text, value) {
@@ -147,8 +155,7 @@
 
     function approvalProvider(host, title, source) {
         source = source || {};
-        var card = element("section", "mc-admin-provider-card");
-        card.appendChild(element("h4", "", title));
+        var card = disclosure(host, "mc-admin-provider-card", title, false);
         var enabled = checked(card, "Enable this approval provider", source.enabled !== false);
         var showTab = checked(card, "Show provider tab in Approval Center", source.showTab !== false);
         var showOverview = checked(card, "Show provider in Approval overview", source.showOverview !== false);
@@ -158,7 +165,6 @@
         var level1 = groupLevel(card, "Level 1 approver groups", levels[1] || levels["1"]);
         var level2 = groupLevel(card, "Level 2 approver groups", levels[2] || levels["2"]);
         var level3 = groupLevel(card, "Level 3 approver groups", levels[3] || levels["3"]);
-        host.appendChild(card);
         return function () {
             return {
                 enabled: enabled.checked,
@@ -172,9 +178,8 @@
 
     function folderPermission(host, source) {
         source = source || {};
-        var card = element("section", "mc-admin-permission-folder");
         var label = source.label || source.key || "Folder";
-        card.appendChild(element("h5", "", label));
+        var card = disclosure(host, "mc-admin-permission-folder", label, false);
         if (source.key && source.key !== label) card.appendChild(element("div", "mc-admin-permission-key", source.key));
         var enabled = checked(card, "Enable this category or folder", source.enabled !== false);
         var allowAll = checked(card, "Allow every user who has module access", source.configured === false ? true : source.allowAll === true);
@@ -186,7 +191,6 @@
         enabled.onchange = sync;
         allowAll.onchange = sync;
         sync();
-        host.appendChild(card);
         return function () {
             return {
                 enabled: enabled.checked,
@@ -208,8 +212,7 @@
             return item;
         });
 
-        var card = element("section", "mc-admin-provider-card mc-admin-permission-module");
-        card.appendChild(element("h4", "", title));
+        var card = disclosure(host, "mc-admin-provider-card mc-admin-permission-module", title, false);
         card.appendChild(element("p", "mc-admin-card-description", "Module access is evaluated first. Device permissions configured in MeshCentral are always required as well."));
         var selectedGroups = Array.isArray(source.accessGroupIds) ? source.accessGroupIds : [];
         var restrict = checked(card, "Restrict module access to selected MeshCentral user groups", selectedGroups.length > 0);
@@ -228,7 +231,6 @@
             foldersHost.appendChild(element("div", "mc-admin-notice", "No folders are currently available. Refresh this page after adding scripts."));
         }
         card.appendChild(foldersHost);
-        host.appendChild(card);
 
         return function () {
             var selectedAccessGroups = restrict.checked ? accessGroups() : [];
@@ -278,8 +280,15 @@
                 });
             })
             .then(function (result) {
+                var previousIconMode = window.SirkIconMode && typeof window.SirkIconMode.get === "function"
+                    ? window.SirkIconMode.get()
+                    : "auto";
                 data = result.snapshot;
                 window.SirkPlatformAdminData = data;
+                var nextIconMode = String(data.uiSettings && data.uiSettings.iconMode || "auto");
+                if (previousIconMode !== nextIconMode && window.SirkIconMode && typeof window.SirkIconMode.set === "function") {
+                    window.SirkIconMode.set(nextIconMode);
+                }
                 status.className = "mc-admin-save-status";
                 status.textContent = "Saved";
             })
