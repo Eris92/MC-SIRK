@@ -7,7 +7,7 @@
 - nazwa wyświetlana: `SIRK Management Platform`;
 - nazwa skrócona: `SIRK Platform`.
 
-Repozytorium nie utrzymuje zgodności z testową strukturą `MyCompany` ani z historycznymi warstwami naprawczymi. Stare entrypointy, shimy, aliasy, migracje danych, hot-patche runtime i niekanoniczne ścieżki są usunięte.
+Repozytorium nie utrzymuje zgodności z testową strukturą `MyCompany` ani historycznymi warstwami compatibility. Stare entrypointy, shimy, aliasy, hot-patche runtime i niekanoniczne loadery są usunięte.
 
 ## Hierarchia indeksów
 
@@ -21,13 +21,12 @@ AGENTS.md
        -> test/INDEX.md
 ```
 
-Odczyt repozytorium zaczyna się od indeksów. Po wybraniu warstwy należy czytać tylko wskazany entrypoint lub moduł oraz jego bezpośrednie zależności.
-
-## Struktura
+## Struktura kanoniczna
 
 ```text
 MC-SIRK/
 ├── AGENTS.md
+├── README.md
 ├── SIRKPortal.js
 ├── SIRKPortalAdmin.js
 ├── plugin-main.js
@@ -37,13 +36,6 @@ MC-SIRK/
 ├── server/
 │   ├── INDEX.md
 │   ├── core/
-│   │   ├── runtime.js
-│   │   ├── settings-store.js
-│   │   ├── secret-store.js
-│   │   ├── approval-service.js
-│   │   ├── device-service.js
-│   │   ├── audit-log.js
-│   │   └── pozostałe usługi wspólne
 │   └── modules/
 │       ├── approval-center/
 │       ├── automation/
@@ -52,12 +44,23 @@ MC-SIRK/
 ├── public/
 │   ├── INDEX.md
 │   ├── native/
+│   │   ├── desktop-commands.js
+│   │   ├── desktop-commands.css
+│   │   └── approval.css
 │   ├── shared/
+│   │   ├── core.js
+│   │   ├── module-shell.js
+│   │   ├── runtime.js
+│   │   ├── styles/
+│   │   └── ui/
 │   └── modules/
+│       ├── approvals/
+│       ├── automation/
+│       ├── commands/
+│       └── move-requests/
 ├── web/
 │   ├── INDEX.md
 │   └── admin/
-├── assets/icons/sirk-ui.svg
 ├── views/SIRK-Portal.handlebars
 ├── tools/install/
 ├── scripts/
@@ -71,14 +74,14 @@ MC-SIRK/
 │   ├── INDEX.md
 │   ├── PROJECT-STATE.md
 │   ├── REPOSITORY-LAYOUT.md
-│   ├── portal-integration.md
+│   ├── releases/
 │   └── agent/
 └── seed/
 ```
 
 ## Backend
 
-Cały kod Node.js i integracje MeshCentral znajdują się w `server/`.
+Cały kod backendu Node/MeshCentral znajduje się w `server/`.
 
 - `server/core/runtime.js` jest jedynym runtime backendu;
 - `server/core/` zawiera storage, security, audyt, integracje i wspólne usługi;
@@ -86,7 +89,7 @@ Cały kod Node.js i integracje MeshCentral znajdują się w `server/`.
 - katalogi `core/` i `modules/` w root są zabronione;
 - backend nie może znajdować się w `public/`.
 
-Jedyny katalog danych:
+Jedyny katalog danych runtime:
 
 ```text
 meshcentral-data/sirk-platform-data
@@ -98,24 +101,69 @@ Plugin nie odczytuje i nie migruje `mycompany-data`.
 
 `public/` zawiera trzy warstwy:
 
-- `public/native/` — integracja z natywnym GUI MeshCentral;
-- `public/shared/` — wspólny loader/lifecycle, komponenty i style;
+- `public/native/` — integracja z natywnym GUI MeshCentral i Quick;
+- `public/shared/` — core, lifecycle, komponenty i style współdzielone;
 - `public/modules/` — pojedyncze renderery modułów.
 
-`public/shared/runtime.js` odpowiada wyłącznie za ładowanie modułów i lifecycle. Nie może nadpisywać API modułów ani naprawiać ich DOM po renderze.
+`public/shared/runtime.js` odpowiada za uruchomienie modułów i przekazywanie lifecycle. `public/shared/module-shell.js` jest właścicielem atomic render.
 
 Pliki aplikacyjne nie mogą leżeć bezpośrednio w `public/`. `public/shared-ui/` jest zabroniony.
 
 ## UI i style
 
-Renderery tworzą docelowy DOM bez warstw normalizujących po fakcie. Wspólne listy otrzymują klasy `sirk-shared-list-*` bezpośrednio w rendererze.
+Podział odpowiedzialności jest jednoznaczny:
 
-- geometria i stany list/toolbarów mają jednego właściciela: `public/shared/ui/toolbar.css`;
-- CSS wspólny jest ładowany po CSS Quick, aby moduły nie konkurowały o finalny wygląd;
-- runtime JavaScript nie wstrzykuje arkuszy `<style>`;
-- kod przeglądarkowy nie używa polling `setInterval`;
-- jedynym dozwolonym obserwatorem zmian motywu jest lokalny `MeshThemeAdapter` w `public/shared/ui/toolbar-config.js`;
-- plugin nie podmienia globalnego `MutationObserver` ani innych API przeglądarki.
+- `public/shared/ui/layout.js` — struktura layoutu i Collapse state;
+- `public/shared/ui/shared-ui.css` — jedna globalna geometria workspace i kolumn;
+- `public/shared/ui/toolbar.css` — geometria toolbaru, wspólnych wierszy oraz wyjątek Edit/Multi dla mierzonego action track;
+- `public/shared/ui/toolbar-config.js` — `MeshThemeAdapter`, native classes i jedyny observer nowego DOM/theme;
+- `public/native/desktop-commands.css` — geometria panelu Quick.
+
+Plugin nie utrzymuje własnej palety standardowych kontrolek. Hover, selected, przyciski, karty, formularze i tabele korzystają z klas aktywnego UI MeshCentral.
+
+Runtime JavaScript nie wstrzykuje arkuszy `<style>` dla layoutu i nie używa polling `setInterval`. Plugin nie podmienia globalnego `MutationObserver`.
+
+Kanoniczne desktopowe tracki shared UI:
+
+```text
+primary:            minmax(165px,205px)
+collapsed primary:  64px
+secondary:          minmax(285px,340px)
+details:            minmax(420px,1fr)
+```
+
+Edit/Multi mogą rozszerzyć drugą kolumnę wyłącznie o zmierzony action track.
+
+## Stan i lifecycle
+
+`public/shared/core.js` utrzymuje jednego `activePlugin` dla workspace SIRK.
+
+`public/shared/module-shell.js`:
+
+- renderuje `secondary` i `details` do odłączonych sekcji;
+- używa `renderSequence` do odrzucania nieaktualnych renderów;
+- podmienia live DOM podczas atomic commit;
+- po commit wykonuje `MeshThemeAdapter.refresh()`;
+- nie wykonuje pośredniego `go(1)` podczas przejścia SIRK -> SIRK.
+
+Approval Center, Commands i My Scripts współdzielą Collapse state przez:
+
+```text
+sirkPlatform.layout.shared-script-columns.collapsed
+```
+
+## Quick
+
+`public/native/desktop-commands.js` jest jedynym właścicielem stanu Quick.
+
+Nie istnieją:
+
+```text
+public/native/mesh-plugin-core.js
+public/native/quick-output-state.js
+```
+
+Output używa `state.detailsCollapsed` oraz klasy `is-details-collapsed`. Attention/pending są stanem runtime. Quick nie używa własnego MutationObservera ani drugiego controllera Output.
 
 ## Moduły
 
@@ -129,6 +177,8 @@ public/modules/approvals/index.js
 Dla jednego modułu może istnieć tylko jeden renderer i jeden właściciel logiki wykonawczej.
 
 ## Loadery
+
+Backend:
 
 ```text
 SIRKPortal.js
@@ -148,9 +198,16 @@ plugin-main.js
   -> public/modules/*
 ```
 
-- `admin.js` utrzymuje mapę assetów natywnego UI i panelu administracyjnego;
-- każda publiczna nazwa assetu wskazuje dokładnie jeden kanoniczny plik;
-- nie istnieją dodatkowe pliki typu `runtime-base`, `mesh-plugin-core` lub `quick-output-state`.
+`admin.js` utrzymuje mapę assetów. Każda publiczna nazwa assetu wskazuje dokładnie jeden kanoniczny plik.
+
+Nie istnieją warstwy:
+
+```text
+download-results.js
+script-edit-actions.js
+mesh-plugin-core.js
+quick-output-state.js
+```
 
 ## Panel administracyjny
 
@@ -161,9 +218,7 @@ web/admin/admin.js
 web/admin/admin.css
 ```
 
-Handlebars jest deklaratywnym szablonem. Logika General, Logs i pozostałych ustawień znajduje się w `web/admin/admin.js`, a prezentacja w `web/admin/admin.css`.
-
-Nie istnieje alias danych `window.MyCompanyAdminData`. Kanoniczny obiekt to `window.SirkPlatformAdminData`.
+Kanoniczny obiekt danych panelu to `window.SirkPlatformAdminData`.
 
 ## Testy i workflow
 
@@ -173,17 +228,19 @@ Repozytorium ma jeden utrzymywany workflow:
 .github/workflows/test.yml
 ```
 
-`npm test` deleguje do `scripts/run-tests.js`, który uruchamia oba walidatory repozytorium oraz automatycznie wszystkie pliki `test/*.test.js` w deterministycznej kolejności. Dodanie nowego testu nie wymaga modyfikacji `package.json`.
+CI używa Node.js 24 oraz `actions/checkout@v7` i `actions/setup-node@v7`.
+
+`npm test` deleguje do `scripts/run-tests.js`, który uruchamia walidatory oraz wszystkie `test/*.test.js` w deterministycznej kolejności.
 
 Walidatory blokują m.in.:
 
-- dodatkowe jednorazowe workflowy i pliki tymczasowe;
-- stare entrypointy, widoki i identyfikatory `MyCompany`;
-- podwójne runtime i renderery;
+- stare entrypointy i identyfikatory `MyCompany`;
+- podwójne runtime/renderery;
 - compatibility hot-patche i release-specific DOM contracts;
-- polling oraz runtime style injection w `public/`;
+- polling i runtime style injection;
 - globalne podmienianie `MutationObserver`;
-- niekanoniczne ścieżki loaderów i assetów.
+- niekanoniczne ścieżki loaderów i assetów;
+- rozbieżność wersji `package.json` i `config.json`.
 
 ## Instalacja
 
@@ -198,3 +255,5 @@ tools/install/Install-SIRK-Portal-FromGit_RUN.ps1
 ```bash
 npm test
 ```
+
+Aktualny potwierdzony stan znajduje się w `docs/PROJECT-STATE.md`.
