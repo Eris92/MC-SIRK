@@ -6,39 +6,58 @@ var path = require("path");
 
 var root = path.join(__dirname, "..");
 var pluginMain = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
-var controller = fs.readFileSync(path.join(root, "public", "native", "quick-output-state.js"), "utf8");
+var desktop = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
+var css = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.css"), "utf8");
 
-var desktopIndex = pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]');
-var controllerIndex = pluginMain.indexOf('["sirk-platform-quick-output-state", "quick-output-state.js"]');
-assert.ok(desktopIndex >= 0 && controllerIndex > desktopIndex,
-    "The stable output controller must load after the native Quick Commands implementation.");
+assert.ok(pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
+    "The canonical Quick renderer must load during native startup.");
+assert.strictEqual(pluginMain.indexOf("quick-output-state.js"), -1,
+    "Startup must not load a second Quick output-state controller.");
 
-assert.ok(controller.indexOf('mc-sirk-quickcommands-output-hidden-v2') >= 0 &&
-    controller.indexOf('mc-sirk-quickcommands-output-attention-v2') >= 0,
-    "Quick output visibility and unseen-result attention must have dedicated state keys.");
-assert.ok(controller.indexOf('writeBoolean(OLD_PREFERRED_KEY, false)') >= 0 &&
-    controller.indexOf('writeBoolean(OLD_ATTENTION_KEY, false)') >= 0,
-    "The conflicting legacy preference controller must be neutralized.");
-assert.ok(controller.indexOf('data-sirk-output-hidden') >= 0 &&
-    controller.indexOf('transition:none!important') >= 0,
-    "A hidden result pane must keep fixed geometry throughout internal renders.");
-assert.ok(controller.indexOf('has-output-attention') >= 0 &&
-    controller.indexOf('setAttention(true)') >= 0,
-    "A completed unseen result must mark the output button.");
-assert.ok(controller.indexOf('if (wasHidden)') >= 0 &&
-    controller.indexOf('if (actualCollapsed) result = original.call(button, event)') >= 0 &&
-    controller.indexOf('if (!actualCollapsed) result = original.call(button, event)') >= 0,
-    "Opening and hiding output must call the native toggle only when its internal state actually needs changing.");
-assert.ok(controller.indexOf('function clearAttentionForNativeNavigation()') >= 0 &&
-    controller.indexOf('setAttention(false)') >= 0 &&
-    controller.indexOf('acknowledgeCurrentOutput(panel)') >= 0,
-    "Changing a native tab must clear attention and acknowledge the disappearing output.");
-assert.ok(controller.indexOf('panel.__sirkStableOutputPending = false') >= 0 &&
-    controller.indexOf('runtime.onNativePageStart = function ()') >= 0 &&
-    controller.indexOf('original.apply(runtime, arguments)') >= 0,
-    "The navigation reset must clear pending state while preserving the original runtime lifecycle.");
-assert.ok(controller.indexOf('attributeFilter') < 0 &&
-    controller.indexOf('MainDev') < 0 && controller.indexOf('p19') < 0,
-    "The controller must not observe style/class changes or touch device-tab routing.");
+assert.ok(desktop.indexOf('PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
+    desktop.indexOf('detailsCollapsed: preferences.quickDetailsCollapsed === true') >= 0,
+    "Quick output visibility must live in the shared My Commands preference store.");
+assert.strictEqual(desktop.indexOf("quickOutputAttention"), -1,
+    "Unseen-result attention must remain transient runtime state rather than a persisted preference.");
+assert.ok(desktop.indexOf('outputAttention: false') >= 0 && desktop.indexOf('outputPending: false') >= 0,
+    "The canonical renderer must keep explicit transient output attention and pending state.");
 
-console.log("Stable Quick output state controller: OK");
+assert.ok(desktop.indexOf('function writeDetailsCollapsed(value)') >= 0 &&
+    desktop.indexOf('writePreferences({ quickDetailsCollapsed: state.detailsCollapsed })') >= 0 &&
+    desktop.indexOf('if (!state.detailsCollapsed) state.outputAttention = false') >= 0,
+    "The one output visibility mutator must persist collapse state and acknowledge output when opened.");
+assert.ok(desktop.indexOf('function setOutput(panel, value, isError)') >= 0 &&
+    desktop.indexOf('if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true') >= 0,
+    "Completed output must raise attention only when the details pane is hidden.");
+assert.ok(desktop.indexOf('function transientOutput(value)') >= 0 &&
+    desktop.indexOf('state.outputPending = !isError && !transientOutput(next)') >= 0,
+    "Loading/submission messages must not be treated as completed unseen output.");
+assert.ok(desktop.indexOf('button.classList.toggle("has-output-attention", state.outputAttention === true)') >= 0,
+    "The canonical details button must render unseen-output attention directly from renderer state.");
+
+var renderStart = desktop.indexOf("function render(panel)");
+var renderEnd = desktop.indexOf("function load(panel)", renderStart);
+var render = desktop.slice(renderStart, renderEnd);
+assert.ok(render.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)') >= 0 &&
+    render.indexOf('panel.appendChild(browser)') > render.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)'),
+    "Persisted output visibility must be applied before the browser reaches the live DOM.");
+assert.ok(css.indexOf('.sirk-quick-command-browser.is-details-collapsed .sirk-quick-command-details{display:none!important}') >= 0,
+    "Static Quick CSS must hide the details pane from the canonical collapsed class.");
+
+assert.ok(desktop.indexOf('function syncAvailability(wrapper)') >= 0 &&
+    desktop.indexOf('if (!connected && panel) panel.hidden = true') >= 0 &&
+    desktop.indexOf('if (!connected && button) button.setAttribute("aria-expanded", "false")') >= 0,
+    "Leaving an active Desktop session must close Quick without a second navigation observer.");
+assert.ok(desktop.indexOf('window.SirkDesktopCommands = { refresh: refreshLifecycle }') >= 0,
+    "Native lifecycle refresh must remain the only external Quick lifecycle entrypoint.");
+
+assert.strictEqual(desktop.indexOf("__sirkStableOutputPending"), -1,
+    "Compatibility pending-state markers must not return.");
+assert.strictEqual(desktop.indexOf("mc-sirk-quickcommands-output-hidden-v2"), -1,
+    "Legacy standalone output visibility preferences must not return.");
+assert.strictEqual(desktop.indexOf("data-sirk-output-hidden"), -1,
+    "Renderer state/classes must be the sole output visibility contract in JavaScript.");
+assert.strictEqual(desktop.indexOf("MutationObserver"), -1,
+    "Quick output state must not depend on DOM or navigation observers.");
+
+console.log("Canonical Quick output state machine: OK");
