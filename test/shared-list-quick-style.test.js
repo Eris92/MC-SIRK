@@ -75,6 +75,12 @@ assert.strictEqual(quickCss.indexOf("--bs-list-group-action-hover-bg"), -1,
     "Quick CSS must not duplicate the native hover palette.");
 assert.strictEqual(quickCss.indexOf("--bs-list-group-active-border-color"), -1,
     "Quick CSS must not duplicate the native selected-state palette.");
+assert.ok(css.indexOf(".mc-shared-page .sirk-shared-list-item:is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)") >= 0,
+    "A single shared theme-safe fallback must keep selected rows perceivable when host native classes provide insufficient contrast.");
+assert.strictEqual(sharedUiCss.indexOf("sirk-shared-list-item:is(.active,.is-active)"), -1,
+    "Selected fallback styling must have one shared owner.");
+assert.strictEqual(quickCss.indexOf("sirk-shared-list-item:is(.active,.is-active)"), -1,
+    "Quick geometry CSS must not duplicate the shared selected fallback.");
 
 var desktopStyle = startup.indexOf('style("sirk-platform-desktop-commands-style", "desktop-commands.css")');
 var sharedStyle = startup.indexOf('style("sirk-platform-toolbar-style", "shared-ui/toolbar.css")');

@@ -195,6 +195,11 @@ assert.ok(resultsButton.classList.contains("active") && resultsButton.classList.
     "Clicking Results must immediately select the Results row.");
 assert.strictEqual(primary.children[1].getAttribute("aria-selected"), "false",
     "Clicking Results must clear root selection before the module rerender.");
+lastTreeOptions.onRootSelect({ path: "Scripts" });
+assert.strictEqual(resultsButton.getAttribute("aria-selected"), "false",
+    "Selecting a catalog root must clear Results immediately before the module rerender.");
+assert.strictEqual(resultsButton.classList.contains("active"), false,
+    "Results and a catalog root must never remain active at the same time.");
 
 lastTreeOptions.rootsContainer.innerHTML = "";
 lastTreeOptions.rootsContainer.appendChild(rootButton("Network"));
