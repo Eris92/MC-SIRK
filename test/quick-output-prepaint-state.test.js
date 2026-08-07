@@ -3,213 +3,46 @@
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
-var vm = require("vm");
 
-var source = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "toolbar.js"), "utf8");
+var source = fs.readFileSync(path.join(__dirname, "..", "public", "native", "desktop-commands.js"), "utf8");
+var css = fs.readFileSync(path.join(__dirname, "..", "public", "native", "desktop-commands.css"), "utf8");
 
-function createClassList(initial) {
-    var values = {};
-    String(initial || "").split(/\s+/).filter(Boolean).forEach(function (name) { values[name] = true; });
-    return {
-        add: function (name) { values[name] = true; },
-        remove: function (name) { delete values[name]; },
-        toggle: function (name, enabled) {
-            if (arguments.length > 1) values[name] = enabled === true;
-            else values[name] = !values[name];
-            return values[name] === true;
-        },
-        contains: function (name) { return values[name] === true; }
-    };
-}
+assert.ok(source.indexOf('detailsCollapsed: preferences.quickDetailsCollapsed === true') >= 0,
+    "Quick must restore the canonical output visibility state before the first render.");
 
-function createElement(tag) {
-    var className = "";
-    var element = {
-        tagName: String(tag || "").toUpperCase(),
-        childNodes: [],
-        children: [],
-        attributes: {},
-        style: {},
-        hidden: false,
-        isConnected: true,
-        parentNode: null,
-        classList: createClassList(),
-        appendChild: function (child) {
-            child.parentNode = this;
-            this.childNodes.push(child);
-            this.children.push(child);
-            if (!this.firstChild) this.firstChild = child;
-            return child;
-        },
-        setAttribute: function (name, value) { this.attributes[name] = String(value); },
-        getAttribute: function (name) { return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null; },
-        removeAttribute: function (name) { delete this.attributes[name]; },
-        focus: function () {},
-        click: function () { if (typeof this.onclick === "function") return this.onclick({ type: "click" }); },
-        querySelector: function (selector) {
-            var wanted = selector.charAt(0) === "." ? selector.slice(1) : "";
-            var queue = this.childNodes.slice();
-            while (queue.length) {
-                var current = queue.shift();
-                if (wanted && current.classList && current.classList.contains(wanted)) return current;
-                if (current.childNodes) queue = queue.concat(current.childNodes);
-            }
-            return null;
-        }
-    };
-    Object.defineProperty(element, "className", {
-        get: function () { return className; },
-        set: function (value) {
-            className = String(value || "");
-            element.classList = createClassList(className);
-        }
-    });
-    Object.defineProperty(element, "innerHTML", {
-        get: function () { return element._innerHTML || ""; },
-        set: function (value) {
-            element._innerHTML = String(value || "");
-            var icon = createElement("span");
-            icon.className = "mc-shared-toolbar-icon mc-portal-toolbar-icon";
-            element.childNodes = [icon];
-            element.children = [icon];
-            element.firstChild = icon;
-            icon.parentNode = element;
-        }
-    });
-    return element;
-}
+var renderStart = source.indexOf("function render(panel)");
+var renderEnd = source.indexOf("function load(panel)", renderStart);
+assert.ok(renderStart >= 0 && renderEnd > renderStart,
+    "The canonical Quick render function must exist.");
+var render = source.slice(renderStart, renderEnd);
 
-var stored = {
-    "mc-sirk-quickcommands-output-hidden-v2": "1",
-    "mc-sirk-quickcommands-details-collapsed": "0",
-    "mc-sirk-quickcommands-details-preferred-collapsed": "1",
-    "mc-sirk-quickcommands-details-attention": "1"
-};
-var documentObject = {
-    createElement: createElement,
-    querySelector: function () { return null; },
-    querySelectorAll: function () { return []; },
-    getElementById: function () { return null; }
-};
-var windowObject = {
-    localStorage: {
-        getItem: function (key) { return Object.prototype.hasOwnProperty.call(stored, key) ? stored[key] : null; },
-        setItem: function (key, value) { stored[key] = String(value); }
-    },
-    setTimeout: function (callback) { callback(); return 1; },
-    SharedToolbarConfig: {
-        definitions: {},
-        resolve: function () { return []; }
-    },
-    SharedToolbarApi: {
-        create: function (context) {
-            return {
-                buttons: context.buttons,
-                state: context.state,
-                searchInput: context.searchInput,
-                setActive: function (key, value) {
-                    var item = context.buttons[key];
-                    if (!item) return;
-                    item.classList.toggle("is-active", value === true);
-                    item.setAttribute("aria-pressed", value === true ? "true" : "false");
-                },
-                setTitle: function (key, value) {
-                    var item = context.buttons[key];
-                    if (!item) return;
-                    item.title = String(value || "");
-                    item.setAttribute("aria-label", item.title);
-                },
-                setIcon: function () {},
-                setEnabled: function () {},
-                showSearch: function () {}
-            };
-        }
-    }
-};
-windowObject.window = windowObject;
-windowObject.document = documentObject;
+var browserCreate = render.indexOf('var browser = element("div", "sirk-quick-command-browser mc-shared-layout")');
+var collapseApply = render.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)');
+var browserAppend = render.indexOf("panel.appendChild(browser)");
+assert.ok(browserCreate >= 0 && collapseApply > browserCreate && browserAppend > collapseApply,
+    "Persisted hidden-output geometry must be applied to the detached browser before it is appended to the live panel.");
+assert.ok(render.indexOf('browser.classList.toggle("is-collapsed", state.collapsed)') > browserCreate,
+    "Category collapse geometry must use the same detached pre-paint render path.");
 
-vm.runInNewContext(source, {
-    window: windowObject,
-    document: documentObject,
-    JSON: JSON,
-    Object: Object,
-    Array: Array,
-    String: String,
-    Number: Number,
-    RegExp: RegExp,
-    setTimeout: windowObject.setTimeout,
-    clearTimeout: function () {}
-}, { filename: "toolbar.js" });
+var toolbarStart = source.indexOf("function mountToolbar(panel, host)");
+var toolbarEnd = source.indexOf("function render(panel)", toolbarStart);
+var toolbar = source.slice(toolbarStart, toolbarEnd);
+assert.ok(toolbar.indexOf('title: state.detailsCollapsed ? text("showDetails") : text("hideDetails")') >= 0,
+    "The first toolbar render must derive its Output label from the same preloaded state.");
+assert.ok(toolbar.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0,
+    "The first toolbar render must derive its active state from the same preloaded state.");
+assert.ok(toolbar.indexOf('onClick: function () { writeDetailsCollapsed(!state.detailsCollapsed); render(panel); }') >= 0,
+    "Output toggling must update renderer state and synchronously rebuild the panel without a post-render controller.");
 
-function createQuickSurface(internallyHidden) {
-    var panel = createElement("aside");
-    panel.className = "sirk-desktop-commands-panel";
-    var host = createElement("div");
-    host.className = "sirk-quick-command-toolbar-host";
-    host.closest = function () { return panel; };
-    var browser = createElement("div");
-    browser.className = "sirk-quick-command-browser" + (internallyHidden ? " is-details-collapsed" : "");
-    panel.appendChild(host);
-    panel.appendChild(browser);
-    return { panel: panel, host: host, browser: browser };
-}
-
-var surface = createQuickSurface(false);
-var handlerCalls = 0;
-var api = windowObject.SharedToolbar.mount({
-    container: surface.host,
-    preset: "mycommands",
-    buttons: {},
-    customButtons: [{
-        key: "details",
-        title: "Ukryj wynik",
-        side: "left",
-        order: 65,
-        icon: "details",
-        onClick: function () {
-            handlerCalls += 1;
-            surface.browser.classList.toggle("is-details-collapsed", true);
-        }
-    }]
-});
-var details = api.buttons.details;
-
-assert.strictEqual(surface.panel.attributes["data-sirk-output-hidden"], "1",
-    "Canonical hidden geometry must be applied before the toolbar is appended.");
-assert.strictEqual(details.title, "Pokaż wynik");
-assert.strictEqual(details.classList.contains("is-active"), false,
-    "A remounted hidden output button must never paint as active.");
-assert.strictEqual(details.attributes["aria-pressed"], "false");
-assert.strictEqual(stored["mc-sirk-quickcommands-details-preferred-collapsed"], "0",
-    "The superseded post-render controller must be neutralized before it can click the button.");
-
-// The internal browser is already visible while the canonical panel is hidden. Opening output
-// must reveal it directly without calling the old toggle and without an intermediate active flash.
-details.click();
-assert.strictEqual(handlerCalls, 0);
-assert.strictEqual(stored["mc-sirk-quickcommands-output-hidden-v2"], "0");
-assert.strictEqual(details.classList.contains("is-active"), true);
-assert.strictEqual(details.attributes["aria-pressed"], "true");
-assert.strictEqual(surface.panel.attributes["data-sirk-output-hidden"], undefined);
-
-// Hiding output from the visible internal state requires one native toggle and reaches the
-// final inactive state synchronously in the same click task.
-details.click();
-assert.strictEqual(handlerCalls, 1);
-assert.strictEqual(stored["mc-sirk-quickcommands-output-hidden-v2"], "1");
-assert.strictEqual(details.classList.contains("is-active"), false);
-assert.strictEqual(details.attributes["aria-pressed"], "false");
-
-var remount = createQuickSurface(false);
-var remountedApi = windowObject.SharedToolbar.mount({
-    container: remount.host,
-    preset: "mycommands",
-    buttons: {},
-    customButtons: [{ key: "details", title: "Ukryj wynik", side: "left", order: 65, icon: "details", onClick: function () {} }]
-});
-assert.strictEqual(remountedApi.buttons.details.classList.contains("is-active"), false,
-    "Category changes and script selections must remount directly in the canonical inactive state.");
-assert.strictEqual(remountedApi.buttons.details.title, "Pokaż wynik");
+assert.ok(css.indexOf('.is-details-collapsed .sirk-quick-command-details{display:none!important}') >= 0,
+    "The pre-applied details collapse class must hide the output pane through static CSS.");
+assert.strictEqual(source.indexOf("data-sirk-output-hidden"), -1,
+    "Quick must not maintain a second panel-level hidden-output state.");
+assert.strictEqual(source.indexOf("mc-sirk-quickcommands-output-hidden-v2"), -1,
+    "Legacy standalone hidden-output preference keys must not return.");
+assert.strictEqual(source.indexOf("details-preferred-collapsed"), -1,
+    "The superseded post-render preferred-collapse controller must not return.");
+assert.strictEqual(source.indexOf("MutationObserver"), -1,
+    "Quick pre-paint state must not depend on DOM observers.");
 
 console.log("Quick output canonical pre-paint state and remount stability: OK");

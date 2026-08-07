@@ -5,7 +5,6 @@ var fs = require("fs");
 var path = require("path");
 
 var commands = fs.readFileSync(path.join(__dirname, "..", "public", "modules", "commands", "index.js"), "utf8");
-var helper = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "download-results.js"), "utf8");
 
 assert.ok(commands.indexOf("window.__sirkNativeCommandAutoRun = true") >= 0,
     "The native Commands module must advertise ownership of selection execution.");
@@ -15,11 +14,8 @@ assert.ok(commands.indexOf("autoExecute === true && (!Array.isArray(item.variabl
     "Only variable-free items may execute automatically.");
 assert.ok(commands.indexOf("show(shell, item, false)") >= 0,
     "Restoring an already selected item during page render must not execute it again.");
-assert.ok(helper.indexOf("if (window.__sirkNativeCommandAutoRun === true) return true") >= 0,
-    "The old catalog workaround must stand down when native execution is available.");
-assert.ok(helper.indexOf("if (window.__sirkNativeCommandAutoRun === true) return") >= 0,
-    "The capture-phase workaround must not duplicate native execution.");
-assert.ok(helper.indexOf('".mc-command-run-button{"') >= 0 && helper.indexOf("visibility:visible!important") >= 0,
-    "The Run action must remain visible for scripts that require variables or manual confirmation.");
+assert.ok(commands.indexOf('shell.element("button", "btn btn-primary mc-command-run-button"') >= 0 &&
+    commands.indexOf("card.appendChild(button)") >= 0,
+    "The native Commands renderer must keep a visible Run action for variable or manually confirmed execution.");
 
 console.log("Native Commands selection execution contract: OK");

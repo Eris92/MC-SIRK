@@ -386,6 +386,7 @@
                 order: 20,
                 onClick: function (toolbar) {
                     tools.toggleFavorites(toolbar, function () {
+                        mode = "scripts";
                         treeState.selectedScript = "";
                         module.api.render();
                     });

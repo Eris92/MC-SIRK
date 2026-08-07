@@ -17,22 +17,20 @@ assert.ok(script.indexOf('collapse: {') >= 0 &&
     script.indexOf('refresh: {') >= 0 &&
     script.indexOf('search: { title: text("search")') >= 0,
     "Quick commands toolbar must provide collapse, favorites, refresh and search controls.");
-assert.ok(script.indexOf('key: "details"') >= 0 &&
-    script.indexOf('DETAILS_COLLAPSED_KEY = "mc-sirk-quickcommands-details-collapsed"') >= 0 &&
-    script.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)') >= 0,
+assert.ok(script.indexOf('detailsCollapsed: preferences.quickDetailsCollapsed === true') >= 0 &&
+    script.indexOf('writePreferences({ quickDetailsCollapsed: state.detailsCollapsed })') >= 0 &&
+    script.indexOf('browser.classList.toggle("is-details-collapsed", state.detailsCollapsed)') >= 0 &&
+    script.indexOf('key: "details"') >= 0,
     "Quick commands must provide a persistent output-column collapse action.");
 assert.ok(script.indexOf('key: "close"') >= 0 && script.indexOf("closePanel(panel)") >= 0,
     "Quick commands must expose Close as a toolbar action.");
 assert.ok(script.indexOf('PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
-    script.indexOf("state.favoritesOnly") >= 0 && script.indexOf("filterGroup") >= 0,
-    "Quick commands favorites must use the same saved favorites as My Commands.");
-assert.ok(toolbar.indexOf('QUICK_PREFERENCES_KEY = "sirkPlatform.mycommands.preferences"') >= 0 &&
-    toolbar.indexOf("preferences.quickFavoritesOnly") >= 0 &&
-    toolbar.indexOf("writeQuickFavoritesOnly(nextQuickFavorites)") >= 0 &&
-    toolbar.indexOf("restoreQuickFavorites(context.buttons.favorites)") >= 0,
-    "Quick commands must save and restore whether the Favorites-only filter is active.");
-assert.ok(toolbar.indexOf("typeof preferences.favoritesOnly === \"boolean\"") >= 0,
-    "Quick commands must migrate an older saved Favorites-only preference.");
+    script.indexOf('favoritesOnly: preferences.quickFavoritesOnly === true') >= 0 &&
+    script.indexOf('writePreferences({ quickFavoritesOnly: state.favoritesOnly })') >= 0 &&
+    script.indexOf("filterGroup") >= 0,
+    "Quick commands favorites must use and persist the same preferences store as My Commands.");
+assert.ok(toolbar.indexOf("window.SharedToolbar") >= 0 && toolbar.indexOf("SharedToolbarConfig.resolve") >= 0,
+    "SharedToolbar must remain generic; Quick-specific persistence belongs to the Quick renderer.");
 assert.ok(script.indexOf('path: "@command/" + category.key + "/" + command.id') >= 0,
     "Quick commands must use the same command favorite keys as My Commands.");
 assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&

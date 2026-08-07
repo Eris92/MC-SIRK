@@ -1,179 +1,57 @@
 "use strict";
 
 var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
 var pluginMain = require("../plugin-main.js");
 
-var originalWindow = global.window;
-var originalDocument = global.document;
+var root = path.join(__dirname, "..");
+var startupSource = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
+var desktopSource = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
+var shellSource = fs.readFileSync(path.join(root, "public", "shared", "module-shell.js"), "utf8");
 
-function classList(values) {
-    var state = Object.create(null);
-    (values || []).forEach(function (value) { state[value] = true; });
-    return {
-        add: function (value) { state[value] = true; },
-        remove: function (value) { delete state[value]; },
-        contains: function (value) { return state[value] === true; },
-        toggle: function (value, enabled) {
-            if (enabled === false) delete state[value];
-            else if (enabled === true || !state[value]) state[value] = true;
-            else delete state[value];
-        }
-    };
-}
+var hook = pluginMain.createSerializedStartupHook("1.8.20-test", "SIRKPortal");
+var source = hook.toString();
 
-function element(tagName) {
-    var attributes = Object.create(null);
-    return {
-        tagName: String(tagName || "div").toUpperCase(),
-        id: "",
-        src: "",
-        href: "",
-        rel: "",
-        async: false,
-        classList: classList(),
-        childNodes: [],
-        setAttribute: function (name, value) { attributes[name] = String(value); },
-        getAttribute: function (name) { return attributes[name] == null ? null : attributes[name]; },
-        addEventListener: function () {},
-        remove: function () {}
-    };
-}
+assert.ok(source.indexOf('var browserVersion = "1.8.20-test"') >= 0 &&
+    source.indexOf('var browserPin = "SIRKPortal"') >= 0,
+    "The serialized browser hook must embed the exact plugin version and pin.");
+assert.ok(source.indexOf('style("sirk-platform-desktop-commands-style", "desktop-commands.css")') >= 0,
+    "Quick must load its static Desktop stylesheet from the canonical startup hook.");
+assert.ok(source.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
+    "Quick must load its canonical Desktop renderer through the normal serialized asset list.");
+assert.ok(source.indexOf("scripts.reduce(function (chain, item)") >= 0,
+    "Browser assets must be loaded serially without a secondary Quick lifecycle loader.");
+assert.ok(source.indexOf("window.SirkPlatformRuntime.initialize()") >= 0 &&
+    source.indexOf("window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId)") >= 0,
+    "Quick lifecycle must enter through the shared browser runtime after assets load.");
 
-var observed = [];
-function NativeMutationObserver(callback) {
-    this.callback = callback;
-}
-NativeMutationObserver.prototype.observe = function (target, options) {
-    observed.push({ observer: this, target: target, options: options });
-};
-NativeMutationObserver.prototype.disconnect = function () {};
-NativeMutationObserver.prototype.takeRecords = function () { return []; };
+assert.strictEqual(source.indexOf("MutationObserver"), -1,
+    "Startup must never replace or scope the browser's global MutationObserver.");
+assert.strictEqual(source.indexOf("WebKitMutationObserver"), -1,
+    "Startup must never replace WebKitMutationObserver either.");
+assert.strictEqual(source.indexOf("mesh-plugin-core"), -1,
+    "The removed native compatibility core must not be reloaded by startup.");
+assert.strictEqual(source.indexOf("quick-output-state"), -1,
+    "The removed Quick output compatibility layer must not be reloaded by startup.");
+assert.strictEqual(source.indexOf("currentScript"), -1,
+    "Quick lifecycle must not infer ownership from whichever script happens to be executing.");
 
-var documentElement = element("html");
-var head = element("head");
-var panel = element("aside");
-panel.id = "SirkDesktopCommandsPanel";
-var commandTab = element("td");
-commandTab.id = "MainDevSirkPlatform-Commands";
-commandTab.classList.add("style3sel");
-var commandHeader = element("span");
-commandHeader.id = "p19ph-sirk-platform-mycommands-device-page";
-commandHeader.classList.add("on");
-var titleText = { nodeType: 3, nodeValue: "Wtyczki" };
-var deviceSuffix = element("span");
-deviceSuffix.id = "p19deviceName";
-deviceSuffix.childNodes = [{ nodeType: 3, nodeValue: " - TEST-PC" }];
-var title = element("h1");
-title.childNodes = [titleText, deviceSuffix];
+assert.strictEqual(desktopSource.indexOf("MutationObserver"), -1,
+    "The canonical Quick renderer must not install detached-node or document-wide observers.");
+assert.strictEqual(desktopSource.indexOf("mesh-plugin-core"), -1,
+    "Quick renderer must not depend on the removed compatibility core.");
+assert.ok(desktopSource.indexOf('document.getElementById("deskarea3x")') >= 0,
+    "Quick must scope itself directly to the native Desktop stage.");
+assert.ok(desktopSource.indexOf('panel.id = "SirkDesktopCommandsPanel"') >= 0 &&
+    desktopSource.indexOf('wrapper.appendChild(panel)') >= 0,
+    "Quick must own one explicit persistent panel instead of observing the full document.");
 
-var elements = {
-    SirkDesktopCommandsPanel: panel,
-    "MainDevSirkPlatform-Commands": commandTab,
-    "p19ph-sirk-platform-mycommands-device-page": commandHeader
-};
+assert.ok(shellSource.indexOf("findDeviceTitleTextNode") >= 0 &&
+    shellSource.indexOf("formatDeviceTitle") >= 0 &&
+    shellSource.indexOf("setDeviceTitle(active)") >= 0,
+    "Commands - <PC> title ownership must live in the device module shell, not in Quick startup hooks.");
+assert.strictEqual(startupSource.indexOf("__sirkScheduleCommandsTitle"), -1,
+    "Startup must not carry a second Commands title synchronizer.");
 
-var listeners = {};
-var documentStub = {
-    currentScript: null,
-    documentElement: documentElement,
-    head: head,
-    createElement: element,
-    getElementById: function (id) { return elements[id] || null; },
-    querySelector: function (selector) {
-        if (selector === ".sirk-desktop-commands-panel") return panel;
-        if (selector === "#p19title h1") return title;
-        if (selector === "#p19headers .on") return commandHeader;
-        return null;
-    },
-    addEventListener: function (name, handler) { listeners[name] = handler; }
-};
-head.appendChild = function (node) {
-    if (node.id) elements[node.id] = node;
-    if (node.tagName === "SCRIPT") {
-        Promise.resolve().then(function () {
-            if (typeof node.onload === "function") node.onload();
-        });
-    }
-    return node;
-};
-
-var storage = {
-    _curPluginPage: "sirk-platform-mycommands-device-page"
-};
-var windowStub = {
-    location: { href: "https://mesh.example.test/?key=test" },
-    MutationObserver: NativeMutationObserver,
-    WebKitMutationObserver: NativeMutationObserver,
-    localStorage: {
-        getItem: function (key) { return storage[key] == null ? null : storage[key]; },
-        setItem: function (key, value) { storage[key] = String(value); }
-    },
-    SirkPlatformRuntime: {
-        initialize: function () { return Promise.resolve(); },
-        onDeviceRefreshEnd: function () {}
-    },
-    xxcurrentView: 19,
-    setTimeout: function (handler) { handler(); return 1; },
-    clearTimeout: function () {},
-    console: { error: function () {} }
-};
-
-function nextTurn() {
-    return new Promise(function (resolve) { setImmediate(resolve); });
-}
-
-(async function run() {
-    global.window = windowStub;
-    global.document = documentStub;
-
-    try {
-        var hook = pluginMain.createSerializedStartupHook("1.7.19", "SIRKPortal");
-        hook();
-
-        assert.notStrictEqual(windowStub.MutationObserver, NativeMutationObserver,
-            "Startup must install the Quick observer scope before loading browser assets.");
-
-        documentStub.currentScript = {
-            src: "https://mesh.example.test/pluginadmin.ashx?pin=SIRKPortal&asset=mesh-plugin-core.js&v=1.7.19"
-        };
-        var quickObserver = new windowStub.MutationObserver(function () {});
-        quickObserver.observe(documentElement, { childList: true, subtree: true });
-
-        assert.ok(observed.some(function (entry) { return entry.observer === quickObserver && entry.target === panel; }),
-            "Mesh/Quick global observers must be attached to the Quick panel.");
-        assert.ok(!observed.some(function (entry) { return entry.observer === quickObserver && entry.target === documentElement; }),
-            "Mesh/Quick observers must never observe the whole document after isolation is installed.");
-
-        documentStub.currentScript = { src: "https://mesh.example.test/scripts/unrelated.js" };
-        var unrelatedObserver = new windowStub.MutationObserver(function () {});
-        unrelatedObserver.observe(documentElement, { childList: true, subtree: true });
-        assert.ok(observed.some(function (entry) { return entry.observer === unrelatedObserver && entry.target === documentElement; }),
-            "Observers unrelated to Quick must keep their native target.");
-
-        assert.strictEqual(typeof windowStub.__sirkScheduleCommandsTitle, "function");
-        windowStub.__sirkScheduleCommandsTitle();
-        assert.strictEqual(titleText.nodeValue, "Commands",
-            "The selected Commands device tab must render Commands - <PC>, not the translated Plugins title.");
-        assert.strictEqual(deviceSuffix.childNodes[0].nodeValue, " - TEST-PC",
-            "Commands title synchronization must preserve the native device suffix.");
-
-        var source = hook.toString();
-        assert.ok(source.indexOf("target === document.documentElement") >= 0,
-            "The serialized hook must intercept only document-wide observers.");
-        assert.ok(source.indexOf("mesh-plugin-core|quick-output-state") >= 0,
-            "The serialized hook must be limited to the two Quick lifecycle scripts.");
-        assert.ok(source.indexOf("[?&#]") >= 0,
-            "Quick script source detection must support query-string ampersands used by pluginadmin.ashx.");
-
-        await nextTurn();
-        await nextTurn();
-
-        console.log("Quick observer lifecycle isolation and Commands device title: OK");
-    } finally {
-        global.window = originalWindow;
-        global.document = originalDocument;
-    }
-}()).catch(function (error) {
-    console.error(error);
-    process.exitCode = 1;
-});
+console.log("Quick lifecycle isolation without global observer or title monkey-patches: OK");

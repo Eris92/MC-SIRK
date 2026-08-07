@@ -8,36 +8,46 @@ var root = path.join(__dirname, "..");
 var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 var quick = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
 
-assert.ok(toolbar.indexOf("function quickDefinitions(options)") >= 0 &&
-    toolbar.indexOf("definitions.push(value)") >= 0 &&
-    toolbar.indexOf("definitions.sort(function (a, b)") >= 0 &&
-    toolbar.indexOf("if (quickToolbar) quickDefinitions(options).forEach(add)") >= 0,
-    "Quick standard and custom toolbar buttons must be sorted together by order.");
-assert.ok(toolbar.indexOf("function addStableDefinitions(options, add, context)") >= 0 &&
-    toolbar.indexOf("else addStableDefinitions(options, add, context)") >= 0 &&
-    toolbar.indexOf("window.SharedToolbarConfig.resolve(\n            options.preset,\n            options.buttons\n        ).forEach(add)") >= 0,
-    "Non-Quick modules must retain the stable 1.7.7 toolbar mounting path.");
+assert.ok(toolbar.indexOf("function definitions(options)") >= 0 &&
+    toolbar.indexOf("window.SharedToolbarConfig.resolve(options.preset, options.buttons).slice()") >= 0 &&
+    toolbar.indexOf("(options.customButtons || []).forEach") >= 0 &&
+    toolbar.indexOf("items.push(item)") >= 0 &&
+    toolbar.indexOf("return items.sort(function (a, b)") >= 0,
+    "SharedToolbar must combine standard and custom definitions before one canonical order sort.");
+assert.ok(toolbar.indexOf('if (a.side !== b.side) return a.side === "left" ? -1 : 1') >= 0 &&
+    toolbar.indexOf("return Number(a.order || 500) - Number(b.order || 500)") >= 0,
+    "All toolbar actions must be sorted first by side and then by numeric order.");
+assert.ok(toolbar.indexOf("definitions(options).forEach(add)") >= 0,
+    "Every module, including Quick, must use the same shared mounting path.");
+assert.strictEqual(toolbar.indexOf("quickDefinitions"), -1,
+    "Quick must not have a private toolbar-definition sorter.");
+assert.strictEqual(toolbar.indexOf("addStableDefinitions"), -1,
+    "Shared modules must not retain a parallel legacy mounting path.");
+
+assert.ok(quick.indexOf('collapse: {') >= 0 && quick.indexOf('side: "left", order: 10') >= 0,
+    "Quick Collapse must be first on the left.");
+assert.ok(quick.indexOf('favorites: {') >= 0 && quick.indexOf('side: "left", order: 20') >= 0,
+    "Quick Favorites must follow Collapse.");
+assert.ok(quick.indexOf('title: text("refresh"), side: "left", order: 50') >= 0,
+    "Quick Refresh must remain before Output and Search.");
 assert.ok(quick.indexOf('key: "details"') >= 0 && quick.indexOf("order: 65") >= 0 &&
     quick.indexOf('search: { title: text("search"), side: "left", order: 70 }') >= 0,
-    "Quick output must appear before Search, with Search as the final left-side button.");
-assert.ok(toolbar.indexOf("function keepQuickToolbarOnOneLine") >= 0 &&
-    toolbar.indexOf('root.style.flexWrap = "nowrap"') >= 0 &&
-    toolbar.indexOf('left.style.flexWrap = "nowrap"') >= 0 &&
-    toolbar.indexOf('right.style.flexWrap = "nowrap"') >= 0,
-    "Quick toolbar controls must remain on one line at compact panel widths.");
-assert.ok(toolbar.indexOf('searchWrap.style.flex = "1 1 120px"') >= 0 &&
-    toolbar.indexOf('searchWrap.style.minWidth = "80px"') >= 0 &&
-    toolbar.indexOf('searchInput.style.width = "100%"') >= 0 &&
-    toolbar.indexOf('searchInput.style.minWidth = "0"') >= 0,
-    "The opened Quick search field must shrink within the toolbar instead of wrapping below it.");
-assert.ok(toolbar.indexOf("if (context.buttons.search) left.appendChild(searchWrap)") >= 0,
-    "The search field must stay directly after the final Search button.");
-assert.ok(toolbar.indexOf("function alignQuickCollapseWithMyScripts(api)") >= 0 &&
-    toolbar.indexOf('if (key === "collapse") return originalSetActive.call(api, key, false)') >= 0 &&
-    toolbar.indexOf("if (quickToolbar) alignQuickCollapseWithMyScripts(api)") >= 0,
-    "Quick collapse must use the neutral MyScripts button style instead of remaining highlighted.");
-assert.ok(toolbar.indexOf("if (value === definition.icon) value = definition.expandIcon") >= 0 &&
-    toolbar.indexOf("else if (value === definition.expandIcon) value = definition.icon") >= 0,
-    "Quick collapse and expand icons must use the corrected opposite direction without changing MyScripts.");
+    "Quick Output must appear before Search, with Search as the final left-side action.");
+assert.ok(quick.indexOf('key: "close"') >= 0 && quick.indexOf('side: "right", order: 200') >= 0,
+    "Quick Close must remain isolated on the right side.");
 
-console.log("Quick-only toolbar behavior and stable shared-module mounting: OK");
+assert.ok(toolbar.indexOf("if (context.buttons.search) left.appendChild(searchWrap)") >= 0,
+    "The search field must stay directly after the ordered left-side Search button.");
+assert.ok(quick.indexOf('toolbar.setActive("collapse", state.collapsed)') >= 0 &&
+    quick.indexOf('toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon)') >= 0,
+    "Quick Collapse active state and icon must be derived from the one renderer-owned collapsed state.");
+assert.ok(quick.indexOf('toolbar.setActive("favorites", state.favoritesOnly)') >= 0 &&
+    quick.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0 &&
+    quick.indexOf('toolbar.setActive("search", state.searchVisible)') >= 0,
+    "Quick toolbar visual state must be synchronized through the shared toolbar API.");
+assert.strictEqual(toolbar.indexOf("keepQuickToolbarOnOneLine"), -1,
+    "SharedToolbar must not contain Quick-only layout monkey-patches.");
+assert.strictEqual(toolbar.indexOf("alignQuickCollapseWithMyScripts"), -1,
+    "SharedToolbar must not override Quick collapse state after mount.");
+
+console.log("Canonical shared toolbar ordering and Quick action sequence: OK");

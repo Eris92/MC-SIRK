@@ -3,98 +3,48 @@
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
-var vm = require("vm");
 
 var source = fs.readFileSync(
     path.join(__dirname, "..", "public", "shared", "ui", "tree.js"),
     "utf8"
 );
 
-var context = {
-    window: {},
-    document: {},
-    MutationObserver: function () {}
-};
-context.window.window = context.window;
-vm.runInNewContext(source, context, { filename: "tree.js" });
+var renderActionsStart = source.indexOf("function renderActions(host, script, options)");
+var renderScriptStart = source.indexOf("function renderScript(host, script, options)", renderActionsStart);
+assert.ok(renderActionsStart >= 0 && renderScriptStart > renderActionsStart,
+    "The canonical tree action renderer must exist.");
+var renderActions = source.slice(renderActionsStart, renderScriptStart);
 
-function classList(names) {
-    names = names || [];
-    return {
-        contains: function (name) { return names.indexOf(name) >= 0; }
-    };
-}
+assert.ok(renderActions.indexOf('var actions = document.createElement("span")') >= 0 &&
+    renderActions.indexOf('actions.className = "mc-tree-script-actions"') >= 0,
+    "Each script render must create one action container locally.");
+assert.ok(renderActions.indexOf("var renderedKeys = Object.create(null)") >= 0 &&
+    renderActions.indexOf("if (renderedKeys[identity]) return") >= 0 &&
+    renderActions.indexOf("renderedKeys[identity] = true") >= 0,
+    "Duplicate action definitions must be eliminated before buttons are appended.");
+assert.ok(renderActions.indexOf('action.setAttribute("data-sirk-action-key", identity)') >= 0,
+    "Every rendered action must expose its canonical identity for diagnostics.");
+assert.ok(renderActions.indexOf("if (actions.childNodes.length) host.appendChild(actions)") >= 0,
+    "The action container must be appended exactly once and only when it contains visible actions.");
+assert.strictEqual((renderActions.match(/host\.appendChild\(actions\)/g) || []).length, 1,
+    "The action renderer must have exactly one action-container append path.");
 
-function actionContainer(actionCount, canonical) {
-    return {
-        classList: classList(["mc-tree-script-actions"]),
-        parentNode: null,
-        getAttribute: function (name) {
-            return name === "data-sirk-action-container" && canonical ? "canonical" : null;
-        },
-        querySelectorAll: function (selector) {
-            return selector === ".mc-tree-script-action"
-                ? new Array(actionCount).fill({})
-                : [];
-        }
-    };
-}
+var renderScriptEnd = source.indexOf("function renderDirectory(host, directory, options)", renderScriptStart);
+var renderScript = source.slice(renderScriptStart, renderScriptEnd);
+assert.ok(renderScript.indexOf("row.appendChild(button)") >= 0 &&
+    renderScript.indexOf("renderActions(row, script, options)") >= 0 &&
+    renderScript.indexOf("host.appendChild(row)") >= 0,
+    "A script row must render its button, then its one canonical action group, then enter the tree.");
+assert.strictEqual((renderScript.match(/renderActions\(row, script, options\)/g) || []).length, 1,
+    "A script row must request action rendering exactly once.");
 
-function row(containers) {
-    var value = {
-        children: containers.slice(),
-        removeChild: function (child) {
-            var index = this.children.indexOf(child);
-            if (index >= 0) this.children.splice(index, 1);
-            child.parentNode = null;
-            return child;
-        }
-    };
-    value.children.forEach(function (child) { child.parentNode = value; });
-    return value;
-}
+assert.strictEqual(source.indexOf("normalizeActionContainers"), -1,
+    "Production tree code must not export a test-only duplicate-container cleanup API.");
+assert.strictEqual(source.indexOf("installActionContainerGuard"), -1,
+    "Production tree code must not repair duplicate action containers after rendering.");
+assert.strictEqual(source.indexOf("MutationObserver"), -1,
+    "The tree renderer must prevent duplicates at creation time instead of observing and repairing the DOM.");
+assert.strictEqual(source.indexOf("data-sirk-action-container"), -1,
+    "The removed compatibility ownership marker must not return.");
 
-var normalize = context.window.SharedDirectoryTree.normalizeActionContainers;
-assert.strictEqual(typeof normalize, "function",
-    "The tree renderer must expose its action-container invariant for regression tests.");
-
-var legacyFavorite = actionContainer(1, false);
-var canonicalEdit = actionContainer(4, true);
-var editRow = row([legacyFavorite, canonicalEdit]);
-assert.strictEqual(normalize(editRow), canonicalEdit,
-    "Edit mode must retain the canonical four-button action group.");
-assert.deepStrictEqual(editRow.children, [canonicalEdit],
-    "The standalone legacy Favorite group must be removed from Edit mode.");
-
-var legacyMulti = actionContainer(1, false);
-var canonicalMulti = actionContainer(1, true);
-var multiRow = row([legacyMulti, canonicalMulti]);
-assert.strictEqual(normalize(multiRow), canonicalMulti,
-    "Multi mode must prefer the explicitly marked canonical action group.");
-assert.deepStrictEqual(multiRow.children, [canonicalMulti],
-    "The duplicate standalone Multi action must be removed.");
-
-var largerUnmarked = actionContainer(4, false);
-var smallerUnmarked = actionContainer(1, false);
-var fallbackRow = row([largerUnmarked, smallerUnmarked]);
-assert.strictEqual(normalize(fallbackRow), largerUnmarked,
-    "Unmarked compatibility containers must retain the group with the most actions.");
-assert.deepStrictEqual(fallbackRow.children, [largerUnmarked],
-    "The smaller unmarked duplicate group must be removed.");
-
-var firstTie = actionContainer(1, false);
-var lastTie = actionContainer(1, false);
-var tieRow = row([firstTie, lastTie]);
-assert.strictEqual(normalize(tieRow), lastTie,
-    "Equal compatibility groups must keep the last rendered container.");
-assert.deepStrictEqual(tieRow.children, [lastTie],
-    "Only one action container may remain after a tie.");
-
-assert.ok(source.indexOf('actions.setAttribute("data-sirk-action-container", "canonical")') >= 0,
-    "The shared renderer must mark its canonical action group.");
-assert.ok(source.indexOf("installActionContainerGuard(treeHost)") >= 0,
-    "The tree host must guard against action containers added by later decorators.");
-assert.ok(source.indexOf('observer.observe(root, { childList: true, subtree: true })') >= 0,
-    "The guard must cover asynchronous nested row mutations.");
-
-console.log("One canonical action container per script row: OK");
+console.log("One action container is created per script row with duplicate keys rejected at render time: OK");

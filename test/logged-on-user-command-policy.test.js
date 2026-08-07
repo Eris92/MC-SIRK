@@ -1,7 +1,7 @@
 "use strict";
 
 var assert = require("assert");
-var entrypoint = require("../SIRKPortal.js");
+var elevatedPolicy = require("../server/core/elevated-quick-command-policy.js");
 var policy = require("../server/core/logged-on-user-command-policy.js");
 
 var captured = [];
@@ -13,11 +13,8 @@ var device = {
 };
 var plugin = { runtime: { context: { device: device } } };
 
-entrypoint.applyElevatedQuickCommandPolicy(plugin);
-entrypoint.applyLoggedOnUserCommandPolicy(plugin);
-
-assert.strictEqual(typeof entrypoint.applyLoggedOnUserCommandPolicy, "function",
-    "The plugin entrypoint must expose the logged-on-user policy.");
+elevatedPolicy.apply(plugin);
+policy.apply(plugin);
 
 var userPowerShell = {
     label: "Wallpaper",

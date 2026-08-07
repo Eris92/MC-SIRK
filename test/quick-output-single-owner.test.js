@@ -3,110 +3,56 @@
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
-var vm = require("vm");
 
 var root = path.join(__dirname, "..");
-var toolbarApiSource = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
-var outputStateSource = fs.readFileSync(path.join(root, "public", "native", "quick-output-state.js"), "utf8");
+var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
+var desktop = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
+var startup = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
 
-function classList(initial) {
-    var values = {};
-    String(initial || "").split(/\s+/).filter(Boolean).forEach(function (name) { values[name] = true; });
-    return {
-        add: function (name) { values[name] = true; },
-        remove: function (name) { delete values[name]; },
-        toggle: function (name, enabled) { values[name] = enabled === true; },
-        contains: function (name) { return values[name] === true; }
-    };
-}
+var detailsStart = desktop.indexOf('key: "details"');
+var detailsEnd = desktop.indexOf('key: "close"', detailsStart);
+assert.ok(detailsStart >= 0 && detailsEnd > detailsStart,
+    "Quick must define one canonical custom details action.");
+var detailsAction = desktop.slice(detailsStart, detailsEnd);
 
-var quickHost = { classList: classList("sirk-quick-command-toolbar-host") };
-var clicks = 0;
-var originalClick = function () { clicks += 1; };
-var button = {
-    title: "Ukryj wynik",
-    onclick: originalClick,
-    classList: classList(),
-    attributes: {},
-    closest: function (selector) { return selector === ".sirk-quick-command-toolbar-host" ? quickHost : null; },
-    setAttribute: function (name, value) { this.attributes[name] = String(value); },
-    getAttribute: function (name) { return this.attributes[name] || null; }
-};
-var browser = { classList: classList() };
-var panel = {
-    attributes: {},
-    querySelector: function (selector) {
-        if (selector === ".sirk-quick-command-details-toggle") return button;
-        if (selector === ".sirk-quick-command-browser") return browser;
-        if (selector === ".sirk-quick-command-status") return null;
-        return null;
-    },
-    querySelectorAll: function () { return [button]; },
-    setAttribute: function (name, value) { this.attributes[name] = String(value); },
-    removeAttribute: function (name) { delete this.attributes[name]; }
-};
+assert.ok(detailsAction.indexOf('onClick: function () { writeDetailsCollapsed(!state.detailsCollapsed); render(panel); }') >= 0,
+    "The canonical details action must own the only user click that changes output visibility.");
+assert.strictEqual((detailsAction.match(/onClick:/g) || []).length, 1,
+    "The Quick details action must expose exactly one click handler.");
+assert.ok(desktop.indexOf('var toolbar = window.SharedToolbar.mount({') >= 0 &&
+    desktop.indexOf('customButtons: [{') >= 0,
+    "Quick custom actions must be passed through the shared toolbar instead of creating private buttons.");
+assert.ok(toolbar.indexOf('button.onclick = function (event)') >= 0 &&
+    toolbar.indexOf('var handler = definition.onClick || handlers[definition.handler]') >= 0 &&
+    toolbar.indexOf('return handler(api, event, definition)') >= 0,
+    "SharedToolbar must be the single dispatcher for custom action clicks.");
+assert.strictEqual(desktop.indexOf('toolbar.buttons.details.onclick ='), -1,
+    "Quick must not replace the shared toolbar details click handler after mount.");
+assert.ok(desktop.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0 &&
+    desktop.indexOf('toolbar.setTitle("details", state.detailsCollapsed ? text("showDetails") : text("hideDetails"))') >= 0,
+    "State/title synchronization must be separate from the click owner.");
 
-var elements = {};
-var documentObject = {
-    documentElement: { appendChild: function (item) { if (item.id) elements[item.id] = item; } },
-    head: { appendChild: function (item) { if (item.id) elements[item.id] = item; } },
-    getElementById: function (id) { return elements[id] || null; },
-    createElement: function () { return { classList: classList(), appendChild: function () {} }; },
-    querySelectorAll: function () { return [panel]; }
-};
-var stored = { "mc-sirk-quickcommands-output-hidden-v2": "1" };
-var windowObject = {
-    document: documentObject,
-    localStorage: {
-        getItem: function (key) { return Object.prototype.hasOwnProperty.call(stored, key) ? stored[key] : null; },
-        setItem: function (key, value) { stored[key] = String(value); }
-    },
-    setTimeout: function (callback) { callback(); return 1; },
-    clearTimeout: function () {}
-};
-windowObject.window = windowObject;
+var setActiveStart = toolbarApi.indexOf("setActive: function (key, value)");
+var setTitleStart = toolbarApi.indexOf("setTitle: function (key, value)", setActiveStart);
+assert.ok(setActiveStart >= 0 && setTitleStart > setActiveStart,
+    "The canonical toolbar active-state API must exist.");
+var setActive = toolbarApi.slice(setActiveStart, setTitleStart);
+assert.strictEqual(setActive.indexOf("onclick"), -1,
+    "Changing active/theme state must never replace or invoke a toolbar click handler.");
+assert.ok(setActive.indexOf('item.classList.toggle("is-active", active)') >= 0 &&
+    setActive.indexOf('item.setAttribute("aria-pressed", active ? "true" : "false")') >= 0,
+    "The toolbar API must own only visual/accessibility state for the details action.");
 
-var context = {
-    window: windowObject,
-    document: documentObject,
-    MutationObserver: function () { this.observe = function () {}; },
-    Promise: Promise,
-    AbortController: typeof AbortController === "function" ? AbortController : undefined,
-    Array: Array,
-    Object: Object,
-    String: String,
-    Number: Number,
-    RegExp: RegExp,
-    JSON: JSON,
-    setTimeout: windowObject.setTimeout,
-    clearTimeout: windowObject.clearTimeout
-};
+assert.strictEqual(desktop.indexOf("__sirkStableOutputState"), -1,
+    "Quick must not need a compatibility ownership marker.");
+assert.strictEqual(desktop.indexOf("quick-output-state"), -1,
+    "Quick must not load or call the removed output-state controller.");
+assert.strictEqual(startup.indexOf("quick-output-state"), -1,
+    "Startup must not load a second Quick output click owner.");
+assert.strictEqual(desktop.indexOf("MutationObserver"), -1,
+    "No observer may discover and wrap the details button after render.");
+assert.strictEqual(desktop.indexOf("mc-sirk-quickcommands-output-hidden-v2"), -1,
+    "The removed standalone output-state preference must not return.");
 
-vm.runInNewContext(toolbarApiSource, context, { filename: "toolbar-api.js" });
-var api = windowObject.SharedToolbarApi.create({
-    root: { closest: function () { return null; } },
-    buttons: { details: button },
-    groups: {},
-    state: {},
-    searchInput: {},
-    searchWrap: {},
-    onSearch: null
-});
-api.setTitle("details", "Pokaż wynik");
-api.setActive("details", false);
-
-assert.strictEqual(button.__sirkStableOutputState, true,
-    "The Quick toolbar API must mark the details button as the canonical click owner.");
-
-vm.runInNewContext(outputStateSource, context, { filename: "quick-output-state.js" });
-
-assert.strictEqual(button.onclick, originalClick,
-    "The output-state observer must not wrap a button already owned by the Quick toolbar.");
-assert.strictEqual(button.title, "Pokaż wynik");
-assert.strictEqual(button.attributes["aria-pressed"], "false");
-
-button.onclick();
-assert.strictEqual(clicks, 1,
-    "One user click must invoke exactly one Quick output handler.");
-
-console.log("Quick output single click owner: OK");
+console.log("Quick output has one canonical click owner: OK");

@@ -1,39 +1,36 @@
-# SIRK Management Platform 1.8.18
+# SIRK Management Platform 1.8.20
 
-**Repozytorium:** `SIRK-Portal`  
+**Repozytorium:** `MC-SIRK`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
 **Nazwa wyświetlana:** `SIRK Management Platform`  
-**Nazwa skrócona w interfejsie:** `SIRK Platform`
+**Nazwa skrócona:** `SIRK Platform`
 
-SIRK Management Platform jest pluginem działającym wyłącznie w natywnym interfejsie MeshCentral. Zawiera backend, panel administracyjny, automatyzację, akceptacje, integracje i zarządzanie urządzeniami.
+SIRK Management Platform jest pluginem działającym w natywnym interfejsie MeshCentral. Zawiera backend, panel administracyjny, My Scripts, Commands, Approval Center, Device Transfers, integracje i mechanizmy wykonywania poleceń na urządzeniach.
 
-Repozytorium nie utrzymuje kompatybilności z testową nazwą ani strukturą `MyCompany`. Nie ładuje starych entrypointów, nie migruje dawnych ustawień i nie korzysta z `mycompany-data`.
+Repozytorium nie utrzymuje kompatybilności z testową strukturą `MyCompany` ani historycznymi warstwami naprawczymi runtime/DOM.
 
-## Zacznij od indeksów
+## Dokumentacja kanoniczna
 
-Przed odczytem kodu:
+Zacznij od:
 
-1. przeczytaj [`AGENTS.md`](AGENTS.md);
-2. otwórz [`docs/INDEX.md`](docs/INDEX.md);
-3. wybierz indeks warstwy odpowiadającej zadaniu;
-4. czytaj wyłącznie wskazaną część repozytorium i jej bezpośrednie zależności.
+1. [`AGENTS.md`](AGENTS.md)
+2. [`docs/INDEX.md`](docs/INDEX.md)
+3. indeksu właściwej warstwy
 
-Nie skanuj całego repozytorium, jeżeli indeks wskazuje konkretny entrypoint, moduł, loader, test lub dokument.
+Najważniejsze dokumenty:
 
-## Dokumentacja
-
-- [Indeks dokumentacji i obszarów](docs/INDEX.md)
-- [Struktura repozytorium](docs/REPOSITORY-LAYOUT.md)
 - [Aktualny stan projektu](docs/PROJECT-STATE.md)
-- [Router instrukcji](AGENTS.md)
-- [Reguły projektu](docs/agent/11-Agent-SIRK-Portal.md)
-- [Prompt startowy nowej rozmowy](docs/agent/Prompt-Start-SIRK-Portal-Conversation.md)
+- [Struktura repozytorium](docs/REPOSITORY-LAYOUT.md)
+- [Frontend index](public/INDEX.md)
+- [Backend index](server/INDEX.md)
+- [Test index](test/INDEX.md)
+- [Release notes 1.8.20](docs/releases/1.8.20.md)
 
-## Warstwy projektu
+## Warstwy
 
 ```text
 backend Node/MeshCentral       -> server/
-adapter natywnego MeshCentral  -> public/native/
+natywna integracja MeshCentral -> public/native/
 frontend współdzielony         -> public/shared/
 renderery modułów              -> public/modules/
 panel administracyjny          -> web/admin/
@@ -41,56 +38,14 @@ widok panelu                   -> views/SIRK-Portal.handlebars
 narzędzia instalacyjne         -> tools/install/
 ```
 
-Szczegółowe mapy znajdują się w lokalnych plikach `INDEX.md` poszczególnych warstw.
-
-## Moduły funkcjonalne
-
-- Automation;
-- Commands;
-- Approvals;
-- Device Transfers.
-
-Backend modułów znajduje się w `server/modules/`, a pojedyncze renderery frontendowe w `public/modules/`.
-
-## Natywny kontrakt UI MeshCentral
-
-Plugin nie posiada własnej palety kolorów ani niezależnego motywu. `MeshThemeAdapter` przypisuje komponentom istniejące klasy aktywnego interfejsu MeshCentral:
-
-- Classic: `style10`, `style10s`, `style3x`, `style3sel` oraz natywne kontrolki formularzy;
-- Modern: klasy Bootstrap używane przez MeshCentral, między innymi `btn-*`, `nav-link`, `list-group-item`, `card`, `form-control`, `form-select` i `table`.
-
-Dotyczy to Approval Center, Commands, My Scripts, Move Requests, Quick, wyników, formularzy, dialogów i panelu administracyjnego. Klasy są ponownie synchronizowane po renderach asynchronicznych oraz zmianie motywu.
-
-CSS pluginu definiuje wyłącznie elementy funkcjonalne, których MeshCentral nie zapewnia: układ trzech kolumn, geometrię Edit/Multi, pozycję panelu Quick, przewijanie i responsywność. Powierzchnie, przyciski, listy, zaznaczenia, karty, formularze, tabele i statusy pozostają własnością MeshCentral.
-
-Renderowanie modułów zachowuje istniejący DOM do czasu zakończenia pobierania danych. Szybkie kliknięcia są łączone i kolejkowane, dzięki czemu Approval Center, Commands, My Scripts oraz Move Requests nie przechodzą przez pusty stan pomiędzy renderami.
-
-Pierwsza i druga kolumna Approval Center, Commands oraz My Scripts korzystają z jednego kontraktu zaczerpniętego z Quick: `165–205 px / 285–340 px`, a na węższym desktopie `150–185 px / 250–300 px`. Wspólne są także padding 12 px, wiersze 36 px, odstęp 3 px, hover, selected i brak transformacji. W Commands i My Scripts przyciski Results oraz rooty katalogu są bezpośrednimi dziećmi rzeczywistej `.mc-shared-primary`, bez pośrednich kontenerów `mc-catalog-navigation` i `mc-catalog-roots`. Przycisk Results ma niezależny listener nawigacji, który nie może zostać utracony przy ponownej synchronizacji klas lub nadpisaniu właściwości `onclick`. Rozwinięte foldery zwiększają wcięcie o lekkie 6 px na każdy kolejny poziom, bez zwiększania wewnętrznego paddingu wierszy. `toolbar.css` nie może definiować drugiego układu zależnego od obecności akcji.
-
-Podczas otwartego workspace Approval Center lub My Scripts natywne `devListToolbarViewIcons` są ukrywane. Po wyjściu z workspace klasa jest usuwana, więc ikony widoku urządzeń wracają i nie są wyłączane globalnie.
-
-Każdy wiersz drzewa może zawierać dokładnie jeden bezpośredni kontener `.mc-tree-script-actions`. Renderer oznacza swój zestaw jako kanoniczny, usuwa starsze kontenery dodane przez nakładające się warstwy i ponownie wymusza kontrakt po asynchronicznych mutacjach DOM. Wewnątrz zestawu nadal obowiązuje deduplikacja po `key`, dlatego built-in Commands nie pokazują drugiej gwiazdki ani drugiej akcji Multi. Aktywna gwiazdka korzysta z natywnej klasy `text-warning`, tak jak aktywny klucz poświadczeń.
-
-Przyciski Edit i Multi-device pozostają jednocześnie widoczne, gdy użytkownik ma odpowiednie uprawnienia. Aktywny może być tylko jeden tryb; kliknięcie drugiego przełącza bezpośrednio z Edit na Multi lub z Multi na Edit.
-
-Quick zachowuje stałą geometrię podczas hover i active. Panel, toolbar, kolumna Output oraz elementy list nie dziedziczą transformacji powiększających z motywów MeshCentral. Po ukryciu Output grid jest rzeczywiście dwukolumnowy, bez pustego trzeciego tracku, a zawartość zaczyna się bezpośrednio pod toolbarem.
-
-Stan ukrycia Output jest synchronizowany pomiędzy renderem Quick i kontrolerem attention. Gdy ukryty Output otrzyma nowy końcowy wynik, przycisk otrzymuje czerwony stan z natywnych tokenów Bootstrap MeshCentral. Otwarcie Output natychmiast zeruje attention, a komunikaty ładowania, wysłania i odświeżenia listy pozostają neutralne. Toolbar ma dolny odstęp przed rozpoczęciem pionowych separatorów kolumn.
-
-## Entry pointy i loadery
-
-Kanoniczne entrypointy MeshCentral:
+Kanoniczne entrypointy:
 
 ```text
 SIRKPortal.js
 SIRKPortalAdmin.js
 ```
 
-Identyfikator `SIRKPortal` celowo nie zawiera myślnika. MeshCentral wykorzystuje `shortName` jako nazwę właściwości w generowanym JavaScript głównego interfejsu, dlatego musi to być poprawny identyfikator JavaScript.
-
-`SIRKPortalAdmin.js` deleguje implementację panelu do `admin.js`.
-
-Łańcuch backendu:
+Backend:
 
 ```text
 SIRKPortal.js
@@ -99,7 +54,90 @@ SIRKPortal.js
       -> server/modules/*
 ```
 
-Mapę assetów natywnego interfejsu utrzymuje `admin.js`.
+Frontend:
+
+```text
+plugin-main.js
+  -> public/shared/core.js
+  -> public/shared/ui/*
+  -> public/shared/module-shell.js
+  -> public/shared/runtime.js
+  -> public/modules/*
+```
+
+Mapę assetów utrzymuje `admin.js`.
+
+## Natywny UI MeshCentral
+
+Plugin nie posiada niezależnego motywu dla standardowych kontrolek.
+
+`MeshThemeAdapter` w `public/shared/ui/toolbar-config.js` mapuje elementy na klasy aktywnego interfejsu MeshCentral:
+
+- Classic: `style10`, `style10s`, `style3x`, `style3sel`;
+- Modern: Bootstrap używany przez MeshCentral, m.in. `btn-*`, `nav-link`, `list-group-item`, `card`, `form-control`, `form-select`, `table`.
+
+CSS pluginu odpowiada za geometrię, przewijanie i responsywność. Hover, selected, standardowe powierzchnie, przyciski, formularze i tabele pozostają własnością MeshCentral.
+
+Kanoniczne desktopowe kolumny shared UI:
+
+```text
+primary:            165–205 px
+collapsed primary:  64 px
+secondary:          285–340 px
+details:            pozostała przestrzeń
+```
+
+Globalna geometria workspace znajduje się w `public/shared/ui/shared-ui.css`. `layout.js` odpowiada tylko za strukturę DOM i stan Collapse.
+
+## MeshCentral Events
+
+SIRK nie utrzymuje własnego systemu audit logów. `server/core/mesh-events.js` przekazuje zdarzenia akcji do natywnego `MeshCentral.DispatchEvent()`.
+
+- nie powstaje `audit.jsonl`;
+- panel SIRK nie ma osobnej zakładki Logs;
+- persistence, filtrowanie i prezentacja zdarzeń należą do MeshCentral Events;
+- eventy SIRK zawierają użytkownika i, gdy dotyczy, urządzenie;
+- hasła, sekrety, tokeny, payloady i output poleceń nie są kopiowane do eventów.
+
+## Atomic render
+
+`public/shared/module-shell.js` renderuje nowe `secondary` i `details` poza live DOM. `renderSequence` odrzuca nieaktualne operacje, a zawartość strony jest podmieniana dopiero podczas atomic commit.
+
+Przejście pomiędzy workspace SIRK nie wykonuje pośredniego `go(1)`, dzięki czemu Devices nie jest odtwarzane pomiędzy modułami.
+
+## Edit / Multi
+
+Edit i Multi-device są wzajemnie wykluczające się, ale oba przyciski pozostają widoczne, jeżeli użytkownik ma wymagane uprawnienia.
+
+Dodatkowy action track jest mierzony na żywo przez `toolbar-api.js`. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
+
+## Quick
+
+Quick jest montowany na natywnej powierzchni Desktop i ma jednego właściciela stanu w:
+
+```text
+public/native/desktop-commands.js
+```
+
+- launcher ma stałą szerokość 38 px;
+- Collapse i Output korzystają ze wspólnych preferences My Commands;
+- ukrycie Output używa klasy `is-details-collapsed`;
+- attention/pending są stanem runtime;
+- Quick nie używa własnego MutationObservera;
+- wiersze korzystają z natywnych klas MeshCentral.
+
+Nie istnieją już warstwy `mesh-plugin-core.js` ani `quick-output-state.js`.
+
+## Wyniki i CSV
+
+`public/shared/ui/results.js` jest jednym rendererem wyników. Rozpoznaje wygenerowane raporty CSV i prowadzi do uwierzytelnionego endpointu `admin.js`.
+
+Endpoint pobierania:
+
+- wymaga użytkownika MeshCentral;
+- ogranicza ścieżkę do kanonicznych katalogów skryptów;
+- dopuszcza wyłącznie `.csv`;
+- wysyła plik jako attachment z `nosniff`.
 
 ## Dane trwałe
 
@@ -111,6 +149,21 @@ meshcentral-data/sirk-platform-data
 
 Plugin nie odczytuje, nie kopiuje i nie migruje `meshcentral-data/mycompany-data`.
 
+## Usunięte warstwy compatibility
+
+W kodzie i startupie nie występują:
+
+```text
+download-results.js
+script-edit-actions.js
+mesh-plugin-core.js
+quick-output-state.js
+runtime-base.js
+audit-log.js
+```
+
+Nie należy ich przywracać. Funkcje dawnych helperów mają obecnie jednoznacznych właścicieli opisanych w `docs/PROJECT-STATE.md`.
+
 ## Instalacja z Git
 
 Uruchom jako Administrator:
@@ -119,19 +172,13 @@ Uruchom jako Administrator:
 .\tools\install\Install-SIRK-Portal-FromGit_RUN.ps1
 ```
 
-Źródłowa implementacja instalatora:
+Implementacja:
 
 ```text
 tools/install/Install-SIRK-Portal-FromGit.ps1
 ```
 
-Repozytorium źródłowe:
-
-```text
-https://github.com/Eris92/MC-SIRK
-```
-
-Instalator umieszcza plugin w:
+Plugin jest instalowany do:
 
 ```text
 meshcentral-data/plugins/SIRKPortal
@@ -143,4 +190,13 @@ meshcentral-data/plugins/SIRKPortal
 npm test
 ```
 
-Walidator struktury blokuje niebezpieczny identyfikator z myślnikiem, stare entrypointy i widoki `MyCompany`, backend poza `server/`, płaskie assety aplikacyjne w `public/`, `public/shared-ui/`, podwójne renderery i niekanoniczne ścieżki loaderów. Test natywnego motywu blokuje ponowne dodanie prywatnych palet, powierzchni i stanów aktywnych niezależnych od MeshCentral.
+Suite automatycznie uruchamia wszystkie `test/*.test.js`, security regression oraz:
+
+```text
+scripts/validate-repository-layout.js
+scripts/validate-architecture.js
+```
+
+CI używa Node.js 24 oraz `actions/checkout@v7` / `actions/setup-node@v7`.
+
+Wersje `package.json` i `config.json` muszą być identyczne.

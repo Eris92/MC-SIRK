@@ -7,214 +7,153 @@ var path = require("path");
 var root = path.resolve(__dirname, "..");
 function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8").replace(/\r\n/g, "\n"); }
 
+var core = read("public/shared/core.js");
 var shell = read("public/shared/module-shell.js");
-var adminCss = read("web/admin/admin.css");
+var runtime = read("public/shared/runtime.js");
+var toolbar = read("public/shared/ui/toolbar-config.js");
+var status = read("public/shared/ui/status-nav.js");
+var tree = read("public/shared/ui/tree.js");
+var scriptTools = read("public/shared/ui/script-tools.js");
+var approvalsUi = read("public/modules/approvals/index.js");
+var commandsUi = read("public/modules/commands/index.js");
+var desktop = read("public/native/desktop-commands.js");
+var desktopCss = read("public/native/desktop-commands.css");
+var sharedCss = read("public/shared/ui/shared-ui.css");
+var approvalsServer = read("server/modules/approval-center/index.js");
+var commandsServer = read("server/modules/commands/index.js");
+var serverRuntime = read("server/core/runtime.js");
+var adminRouter = read("admin.js");
 var adminJs = read("web/admin/admin.js");
-var sharedCore = read("public/shared/core.js");
-assert.ok(sharedCore.indexOf("approvalcenter: svgData") >= 0 && sharedCore.indexOf('fill="#7b1fa2"') >= 0,
-    "Approval Center must use its original purple clipboard menu icon.");
-assert.ok(sharedCore.indexOf('url.searchParams.delete("viewmode")') >= 0,
-    "Leaving a SIRK workspace must remove its custom viewmode from the URL.");
-assert.ok(sharedCore.indexOf('if (url.hash === "#") url.hash = ""') >= 0,
-    "Leaving a SIRK workspace must remove an empty trailing hash.");
-assert.ok(sharedCore.indexOf('window.xxcurrentView = Number(viewMode)') >= 0,
-    "A SIRK workspace hosted in p1 must use its logical view number so native go(1) redraws the device list on return.");
-assert.ok(sharedCore.indexOf('if (!core.workspaceState && typeof window.go === "function"') >= 0,
-    "Switching directly between SIRK workspaces must not briefly invoke native go(1) and discard the new custom URL.");
-assert.ok(adminCss.indexOf("body.night #sirk-platform-admin") >= 0 && adminCss.indexOf("--sirk-admin-bg: #ffffff") >= 0 && adminCss.indexOf("--sirk-admin-bg: #17191d") >= 0,
-    "The administration panel must react live to MeshCentral light and night theme classes.");
-assert.ok(adminCss.lastIndexOf("html body #sirk-platform-admin") > adminCss.lastIndexOf("color-scheme: dark;"),
-    "Final live-theme rules must follow and override the legacy forced-dark compatibility block.");
-assert.ok(adminCss.indexOf('#sirk-platform-admin[data-host-theme="dark"]') >= 0 && adminJs.indexOf('var theme = hostIsDark() ? "dark" : "light"') >= 0 && adminJs.indexOf('root.setAttribute("data-host-theme", theme)') >= 0,
-    "The administration panel must infer the live MeshCentral host theme when the host does not expose body.night.");
-assert.ok(adminJs.indexOf('typeof window.nightMode === "boolean"') >= 0 && adminJs.indexOf('localStorage.getItem("nightMode")') >= 0,
-    "The administration panel must use MeshCentral's native live nightMode state instead of a plugin container color.");
-assert.ok(adminJs.indexOf('root.parentElement.classList.add("sirk-admin-host")') >= 0 && adminCss.indexOf('.sirk-admin-host[data-sirk-host-theme="dark"]') >= 0,
-    "The MeshCentral wrapper around the administration panel must not leave a light frame in night mode.");
+var adminCss = read("web/admin/admin.css");
+var pluginMain = read("plugin-main.js");
+
+assert.ok(core.indexOf('url.searchParams.delete("viewmode")') >= 0 && core.indexOf('if (url.hash === "#") url.hash = ""') >= 0,
+    "Leaving a SIRK workspace must clean its custom URL state.");
+assert.ok(shell.indexOf('if (!core.workspaceState && typeof window.go === "function") window.go(1)') >= 0,
+    "Native Devices may be entered before the first SIRK workspace, but not between SIRK workspaces.");
+assert.ok(shell.indexOf("core.activePlugin && core.activePlugin !== moduleInstance") >= 0 &&
+    shell.indexOf("core.activePlugin = moduleInstance") >= 0,
+    "SIRK workspaces must have one active owner.");
+assert.ok(shell.indexOf("state.renderSequence") >= 0 && shell.indexOf("replaceChildren(realSecondary, nextSecondary)") >= 0,
+    "Workspace renders must commit atomically and discard stale renders.");
+
 var topTabStart = shell.indexOf("function ensureTopTab()");
 var topTabEnd = shell.indexOf("function remove()", topTabStart);
 var topTab = shell.slice(topTabStart, topTabEnd);
 assert.ok(topTabStart >= 0 && topTabEnd > topTabStart, "Commands device-tab registration must exist.");
-assert.ok(topTab.indexOf('document.getElementById(pageId)') < 0,
-    "Commands top tab must not wait for its own unopened plugin page.");
 assert.ok(topTab.indexOf('document.getElementById("MainDevTerminal")') >= 0,
-    "Commands top tab must attach beside the native Terminal tab.");
+    "Commands must attach beside the native Terminal tab.");
+assert.ok(topTab.indexOf('document.getElementById(pageId)') < 0,
+    "Commands tab registration must not depend on an already opened plugin page.");
 
-var browserRuntime = read("public/shared/runtime.js");
-var toolbarIcons = read("public/shared/ui/toolbar-config.js");
-var statusIcons = read("public/shared/ui/status-nav.js");
-var approvalIcons = read("public/modules/approvals/index.js");
-[toolbarIcons, statusIcons, approvalIcons].forEach(function (source) {
+[toolbar, status, approvalsUi].forEach(function (source) {
     assert.ok(source.indexOf('fill="none"') >= 0 && source.indexOf('stroke="currentColor"') >= 0,
-        "Native inline icons must use theme-aware line rendering instead of black browser fills.");
+        "Inline UI icons must follow the active MeshCentral theme.");
 });
-assert.ok(browserRuntime.indexOf("stroke='currentColor'") >= 0,
-    "Decorated command icons must follow the active MeshCentral theme.");
-assert.ok(browserRuntime.indexOf('if (tools.state.editMode === true && hasCredentials && config.canEdit === true') >= 0,
-    "The runtime credential-action decorator must never restore credential buttons outside Edit mode.");
-var directoryTree = read("public/shared/ui/tree.js");
-assert.ok(directoryTree.indexOf('function lineIcon(kind)') >= 0 && directoryTree.indexOf('icon: "▣"') < 0,
-    "Script-tree fallback icons must be proper SVG artwork rather than solid text blocks.");
-var editActions = read("public/shared/ui/script-edit-actions.js");
-assert.ok(editActions.indexOf('if (config.canEdit === true && typeof config.onEdit === "function")') >= 0,
-    "The edit action must only be rendered for editable file-backed scripts.");
-assert.ok(editActions.indexOf("if (tools.state.editMode)") >= 0,
-    "Enhanced script actions must keep credentials and editing controls inside Edit mode.");
-assert.ok(browserRuntime.indexOf('core.assetUrl("", "shared-ui/') < 0,
-    "Browser runtime must not reload shared UI assets already serialized by plugin-main.");
-assert.ok(browserRuntime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0,
-    "A native redraw of shared page p1 must not turn an active SIRK workspace back into Devices.");
-assert.ok(browserRuntime.indexOf('core.activateMenu(core.workspaceState.viewMode)') >= 0,
-    "The active SIRK menu entry must be reapplied after every native page redraw.");
+assert.ok(tree.indexOf("function lineIcon(kind)") >= 0 && tree.indexOf('icon: "▣"') < 0,
+    "Tree fallback icons must use SVG artwork rather than solid text glyphs.");
+assert.ok(scriptTools.indexOf("if (state.editMode) {") >= 0 &&
+    scriptTools.indexOf('key: "credentials"') > scriptTools.indexOf("if (state.editMode) {") &&
+    scriptTools.indexOf('key: "edit"') > scriptTools.indexOf("if (state.editMode) {"),
+    "Credential and edit row actions must remain inside Edit mode.");
+assert.ok(scriptTools.indexOf('if (config.canEdit === true) actions.push({ key: "edit"') >= 0,
+    "Edit actions must require edit capability.");
+assert.strictEqual(pluginMain.indexOf("script-edit-actions.js"), -1,
+    "Startup must not reload the removed script-edit compatibility layer.");
+assert.ok(runtime.indexOf('core.assetUrl("", "shared-ui/') < 0,
+    "Browser runtime must not reload shared UI assets serialized by plugin-main.");
+assert.ok(runtime.indexOf('!(Number(view) === 1 && core.workspaceState)') >= 0 &&
+    runtime.indexOf('core.activateMenu(core.workspaceState.viewMode)') >= 0,
+    "Native p1 redraws must preserve an active SIRK workspace and menu selection.");
 
-var approvals = read("server/modules/approval-center/index.js");
-assert.ok(approvals.indexOf("current.modules.approvals") >= 0,
-    "Approval Center must use the shared approval settings store.");
-assert.ok(approvals.indexOf("current.modules.approvalcenter.retentionDays") < 0,
-    "Approval Center must not persist retention in a disconnected module key.");
-
-var serverRuntime = read("server/core/runtime.js");
+assert.ok(approvalsServer.indexOf("current.modules.approvals") >= 0 &&
+    approvalsServer.indexOf("current.modules.approvalcenter.retentionDays") < 0,
+    "Approval Center must use the shared approval settings store only.");
 ["showTab", "showOverview", "allowNoApproval", "existing.levels"].forEach(function (field) {
-    assert.ok(serverRuntime.indexOf(field) >= 0,
-        "Admin settings must persist the Approval provider option: " + field);
+    assert.ok(serverRuntime.indexOf(field) >= 0, "Approval settings must persist: " + field);
 });
 assert.ok(serverRuntime.indexOf("userGroups: shared.getUserGroups(parent)") >= 0,
-    "Approval settings must receive MeshCentral groups for Level 1-3 selection.");
+    "Approval settings must receive MeshCentral groups for levels 1-3.");
 var saveAdminStart = serverRuntime.indexOf("function saveAdminSettings");
 var saveAdminEnd = serverRuntime.indexOf("function moduleFolders", saveAdminStart);
 assert.ok(serverRuntime.slice(saveAdminStart, saveAdminEnd).indexOf("integrations.save") < 0,
-    "Module settings saves must not rewrite integrations or the encrypted secret store.");
+    "Module settings saves must not rewrite integrations or encrypted secrets.");
 
-var adminUi = read("web/admin/admin.js");
 ["Allow execution without approval", "Level 1 approver groups", "Level 2 approver groups", "Level 3 approver groups", "Show provider tab", "Show provider in Approval overview"].forEach(function (label) {
-    assert.ok(adminUi.indexOf(label) >= 0, "Approval settings UI is missing: " + label);
+    assert.ok(adminJs.indexOf(label) >= 0, "Approval settings UI is missing: " + label);
 });
-assert.ok(adminUi.indexOf("AbortController") >= 0 && adminUi.indexOf("15000") >= 0,
-    "Admin saves must time out and restore the Save button instead of hanging indefinitely.");
+assert.ok(adminJs.indexOf("AbortController") >= 0 && adminJs.indexOf("15000") >= 0,
+    "Admin saves must have a bounded timeout.");
+assert.ok(adminJs.indexOf('var theme = hostIsDark() ? "dark" : "light"') >= 0 &&
+    adminJs.indexOf('typeof window.nightMode === "boolean"') >= 0,
+    "Administration must derive its live state from the MeshCentral host theme.");
+assert.ok(adminCss.indexOf("background:transparent!important") >= 0,
+    "Administration must expose the host surface instead of painting a private theme.");
+assert.strictEqual(adminCss.indexOf("--sirk-admin"), -1,
+    "Administration CSS must not own a private color palette.");
+assert.ok(adminRouter.indexOf("req.query.action") >= 0 && adminRouter.indexOf("req.body.action") >= 0,
+    "Admin POST routing must accept the action from query or form body.");
 
-var admin = read("admin.js");
-assert.ok(admin.indexOf("req.query.action") >= 0 && admin.indexOf("req.body.action") >= 0,
-    "Admin POST routing must read the requested action from both query and form body.");
-
-var desktopCommands = read("public/native/desktop-commands.js");
-var desktopCommandsCss = read("public/native/desktop-commands.css");
-var sharedUiCss = read("public/shared/ui/shared-ui.css");
-var commandsModule = read("public/modules/commands/index.js");
-['scripts:', 'network:', 'system:', 'other:'].forEach(function (icon) {
-    assert.ok(commandsModule.indexOf(icon) >= 0,
-        "My Commands must provide a distinct SVG menu icon for " + icon);
+["scripts:", "network:", "system:", "other:"].forEach(function (icon) {
+    assert.ok(commandsUi.indexOf(icon) >= 0, "My Commands must provide a distinct SVG menu icon for " + icon);
 });
-assert.ok(commandsModule.indexOf("iconMarkup: ICONS[command.id]") >= 0,
-    "My Commands entries must expose their command-specific SVG artwork to the shared tree.");
-assert.ok(desktopCommands.indexOf('document.getElementById("deskarea3x")') >= 0,
-    "Desktop Commands must mount on the native desktop stage.");
-assert.ok(desktopCommands.indexOf('{ surface: "desktop" }') >= 0,
-    "Desktop Commands must request the Desktop-filtered command and script tree.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-browser") >= 0 && desktopCommands.indexOf("variableForm") >= 0,
-    "Desktop Commands must retain the category browser and render variables in the third column.");
-assert.ok(desktopCommands.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0,
-    "Desktop Commands must group every file-backed script under the same Scripts entry used by My Commands.");
-assert.ok(desktopCommands.indexOf('sirk-quick-command-tree') >= 0 && desktopCommands.indexOf('appendItem(item, depth + 1)') >= 0,
-    "Desktop Commands must render folders and their scripts together in the second-column tree.");
-assert.ok(desktopCommands.indexOf("function scriptGroup") >= 0 && desktopCommands.indexOf("state.expanded[group.key]") >= 0,
-    "Desktop script folders must preserve nested directories and expand like the My Commands tree.");
-assert.ok(desktopCommands.indexOf('data.directExecutionAllowed !== true') >= 0 && desktopCommands.indexOf('requiresApproval: false') >= 0,
-    "Desktop Commands must expose file-backed scripts as direct actions without Approval UI.");
-assert.ok(desktopCommands.indexOf('desktopDirect: true') >= 0 && desktopCommands.indexOf('addIcon(button') >= 0,
-    "Desktop Commands must request direct execution and render folder/script icons.");
-assert.ok(desktopCommands.indexOf('(data.catalog || []).forEach') >= 0,
-    "Desktop Commands must include Network, System and Other alongside Scripts.");
-assert.ok(desktopCommands.indexOf('iconKind: command.id') >= 0,
-    "Desktop Commands must use command-specific icons matching My Commands.");
-assert.ok(desktopCommands.indexOf("sirk-quick-command-run") < 0 && desktopCommands.indexOf('if (!(value.variables || []).length)') >= 0 && desktopCommands.indexOf("sirk-quick-command-submit") >= 0,
-    "Desktop Commands must execute variable-free items immediately and show Run only for variable input.");
-assert.ok(desktopCommands.indexOf("state.detail = value;") >= 0 &&
-    desktopCommands.indexOf("writeDetailsCollapsed(false);") >= 0 &&
-    desktopCommands.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0 &&
-    desktopCommands.indexOf('if (button) button.disabled = true') >= 0,
-    "Selecting a variable-free Quick command must open the details pane, clear old output and execute automatically.");
-assert.ok(desktopCommands.indexOf('sirk-quick-command-details') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details') >= 0,
-    "Desktop Commands must reserve the third column for variable fields and their Run action.");
-assert.ok(desktopCommands.indexOf('var status = element("div", "sirk-quick-command-status", state.output)') >= 0 &&
-    desktopCommands.indexOf("details.appendChild(status)") >= 0 &&
-    desktopCommands.indexOf('panel.appendChild(element("div", "sirk-quick-command-status"))') < 0 &&
-    desktopCommandsCss.indexOf('.sirk-quick-command-details>.sirk-quick-command-status:not(:empty)') >= 0,
-    "Desktop command output must render inside the scrollable third column instead of a full-width footer.");
-assert.ok(desktopCommands.indexOf('"▶ " + text("run")') >= 0 && desktopCommandsCss.indexOf('.sirk-quick-command-details .sirk-quick-command-submit') >= 0,
-    "The variable Run action must remain visually distinct from transparent tree buttons.");
-assert.ok(desktopCommands.indexOf("function desktopConnected()") >= 0 && desktopCommands.indexOf("window.desktop.State") >= 0 && desktopCommands.indexOf("syncAvailability(wrapper)") >= 0,
-    "Quick commands must be hidden and blocked unless MeshCentral reports an active Desktop session.");
-assert.ok(desktopCommands.indexOf("function protectInput(control)") >= 0 && desktopCommands.indexOf('event.stopPropagation()') >= 0,
-    "Quick command inputs must keep keyboard events away from the active remote Desktop handler.");
-assert.ok(desktopCommandsCss.indexOf("min-width:84px;min-height:32px") >= 0,
-    "The Quick commands Run action must use the compact control size.");
-assert.ok(desktopCommands.indexOf('waitForExecution(result.id') >= 0 && desktopCommands.indexOf('"output"') >= 0,
-    "Desktop Commands must wait for the agent result instead of reporting submission as execution success.");
-assert.ok(desktopCommands.indexOf('value.requiresApproval ? text("request")') < 0,
-    "Desktop direct scripts must always display Run and never a Request button.");
-assert.ok(desktopCommands.indexOf('key: "script:" + root.path') < 0,
-    "Desktop Commands must not duplicate script folders alongside built-in command categories.");
-assert.ok(desktopCommandsCss.indexOf("body.night .sirk-desktop-commands") >= 0,
-    "Desktop Commands must follow MeshCentral's native night-mode class.");
-assert.ok(desktopCommandsCss.indexOf("var(--sdc-panel)") >= 0 && desktopCommandsCss.indexOf("var(--sdc-text)") >= 0,
-    "Desktop Commands surfaces must use theme variables instead of fixed colors.");
-assert.ok(sharedUiCss.indexOf("height:calc(100vh - 155px)") >= 0 && sharedUiCss.indexOf(".mc-shared-details{scrollbar-gutter:stable}") >= 0,
-    "Long script editors must remain inside the viewport and expose a stable vertical scrollbar.");
-assert.ok(admin.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
-    "Desktop Commands script must be exposed by the plugin asset router.");
-var commandsServer = read("server/modules/commands/index.js");
-assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 && commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
-    "The server must bypass Approval storage only for validated no-approval file-backed scripts.");
-assert.ok(commandsServer.indexOf("function interactiveDesktopCommand") >= 0 && commandsServer.indexOf("New-ScheduledTaskPrincipal") >= 0 && commandsServer.indexOf("-LogonType Interactive") >= 0,
-    "GUI commands must launch in the logged-on Windows user's interactive desktop session.");
-assert.ok(commandsServer.indexOf("Get-Process explorer -IncludeUserName") >= 0 && commandsServer.indexOf("Get-CimInstance Win32_ComputerSystem") >= 0,
-    "Interactive command launch must resolve the Explorer session owner before using the WMI fallback.");
-assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServer.indexOf("-Execute $env:ComSpec") < 0,
-    "Interactive Desktop tools must launch their executable directly without a flashing helper CMD window.");
-assert.ok(commandsServer.indexOf('Buffer.from(vbs, "utf8")') >= 0 && commandsServer.indexOf("wscript.exe") >= 0 && commandsServer.indexOf("shell.AppActivate") >= 0,
-    "Interactive Desktop tools must use a console-free WScript launcher that activates the requested window.");
-assert.ok(commandsServer.indexOf("Get-ScheduledTaskInfo -TaskName $taskName") >= 0 && commandsServer.indexOf("LastRunTime.Year") >= 0,
-    "The scheduled Desktop launcher must confirm that the task was started without racing its short-lived Running state.");
-assert.ok(commandsServer.indexOf("DeleteFile WScript.ScriptFullName") >= 0,
-    "The console-free launcher must clean up its own script only after it has been opened by WScript.");
-assert.ok(commandsServer.indexOf("approvalLevels: []") >= 0 && commandsServer.indexOf("directExecutionAllowed: true") >= 0,
-    "Desktop file-backed scripts must remain available even when the main Approval provider requires approval.");
-assert.ok(commandsServer.indexOf('asset === "command-definition"') >= 0 && commandsServer.indexOf("commandOverrides") >= 0,
-    "Built-in My Commands entries must expose a persistent command editor.");
-assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0 && commandsServer.indexOf('["system", "other"]') >= 0,
-    "Built-in commands must persist separate Desktop and without-Desktop availability, with System and Other defaulting to Desktop only.");
-assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf("decorateScriptTree") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,
-    "File-backed scripts must persist and enforce separate Desktop and My Commands card availability.");
-var scriptDefinitionForm = read("public/shared/ui/script-definition-form.js");
-var scriptTools = read("public/shared/ui/script-tools.js");
-assert.ok(scriptDefinitionForm.indexOf("showOnDesktop.checked") >= 0 && scriptDefinitionForm.indexOf("showWithoutDesktop.checked") >= 0,
-    "The script editor must save both script availability controls.");
-assert.ok(scriptTools.indexOf('if (state.editMode) {\n                        actions.push({ key: "favorite"') >= 0 &&
-    scriptTools.indexOf('if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials"') > scriptTools.indexOf('if (state.editMode) {\n                        actions.push({ key: "favorite"'),
-    "Script credential actions must only be created inside script edit mode.");
-assert.ok(desktopCommands.indexOf("command.showOnDesktop === true") >= 0,
-    "Desktop Quick commands must include only commands enabled for an active Desktop connection.");
-assert.ok(commandsModule.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0 && commandsModule.indexOf("siteAdmin = isAdmin(shell)") >= 0,
-    "My Commands must always expose every command to Site Admin while filtering Desktop-only commands for other users.");
-assert.ok(commandsModule.indexOf("mc-command-run-button") >= 0 && commandsModule.indexOf('tools.saveTreeState(treeState);\n                show(shell, item, true);') >= 0,
-    "Selecting an item in Commands must render its details immediately and directly execute variable-free entries.");
-assert.ok(commandsServer.indexOf("if (!levels.length && !allowNoApproval())") < 0,
-    "Built-in commands must not receive Approval level 1 implicitly.");
+assert.ok(commandsUi.indexOf("tonedIcon(ICONS[command.id] || ICONS.mmc, category.key)") >= 0,
+    "My Commands entries must expose command-specific theme-aware SVG artwork.");
+assert.ok(commandsUi.indexOf("mc-command-run-button") >= 0 &&
+    commandsUi.indexOf("show(shell, item, true)") >= 0,
+    "Selecting a command must show its details and allow immediate variable-free execution.");
+assert.ok(commandsUi.indexOf("command.showWithoutDesktop === true || siteAdmin || tools.state.editMode") >= 0,
+    "Site Admin must be able to edit Desktop-only built-in commands while normal users respect availability.");
+
+assert.ok(desktop.indexOf('document.getElementById("deskarea3x")') >= 0 && desktop.indexOf('{ surface: "desktop" }') >= 0,
+    "Quick commands must mount on the native Desktop stage and request Desktop-filtered data.");
+assert.ok(desktop.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0 &&
+    desktop.indexOf("function scriptGroup") >= 0,
+    "Quick commands must preserve the Scripts tree and nested folders.");
+assert.ok(desktop.indexOf("function desktopConnected()") >= 0 && desktop.indexOf("window.desktop.State") >= 0,
+    "Quick commands must require an active MeshCentral Desktop session.");
+assert.ok(desktop.indexOf("function protectInput(control)") >= 0 && desktop.indexOf("event.stopPropagation()") >= 0,
+    "Quick command inputs must not leak keyboard events into the remote Desktop handler.");
+assert.ok(desktop.indexOf("writeDetailsCollapsed(false);") >= 0 &&
+    desktop.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0,
+    "Variable-free Quick commands must reveal the details pane and execute immediately.");
+assert.ok(desktop.indexOf("waitForExecution(result.id") >= 0 && desktop.indexOf('"output"') >= 0,
+    "Quick commands must wait for agent output instead of treating submission as success.");
+assert.ok(desktop.indexOf('value.requiresApproval ? text("request")') < 0,
+    "Desktop direct scripts must not show Approval UI.");
+assert.ok(desktopCss.indexOf("grid-template-columns") >= 0 && desktopCss.indexOf("sirk-desktop-commands-panel") >= 0,
+    "Quick CSS may own geometry for the Desktop overlay.");
+assert.strictEqual(desktopCss.indexOf("--sdc-panel"), -1,
+    "Quick CSS must not reintroduce a private panel palette.");
+assert.ok(sharedCss.indexOf("height:calc(100vh - 155px)") >= 0 && sharedCss.indexOf("scrollbar-gutter:stable") >= 0,
+    "Long editors must stay inside the viewport with stable scrolling.");
+assert.ok(adminRouter.indexOf('"desktop-commands.js": ["public/native/desktop-commands.js"') >= 0,
+    "Desktop Commands must be exposed by the asset router.");
+
+assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 &&
+    commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
+    "Direct execution bypass must be limited to validated Desktop file-backed scripts.");
+assert.ok(commandsServer.indexOf("function interactiveDesktopCommand") >= 0 &&
+    commandsServer.indexOf("-LogonType Interactive") >= 0,
+    "GUI commands must launch in the logged-on user's interactive session.");
+assert.ok(commandsServer.indexOf("Get-Process explorer -IncludeUserName") >= 0 &&
+    commandsServer.indexOf("Get-CimInstance Win32_ComputerSystem") >= 0,
+    "Interactive launch must resolve the Explorer owner before the WMI fallback.");
+assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServer.indexOf("wscript.exe") >= 0,
+    "Desktop tools must use the console-free interactive launcher.");
+assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0,
+    "Built-in commands must persist separate Desktop and non-Desktop availability.");
+assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,
+    "File-backed scripts must enforce surface-specific availability.");
 assert.ok(commandsServer.indexOf("result.approvalLevels = []") >= 0,
-    "Every built-in command must execute directly; Approval is reserved for file-backed scripts.");
+    "Built-in commands must execute directly; Approval is reserved for file-backed scripts.");
 assert.ok(commandsServer.indexOf("fallbackResultsPath") >= 0 && commandsServer.indexOf("memoryRows") >= 0,
-    "Command execution must survive an inaccessible results.json by using fallback and in-memory storage.");
-assert.ok(commandsModule.indexOf('row("Approval", approvals)') < 0,
-    "The built-in command editor must not offer Approval settings.");
-assert.ok(commandsModule.indexOf("function openCommandEditor") >= 0 && commandsModule.indexOf('canEdit: isAdmin(shell)') >= 0,
-    "The edit pencil must be available and functional for built-in commands.");
+    "Command execution must survive an inaccessible results.json.");
 
-var pluginMain = read("plugin-main.js");
-assert.ok(pluginMain.indexOf('String(existing.src || "") !== String(sourceUrl || "")') >= 0,
-    "Plugin updates must replace stale versioned browser scripts already present in the page.");
-assert.ok(pluginMain.indexOf('String(existing.href || "") === String(href)') >= 0,
-    "Plugin updates must replace stale versioned stylesheets already present in the page.");
+assert.ok(pluginMain.indexOf('String(existing.src || "") !== String(sourceUrl || "")') >= 0 &&
+    pluginMain.indexOf('String(existing.href || "") === String(href)') >= 0,
+    "Plugin updates must replace stale versioned browser assets.");
 assert.ok(pluginMain.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
     "Desktop Commands must load during native MeshCentral startup.");
 
-console.log("Native UI contracts: OK");
+console.log("Native UI integration contracts: OK");

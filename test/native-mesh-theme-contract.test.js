@@ -9,13 +9,14 @@ function read(file) { return fs.readFileSync(path.join(root, file), "utf8"); }
 
 var config = read("public/shared/ui/toolbar-config.js");
 var settings = read("public/shared/ui/settings.js");
+var shell = read("public/shared/module-shell.js");
 var main = read("public/shared/styles/main.css");
 var shared = read("public/shared/ui/shared-ui.css");
 var toolbar = read("public/shared/ui/toolbar.css");
 var quick = read("public/native/desktop-commands.css");
 var admin = read("web/admin/admin.css");
 var status = read("public/shared/ui/status-nav.js");
-var editActions = read("public/shared/ui/script-edit-actions.js");
+var scriptTools = read("public/shared/ui/script-tools.js");
 var tree = read("public/shared/ui/tree.js");
 var view = read("views/SIRK-Portal.handlebars");
 
@@ -29,10 +30,18 @@ var view = read("views/SIRK-Portal.handlebars");
 });
 assert.ok(config.indexOf("window.MeshThemeAdapter") >= 0,
     "The shared bootstrap must expose one Mesh theme adapter.");
-assert.ok(settings.indexOf("syncNativeContainers") >= 0 && settings.indexOf("MutationObserver") >= 0,
-    "Native classes must be reapplied after asynchronous plugin renders.");
-assert.ok(settings.indexOf("data-native-theme-sanitized") >= 0,
-    "Historical generated color rules must be removed at runtime.");
+assert.ok(config.indexOf("function installObserver()") >= 0 &&
+    config.indexOf("new MutationObserver") >= 0 &&
+    config.indexOf("PLUGIN_ROOT_SELECTOR") >= 0,
+    "The theme adapter must watch only for newly rendered SIRK roots and host theme changes.");
+assert.ok(config.indexOf('attributeFilter: ["class", "data-bs-theme"]') >= 0,
+    "Theme observation must be limited to host theme attributes.");
+assert.ok(shell.indexOf('window.MeshThemeAdapter.refresh(page.root || realDetails.parentNode)') >= 0,
+    "Module renders must explicitly refresh native classes after an atomic render commit.");
+assert.strictEqual(settings.indexOf("MutationObserver"), -1,
+    "Settings must not duplicate the theme observer or own rendering lifecycle.");
+assert.strictEqual(config.indexOf("data-native-theme-sanitized"), -1,
+    "The native adapter must not carry historical runtime style-sanitization flags.");
 
 [
     [main, "--sirk-button", "shared action-button palette"],
@@ -48,8 +57,8 @@ assert.ok(settings.indexOf("data-native-theme-sanitized") >= 0,
     [status, "--sirk-status", "private semantic status palette"],
     [status, "#198754", "hard-coded approval success color"],
     [status, "#dc3545", "hard-coded approval danger color"],
-    [editActions, "#e0a800", "generated credential color"],
-    [editActions, "#d39e00", "legacy generated credential color"],
+    [scriptTools, "#e0a800", "generated credential color"],
+    [scriptTools, "#d39e00", "legacy generated credential color"],
     [tree, "var(--bs-primary,#3b82f6)", "inline Bootstrap-only folder color"],
     [tree, "graphic.style.color", "inline tree icon color assignment"]
 ].forEach(function (entry) {
@@ -63,7 +72,9 @@ assert.ok(quick.indexOf("grid-template-columns") >= 0 && quick.indexOf("sirk-des
     "Quick may retain functional overlay and column geometry.");
 assert.ok(toolbar.indexOf("mc-script-form-row") >= 0 && toolbar.indexOf("mc-definition-top-grid") >= 0,
     "Forms may retain functional layout without owning their visual palette.");
+assert.ok(scriptTools.indexOf("createElement(\"style\")") < 0,
+    "Script tools must not reintroduce runtime-generated theme CSS.");
 assert.ok(view.indexOf("asset=shared-ui/toolbar-config.js") >= 0 && view.indexOf("asset=shared-ui/settings.js") >= 0,
-    "The administration view must load the same native adapter and lifecycle as the user UI.");
+    "The administration view must load the same native adapter and settings primitives as the user UI.");
 
 console.log("Native MeshCentral theme ownership and geometry-only plugin CSS: OK");

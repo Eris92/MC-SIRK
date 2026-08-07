@@ -4,43 +4,54 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-var css = fs.readFileSync(path.join(__dirname, "..", "public/native/desktop-commands.css"), "utf8");
+var root = path.join(__dirname, "..");
+var css = fs.readFileSync(path.join(root, "public/native/desktop-commands.css"), "utf8");
+var adapter = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"), "utf8");
 
-assert.ok(css.indexOf('.sirk-desktop-commands-toggle:hover,.sirk-desktop-commands-toggle[aria-expanded="true"]{width:38px}') >= 0,
-    "Quick launcher must retain its exact width on hover and while open.");
-assert.ok(css.indexOf(".sirk-desktop-commands-panel:hover") >= 0 &&
-    css.indexOf(".sirk-quick-command-details:hover") >= 0 &&
-    css.indexOf("transform:none!important") >= 0 &&
-    css.indexOf("scale:none!important") >= 0,
-    "Quick panel, output column and rows must not inherit host hover scaling.");
+assert.ok(css.indexOf('.sirk-desktop-commands-toggle{position:absolute;z-index:1002;top:50%;right:-1px;width:38px;height:60px') >= 0,
+    "Quick launcher must retain its exact 38 px geometry.");
+assert.strictEqual(css.indexOf('.sirk-desktop-commands-toggle:hover'), -1,
+    "Quick launcher hover must not change its width or geometry.");
+assert.strictEqual(css.indexOf('.sirk-desktop-commands-toggle[aria-expanded="true"]'), -1,
+    "Opening Quick must not change launcher width or geometry.");
 assert.ok(css.indexOf('background-color:var(--bs-body-bg)!important') >= 0,
     "Modern Quick surfaces must use the active MeshCentral Bootstrap body background.");
-assert.ok(css.indexOf('.sirk-desktop-commands-panel[data-mesh-ui="modern"] .sirk-quick-command-toolbar-host{background-color:var(--bs-body-bg)!important}') >= 0,
-    "The padded Quick toolbar host must use the same opaque native surface as the columns below it.");
-assert.ok(css.indexOf("--bs-list-group-action-hover-bg") >= 0 &&
-    css.indexOf("--bs-list-group-action-hover-color") >= 0,
-    "First and second Quick columns must expose the native hover state.");
-assert.ok(css.indexOf("--bs-list-group-active-border-color") >= 0 &&
-    css.indexOf("outline-offset:-1px") >= 0,
-    "Selected Quick rows must remain visible without replacing the native active background.");
-assert.ok(css.indexOf(".sirk-quick-command-toolbar-host{padding:8px 10px 0;overflow:hidden;box-sizing:border-box}") >= 0,
-    "Quick content must start immediately below the toolbar and stay inside the panel outline.");
-assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-button:hover") >= 0,
-    "Quick toolbar controls, including Close, must not scale outside the panel outline.");
-assert.ok(css.indexOf('data-sirk-output-hidden="1"') >= 0 &&
-    css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,1fr)!important") >= 0 &&
-    css.indexOf("grid-template-columns:64px minmax(285px,1fr)!important") >= 0,
-    "Hidden Quick output must use a real two-column grid instead of retaining a zero-width third track.");
-var hiddenOverrides = css.slice(css.lastIndexOf('html .sirk-desktop-commands-panel[data-sirk-output-hidden="1"]'));
-assert.strictEqual(hiddenOverrides.indexOf("minmax(285px,340px) 0!important"), -1,
-    "The final hidden-output override must not declare the obsolete third track.");
-assert.strictEqual(css.indexOf("--bs-list-group-active-bg"), -1,
-    "Quick must not own the active-row background.");
-assert.strictEqual(css.indexOf("--bs-list-group-active-color"), -1,
-    "Quick must not own the active-row text color.");
-assert.strictEqual(css.indexOf("--sdc-hover"), -1,
-    "Quick interaction feedback must not restore a private hover palette.");
-assert.strictEqual(css.indexOf("--sdc-active"), -1,
-    "Quick interaction feedback must not restore a private active palette.");
+assert.ok(css.indexOf('.sirk-desktop-commands-panel[data-mesh-ui="modern"]') >= 0 &&
+    css.indexOf('.sirk-quick-command-toolbar-host{background-color:var(--bs-body-bg)!important}') >= 0,
+    "The Quick panel, columns and padded toolbar host must share the same opaque native surface.");
 
-console.log("Quick native background, opaque toolbar, containment and exact collapsed geometry: OK");
+assert.ok(adapter.indexOf('.sirk-quick-command-browser button') >= 0 &&
+    adapter.indexOf('syncOwnedClasses(element, ["list-group-item", "list-group-item-action"])') >= 0,
+    "Modern Quick rows must inherit native MeshCentral list interaction styling.");
+assert.ok(adapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
+    "Classic Quick rows must inherit native MeshCentral style10/style10s styling.");
+
+assert.ok(css.indexOf('.sirk-quick-command-toolbar-host{min-width:0;padding:8px 10px 0;overflow:hidden;box-sizing:border-box}') >= 0,
+    "Quick content must start immediately below the toolbar and stay inside the panel outline.");
+assert.ok(css.indexOf('grid-template-columns:minmax(165px,205px) minmax(285px,340px) 0!important') >= 0 &&
+    css.indexOf('grid-template-columns:64px minmax(285px,340px) 0!important') >= 0,
+    "Hidden Quick output must use the canonical collapsed details track without a compatibility controller.");
+assert.ok(css.indexOf('.sirk-quick-command-browser.is-details-collapsed .sirk-quick-command-details{display:none!important}') >= 0,
+    "The canonical details-collapsed class must be the only CSS visibility owner.");
+
+[
+    "data-sirk-output-hidden",
+    "--bs-list-group-action-hover-bg",
+    "--bs-list-group-action-hover-color",
+    "--bs-list-group-active-border-color",
+    "--bs-list-group-active-bg",
+    "--bs-list-group-active-color",
+    "--sdc-hover",
+    "--sdc-active",
+    "scale:none",
+    "zoom:1!important"
+].forEach(function (value) {
+    assert.strictEqual(css.indexOf(value), -1,
+        "Quick native interaction CSS must not contain legacy/private state: " + value);
+});
+assert.strictEqual(css.indexOf('.sirk-quick-command-browser button:hover'), -1,
+    "Quick must not override native row hover styling.");
+assert.strictEqual(css.indexOf('.sirk-quick-command-browser button.active'), -1,
+    "Quick must not override native row selected styling.");
+
+console.log("Quick native background, stable launcher and adapter-owned row interactions: OK");

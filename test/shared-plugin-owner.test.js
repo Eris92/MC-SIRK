@@ -3,118 +3,59 @@
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
-var vm = require("vm");
 
-function createClassList(initial) {
-    var values = Array.isArray(initial) ? initial.slice() : [];
-    return {
-        add: function () {
-            Array.prototype.forEach.call(arguments, function (value) {
-                if (values.indexOf(value) < 0) values.push(value);
-            });
-        },
-        remove: function () {
-            Array.prototype.forEach.call(arguments, function (value) {
-                var index = values.indexOf(value);
-                if (index >= 0) values.splice(index, 1);
-            });
-        },
-        contains: function (value) { return values.indexOf(value) >= 0; },
-        values: function () { return values.slice(); }
-    };
-}
+var root = path.join(__dirname, "..");
+var core = fs.readFileSync(path.join(root, "public", "shared", "core.js"), "utf8");
+var shell = fs.readFileSync(path.join(root, "public", "shared", "module-shell.js"), "utf8");
+var runtime = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"), "utf8");
+var startup = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
 
-function createElement(initialClasses) {
-    var attributes = Object.create(null);
-    return {
-        classList: createClassList(initialClasses),
-        setAttribute: function (name, value) { attributes[name] = String(value); },
-        removeAttribute: function (name) { delete attributes[name]; },
-        getAttribute: function (name) { return attributes[name]; },
-        querySelector: function () { return null; }
-    };
-}
+assert.ok(core.indexOf('window.SirkPlatformCore = window.SirkPlatformCore || {}') >= 0 &&
+    core.indexOf('core.activePlugin = core.activePlugin || null') >= 0,
+    "SIRK must have one explicit shared core and active workspace owner.");
+assert.ok(shell.indexOf('if (core.activePlugin && core.activePlugin !== moduleInstance && typeof core.activePlugin.close === "function")') >= 0 &&
+    shell.indexOf('core.activePlugin.close(false)') >= 0 &&
+    shell.indexOf('core.activePlugin = moduleInstance') >= 0,
+    "Switching SIRK modules must close the previous SIRK owner and transfer ownership atomically.");
+assert.ok(shell.indexOf('if (core.activePlugin === moduleInstance) core.activePlugin = null') >= 0,
+    "Closing a SIRK workspace must release only its own shared owner.");
 
-var externalPlugin = { key: "external", closeCount: 0, close: function () { this.closeCount += 1; } };
-var leftImage = { style: {} };
-var leftMenu = createElement(["nav-link", "text-center", "text-white", "active"]);
-leftMenu.querySelector = function (selector) {
-    return selector === "img.sirk-platform-menu-icon" ? leftImage : null;
-};
-var ensureMenuCount = 0;
-var context = {
-    document: {
-        getElementById: function (id) { return id === "LeftMenuSirkPlatform-myscripts" ? leftMenu : null; }
-    },
-    window: {
-        MeshPluginCore: { activePlugin: externalPlugin },
-        SirkPlatformCore: {
-            activePlugin: null,
-            ensureMenu: function () { ensureMenuCount += 1; return true; }
-        }
-    }
-};
-context.window.window = context.window;
-context.window.document = context.document;
+assert.strictEqual(core.indexOf("MeshPluginCore"), -1,
+    "SIRK core must not alias, replace or monkey-patch another plugin's global owner.");
+assert.strictEqual(shell.indexOf("MeshPluginCore"), -1,
+    "Module lifecycle must not depend on another plugin's private global owner.");
+assert.strictEqual(runtime.indexOf("MeshPluginCore"), -1,
+    "Runtime lifecycle must stay isolated from removed MeshPluginCore compatibility code.");
+assert.strictEqual(startup.indexOf("mesh-plugin-core"), -1,
+    "Browser startup must not load the removed MeshPluginCore compatibility layer.");
 
-var source = fs.readFileSync(
-    path.join(__dirname, "..", "public", "native", "mesh-plugin-core.js"),
-    "utf8"
-);
-vm.runInNewContext(source, context);
+assert.ok(core.indexOf('item.setAttribute("data-meshcentral-plugin-menu", String(order))') >= 0 &&
+    core.indexOf('items = Array.prototype.slice.call(host.children).filter(function (child)') >= 0,
+    "SIRK menu ordering must affect only entries explicitly registered by SIRK.");
+assert.ok(core.indexOf('return child.hasAttribute("data-meshcentral-plugin-menu")') >= 0,
+    "Unrelated third-party menu entries must stay outside SIRK reordering.");
+assert.ok(core.indexOf('"#MainMenuSpan .fullselect"') >= 0 &&
+    core.indexOf('"#page_leftbar .lbbuttonsel2"') >= 0,
+    "Native selection cleanup must target known MeshCentral selected states.");
+assert.strictEqual(core.indexOf('[id^="MainMenu"]'), -1,
+    "SIRK must not clear every top-menu entry by generic ID prefix.");
+assert.strictEqual(core.indexOf('[id^="LeftMenu"]'), -1,
+    "SIRK must not clear every left-menu entry by generic ID prefix.");
 
-var meshCore = context.window.MeshPluginCore;
-var sirkCore = context.window.SirkPlatformCore;
+assert.ok(core.indexOf('main.classList.add((String(main.tagName || "").toLowerCase() === "a" || main.classList.contains("nav-link")) ? "active" : "fullselect")') >= 0,
+    "Top-menu selection must use Bootstrap active in Modern MeshCentral and fullselect in Classic MeshCentral.");
+assert.ok(core.indexOf('left.classList.add((String(left.tagName || "").toLowerCase() === "a" || left.classList.contains("nav-link")) ? "active" : "lbbuttonsel2")') >= 0,
+    "Left-menu selection must use Bootstrap active in Modern MeshCentral and lbbuttonsel2 in Classic MeshCentral.");
+assert.ok(core.indexOf('main.setAttribute("aria-current", "page")') >= 0 &&
+    core.indexOf('left.setAttribute("aria-current", "page")') >= 0,
+    "Active Modern/Classic menu entries must expose accessible current-page state.");
 
-assert.notStrictEqual(meshCore, sirkCore,
-    "SIRK must not overwrite another plugin's MeshPluginCore implementation.");
-assert.strictEqual(sirkCore.activePlugin, externalPlugin,
-    "SIRK must see the plugin already active through the shared MeshPluginCore owner.");
+assert.ok(core.indexOf('image.className = "sirk-platform-menu-icon"') >= 0 &&
+    core.indexOf('image.style.width = "24px"') >= 0 &&
+    core.indexOf('image.style.height = "24px"') >= 0 &&
+    core.indexOf('image.style.objectFit = "contain"') >= 0,
+    "Modern SIRK menu icons must use one canonical 24 px native-aligned image geometry.");
+assert.ok(core.indexOf('legacyIcon.style.backgroundSize = "contain"') >= 0,
+    "Classic SIRK menu icons must keep their native slot and preserve proportions.");
 
-var sirkPlugin = { key: "approvalcenter", closeCount: 0, close: function () { this.closeCount += 1; } };
-sirkCore.activePlugin = sirkPlugin;
-assert.strictEqual(meshCore.activePlugin, sirkPlugin,
-    "Other MeshCentral plugins must see the SIRK module as the active plugin.");
-
-var otherPlugin = { key: "other", closeCount: 0, close: function () { this.closeCount += 1; } };
-meshCore.activePlugin = otherPlugin;
-assert.strictEqual(sirkCore.activePlugin, otherPlugin,
-    "SIRK must immediately see an external plugin that replaced the active owner.");
-
-sirkCore.activePlugin.close(false);
-assert.strictEqual(otherPlugin.closeCount, 1,
-    "The shared owner must allow SIRK to close an external plugin through the standard lifecycle.");
-
-sirkCore.activePlugin = null;
-assert.strictEqual(meshCore.activePlugin, null,
-    "Clearing the SIRK owner must clear the shared MeshPluginCore owner.");
-
-var mainMenu = createElement(["nav-link", "active"]);
-sirkCore.setPluginMenuActive(mainMenu, leftMenu, true);
-assert.strictEqual(mainMenu.classList.contains("fullselect"), true,
-    "The active top-menu entry must use MeshCentral's original fullselect class.");
-assert.strictEqual(mainMenu.classList.contains("active"), false,
-    "SIRK must not replace MeshCentral's original top-menu state with Bootstrap active.");
-assert.strictEqual(leftMenu.classList.contains("lbbuttonsel2"), true,
-    "The active left-menu entry must use MeshCentral's original lbbuttonsel2 class.");
-assert.strictEqual(leftMenu.classList.contains("active"), false,
-    "SIRK must not use Bootstrap active for native MeshCentral left-menu entries.");
-
-sirkCore.setPluginMenuActive(mainMenu, leftMenu, false);
-assert.strictEqual(mainMenu.classList.contains("fullselect"), false,
-    "Closing a SIRK module must clear the original top-menu selection.");
-assert.strictEqual(leftMenu.classList.contains("lbbuttonsel2"), false,
-    "Closing a SIRK module must clear the original left-menu selection.");
-
-assert.strictEqual(sirkCore.ensureMenu({ leftId: "LeftMenuSirkPlatform-myscripts" }), true,
-    "The original menu registration result must be preserved.");
-assert.strictEqual(ensureMenuCount, 1,
-    "The native menu wrapper must call the original registration exactly once.");
-assert.strictEqual(leftImage.style.width, "40px",
-    "SIRK menu icons must use the original MyScripts 40px width.");
-assert.strictEqual(leftImage.style.height, "40px",
-    "SIRK menu icons must use the original MyScripts 40px height.");
-assert.strictEqual(leftImage.style.objectFit, "contain",
-    "SIRK menu icons must keep their original proportions.");
-
-console.log("Shared owner and original MeshCentral menu contract: OK");
+console.log("Isolated SIRK owner and native third-party-safe menu lifecycle: OK");

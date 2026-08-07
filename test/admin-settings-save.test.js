@@ -49,6 +49,9 @@ runtime.saveAdminSettings(admin, {
                     assert.strictEqual(this.statusCode, 200);
                     assert.strictEqual(result.ok, true);
                     assert.strictEqual(result.snapshot.moduleSettings.mycommands.showOnDevice, false);
+                    assert.strictEqual(result.snapshot.uiSettings.iconMode, "modern", "General icon mode must round-trip through the admin POST response.");
+                    var persisted = JSON.parse(fs.readFileSync(path.join(temporary, "sirk-platform-data", "settings.json"), "utf8"));
+                    assert.strictEqual(persisted.ui.iconMode, "modern", "General icon mode must persist in settings.json.");
                     resolve();
                 } catch (error) { reject(error); }
             }
@@ -56,12 +59,15 @@ runtime.saveAdminSettings(admin, {
         adminHandler.post({ query: { pin: "SIRKPortal" }, body: {
             action: "save-settings",
             modules: JSON.stringify({ mycommands: true }),
-            moduleOptions: JSON.stringify({ mycommands: { showOnDevice: false } })
+            moduleOptions: JSON.stringify({
+                general: { iconMode: "modern" },
+                mycommands: { showOnDevice: false }
+            })
         } }, response, admin);
     });
 }).then(function () {
     fs.rmSync(temporary, { recursive: true, force: true });
-    console.log("Admin settings save: OK");
+    console.log("Admin settings save including General icon mode: OK");
 }).catch(function (error) {
     console.error(error);
     process.exitCode = 1;

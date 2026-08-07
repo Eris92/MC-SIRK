@@ -1,7 +1,6 @@
 "use strict";
 
 var assert = require("assert");
-var entrypoint = require("../SIRKPortal.js");
 var policy = require("../server/core/elevated-quick-command-policy.js");
 
 var captured = [];
@@ -12,7 +11,7 @@ var device = {
     }
 };
 
-entrypoint.applyElevatedQuickCommandPolicy({ runtime: { context: { device: device } } });
+policy.apply({ runtime: { context: { device: device } } });
 
 var vbs = [
     "Set shell = CreateObject(\"WScript.Shell\")",
@@ -33,14 +32,12 @@ var interactive = {
     runAsUser: 0,
     cmd: interactiveSource
 };
-
 var background = {
     label: "Flush DNS",
     type: 1,
     runAsUser: 0,
     cmd: "ipconfig /flushdns"
 };
-
 var legacyLoggedOnUser = {
     label: "Legacy user script",
     type: 2,

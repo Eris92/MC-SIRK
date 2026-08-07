@@ -19,6 +19,7 @@ server/core/runtime.js
 | sekrety | `secret-store.js` |
 | approval workflow | `approval-service.js` |
 | urządzenia | `device-service.js` |
+| zdarzenia SIRK w natywnym MeshCentral Events | `mesh-events.js` |
 | folder permissions | `folder-access.js` |
 | HTTP clients i integracje | `http-client.js`, `integration-service.js` |
 | skrypty i wykonanie | `script-admin-service.js`, `server-script-executor.js`, `script-confirmation-library.js` |
@@ -41,6 +42,8 @@ Jedyny katalog danych:
 ```text
 meshcentral-data/sirk-platform-data
 ```
+
+SIRK nie tworzy osobnego `audit.jsonl`. Zdarzenia akcji są przekazywane przez `MeshCentral.DispatchEvent()` i przechowywane przez natywny system Events MeshCentral.
 
 Nie analizuj ani nie migruj `mycompany-data`.
 

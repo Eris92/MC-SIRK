@@ -5,64 +5,80 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.resolve(__dirname, "..");
-var runtime = fs.readFileSync(path.join(root, "public/shared/ui/status-nav.js"), "utf8");
-var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.css"), "utf8");
+function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
-["mc-shared-page-approvalcenter", "mc-shared-page-mycommands", "mc-shared-page-myscripts", "sirk-quick-command-browser"].forEach(function (name) {
-    assert.ok(runtime.indexOf(name) >= 0,
-        name + " must be normalized by the actual shared-list runtime.");
+var tree = read("public/shared/ui/tree.js");
+var status = read("public/shared/ui/status-nav.js");
+var catalog = read("public/shared/ui/catalog.js");
+var css = read("public/shared/ui/toolbar.css");
+var sharedUiCss = read("public/shared/ui/shared-ui.css");
+var quickCss = read("public/native/desktop-commands.css");
+var adapter = read("public/shared/ui/toolbar-config.js");
+var startup = read("plugin-main.js");
+
+assert.ok(tree.indexOf('" sirk-shared-list-item"') >= 0 &&
+    tree.indexOf('" sirk-shared-list-icon"') >= 0 &&
+    tree.indexOf('mc-tree-label sirk-shared-list-label') >= 0 &&
+    tree.indexOf('copy.className = "sirk-shared-list-copy"') >= 0,
+    "Tree rows must receive the shared list geometry classes directly while they are rendered.");
+assert.ok(tree.indexOf('indicator.className = "mc-tree-approval"') >= 0 &&
+    tree.indexOf('button.__sirkCopy.appendChild(indicator)') >= 0,
+    "Requires-approval must remain inside the label/copy track instead of becoming a third grid item.");
+
+assert.ok(status.indexOf("sirk-shared-list-item") >= 0 &&
+    status.indexOf("sirk-shared-list-icon") >= 0 &&
+    status.indexOf("sirk-shared-list-label") >= 0,
+    "Status navigation must render the same shared list geometry contract directly.");
+assert.ok(catalog.indexOf("mc-catalog-results") >= 0 &&
+    catalog.indexOf("sirk-shared-list-item") >= 0 &&
+    catalog.indexOf("sirk-shared-list-icon") >= 0,
+    "Results must use the same shared list geometry contract as roots and status rows.");
+
+[tree, status, catalog].forEach(function (source) {
+    assert.strictEqual(source.indexOf("CONTRACT_VERSION"), -1,
+        "Shared renderers must not carry release-specific visual contract versions.");
+    assert.strictEqual(source.indexOf("MutationObserver"), -1,
+        "Shared renderers must not repair their DOM asynchronously after rendering.");
+    assert.strictEqual(source.indexOf('createElement("style")'), -1,
+        "Shared renderers must not inject runtime CSS.");
+    assert.strictEqual(source.indexOf("data-sirk-list-contract"), -1,
+        "Shared renderers must not rely on compatibility ownership markers.");
 });
 
-assert.ok(runtime.indexOf('var CONTRACT_VERSION = "1.8.15"') >= 0 &&
-    runtime.indexOf('document.documentElement.setAttribute("data-sirk-list-contract-version", CONTRACT_VERSION)') >= 0,
-    "The browser must expose the exact shared-list runtime version for diagnostics.");
-assert.ok(runtime.indexOf('element.classList.add("sirk-shared-list-item")') >= 0 &&
-    runtime.indexOf('element.setAttribute("data-sirk-list-contract", "1")') >= 0,
-    "Every real row must receive the canonical class and ownership marker.");
-assert.ok(runtime.indexOf('icon.classList.add("sirk-shared-list-icon")') >= 0 &&
-    runtime.indexOf('label.classList.add("sirk-shared-list-label", "sirk-quick-command-label")') >= 0,
-    "Icons and labels must receive the same DOM contract as Quick.");
-assert.ok(runtime.indexOf('copy.className = "sirk-shared-list-copy sirk-quick-command-copy"') >= 0 &&
-    runtime.indexOf("if (label.parentNode !== copy) copy.appendChild(label)") >= 0,
-    "Approval, Commands and My Scripts labels must use the same copy wrapper as Quick.");
-assert.ok(runtime.indexOf("grid-template-columns:minmax(0,1fr) auto!important") >= 0 &&
-    runtime.indexOf("if (approval && approval.parentNode !== copy) copy.appendChild(approval)") >= 0,
-    "Requires-approval indicator must remain beside the first text line.");
+assert.ok(css.indexOf(".sirk-shared-list-item,.sirk-quick-command-categories>button,.sirk-quick-command-tree>button{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px") >= 0,
+    "Approval, Commands, My Scripts and both Quick columns must share one 24 px icon geometry.");
+assert.ok(css.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
+    "All shared and Quick rows must use the same height, margin and padding.");
+assert.ok(css.indexOf(".sirk-shared-list-copy,.sirk-quick-command-copy{display:grid;grid-template-columns:minmax(0,1fr) auto") >= 0,
+    "Shared and Quick copy tracks must reserve a compact first-line indicator column.");
+assert.ok(sharedUiCss.indexOf(".mc-tree-folder-body{margin:0 0 0 6px}") >= 0 &&
+    css.indexOf("var(--sdc-depth,0) * 6px") >= 0,
+    "Nested shared trees and Quick must use the same cumulative 6 px indentation step from their canonical CSS owners.");
+assert.strictEqual(css.indexOf(".mc-tree-folder-body{"), -1,
+    "Toolbar CSS must not duplicate shared tree indentation ownership.");
 
-assert.ok(runtime.indexOf('element.classList.toggle("active", selected)') >= 0 &&
-    runtime.indexOf('element.classList.toggle("is-active", selected)') >= 0 &&
-    runtime.indexOf('element.setAttribute("aria-selected", selected ? "true" : "false")') >= 0,
-    "Selected state must be synchronized identically for all modules and Quick.");
-assert.ok(runtime.indexOf("moveStatusToIcon(element)") >= 0 &&
-    runtime.indexOf("element.classList.remove(name)") >= 0,
-    "Approval semantic status colors must be removed from the complete row and moved to its icon.");
+assert.ok(adapter.indexOf('.mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button') >= 0,
+    "Shared and Quick rows must enter the same native navigation styling path.");
+assert.ok(adapter.indexOf('syncOwnedClasses(element, ["list-group-item", "list-group-item-action"])') >= 0 &&
+    adapter.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
+    "Hover and selected appearance must come from native Modern or Classic MeshCentral classes.");
+[
+    ".sirk-shared-list-item:hover",
+    ".sirk-shared-list-item.active",
+    ".sirk-quick-command-categories>button:hover",
+    ".sirk-quick-command-tree>button.active"
+].forEach(function (selector) {
+    assert.strictEqual(css.indexOf(selector), -1,
+        "Shared geometry CSS must not own native interaction selector " + selector + ".");
+});
+assert.strictEqual(quickCss.indexOf("--bs-list-group-action-hover-bg"), -1,
+    "Quick CSS must not duplicate the native hover palette.");
+assert.strictEqual(quickCss.indexOf("--bs-list-group-active-border-color"), -1,
+    "Quick CSS must not duplicate the native selected-state palette.");
 
-assert.ok(runtime.indexOf('button.sirk-shared-list-item.sirk-shared-list-item[data-sirk-list-contract="1"][data-sirk-list-contract="1"]') >= 0,
-    "The final visual owner must depend only on the SIRK marker, not MeshCentral or Bootstrap item classes.");
-assert.strictEqual(runtime.indexOf("sirk-shared-list-item.list-group-item.list-group-item-action"), -1,
-    "The final visual selector must not require list-group-item classes.");
-assert.strictEqual(runtime.indexOf("sirk-shared-list-item.nav-link"), -1,
-    "The final visual selector must not require nav-link classes.");
-assert.ok(runtime.indexOf("grid-template-columns:24px minmax(0,1fr)!important") >= 0 &&
-    quick.indexOf("grid-template-columns:24px minmax(0,1fr)") >= 0,
-    "All rows must use the same icon and label tracks as Quick.");
-assert.ok(runtime.indexOf("min-height:36px!important;margin:0 0 3px!important;padding:8px!important") >= 0 &&
-    quick.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
-    "All rows must use the same height, spacing and padding as Quick.");
-assert.ok(runtime.indexOf("background:transparent!important;color:inherit!important;border:1px solid transparent!important;border-radius:0!important") >= 0,
-    "Default rows must have one square, transparent interaction surface.");
-assert.ok(runtime.indexOf("background:var(--bs-list-group-action-hover-bg,rgba(127,127,127,.12))!important") >= 0,
-    "Every module and Quick must use one native hover state.");
-assert.ok(runtime.indexOf("border-color:var(--bs-list-group-active-border-color,var(--bs-border-color,currentColor))!important") >= 0 &&
-    runtime.indexOf("outline:0!important;box-shadow:none!important") >= 0,
-    "Every selected row must use one border state without a second outline or shadow.");
-assert.ok(runtime.indexOf(".sirk-quick-command-categories > button") >= 0 &&
-    runtime.indexOf(".sirk-quick-command-tree > button") >= 0,
-    "Both Quick columns must be explicitly covered by the shared contract.");
-assert.ok(runtime.indexOf("background-color:var(--bs-body-bg)!important") >= 0,
-    "The first, second and details columns must use the same native surface.");
-assert.ok(runtime.indexOf("window.__sirkSharedListObserver.disconnect()") >= 0 &&
-    runtime.indexOf("adapter.__sirkSharedListContractVersion = CONTRACT_VERSION") >= 0,
-    "A new release must replace the previous observer and adapter contract instead of keeping stale runtime code.");
+var desktopStyle = startup.indexOf('style("sirk-platform-desktop-commands-style", "desktop-commands.css")');
+var sharedStyle = startup.indexOf('style("sirk-platform-toolbar-style", "shared-ui/toolbar.css")');
+assert.ok(desktopStyle >= 0 && sharedStyle > desktopStyle,
+    "Shared row geometry CSS must load after Quick-specific panel geometry without becoming the interaction-theme owner.");
 
-console.log("Class-independent Approval, Commands, My Scripts and Quick list interaction owner: OK");
+console.log("Direct shared-list geometry with native MeshCentral interaction ownership: OK");

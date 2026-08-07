@@ -3,136 +3,48 @@
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
-var vm = require("vm");
 
-var source = fs.readFileSync(
-    path.join(__dirname, "..", "public", "shared", "ui", "layout.js"),
-    "utf8"
-);
+var root = path.join(__dirname, "..");
+var shell = fs.readFileSync(path.join(root, "public", "shared", "module-shell.js"), "utf8");
+var layout = fs.readFileSync(path.join(root, "public", "shared", "ui", "layout.js"), "utf8");
 
-var timers = [];
-var context = {
-    Array: Array,
-    Object: Object,
-    Promise: Promise,
-    String: String,
-    console: console,
-    document: {
-        getElementById: function () { return null; },
-        createElement: function () { return {}; },
-        head: { appendChild: function () {} },
-        documentElement: { appendChild: function () {} }
-    },
-    window: {
-        localStorage: {
-            getItem: function () { return null; },
-            setItem: function () {}
-        },
-        setTimeout: function (callback) {
-            timers.push(callback);
-            return timers.length;
-        }
-    }
-};
-context.window.window = context.window;
+assert.ok(shell.indexOf("var sequence = Number(state.renderSequence || 0) + 1") >= 0 &&
+    shell.indexOf("state.renderSequence = sequence") >= 0,
+    "Every module render must receive a monotonically increasing sequence number.");
+assert.ok(shell.indexOf('var nextSecondary = document.createElement("section")') >= 0 &&
+    shell.indexOf('var nextDetails = document.createElement("section")') >= 0,
+    "Secondary and details content must be rendered into detached replacement sections.");
+assert.ok(shell.indexOf("page.secondary = nextSecondary") >= 0 &&
+    shell.indexOf("page.details = nextDetails") >= 0,
+    "Module renderers must write into detached sections instead of clearing the live page.");
+assert.ok(shell.indexOf("if (sequence !== state.renderSequence) return") >= 0,
+    "An older asynchronous render must be discarded when a newer render has already started.");
+assert.ok(shell.indexOf("replaceChildren(realSecondary, nextSecondary)") >= 0 &&
+    shell.indexOf("replaceChildren(realDetails, nextDetails)") >= 0,
+    "Live module columns must be replaced only during the final atomic commit.");
+assert.ok(shell.indexOf("restoreReferences();") >= 0,
+    "Page references must be restored to the live DOM before commit or error handling.");
+assert.ok(shell.indexOf('window.MeshThemeAdapter.refresh(page.root || realDetails.parentNode)') >= 0,
+    "The atomic commit must reapply native MeshCentral classes to the completed render.");
+assert.ok(shell.indexOf("if (sequence === state.renderSequence) renderError(realDetails, error)") >= 0,
+    "Only the latest render may replace the live details column with an error state.");
 
-vm.runInNewContext(source, context, { filename: "layout.js" });
+var renderStart = shell.indexOf("render: function () {");
+var renderEnd = shell.indexOf("api: function (asset", renderStart);
+assert.ok(renderStart >= 0 && renderEnd > renderStart,
+    "The canonical module render function must exist.");
+var renderBlock = shell.slice(renderStart, renderEnd);
+assert.strictEqual(renderBlock.indexOf("page.layout.clear()"), -1,
+    "Rerendering must never blank the live three-column layout before new data is ready.");
+assert.strictEqual(renderBlock.indexOf('realSecondary.innerHTML = ""'), -1,
+    "Rerendering must not clear the live secondary column before commit.");
+assert.strictEqual(renderBlock.indexOf('realDetails.innerHTML = ""'), -1,
+    "Rerendering must not clear the live details column before commit.");
+assert.strictEqual(shell.indexOf("__sirkStableModuleRenderingInstalled"), -1,
+    "Stable rendering must be the canonical module-shell implementation, not an installed compatibility patch.");
+assert.strictEqual(layout.indexOf("SirkPlatformModuleShell"), -1,
+    "SharedLayout must not monkey-patch module rendering lifecycle.");
+assert.strictEqual(layout.indexOf("renderQueued"), -1,
+    "SharedLayout must not maintain a second render queue.");
 
-var clearCount = 0;
-var visibleContent = { connected: true };
-
-context.window.SirkPlatformModuleShell = {
-    create: function (definition) {
-        var page = {
-            root: {},
-            primary: { marker: visibleContent },
-            secondary: { marker: visibleContent },
-            details: { marker: visibleContent },
-            layout: {
-                clear: function () {
-                    clearCount += 1;
-                    page.primary.marker = null;
-                    page.secondary.marker = null;
-                    page.details.marker = null;
-                }
-            }
-        };
-        var api = {
-            state: { page: page },
-            render: function () {
-                page.layout.clear();
-                Promise.resolve(definition.render(api)).catch(function () {});
-            }
-        };
-        return { api: api, render: api.render };
-    }
-};
-
-while (timers.length) timers.shift()();
-
-assert.strictEqual(
-    context.window.__sirkStableModuleRenderingInstalled,
-    true,
-    "The shared layout runtime must install the stable module-rendering contract."
-);
-
-var firstResolve;
-var renderCalls = 0;
-var definition = {
-    render: function () {
-        renderCalls += 1;
-        if (renderCalls === 1) {
-            return new Promise(function (resolve) { firstResolve = resolve; });
-        }
-        return Promise.resolve();
-    }
-};
-var moduleInstance = context.window.SirkPlatformModuleShell.create(definition);
-
-(async function () {
-    var first = moduleInstance.api.render();
-    var sameFrame = moduleInstance.api.render();
-
-    assert.strictEqual(first, sameFrame,
-        "Multiple render requests in one microtask must share one scheduled render.");
-
-    await Promise.resolve();
-    await Promise.resolve();
-
-    assert.strictEqual(renderCalls, 1,
-        "Two same-frame clicks must start only one renderer.");
-    assert.strictEqual(clearCount, 0,
-        "A rerender must not clear the three-column layout before data is ready.");
-    assert.strictEqual(moduleInstance.api.state.page.primary.marker, visibleContent,
-        "Existing primary-column DOM must remain visible while rendering.");
-    assert.strictEqual(moduleInstance.api.state.page.secondary.marker, visibleContent,
-        "Existing secondary-column DOM must remain visible while rendering.");
-    assert.strictEqual(moduleInstance.api.state.page.details.marker, visibleContent,
-        "Existing details DOM must remain visible while rendering.");
-
-    moduleInstance.api.render();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    assert.strictEqual(renderCalls, 1,
-        "A click during an active render must be queued instead of running concurrently.");
-    assert.strictEqual(clearCount, 0,
-        "Queued rendering must also preserve the current DOM.");
-
-    firstResolve();
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    assert.strictEqual(renderCalls, 2,
-        "After the active render completes, exactly one final queued render must run.");
-    assert.strictEqual(clearCount, 0,
-        "The final queued render must not expose a blank intermediate layout.");
-    assert.strictEqual(moduleInstance.render, moduleInstance.api.render,
-        "External module lifecycle calls must use the same stable render function.");
-
-    console.log("Stable shared module rendering without click flicker: OK");
-}()).catch(function (error) {
-    console.error(error);
-    process.exitCode = 1;
-});
+console.log("Canonical atomic shared module rendering without blank intermediate state: OK");

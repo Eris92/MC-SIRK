@@ -5,113 +5,76 @@ var fs = require("fs");
 var path = require("path");
 var vm = require("vm");
 
-var source = fs.readFileSync(
-    path.join(__dirname, "..", "public", "shared", "ui", "layout.js"),
-    "utf8"
-);
-var toolbarSource = fs.readFileSync(
-    path.join(__dirname, "..", "public", "shared", "ui", "toolbar.css"),
-    "utf8"
-);
+var root = path.join(__dirname, "..");
+var source = fs.readFileSync(path.join(root, "public", "shared", "ui", "layout.js"), "utf8");
+var sharedCss = fs.readFileSync(path.join(root, "public", "shared", "ui", "shared-ui.css"), "utf8");
+var toolbarCss = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.css"), "utf8");
 
-assert.ok(
-    source.indexOf(".mc-shared-page-approvalcenter,.mc-shared-page-mycommands,.mc-shared-page-myscripts") >= 0,
-    "Approval, Commands and My Scripts must use one shared column selector."
-);
-assert.ok(
-    source.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >= 0 &&
-    source.indexOf("--sirk-primary-collapsed-track:64px") >= 0 &&
-    source.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
-    "The shared desktop tracks must match the Quick primary and secondary geometry."
-);
-assert.ok(
-    source.indexOf("grid-template-columns:var(--sirk-shared-primary-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
-    "Every expanded module must use the same shared tracks."
-);
-assert.ok(
-    source.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
-    "Every collapsed module must start its second column after the same 64 px track."
-);
-assert.ok(
-    source.indexOf("--sirk-shared-primary-track:minmax(150px,185px)") >= 0 &&
-    source.indexOf("--sirk-shared-secondary-track:minmax(250px,300px)") >= 0,
-    "The narrower desktop breakpoint must match Quick for all three modules."
-);
-assert.ok(
-    source.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
-    "Shared primary and secondary rows must use the Quick row geometry."
-);
-assert.strictEqual(
-    toolbarSource.indexOf(".mc-shared-layout:has(.mc-tree-script-actions:not(:empty))"),
-    -1,
-    "Toolbar CSS must not create a second column system based on action buttons."
-);
-assert.strictEqual(
-    toolbarSource.indexOf(".mc-shared-layout{grid-template-columns:"),
-    -1,
-    "Toolbar CSS must not override the canonical shared layout tracks."
-);
-assert.ok(
-    source.indexOf('var SHARED_SCRIPT_LAYOUT_KEY = "sirkPlatform.layout.shared-script-columns.collapsed"') >= 0,
-    "The three modules must share one Collapse state."
-);
+assert.ok(source.indexOf('var SHARED_SCRIPT_LAYOUT_KEY = "sirkPlatform.layout.shared-script-columns.collapsed"') >= 0,
+    "Approval, Commands and My Scripts must share one Collapse state key.");
+["approvalcenter", "mycommands", "myscripts"].forEach(function (preset) {
+    assert.ok(source.indexOf(preset + ": true") >= 0,
+        "Shared Collapse state must include " + preset + ".");
+});
+assert.ok(source.indexOf("initialCollapsed(storageKey, options.collapsed)") >= 0 &&
+    source.indexOf("synchronizeShared(collapsed, entry)") >= 0,
+    "SharedLayout must migrate legacy state and synchronize mounted script layouts.");
+assert.ok(source.indexOf("isCollapsed: function ()") >= 0 &&
+    source.indexOf("toggleCollapsed: function ()") >= 0,
+    "SharedLayout must expose the Collapse API consumed by module-shell.");
+assert.strictEqual(source.indexOf('createElement("style")'), -1,
+    "SharedLayout must not generate runtime CSS.");
 
-function ClassList(initial) {
-    this.values = (initial || []).slice();
-}
-ClassList.prototype.contains = function (name) {
-    return this.values.indexOf(String(name)) >= 0;
-};
+assert.ok(sharedCss.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >= 0 &&
+    sharedCss.indexOf("--sirk-primary-collapsed-track:64px") >= 0 &&
+    sharedCss.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
+    "Shared desktop tracks must match the canonical Quick primary and secondary geometry.");
+assert.ok(sharedCss.indexOf("grid-template-columns:var(--sirk-shared-primary-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)") >= 0,
+    "Expanded modules must use the shared static tracks.");
+assert.ok(sharedCss.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
+    "Collapsed modules must preserve the same second and third tracks after the 64 px primary track.");
+assert.ok(sharedCss.indexOf(".mc-shared-nav-item{display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:36px;padding:8px") >= 0,
+    "Shared navigation rows must retain the compact canonical row geometry.");
+assert.strictEqual(toolbarCss.indexOf(".mc-shared-layout:has(.mc-tree-script-actions:not(:empty))"), -1,
+    "Toolbar CSS must not create a second column system based on action buttons.");
+assert.strictEqual(/(^|})\.mc-shared-layout\{grid-template-columns:/.test(toolbarCss), false,
+    "Toolbar CSS must not override the canonical global shared layout tracks.");
+
+function ClassList() { this.values = []; }
+ClassList.prototype.contains = function (name) { return this.values.indexOf(String(name)) >= 0; };
 ClassList.prototype.toggle = function (name, enabled) {
     name = String(name);
     var index = this.values.indexOf(name);
     if (enabled === true && index < 0) this.values.push(name);
-    if (enabled === false && index >= 0) this.values.splice(index, 1);
+    else if (enabled === false && index >= 0) this.values.splice(index, 1);
+    else if (enabled == null) {
+        if (index >= 0) this.values.splice(index, 1); else this.values.push(name);
+    }
 };
-ClassList.prototype.add = function (name) {
-    this.toggle(name, true);
+ClassList.prototype.set = function (value) {
+    this.values = String(value || "").split(/\s+/).filter(Boolean);
 };
 
-function Element(tagName, classes) {
+function Element(tagName) {
     this.tagName = String(tagName || "div").toUpperCase();
-    this.classList = new ClassList(classes || []);
-    this.className = (classes || []).join(" ");
+    this.classList = new ClassList();
     this.children = [];
     this.parentNode = null;
-    this.attributes = {};
     this.innerHTML = "";
-    this.id = "";
 }
+Object.defineProperty(Element.prototype, "className", {
+    get: function () { return this.classList.values.join(" "); },
+    set: function (value) { this.classList.set(value); }
+});
 Element.prototype.appendChild = function (child) {
     child.parentNode = this;
     this.children.push(child);
     return child;
 };
-Element.prototype.setAttribute = function (name, value) {
-    this.attributes[name] = String(value);
-    if (name === "id") this.id = String(value);
-};
-Element.prototype.closest = function (selector) {
-    if (selector !== ".mc-shared-page") return null;
-    for (var current = this; current; current = current.parentNode) {
-        if (current.classList && current.classList.contains("mc-shared-page")) return current;
-    }
-    return null;
-};
 
-var storage = Object.create(null);
-var styles = [];
+var values = Object.create(null);
 var document = {
-    getElementById: function (id) {
-        return styles.filter(function (item) { return item.id === id; })[0] || null;
-    },
     createElement: function (tag) { return new Element(tag); },
-    head: {
-        appendChild: function (item) { styles.push(item); }
-    },
-    documentElement: {
-        appendChild: function (item) { styles.push(item); }
-    },
     querySelector: function () { return null; }
 };
 var context = {
@@ -121,9 +84,9 @@ var context = {
         document: document,
         localStorage: {
             getItem: function (key) {
-                return Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null;
+                return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null;
             },
-            setItem: function (key, value) { storage[key] = String(value); }
+            setItem: function (key, value) { values[key] = String(value); }
         }
     }
 };
@@ -131,56 +94,53 @@ context.window.window = context.window;
 vm.runInNewContext(source, context, { filename: "layout.js" });
 
 function mount(preset, legacyValue) {
-    var page = new Element("div", ["mc-shared-page", "mc-shared-page-" + preset]);
-    var host = new Element("div", ["mc-shared-layout-host"]);
-    page.appendChild(host);
-    if (legacyValue) storage["sirkPlatform.layout." + preset + ".collapsed"] = legacyValue;
-    var layout = context.window.SharedLayout.mount({
-        container: host,
-        storageKey: "sirkPlatform.layout." + preset + ".collapsed"
-    });
-    return { page: page, host: host, layout: layout };
+    var host = new Element("div");
+    var key = "sirkPlatform.layout." + preset + ".collapsed";
+    if (legacyValue != null) values[key] = legacyValue;
+    var layout = context.window.SharedLayout.mount({ container: host, storageKey: key });
+    return layout;
 }
 
 var approval = mount("approvalcenter", "collapsed");
-assert.strictEqual(approval.layout.isCollapsed(), true,
-    "The first mounted module must migrate its existing Collapse state.");
-assert.strictEqual(approval.layout.root.classList.contains("sirk-shared-quick-columns"), true,
-    "Approval must use the canonical Quick-aligned column contract.");
-assert.strictEqual(approval.layout.primary.classList.contains("sirk-shared-quick-primary"), true,
+assert.strictEqual(approval.isCollapsed(), true,
+    "The first shared module must migrate its existing legacy Collapse state.");
+assert.strictEqual(values["sirkPlatform.layout.shared-script-columns.collapsed"], "collapsed",
+    "Migrated Collapse state must be persisted under the shared key.");
+assert.strictEqual(approval.root.classList.contains("sirk-shared-quick-columns"), true,
+    "Approval must expose the shared Quick-aligned layout role.");
+assert.strictEqual(approval.primary.classList.contains("sirk-shared-quick-primary"), true,
     "The first column must expose the shared Quick-aligned role.");
-assert.strictEqual(approval.layout.secondary.classList.contains("sirk-shared-quick-secondary"), true,
-    "The second column must expose the shared Quick-aligned role."
-);
+assert.strictEqual(approval.secondary.classList.contains("sirk-shared-quick-secondary"), true,
+    "The second column must expose the shared Quick-aligned role.");
 
 var commands = mount("mycommands", "expanded");
 var scripts = mount("myscripts", "expanded");
-assert.strictEqual(commands.layout.isCollapsed(), true,
-    "Commands must use the shared collapsed state instead of its legacy setting.");
-assert.strictEqual(scripts.layout.isCollapsed(), true,
-    "My Scripts must use the same collapsed state as Approval and Commands.");
+assert.strictEqual(commands.isCollapsed(), true,
+    "Commands must prefer the migrated shared state over its old per-module value.");
+assert.strictEqual(scripts.isCollapsed(), true,
+    "My Scripts must prefer the same shared state.");
 
-commands.layout.setCollapsed(false);
-assert.strictEqual(approval.layout.isCollapsed(), false,
+commands.setCollapsed(false);
+assert.strictEqual(approval.isCollapsed(), false,
     "Expanding Commands must align Approval immediately.");
-assert.strictEqual(commands.layout.isCollapsed(), false,
+assert.strictEqual(commands.isCollapsed(), false,
     "Commands must become expanded.");
-assert.strictEqual(scripts.layout.isCollapsed(), false,
+assert.strictEqual(scripts.isCollapsed(), false,
     "Expanding Commands must align My Scripts immediately.");
 
-scripts.layout.setCollapsed(true);
-assert.strictEqual(approval.layout.isCollapsed(), true,
+scripts.toggleCollapsed();
+assert.strictEqual(approval.isCollapsed(), true,
     "Collapsing My Scripts must align Approval immediately.");
-assert.strictEqual(commands.layout.isCollapsed(), true,
+assert.strictEqual(commands.isCollapsed(), true,
     "Collapsing My Scripts must align Commands immediately.");
-assert.strictEqual(storage["sirkPlatform.layout.shared-script-columns.collapsed"], "collapsed",
-    "The synchronized state must be stored under one shared key."
-);
-assert.strictEqual(styles.length, 1,
-    "The shared column contract stylesheet must be installed once."
-);
-assert.ok(styles[0].textContent.indexOf("margin:0!important;padding:0!important") >= 0,
-    "Every layout host must use the same zero inset before the first track."
-);
+assert.strictEqual(values["sirkPlatform.layout.shared-script-columns.collapsed"], "collapsed",
+    "Synchronized state must remain stored under one shared key.");
 
-console.log("Approval, Commands and My Scripts use the Quick column contract: OK");
+var independent = mount("standard", "expanded");
+independent.setCollapsed(true);
+assert.strictEqual(independent.isCollapsed(), true,
+    "Non-script layouts must retain their own Collapse state.");
+assert.strictEqual(values["sirkPlatform.layout.standard.collapsed"], "collapsed",
+    "Non-script layouts must persist using their supplied storage key.");
+
+console.log("Approval, Commands and My Scripts share canonical static columns and Collapse state: OK");

@@ -7,9 +7,10 @@
             <button type="button" data-tab="mycommands">My Commands</button>
             <button type="button" data-tab="myscripts">My Scripts</button>
             <button type="button" data-tab="permissions">Permissions</button>
-            <button type="button" data-tab="logs">Logs</button>
         </div>
-        <div id="sirk-platform-admin-content"><section class="mc-admin-card">Loading settings…</section></div>
+        <div id="sirk-platform-admin-content">
+            <section class="mc-admin-card">Loading settings…</section>
+        </div>
     </div>
 </div>
 <script>window.SirkPlatformAdminData={{{adminDataJson}}};</script>
@@ -18,18 +19,3 @@
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=shared-ui/toolbar-config.js&v={{version}}"></script>
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=shared-ui/settings.js&v={{version}}"></script>
 <script src="pluginadmin.ashx?pin={{pluginShortName}}&asset=admin.js&v={{version}}"></script>
-<style>.mc-admin-audit-wrap{overflow:auto}.mc-admin-audit-table{width:100%;border-collapse:collapse;min-width:760px}.mc-admin-audit-table th,.mc-admin-audit-table td{padding:7px 9px;text-align:left;vertical-align:top}.mc-admin-audit-table td{overflow-wrap:anywhere}</style>
-<script>
-(function(){
-'use strict';
-var root=document.getElementById('sirk-platform-admin'),content=document.getElementById('sirk-platform-admin-content');
-if(!root||!content)return;
-function el(tag,cls,text){var x=document.createElement(tag);if(cls)x.className=cls;if(text!=null)x.textContent=text;return x;}
-function activate(button){root.querySelectorAll('[data-tab]').forEach(function(x){x.classList.toggle('active',x===button);});}
-function saveGeneral(select,status,button){button.disabled=true;status.textContent='Saving…';var body=new URLSearchParams();body.set('action','save-settings');body.set('modules','{}');body.set('moduleOptions',JSON.stringify({general:{iconMode:select.value}}));var url=new URL('pluginadmin.ashx',location.href);url.searchParams.set('pin',root.getAttribute('data-plugin')||'SIRKPortal');url.searchParams.set('action','save-settings');fetch(url.href,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','Accept':'application/json'},body:body.toString()}).then(function(r){return r.json().then(function(v){if(!r.ok||!v.ok)throw new Error(v.error||'Save failed');return v;});}).then(function(v){window.SirkPlatformAdminData=v.snapshot;status.textContent='Saved';}).catch(function(e){status.textContent=e.message||String(e);}).then(function(){button.disabled=false;});}
-function general(){content.innerHTML='';var card=el('section','mc-admin-card');card.appendChild(el('h3','', 'General'));card.appendChild(el('p','mc-admin-card-description','Select which menu icon family is used independently of the loaded MeshCentral theme.'));var label=el('label','mc-admin-field');label.appendChild(el('span','mc-admin-field-label','Menu icon mode'));var select=el('select','mc-admin-input');[['auto','Auto'],['classic','Classic'],['modern','Modern']].forEach(function(x){var o=el('option','',x[1]);o.value=x[0];select.appendChild(o);});select.value=String(window.SirkPlatformAdminData.uiSettings&&window.SirkPlatformAdminData.uiSettings.iconMode||'auto');label.appendChild(select);card.appendChild(label);var row=el('div','mc-admin-actions'),button=el('button','mc-admin-primary','Save settings'),status=el('span','mc-admin-save-status','');button.type='button';button.onclick=function(){saveGeneral(select,status,button);};row.appendChild(button);row.appendChild(status);card.appendChild(row);content.appendChild(card);}
-function logs(){content.innerHTML='';var card=el('section','mc-admin-card'),head=el('div','mc-admin-toolbar');card.appendChild(el('h3','','Audit logs'));card.appendChild(el('p','mc-admin-card-description','Persistent redacted action log. Passwords, secrets, tokens, payloads and command output are not stored.'));var refresh=el('button','mc-admin-secondary','Refresh');refresh.type='button';refresh.onclick=function(){location.reload();};head.appendChild(refresh);card.appendChild(head);var wrap=el('div','mc-admin-audit-wrap'),table=el('table','mc-admin-audit-table'),thead=el('thead'),tr=el('tr');['Date/Time','Actor','Module','Action','Status','Target'].forEach(function(x){tr.appendChild(el('th','',x));});thead.appendChild(tr);table.appendChild(thead);var body=el('tbody');(window.SirkPlatformAdminData.auditLog||[]).forEach(function(entry){var row=el('tr');[entry.timestamp,entry.actorName,entry.module,entry.action,entry.outcome,entry.target].forEach(function(x){row.appendChild(el('td','',x||'—'));});body.appendChild(row);});if(!body.children.length){var empty=el('tr'),cell=el('td','','No audit entries yet.');cell.colSpan=6;empty.appendChild(cell);body.appendChild(empty);}table.appendChild(body);wrap.appendChild(table);card.appendChild(wrap);content.appendChild(card);}
-root.querySelectorAll('[data-tab="general"],[data-tab="logs"]').forEach(function(button){button.addEventListener('click',function(event){event.preventDefault();event.stopImmediatePropagation();activate(button);if(button.getAttribute('data-tab')==='general')general();else logs();},true);});
-var first=root.querySelector('[data-tab="general"]');if(first){activate(first);general();}
-}());
-</script>
