@@ -24,8 +24,8 @@ assert.ok(admin.indexOf('root.setAttribute("data-host-theme", theme)') >= 0 &&
 assert.strictEqual(admin.indexOf('setInterval('), -1,
     "Admin host theme synchronization must not poll.");
 var observerStart = admin.indexOf('function observeHostTheme()');
-var activateStart = admin.indexOf('function activate(', observerStart);
-var observerBody = admin.slice(observerStart, activateStart);
+var observerEnd = admin.indexOf('function element(', observerStart);
+var observerBody = admin.slice(observerStart, observerEnd);
 assert.strictEqual(observerBody.indexOf('render('), -1,
     "Theme changes must not rerender admin content or reset form state.");
 assert.strictEqual(observerBody.indexOf('fetchJson('), -1,
