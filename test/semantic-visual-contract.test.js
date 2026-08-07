@@ -66,8 +66,10 @@ assert.ok(sharedUi.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >=
     "Normal shared modules must use the same canonical first and second-column tracks as Quick.");
 assert.strictEqual(layout.indexOf("grid-template-columns:"), -1,
     "SharedLayout JavaScript must own only structure/state; grid geometry belongs to static CSS.");
-assert.strictEqual(toolbarCss.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:"), -1,
-    "Toolbar CSS must not reintroduce a competing collapsed-layout definition.");
+assert.strictEqual(/(^|})\.mc-shared-layout\.is-collapsed\{grid-template-columns:/.test(toolbarCss), false,
+    "Toolbar CSS must not reintroduce a competing global collapsed-layout definition.");
+assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:") >= 0,
+    "Edit and Multi may retain their mode-specific collapsed geometry for the measured action track.");
 assert.ok(sharedUi.indexOf(".mc-shared-layout.is-collapsed .mc-shared-primary") >= 0,
     "Only the shared primary column may be compacted by the collapsed layout.");
 assert.strictEqual(sharedUi.indexOf(".mc-shared-secondary .mc-approval-label{display:none"), -1,
