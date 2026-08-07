@@ -4,19 +4,41 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-var toolbar = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "toolbar.js"), "utf8");
+var root = path.join(__dirname, "..");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
+var quick = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
+var page = fs.readFileSync(path.join(root, "public", "shared", "ui", "page.js"), "utf8");
 
-var stableStart = toolbar.indexOf("function addStableDefinitions(options, add, context)");
-var quickStart = toolbar.indexOf("function keepQuickToolbarOnOneLine");
-var stableBlock = toolbar.slice(stableStart, quickStart);
+assert.ok(toolbar.indexOf("function definitions(options)") >= 0 &&
+    toolbar.indexOf("window.SharedToolbarConfig.resolve(options.preset, options.buttons).slice()") >= 0,
+    "SharedToolbar must resolve every preset through one canonical definitions path.");
+assert.ok(toolbar.indexOf("(options.customButtons || []).forEach") >= 0 &&
+    toolbar.indexOf("return items.sort(function (a, b)") >= 0,
+    "Custom Quick actions must join the same ordered definition list instead of using a separate mounting branch.");
+assert.ok(toolbar.indexOf("definitions(options).forEach(add)") >= 0,
+    "All toolbars must mount through one canonical add loop.");
 
-assert.ok(stableStart >= 0 && quickStart > stableStart,
-    "The stable non-Quick mounting function must exist before Quick-only layout helpers.");
-assert.ok(stableBlock.indexOf("quickDefinitions") < 0 &&
-    stableBlock.indexOf("alignQuickCollapseWithMyScripts") < 0 &&
-    stableBlock.indexOf("keepQuickToolbarOnOneLine") < 0,
-    "The non-Quick mounting path must not invoke Quick-only behavior.");
-assert.ok(toolbar.indexOf("if (quickToolbar) quickDefinitions(options).forEach(add);\n            else addStableDefinitions(options, add, context);") >= 0,
-    "Quick and non-Quick toolbar mounting must use explicit isolated branches.");
+[
+    "quickDefinitions",
+    "addStableDefinitions",
+    "keepQuickToolbarOnOneLine",
+    "alignQuickCollapseWithMyScripts",
+    "quickToolbar"
+].forEach(function (legacy) {
+    assert.strictEqual(toolbar.indexOf(legacy), -1,
+        "SharedToolbar must not retain Quick-specific compatibility helper: " + legacy);
+});
 
-console.log("Shared toolbar Quick isolation: OK");
+assert.ok(quick.indexOf("window.SharedToolbar.mount({") >= 0 &&
+    quick.indexOf('preset: "mycommands"') >= 0 &&
+    quick.indexOf("customButtons: [{") >= 0,
+    "Quick must consume SharedToolbar through the same public mount API as normal modules.");
+assert.ok(page.indexOf("window.SharedToolbar.mount({") >= 0 &&
+    page.indexOf("preset: options.preset") >= 0,
+    "SharedPage modules must consume the same public mount API.");
+assert.strictEqual(quick.indexOf("SharedToolbar.prototype"), -1,
+    "Quick must not patch SharedToolbar after loading.");
+assert.strictEqual(quick.indexOf("window.SharedToolbar.mount ="), -1,
+    "Quick must not replace the shared toolbar mount implementation.");
+
+console.log("One canonical SharedToolbar mount path for Quick and shared modules: OK");
