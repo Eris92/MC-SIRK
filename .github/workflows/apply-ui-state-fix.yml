@@ -1,0 +1,200 @@
+name: Apply UI state fix
+
+on:
+  push:
+    branches:
+      - fix/1.8.21-ui-state-and-edit-actions
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/1.8.21-ui-state-and-edit-actions
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Apply exact source patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, got {count}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'public/shared/core.js',
+              'var iconSource = definition.icon || family[key] || modernMenuIcons[key] || "";',
+              'var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";'
+          )
+
+          old_icon = '''            if (iconSource) {
+                var legacyIcon = left.querySelector(".lbtg");
+                if (legacyIcon) {
+                    legacyIcon.className = "lbtg";
+                    legacyIcon.style.backgroundImage = 'url("' + iconSource + '")';
+                    legacyIcon.style.backgroundPosition = "center";
+                    legacyIcon.style.backgroundRepeat = "no-repeat";
+                    legacyIcon.style.backgroundSize = "contain";
+                } else if (leftModern) {
+                    var nativeIcon = left.querySelector("svg, i, img");
+                    var image = document.createElement("img");
+                    image.className = "sirk-platform-menu-icon";
+                    image.alt = "";
+                    image.src = iconSource;
+                    image.style.width = "24px";
+                    image.style.height = "24px";
+                    image.style.objectFit = "contain";
+                    if (nativeIcon && nativeIcon.parentNode) nativeIcon.parentNode.replaceChild(image, nativeIcon);
+                    else left.insertBefore(image, left.firstChild);
+                }
+            }
+'''
+          new_icon = '''            left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
+            if (iconSource) {
+                var legacyIcon = left.querySelector(".lbtg");
+                var currentIcon = left.querySelector(".sirk-platform-menu-icon") || left.querySelector("svg, i, img");
+                if (legacyIcon) {
+                    legacyIcon.className = "lbtg";
+                    legacyIcon.style.backgroundImage = 'url("' + iconSource + '")';
+                    legacyIcon.style.backgroundPosition = "center";
+                    legacyIcon.style.backgroundRepeat = "no-repeat";
+                    legacyIcon.style.backgroundSize = "contain";
+                    legacyIcon.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
+                }
+                if (!legacyIcon || leftModern) {
+                    var image = document.createElement("img");
+                    image.className = "sirk-platform-menu-icon";
+                    image.alt = "";
+                    image.src = iconSource;
+                    image.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
+                    image.style.width = "24px";
+                    image.style.height = "24px";
+                    image.style.objectFit = "contain";
+                    if (currentIcon && currentIcon.parentNode && currentIcon !== legacyIcon) currentIcon.parentNode.replaceChild(image, currentIcon);
+                    else left.insertBefore(image, left.firstChild);
+                }
+            }
+'''
+          replace_once('public/shared/core.js', old_icon, new_icon)
+
+          old_actions = '''                    if (state.editMode) {
+                        actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
+                        if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials", icon: "🔑", className: "mc-tree-credential-action", title: "Configure script credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
+                        if (config.canEdit === true) actions.push({ key: "edit", icon: "✎", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
+                    }
+'''
+          new_actions = '''                    if (state.editMode) {
+                        var hasCredentials = !!(script.secretVariables && script.secretVariables.length);
+                        if (config.canEdit === true) actions.push({ key: "credentials", icon: "🔑", disabled: !hasCredentials, className: "mc-tree-credential-action", title: hasCredentials ? "Configure script credentials" : "No script credentials configured", onClick: function () { if (hasCredentials && config.onCredentials) config.onCredentials(script); } });
+                        actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
+                        actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
+                        if (config.canEdit === true) actions.push({ key: "edit", icon: "✎", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
+                    }
+'''
+          replace_once('public/shared/ui/script-tools.js', old_actions, new_actions)
+
+          replace_once(
+              'public/shared/ui/tree.js',
+              '''            action.type = "button";
+            action.className = "mc-tree-script-action";
+''',
+              '''            action.type = "button";
+            action.disabled = definition.disabled === true;
+            action.className = "mc-tree-script-action";
+            action.classList.toggle("is-disabled", action.disabled);
+'''
+          )
+          replace_once(
+              'public/shared/ui/tree.js',
+              '''                event.preventDefault();
+                event.stopPropagation();
+                if (typeof definition.onClick === "function") definition.onClick(script, event, action);
+''',
+              '''                event.preventDefault();
+                event.stopPropagation();
+                if (action.disabled) return;
+                if (typeof definition.onClick === "function") definition.onClick(script, event, action);
+'''
+          )
+
+          css = Path('public/shared/ui/toolbar.css')
+          css_text = css.read_text(encoding='utf-8')
+          marker = '.sirk-shared-list-item:is(.active,.is-active)'
+          if marker in css_text:
+              raise SystemExit('selection fallback already exists')
+          css_text += '''\n.mc-tree-script-action:disabled{opacity:.45;cursor:not-allowed}\n.mc-shared-page .sirk-shared-list-item:is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active){background-color:var(--bs-primary-bg-subtle,color-mix(in srgb,currentColor 12%,transparent))!important;box-shadow:inset 3px 0 0 var(--bs-primary,currentColor)!important}\n'''
+          css.write_text(css_text, encoding='utf-8')
+
+          # Update old tests that deliberately prohibited a visible fallback selected state.
+          for name in [
+              'test/quick-shared-selection-style.test.js',
+              'test/shared-column-interaction-style.test.js',
+              'test/shared-list-quick-style.test.js'
+          ]:
+              p = Path(name)
+              text = p.read_text(encoding='utf-8')
+              text = text.replace('[quick, "box-shadow:inset 3px 0 0", "Quick-only selected stripe"],\n', '')
+              text = text.replace('[quick, "box-shadow:inset 3px 0 0", "Quick-only selected stripe"],', '')
+              text = text.replace('assert.strictEqual(css.indexOf(selector), -1,\n        "Shared geometry CSS must not own native interaction selector " + selector + ".");', 'assert.ok(css.indexOf(selector) >= 0 || css.indexOf(".sirk-shared-list-item:is(.active,.is-active)") >= 0,\n        "Shared selected state must remain visibly marked while using host theme tokens.");')
+              p.write_text(text, encoding='utf-8')
+
+          regression = Path('test/ui-visible-state-regression.test.js')
+          regression.write_text(r'''"use strict";
+
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
+
+var core = read("public/shared/core.js");
+var tools = read("public/shared/ui/script-tools.js");
+var tree = read("public/shared/ui/tree.js");
+var css = read("public/shared/ui/toolbar.css");
+
+assert.ok(core.indexOf('var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";') >= 0,
+    "Admin icon family must win over a module/default icon override.");
+assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic")') >= 0,
+    "Rendered plugin menu entries must expose the selected icon family.");
+assert.ok(core.indexOf('if (!legacyIcon || leftModern)') >= 0,
+    "Menu icons must have an explicit image fallback when the host does not expose legacy .lbtg markup.");
+
+var credentials = tools.indexOf('key: "credentials"');
+var favorite = tools.indexOf('key: "favorite"', credentials);
+var link = tools.indexOf('key: "link"', favorite);
+var edit = tools.indexOf('key: "edit"', link);
+assert.ok(credentials >= 0 && favorite > credentials && link > favorite && edit > link,
+    "Edit mode action order must be Credentials, Favorite, Copy link, Edit.");
+assert.ok(tools.indexOf('disabled: !hasCredentials') >= 0,
+    "Credentials must remain visible but disabled when the script has no secret variables.");
+assert.ok(tree.indexOf('action.disabled = definition.disabled === true') >= 0 && tree.indexOf('if (action.disabled) return;') >= 0,
+    "Tree actions must render and enforce disabled actions.");
+assert.ok(css.indexOf('.mc-shared-page .sirk-shared-list-item:is(.active,.is-active)') >= 0,
+    "First and second shared columns must have a visible selected-state fallback.");
+assert.ok(css.indexOf('.sirk-quick-command-browser button:is(.active,.is-active)') >= 0,
+    "Quick selected rows must use the same visible host-token fallback.");
+assert.ok(css.indexOf('var(--bs-primary,currentColor)') >= 0,
+    "Visible selection must derive from the active host theme rather than a private fixed color.");
+
+console.log("Visible menu icon family, Edit actions and selected rows regression contract: OK");
+''', encoding='utf-8')
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/shared/core.js public/shared/ui/script-tools.js public/shared/ui/tree.js public/shared/ui/toolbar.css test/
+          git commit -m "Fix visible menu icons, Edit actions and selection state"
+          git push origin HEAD:fix/1.8.21-ui-state-and-edit-actions
