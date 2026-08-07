@@ -16,10 +16,12 @@ var toolbarCss = read("public/shared/ui/toolbar.css");
 var layout = read("public/shared/ui/layout.js");
 var sharedUi = read("public/shared/ui/shared-ui.css");
 
-assert.ok(tree.indexOf('graphic.className = "mc-tree-folder-icon mc-tree-fallback-icon"') >= 0,
-    "Nested My Scripts/Commands directories without custom artwork must use the shared folder icon.");
-assert.ok(tree.indexOf('graphic.innerHTML = lineIcon("folder")') >= 0,
-    "The nested directory fallback must render the same folder glyph as root folders.");
+assert.ok(tree.indexOf('fallback.className = "mc-tree-fallback-icon sirk-shared-list-icon"') >= 0 &&
+    tree.indexOf('fallbackKind: "folder"') >= 0,
+    "Nested My Scripts/Commands directories without custom artwork must use the shared folder fallback path.");
+assert.ok(tree.indexOf('lineIcon(options.fallbackKind || "folder")') >= 0 &&
+    tree.indexOf('var paths = kind === "script"') >= 0,
+    "The nested directory fallback must resolve to the same shared folder SVG as root folders.");
 assert.ok(tree.indexOf("mc-tree-folder-arrow") < 0,
     "Missing folder artwork must not be represented by a triangle arrow.");
 
