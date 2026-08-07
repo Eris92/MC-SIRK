@@ -19,5 +19,7 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Validate development metadata
+        run: node scripts/validate-repository-layout.js
       - name: Run test suite
         run: npm test
