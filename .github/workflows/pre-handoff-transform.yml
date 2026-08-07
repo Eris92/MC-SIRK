@@ -6,6 +6,7 @@ on:
       - refactor/pre-handoff-cleanup-1.8.20
     paths:
       - scripts/pre-handoff-transform.py
+      - .github/workflows/pre-handoff-transform.yml
 
 permissions:
   contents: write
