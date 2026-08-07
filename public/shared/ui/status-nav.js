@@ -41,19 +41,22 @@
             this.list(options.counts).forEach(function (item) {
                 var button = document.createElement("button");
                 button.type = "button";
-                button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-result-status sirk-result-status-" + (item.key || "all");
+                button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-result-status sirk-result-status-" + (item.key || "all") + " sirk-shared-list-item";
 
                 var icon = document.createElement("span");
-                icon.className = "sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon";
+                icon.className = "sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon sirk-shared-list-icon";
                 icon.innerHTML = item.icon;
 
+                var copy = document.createElement("span");
+                copy.className = "sirk-shared-list-copy";
                 var label = document.createElement("span");
-                label.className = "mc-portal-nav-label";
+                label.className = "mc-portal-nav-label sirk-shared-list-label";
                 label.textContent = item.title + (item.badge == null ? "" : " (" + item.badge + ")");
+                copy.appendChild(label);
 
                 var selected = item.key === options.selected;
                 button.appendChild(icon);
-                button.appendChild(label);
+                button.appendChild(copy);
                 button.classList.toggle("active", selected);
                 button.classList.toggle("is-active", selected);
                 button.setAttribute("aria-selected", selected ? "true" : "false");
