@@ -62,8 +62,12 @@ var script = {
     secretVariables: [{ name: "Password" }]
 };
 
+function actions() {
+    return Array.from(tools.scriptActions(script, config));
+}
+
 function actionKeys() {
-    return Array.from(tools.scriptActions(script, config), function (item) { return item.key; }).join(",");
+    return actions().map(function (item) { return item.key; }).join(",");
 }
 
 function sync() {
@@ -84,8 +88,17 @@ assert.strictEqual(active.manage, true, "The Edit toolbar button must be active.
 assert.strictEqual(active.multi, false, "The Multi toolbar button must be inactive in Edit mode.");
 assert.strictEqual(visible.manage, true, "The Edit button must remain visible while active.");
 assert.strictEqual(visible.multi, true, "The Multi button must remain available as a direct switch from Edit.");
-assert.strictEqual(actionKeys(), "favorite,credentials,edit",
-    "Edit mode must expose only Edit-related row actions.");
+assert.strictEqual(actionKeys(), "credentials,favorite,link,edit",
+    "Edit mode must expose Credentials, Favorite, Copy link and Edit in a stable order.");
+assert.strictEqual(actions()[0].disabled, false,
+    "Credentials must be enabled when secret variables are configured.");
+
+script.secretVariables = [];
+assert.strictEqual(actionKeys(), "credentials,favorite,link,edit",
+    "Scripts without secrets must keep the same Edit action layout.");
+assert.strictEqual(actions()[0].disabled, true,
+    "Credentials must remain visible but disabled when no secret variables exist.");
+script.secretVariables = [{ name: "Password" }];
 
 tools.toggleMulti(toolbar);
 sync();
@@ -123,4 +136,4 @@ assert.ok(/refresh:[^\n]*order: 50/.test(toolbarConfig), "Refresh must remain af
 assert.strictEqual(source.indexOf('createElement("style")'), -1,
     "Edit/Multi behavior must not install runtime styles; styling belongs to static CSS.");
 
-console.log("Edit and Multi remain visible, mutually exclusive and switch directly: OK");
+console.log("Edit and Multi remain visible, mutually exclusive and expose the full Edit action set: OK");
