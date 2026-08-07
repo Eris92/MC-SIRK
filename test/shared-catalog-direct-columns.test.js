@@ -7,9 +7,7 @@ var vm = require("vm");
 
 var source = fs.readFileSync(path.resolve(__dirname, "../public/shared/ui/catalog.js"), "utf8");
 
-function ClassList(owner) {
-    this.owner = owner;
-}
+function ClassList(owner) { this.owner = owner; }
 ClassList.prototype._items = function () {
     return String(this.owner.className || "").split(/\s+/).filter(Boolean);
 };
@@ -92,9 +90,7 @@ Element.prototype.dispatchEvent = function (event) {
     }, this);
     return !event.defaultPrevented;
 };
-Element.prototype.click = function () {
-    return this.dispatchEvent({ type: "click" });
-};
+Element.prototype.click = function () { return this.dispatchEvent({ type: "click" }); };
 Element.prototype.appendChild = function (node) {
     if (node.parentNode) node.parentNode.removeChild(node);
     this.childNodes.push(node);
@@ -123,10 +119,11 @@ function Comment(value) {
 Comment.prototype = Object.create(Node.prototype);
 Comment.prototype.constructor = Comment;
 
-function button(title) {
+function rootButton(title) {
     var value = new Element("button");
     value.textContent = title;
-    value.className = "mc-shared-nav-item mc-tree-root";
+    value.className = "mc-shared-nav-item mc-tree-root sirk-shared-list-item active is-active";
+    value.setAttribute("aria-selected", "true");
     return value;
 }
 
@@ -140,15 +137,21 @@ var window = {
         mount: function (options) {
             lastTreeOptions = options;
             options.rootsContainer.innerHTML = "";
-            options.rootsContainer.appendChild(button("Scripts"));
-            options.rootsContainer.appendChild(button("System"));
+            options.rootsContainer.appendChild(rootButton("Scripts"));
+            options.rootsContainer.appendChild(rootButton("System"));
             return options.state || {};
         }
-    },
-    SirkSharedListContract: { schedule: function () {} }
+    }
 };
 
-vm.runInNewContext(source, { window: window, document: document, Object: Object, Array: Array, String: String, Error: Error });
+vm.runInNewContext(source, {
+    window: window,
+    document: document,
+    Object: Object,
+    Array: Array,
+    String: String,
+    Error: Error
+});
 
 function elementLabels(host) {
     return host.children.map(function (item) {
@@ -171,30 +174,32 @@ window.SharedCatalogView.mount({
 assert.deepStrictEqual(elementLabels(primary), ["Results", "Scripts", "System"],
     "Results and catalog roots must be direct primary-column children in the default order.");
 assert.ok(primary.classList.contains("sirk-shared-catalog-primary"),
-    "The real primary host must own the shared catalog contract.");
-assert.strictEqual(primary.getAttribute("data-sirk-catalog-contract-version"), "1.8.18",
-    "The rendered primary column must expose the active functional catalog contract version.");
+    "The real primary host must identify the shared catalog column directly.");
 assert.strictEqual(primary.children.some(function (item) {
     return item.classList.contains("mc-catalog-navigation") || item.classList.contains("mc-catalog-roots");
 }), false, "The shared column must not recreate historical wrapper elements.");
 
 var resultsButton = primary.children[0];
-assert.strictEqual(resultsButton.getAttribute("data-sirk-catalog-action"), "results",
-    "The Results row must expose its navigation action.");
+assert.ok(resultsButton.classList.contains("mc-catalog-results") &&
+    resultsButton.classList.contains("sirk-shared-list-item"),
+    "Results must use the same direct shared-list renderer contract as catalog roots.");
+assert.strictEqual(resultsButton.getAttribute("data-sirk-catalog-contract-version"), null,
+    "The maintained catalog must not expose release-specific implementation markers.");
+
 resultsButton.onclick = function () {};
 assert.strictEqual(resultsButton.click(), false,
-    "The Results navigation must prevent the native button default action.");
+    "Results navigation must prevent the native button default action.");
 assert.strictEqual(resultsClicks, 1,
-    "The Results callback must survive a later onclick property overwrite.");
+    "The capture listener must survive a later onclick property overwrite.");
 assert.ok(resultsButton.classList.contains("active") && resultsButton.classList.contains("is-active"),
     "Clicking Results must immediately select the Results row.");
 assert.strictEqual(primary.children[1].getAttribute("aria-selected"), "false",
-    "Clicking Results must clear root selection before the asynchronous module render.");
+    "Clicking Results must clear root selection before the module rerender.");
 
 lastTreeOptions.rootsContainer.innerHTML = "";
-lastTreeOptions.rootsContainer.appendChild(button("Network"));
+lastTreeOptions.rootsContainer.appendChild(rootButton("Network"));
 assert.deepStrictEqual(elementLabels(primary), ["Results", "Network"],
-    "A tree rerender must replace only roots and preserve the Results row and direct structure.");
+    "A tree rerender must replace only roots and preserve Results and the direct column structure.");
 resultsButton.click();
 assert.strictEqual(resultsClicks, 2,
     "The preserved Results row must remain clickable after a catalog-root rerender.");
@@ -209,5 +214,10 @@ window.SharedCatalogView.mount({
 });
 assert.deepStrictEqual(elementLabels(endPrimary), ["Scripts", "System", "Results"],
     "The comment anchor must preserve the configured end position across direct rendering.");
+
+assert.strictEqual(source.indexOf("CONTRACT_VERSION"), -1,
+    "Catalog source must not carry a release-specific DOM contract version.");
+assert.strictEqual(source.indexOf("SirkSharedListContract"), -1,
+    "Catalog source must not depend on a post-render normalizer.");
 
 console.log("Shared catalog direct columns and functional Results navigation: OK");
