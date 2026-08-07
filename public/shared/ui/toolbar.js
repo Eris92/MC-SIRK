@@ -95,7 +95,7 @@
 
             definitions(options).forEach(add);
             api.addButton = add;
-            if (context.buttons.search) left.appendChild(searchWrap);
+            if (context.buttons.search) center.appendChild(searchWrap);
 
             var searchTimer = 0;
             searchInput.oninput = function () {
