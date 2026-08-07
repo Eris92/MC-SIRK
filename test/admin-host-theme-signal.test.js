@@ -6,7 +6,8 @@ var path = require("path");
 var root = path.resolve(__dirname, "..");
 var admin = fs.readFileSync(path.join(root, "web/admin/admin.js"), "utf8");
 
-assert.ok(admin.indexOf('window.nightMode === true') >= 0,
+assert.ok(admin.indexOf('typeof window.nightMode === "boolean"') >= 0 &&
+    admin.indexOf('return window.nightMode;') >= 0,
     "Admin theme detection must honor the MeshCentral nightMode runtime signal.");
 assert.ok(admin.indexOf('document.body.classList.contains("night")') >= 0,
     "Admin theme detection must honor the Classic/Modern body.night signal.");
