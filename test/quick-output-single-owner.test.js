@@ -10,7 +10,7 @@ var desktop = fs.readFileSync(path.join(root, "public", "native", "desktop-comma
 var startup = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
 
 var detailsStart = desktop.indexOf('key: "details"');
-var detailsEnd = desktop.indexOf('host.appendChild(custom)', detailsStart);
+var detailsEnd = desktop.indexOf('key: "close"', detailsStart);
 assert.ok(detailsStart >= 0 && detailsEnd > detailsStart,
     "Quick must define one canonical custom details action.");
 var detailsAction = desktop.slice(detailsStart, detailsEnd);
