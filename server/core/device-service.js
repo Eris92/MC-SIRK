@@ -215,7 +215,7 @@ module.exports.createDeviceService = function (options) {
             etype: "node", action: "runcommands", nodeid: context.nodeId,
             domain: String(context.domain && context.domain.id || ""),
             userid: user && user._id, username: shared.userName(user),
-            msg: 'My Company: user "' + shared.userName(user) + '" started "' +
+            msg: 'SIRK Management Platform: user "' + shared.userName(user) + '" started "' +
                 String(command.label || "command") + '".', plugin: "SirkPlatform"
         });
     }
