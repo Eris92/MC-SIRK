@@ -6,7 +6,7 @@ CENTRALNE REPO ISSUES:
 - `Eris92/MC-SIRK`
 - branch: `main`
 
-Wszystkie Issues dotyczące backendu, natywnego UI, Quick, Commands, My Scripts, Approval Center, admin panelu, MeshCentral integration, build/CI/release, security, performance i dokumentacji twórz w `Eris92/MC-SIRK`.
+Wszystkie Issues dotyczące backendu, natywnego UI, Quick, Commands, My Scripts, Approval Center, admin panelu, MeshCentral integration, build/CI, security, performance i dokumentacji twórz w `Eris92/MC-SIRK`.
 
 Przed przygotowaniem technicznego Issue użyj GitHub.
 
@@ -20,6 +20,7 @@ Następnie, zależnie od zadania, tylko potrzebne moduły, szczególnie:
 - `docs/agent/11-Agent-SIRK-Portal.md`
 - `docs/agent/12-Agent-Wydajnosc-Reuse.md`
 - `docs/agent/13-Agent-Kontekst-Issues.md`
+- `docs/agent/14-Agent-Wersjonowanie-Pre1.md`
 
 Nie czytaj całego repozytorium ani wszystkich docs bez potrzeby.
 
@@ -52,7 +53,7 @@ Dobieraj sekcje do zadania; nie dodawaj pustych sekcji dla samego szablonu.
 Preferowana struktura:
 
 ## Type
-Bug / Feature / Refactor / Performance / Security / Investigation / Deployment / Release / Documentation
+Bug / Feature / Refactor / Performance / Security / Investigation / Deployment / Documentation
 
 ## Area
 Backend / Native UI / Quick / Commands / My Scripts / Approval / Admin / MeshCentral integration / Build/CI / Security / Cross-area
@@ -110,11 +111,16 @@ Preferuj:
 1. targeted test;
 2. regression/negative test;
 3. manual smoke test w realnym MeshCentral, jeśli problem dotyczy integracji UI/runtime;
-4. `npm test` tylko dla wspólnego runtime/contractu, security, struktury lub release.
+4. `npm test` tylko dla wspólnego runtime/contractu, security, struktury lub przed świadomym release.
 
-MC-SIRK jest osobnym projektem od nowego SIRK Agent/Portal/Central/Updater. Nie kopiuj jego polityki wersjonowania ani architektury.
+MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
-Aktualna baza release to `1.8.21`, a `main` może zawierać kandydackie poprawki `1.8.22`. Nie proponuj automatycznego bump/tag/release. Release wymaga zgodności z `docs/PROJECT-STATE.md`, odpowiednimi release notes i wymaganym smoke testem.
+Obowiązuje lokalna polityka `docs/agent/14-Agent-Wersjonowanie-Pre1.md`:
+- preferowana konwencja użytkownika: `0.1.1.X`;
+- SemVer/npm representation: `0.1.1-dev.X`;
+- nie używać historycznego `1.8.x` jako źródła kolejnego numeru;
+- nie proponować `1.0.0+` bez jawnego release gate;
+- nie tworzyć automatycznie tagu/GitHub Release dla development revision.
 
 Jeśli użytkownik pisze skrótowo, np. `Quick po kliknięciu znowu się rozwija`, nie kopiuj tego bezpośrednio. Sprawdź aktualny kod i przekształć w techniczny task packet.
 
