@@ -43,7 +43,8 @@ assert.strictEqual(desktopSource.indexOf("mesh-plugin-core"), -1,
     "Quick renderer must not depend on the removed compatibility core.");
 assert.ok(desktopSource.indexOf('document.getElementById("deskarea3x")') >= 0,
     "Quick must scope itself directly to the native Desktop stage.");
-assert.ok(desktopSource.indexOf('document.getElementById("SirkDesktopCommandsPanel")') >= 0,
+assert.ok(desktopSource.indexOf('panel.id = "SirkDesktopCommandsPanel"') >= 0 &&
+    desktopSource.indexOf('wrapper.appendChild(panel)') >= 0,
     "Quick must own one explicit persistent panel instead of observing the full document.");
 
 assert.ok(shellSource.indexOf("findDeviceTitleTextNode") >= 0 &&
