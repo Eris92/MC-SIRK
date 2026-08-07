@@ -31,10 +31,18 @@
         }
     };
 
-    function mode() {
-        var bootstrap = window.SirkPlatformRuntime && window.SirkPlatformRuntime.state && window.SirkPlatformRuntime.state.bootstrap;
-        var value = String(bootstrap && bootstrap.ui && bootstrap.ui.iconMode || "auto").toLowerCase();
+    function normalizeMode(value) {
+        value = String(value || "auto").toLowerCase();
         return ["auto", "classic", "modern"].indexOf(value) >= 0 ? value : "auto";
+    }
+
+    function mode() {
+        var adminData = window.SirkPlatformAdminData;
+        var adminMode = adminData && adminData.uiSettings && adminData.uiSettings.iconMode;
+        if (adminMode != null && adminMode !== "") return normalizeMode(adminMode);
+
+        var bootstrap = window.SirkPlatformRuntime && window.SirkPlatformRuntime.state && window.SirkPlatformRuntime.state.bootstrap;
+        return normalizeMode(bootstrap && bootstrap.ui && bootstrap.ui.iconMode);
     }
 
     window.SirkIconMode = {
