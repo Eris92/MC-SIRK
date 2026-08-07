@@ -1,0 +1,75 @@
+name: Publish SIRK 1.8.21
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-sirk-v1.8.21
+  cancel-in-progress: true
+
+jobs:
+  release:
+    if: github.event.pull_request.head.ref == 'release/publish-v1.8.21'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_SHA: ccb735b6ed2ec99e0332fb3a0b89d13c2ba47fe6
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Verify release target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          test "$(node -p "require('./config.json').version")" = "1.8.21"
+          test "$(node -p "require('./package.json').version")" = "1.8.21"
+          test -f docs/releases/1.8.21.md
+          git diff --check "$RELEASE_SHA^" "$RELEASE_SHA"
+
+      - name: Run full test suite
+        run: npm test
+
+      - name: Create tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin refs/tags/v1.8.21 >/dev/null 2>&1; then
+            existing="$(git ls-remote --tags origin refs/tags/v1.8.21^{} | awk '{print $1}')"
+            if [ -z "$existing" ]; then existing="$(git ls-remote --tags origin refs/tags/v1.8.21 | awk '{print $1}')"; fi
+            test "$existing" = "$RELEASE_SHA"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a v1.8.21 "$RELEASE_SHA" -m "SIRK Management Platform 1.8.21"
+            git push origin refs/tags/v1.8.21
+          fi
+          if ! gh release view v1.8.21 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create v1.8.21 \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$RELEASE_SHA" \
+              --title "SIRK Management Platform 1.8.21" \
+              --latest \
+              --notes-file docs/releases/1.8.21.md
+          fi
