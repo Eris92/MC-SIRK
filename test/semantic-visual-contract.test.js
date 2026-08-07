@@ -9,6 +9,7 @@ function read(relative) { return fs.readFileSync(path.join(root, relative), "utf
 
 var tree = read("public/shared/ui/tree.js");
 var statusNav = read("public/shared/ui/status-nav.js");
+var catalog = read("public/shared/ui/catalog.js");
 var approvals = read("public/modules/approvals/index.js");
 var themeAdapter = read("public/shared/ui/toolbar-config.js");
 var mainCss = read("public/shared/styles/main.css");
@@ -26,22 +27,40 @@ assert.ok(tree.indexOf("mc-tree-folder-arrow") < 0,
     "Missing folder artwork must not be represented by a triangle arrow.");
 
 ["all", "pending", "executing", "approved", "completed", "failed", "rejected"].forEach(function (key) {
-    assert.ok(statusNav.indexOf('sirk-result-status-' + (key === "all" ? '" + (item.key || "all")' : key)) >= 0 ||
+    assert.ok(statusNav.indexOf("sirk-result-status-" + key) >= 0 ||
         statusNav.indexOf('{ key: "' + (key === "all" ? "" : key) + '"') >= 0,
         "Status navigation must retain the semantic state " + key + ".");
 });
-assert.ok(statusNav.indexOf("window.MeshThemeAdapter.status") >= 0,
-    "Status rows must delegate their appearance to the native MeshCentral adapter.");
+assert.ok(statusNav.indexOf('button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-shared-list-item"') >= 0,
+    "Shared status row buttons must remain neutral native navigation items.");
+assert.ok(statusNav.indexOf('icon.className = "sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-" + key') >= 0,
+    "Shared semantic status classes must be attached to icons, not row labels.");
+assert.ok(statusNav.indexOf("window.MeshThemeAdapter.status(icon)") >= 0,
+    "Shared status icons must delegate their semantic color to the native MeshCentral adapter.");
 assert.strictEqual(statusNav.indexOf("--sirk-status"), -1,
     "Status navigation must not own a private color palette.");
+
 ["text-warning", "text-info", "text-success", "text-danger"].forEach(function (name) {
     assert.ok(themeAdapter.indexOf('desired = "' + name + '"') >= 0,
         "Modern status state must map to native Bootstrap class " + name + ".");
 });
 assert.ok(themeAdapter.indexOf("element.classList.add(desired)") >= 0,
     "The selected native semantic status class must be applied idempotently.");
-assert.ok(approvals.indexOf('className: "mc-approval-status sirk-result-status sirk-result-status-" + key') >= 0,
-    "Approval Center status filters must expose semantic status classes.");
+
+assert.ok(approvals.indexOf('className: "mc-approval-status"') >= 0 &&
+    approvals.indexOf('iconClassName: "sirk-result-status sirk-result-status-" + key') >= 0,
+    "Approval Center status rows must keep standard text while applying semantic state to their icons.");
+assert.strictEqual(approvals.indexOf('className: "mc-approval-status sirk-result-status'), -1,
+    "Approval Center status color must never be attached to the whole second-column row.");
+assert.ok(approvals.indexOf('title: "Overview"') >= 0 &&
+    approvals.indexOf('iconClassName: "sirk-result-status sirk-result-status-all"') >= 0,
+    "Approval Overview must use the same neutral/all semantic icon role as Results.");
+assert.ok(catalog.indexOf('button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item"') >= 0 &&
+    catalog.indexOf('sirk-result-status-icon sirk-result-status sirk-result-status-all') >= 0,
+    "Commands/My Scripts Results must keep native text and apply the all-state color only to the icon.");
+assert.ok(catalog.indexOf("window.MeshThemeAdapter.status(icon)") >= 0,
+    "Results icon color must come from the same native semantic adapter as Approval Overview.");
+
 assert.ok(approvals.indexOf("sirk-action-approve") >= 0 &&
     approvals.indexOf("sirk-action-reject") >= 0,
     "Approve and Reject must retain explicit semantic action roles alongside native button variants.");
@@ -75,4 +94,4 @@ assert.ok(sharedUi.indexOf(".mc-shared-layout.is-collapsed .mc-shared-primary") 
 assert.strictEqual(sharedUi.indexOf(".mc-shared-secondary .mc-approval-label{display:none"), -1,
     "Collapsing the first column must not hide Approval Center second-column labels.");
 
-console.log("Native semantic statuses, approval actions and canonical collapsed layout: OK");
+console.log("Native semantic icon colors, approval actions and canonical collapsed layout: OK");
