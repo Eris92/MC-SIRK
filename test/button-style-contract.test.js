@@ -34,8 +34,8 @@ assert.ok(toolbar.indexOf('className = "btn btn-secondary btn-sm mc-shared-toolb
     "Shared toolbar buttons must start from a neutral native button contract.");
 assert.ok(toolbarApi.indexOf('item.disabled = key === "favorites" ? false : value === false') >= 0,
     "Favorites must remain clickable even when the current page is Results.");
-assert.ok(tools.indexOf('toolbar.setActive("favorites", scriptsMode && state.favoritesOnly)') >= 0 &&
-    tools.indexOf('toolbar.setTitle("favorites", state.favoritesOnly ? "Show all scripts" : "Favorites")') >= 0,
+assert.ok(tools.indexOf('api.setActive("favorites", scriptsMode && state.favoritesOnly)') >= 0 &&
+    tools.indexOf('api.setTitle("favorites", state.favoritesOnly ? "Show all scripts" : "Favorites")') >= 0,
     "SharedScriptTools must own Favorites state/title without a toolbar monkey-patch.");
 
 assert.ok(commands.indexOf('mode = "commands"; treeState.selectedScript = ""; module.api.render();') >= 0,
