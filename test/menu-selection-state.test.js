@@ -39,8 +39,8 @@ assert.ok(page.indexOf('item.classList.remove("lbbuttonsel", "lbbuttonsel2", "ac
 assert.ok(page.indexOf("core.__nativeLeftMenuContractInstalled") >= 0,
     "The native menu contract must install once and remain idempotent.");
 
-assert.ok(shell.indexOf("if (typeof window.go === \"function\") window.go(1)") >= 0,
-    "Each workspace module must enter through MeshCentral's native device lifecycle.");
+assert.ok(shell.indexOf('if (!core.workspaceState && typeof window.go === "function") window.go(1)') >= 0,
+    "Entering SIRK from a native page must use MeshCentral's device lifecycle, without redrawing Devices during SIRK-to-SIRK switches.");
 assert.ok(shell.indexOf("core.activePlugin && core.activePlugin !== moduleInstance") >= 0,
     "Opening one SIRK module must close the previously active SIRK module.");
 assert.ok(shell.indexOf("core.activePlugin = moduleInstance") >= 0,
