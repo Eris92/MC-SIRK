@@ -58,7 +58,7 @@
         button.title = options.title;
 
         var icon = document.createElement("span");
-        icon.className = "mc-nav-icon";
+        icon.className = "mc-nav-icon" + (options.iconClassName ? " " + options.iconClassName : "");
         icon.setAttribute("aria-hidden", "true");
         icon.innerHTML = options.icon || icons.all;
 
@@ -95,6 +95,7 @@
         nav(host, {
             title: "Overview",
             icon: icons.overview,
+            iconClassName: "sirk-result-status sirk-result-status-all",
             active: !selectedProvider,
             onClick: function () {
                 selectedProvider = "";
@@ -143,7 +144,8 @@
             nav(host, {
                 title: status.title,
                 icon: icons[key] || status.icon || icons.all,
-                className: "mc-approval-status sirk-result-status sirk-result-status-" + key,
+                className: "mc-approval-status",
+                iconClassName: "sirk-result-status sirk-result-status-" + key,
                 active: selectedStatus === status.key,
                 onClick: function () { selectedStatus = status.key; shell.render(); }
             }, shell);
