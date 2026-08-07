@@ -26,9 +26,18 @@ Jeśli poprawka nie rozwiązała problemu i piszę `nie działa`, `nadal nie dzi
 
 Kanoniczna gałąź to `main`. Nie używaj historycznych branchy i nie twórz nowych branchy bez potrzeby lub jawnego polecenia.
 
-MC-SIRK jest osobnym projektem od nowego SIRK Agent/Portal/Central/Updater. Nie kopiuj automatycznie architektury, instrukcji ani polityki wersjonowania z tamtego projektu.
+MC-SIRK jest osobnym projektem od nowego SIRK Agent/Portal/Central/Updater. Nie kopiuj automatycznie architektury między projektami.
 
-Baza wydania to `1.8.21`. Aktualny `main` może zawierać poprawki kandydujące do `1.8.22`. Nie bumpuj, nie taguj i nie publikuj release automatycznie. Przed release odczytaj `docs/PROJECT-STATE.md` oraz odpowiedni draft/release notes i wykonaj wymagany real MeshCentral smoke test.
+MC-SIRK nie ma jeszcze pierwszego pełnego wydania produktu. Obowiązuje `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
+
+Aktualna linia development:
+`0.1.1-dev.X`
+
+Jest to SemVer-compatible odpowiednik preferowanej konwencji użytkownika `0.1.1.X`.
+
+Nie używaj historycznych `1.8.x` jako źródła kolejnego numeru. Nie ustawiaj, nie taguj ani nie publikuj `1.0.0+` bez jawnego release gate. `package.json` i `config.json` muszą zawsze mieć identyczną wersję.
+
+Nie twórz automatycznie GitHub Release/tag przy zwykłym bumpie development revision.
 
 Wydajność jest priorytetem. Przed dodaniem nowej klasy, modułu, helpera, renderera, CSS class, handlera, timera, observera lub request loop najpierw sprawdź istniejącego ownera i możliwość reuse.
 
@@ -52,7 +61,7 @@ Przy zmianach UI zachowuj bieżące kontrakty opisane w `docs/PROJECT-STATE.md`,
 Po zmianie:
 1. uruchom targeted test;
 2. dla regresji/state/security dodaj lub uruchom test negatywny/regresyjny;
-3. `npm test` uruchom dla zmian runtime, loadera, shared UI, struktury, security/public contractu lub przed release — nie dla każdej drobnej zmiany;
+3. `npm test` uruchom dla zmian runtime, loadera, shared UI, struktury, security/public contractu lub przed świadomym release;
 4. sprawdź diff;
 5. nie deklaruj rozwiązania, dopóki acceptance criteria nie są spełnione.
 
