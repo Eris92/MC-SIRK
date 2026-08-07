@@ -1,9 +1,11 @@
 # SIRK Management Platform — project state
 
-Status: `development after verified 1.8.21`  
-Base release: `1.8.21`  
-Current `main`: zawiera dodatkowe poprawki kandydujące do `1.8.22`; CI Test dla promowanej linii zakończony `success`.  
-Release `1.8.22`: **nie publikować ani nie tagować przed real MeshCentral smoke test**. Szczegóły: `docs/releases/1.8.22-draft.md`.
+Status: `development pre-1.0`  
+Current development version: `0.1.1-dev.1`  
+Product release: **none yet**  
+First complete product release: reserved for `1.0.0` after explicit release gate.
+
+Previous `1.8.x` numbering was internal development numbering only. It is historical evidence, not the current version line and not proof of a product release.
 
 ## Produkt i runtime
 
@@ -114,16 +116,22 @@ sirkPlatform.layout.shared-script-columns.collapsed
 
 `SharedLayout` synchronizuje aktywne layouty. Pozostałe layouty zachowują własne klucze.
 
-## Aktualny kandydat 1.8.22
+## Wersjonowanie
 
-Po wydaniu `1.8.21` na `main` zostały promowane poprawki realnych regresji UI, m.in.:
+Aktualne źródła wersji:
 
-- wybrana rodzina ikon z General ma pierwszeństwo nad cloned/default menu artwork;
-- Edit ma stabilny zestaw akcji;
-- Credentials pozostaje widoczne, ale disabled bez secret variables;
-- shared list/Quick mają widoczny selected-state fallback.
+```text
+package.json -> 0.1.1-dev.1
+config.json  -> 0.1.1-dev.1
+```
 
-CI nie zastępuje smoke testu na realnym MeshCentral. Nie bumpować/tagować `1.8.22` automatycznie.
+Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
+
+Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
+
+Aktualne development notes: `docs/releases/0.1.1-dev.1-draft.md`.
+
+Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
 ## Weryfikacja
 
