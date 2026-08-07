@@ -132,6 +132,9 @@
                     item.classList.toggle("is-active", active);
                     item.setAttribute("aria-pressed", active ? "true" : "false");
                     updateModeClass(context, key, active);
+                    if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {
+                        window.MeshThemeAdapter.button(item);
+                    }
                 },
                 setTitle: function (key, value) {
                     var item = context.buttons[key];
