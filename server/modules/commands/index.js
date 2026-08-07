@@ -19,6 +19,7 @@ module.exports.createModule = function (context) {
         network: {
             key: "network", title: "Network", icon: "🌐", commands: [
                 { id: "flushdns", label: "Flush DNS", description: "Clear the DNS client cache.", type: 1, runAsUser: 0, cmd: "ipconfig /flushdns" },
+                { id: "network-settings", label: "Active network adapter settings", description: "Open properties for the adapter used by the active default route.", type: 1, runAsUser: 2, cmd: "start \"\" powershell.exe -NoProfile -WindowStyle Hidden -Command \"$route=Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue|Where-Object{$_.State -eq 'Alive'}|Sort-Object RouteMetric,InterfaceMetric|Select-Object -First 1;if(-not $route){$route=Get-NetRoute -DestinationPrefix '::/0' -ErrorAction SilentlyContinue|Where-Object{$_.State -eq 'Alive'}|Sort-Object RouteMetric,InterfaceMetric|Select-Object -First 1};if(-not $route){throw 'No active default route was found.'};$adapter=Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction Stop;Start-Process control.exe -ArgumentList 'ncpa.cpl';Start-Sleep -Milliseconds 900;$shell=New-Object -ComObject Shell.Application;$folder=$shell.Namespace(3);$item=$folder.Items()|Where-Object{$_.Name -eq $adapter.Name}|Select-Object -First 1;if($item){$item.InvokeVerb('properties')}\"" },
                 { id: "dns", label: "Check DNS", description: "Resolve a DNS name.", type: 2, runAsUser: 0, variables: [{ name: "name", label: "DNS name", required: true, control: "text", defaultValue: "" }], cmd: "Resolve-DnsName -Name $name | Format-Table -AutoSize" },
                 { id: "port", label: "Check port", description: "Test a TCP or UDP port.", type: 2, runAsUser: 0, variables: [{ name: "hostName", label: "Host name or IP", required: true, control: "text", defaultValue: "" }, { name: "port", label: "Port", required: true, control: "text", defaultValue: "443" }, { name: "protocol", label: "Protocol", required: true, control: "select", defaultValue: "TCP", options: [{ value: "TCP", label: "TCP" }, { value: "UDP", label: "UDP" }] }], cmd: "if ($protocol -eq 'UDP') { $client=New-Object Net.Sockets.UdpClient; try { $client.Connect($hostName,[int]$port); $bytes=[Text.Encoding]::UTF8.GetBytes('MyCommands UDP probe'); [void]$client.Send($bytes,$bytes.Length); 'UDP datagram sent to {0}:{1}' -f $hostName,$port } finally { $client.Dispose() } } else { Test-NetConnection -ComputerName $hostName -Port ([int]$port) -InformationLevel Detailed }" },
                 { id: "netstat", label: "Open ports", description: "Show listening ports and active connections.", type: 1, runAsUser: 0, cmd: "netstat -ano" },
@@ -124,22 +125,43 @@ module.exports.createModule = function (context) {
     }
     function executionRows() {
         var value;
-        try { var stat = context.fs.statSync(activeResultsPath); if (!stat.isFile()) { var invalid = new Error("Command results path is not a file."); invalid.code = "EISDIR"; throw invalid; } value = JSON.parse(context.fs.readFileSync(activeResultsPath, "utf8").replace(/^\uFEFF/, "")); }
-        catch (error) { var code = String(error && error.code || ""); if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) { activeResultsPath = fallbackResultsPath; value = shared.readJson(context.fs, activeResultsPath, { rows: memoryRows }); } else value = { rows: memoryRows }; }
+        try {
+            var stat = context.fs.statSync(activeResultsPath);
+            if (!stat.isFile()) { var invalid = new Error("Command results path is not a file."); invalid.code = "EISDIR"; throw invalid; }
+            value = JSON.parse(context.fs.readFileSync(activeResultsPath, "utf8").replace(/^\uFEFF/, ""));
+        } catch (error) {
+            var code = String(error && error.code || "");
+            if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) {
+                activeResultsPath = fallbackResultsPath;
+                value = shared.readJson(context.fs, activeResultsPath, { rows: memoryRows });
+            } else value = { rows: memoryRows };
+        }
         memoryRows = Array.isArray(value.rows) ? value.rows : memoryRows;
         return shared.copy(memoryRows);
     }
     function writeRows(rows) {
-        memoryRows = shared.copy(rows); var value = { schemaVersion: 1, rows: rows };
+        memoryRows = shared.copy(rows);
+        var value = { schemaVersion: 1, rows: rows };
         try { shared.writeJsonAtomic(context.fs, context.path, activeResultsPath, value); }
-        catch (error) { var code = String(error && error.code || ""); if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) { activeResultsPath = fallbackResultsPath; try { shared.writeJsonAtomic(context.fs, context.path, activeResultsPath, value); } catch (ignored) {} } else if (activeResultsPath !== fallbackResultsPath) throw error; }
+        catch (error) {
+            var code = String(error && error.code || "");
+            if (activeResultsPath === resultsPath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) {
+                activeResultsPath = fallbackResultsPath;
+                try { shared.writeJsonAtomic(context.fs, context.path, activeResultsPath, value); } catch (ignored) {}
+            } else if (activeResultsPath !== fallbackResultsPath) throw error;
+        }
     }
-    function saveExecution(row) { var rows = executionRows(); rows.unshift(row); if (rows.length > 2000) rows.length = 2000; writeRows(rows); }
+    function saveExecution(row) {
+        var rows = executionRows();
+        rows.unshift(row);
+        if (rows.length > 2000) rows.length = 2000;
+        writeRows(rows);
+    }
 
     function findCatalogCommand(commandId) {
         commandId = String(commandId || "");
         var keys = Object.keys(catalog);
-        for (var index = 0; index < keys.length; index++) {
+        for (var index = 0; index < keys.length; index += 1) {
             var category = catalog[keys[index]];
             var command = (category.commands || []).find(function (item) { return item.id === commandId; });
             if (command) return { category: category, command: effectiveCommand(command, category.key) };
@@ -170,8 +192,20 @@ module.exports.createModule = function (context) {
                 title: category.title,
                 icon: category.icon,
                 commands: category.commands.map(function (source) {
-                    var command = effectiveCommand(source, category.key), levels = command.approvalLevels;
-                    return { id: command.id, label: command.label, description: command.description, variables: publicVariables(command.variables), approvalLevels: levels, requiresApproval: levels.length > 0, confirmExecution: command.confirmExecution === true, runAsUser: command.runAsUser, showOnDesktop: command.showOnDesktop === true, showWithoutDesktop: command.showWithoutDesktop === true };
+                    var command = effectiveCommand(source, category.key);
+                    var levels = command.approvalLevels;
+                    return {
+                        id: command.id,
+                        label: command.label,
+                        description: command.description,
+                        variables: publicVariables(command.variables),
+                        approvalLevels: levels,
+                        requiresApproval: levels.length > 0,
+                        confirmExecution: command.confirmExecution === true,
+                        runAsUser: command.runAsUser,
+                        showOnDesktop: command.showOnDesktop === true,
+                        showWithoutDesktop: command.showWithoutDesktop === true
+                    };
                 })
             };
         });
@@ -201,7 +235,10 @@ module.exports.createModule = function (context) {
         if (!match) throw new Error("Invalid interactive Desktop command.");
         var executable = match[1] || match[2];
         var argumentsText = match[3] || "";
-        if (/\.msc$/i.test(executable)) { argumentsText = '"' + executable + '"' + (argumentsText ? " " + argumentsText : ""); executable = "mmc.exe"; }
+        if (/\.msc$/i.test(executable)) {
+            argumentsText = '"' + executable + '"' + (argumentsText ? " " + argumentsText : "");
+            executable = "mmc.exe";
+        }
         return { executable: executable, argumentsText: argumentsText };
     }
     function interactiveDesktopCommand(commandText, label) {
@@ -297,11 +334,12 @@ module.exports.createModule = function (context) {
         if (payload.commandId) {
             var found = findCatalogCommand(payload.commandId);
             if (!found) throw new Error("Command preset not found.");
+            if (found.command.confirmExecution === true && payload.confirmedExecution !== true) throw new Error("Execution confirmation is required for this command.");
             payload.commandId = found.command.id;
             payload.label = found.command.label;
             payload.description = found.command.description;
-            payload.approvalLevels = approvalLevels([]);
-            payload.confirmedExecution = false;
+            payload.approvalLevels = [];
+            payload.confirmedExecution = found.command.confirmExecution === true;
             delete payload.command;
             delete payload.scriptPath;
             return payload;
@@ -341,11 +379,7 @@ module.exports.createModule = function (context) {
             payload = normalizePayload(value);
             if (payload.approvalLevels.length) return Promise.reject(new Error("This command requires approval."));
         }
-        var request = {
-            id: "",
-            requester: { id: user && user._id || "", name: shared.userName(user) },
-            executionId: shared.randomId(12)
-        };
+        var request = { id: "", requester: { id: user && user._id || "", name: shared.userName(user) }, executionId: shared.randomId(12) };
         return execute(payload, request).then(function (result) {
             return { ok: true, direct: true, request: { status: result.status || "executing", result: result } };
         });
@@ -372,20 +406,28 @@ module.exports.createModule = function (context) {
                     return !!found && folderAccess.canAccess(user, folderRules(), "@menu/" + found.category.key);
                 }
                 return true;
-            }).map(function (request) { var id = request.result && request.result.id; if (id && byId[String(id)]) request.result = shared.copy(byId[String(id)]); return request; });
+            }).map(function (request) {
+                var id = request.result && request.result.id;
+                if (id && byId[String(id)]) request.result = shared.copy(byId[String(id)]);
+                return request;
+            });
             value.ok = true;
             return value;
         });
     }
 
     function nodeIds(value) {
-        var list = Array.isArray(value) ? value : String(value || "").split(/[\r\n,;]+/), seen = Object.create(null);
-        return list.map(function (id) { return String(id || "").trim(); }).filter(function (id) { if (!id || seen[id]) return false; seen[id] = true; return true; });
+        var list = Array.isArray(value) ? value : String(value || "").split(/[\r\n,;]+/);
+        var seen = Object.create(null);
+        return list.map(function (id) { return String(id || "").trim(); }).filter(function (id) {
+            if (!id || seen[id]) return false;
+            seen[id] = true;
+            return true;
+        });
     }
 
     function multiExecute(user, value) {
         value = value || {};
-        requireScriptAccess(user);
         var settings = context.settings.read().modules.mycommands || {};
         var maxMultiHostNodes = Math.max(1, Math.min(1000, Number(settings.maxMultiHostNodes) || 200));
         var multiHostConcurrency = Math.max(1, Math.min(64, Number(settings.multiHostConcurrency) || 8));
@@ -393,22 +435,42 @@ module.exports.createModule = function (context) {
         if (!ids.length && value.nodeId) ids = [String(value.nodeId)];
         if (!ids.length) throw new Error("Select at least one device.");
         if (ids.length > maxMultiHostNodes) throw new Error("A maximum of " + maxMultiHostNodes + " devices can be selected.");
-        var script = library.getScript(value.scriptPath, true);
-        if (!script) throw new Error("Script not found.");
-        if (script.multiHost !== true) throw new Error("This script does not allow multi-device execution.");
-        if (script.confirmExecution === true && value.confirmedExecution !== true) throw new Error("Execution confirmation is required for this script.");
-        var cursor = 0, rows = [];
+
+        var source = { variableValues: value.variableValues || {}, multiHost: true };
+        if (value.commandId) {
+            var found = requireCommandAccess(user, value.commandId);
+            if (found.command.confirmExecution === true && value.confirmedExecution !== true) {
+                throw new Error("Execution confirmation is required for this command.");
+            }
+            source.commandId = found.command.id;
+            source.confirmedExecution = found.command.confirmExecution === true;
+        } else {
+            requireScriptAccess(user);
+            var script = library.getScript(value.scriptPath, true);
+            if (!script) throw new Error("Script not found.");
+            if (script.multiHost !== true) throw new Error("This script does not allow multi-device execution.");
+            if (script.confirmExecution === true && value.confirmedExecution !== true) throw new Error("Execution confirmation is required for this script.");
+            source.scriptPath = script.path;
+            source.confirmedExecution = script.confirmExecution === true;
+        }
+
+        var cursor = 0;
+        var rows = [];
         function worker() {
             if (cursor >= ids.length) return Promise.resolve();
             var id = ids[cursor++];
-            return context.approval.submit("mycommands", user, { nodeId: id, scriptPath: script.path, nodeName: id, variableValues: value.variableValues || {}, multiHost: true, confirmedExecution: script.confirmExecution === true }, value.note).then(function (request) {
+            var payload = shared.copy(source);
+            payload.nodeId = id;
+            payload.nodeName = id;
+            return context.approval.submit("mycommands", user, payload, value.note).then(function (request) {
                 rows.push({ nodeId: id, ok: true, request: request });
             }).catch(function (error) {
                 rows.push({ nodeId: id, ok: false, error: String(error && error.message || error) });
             }).then(worker);
         }
+
         var workers = [];
-        for (var index = 0; index < Math.min(multiHostConcurrency, ids.length); index++) workers.push(worker());
+        for (var index = 0; index < Math.min(multiHostConcurrency, ids.length); index += 1) workers.push(worker());
         return Promise.all(workers).then(function () {
             var failed = rows.filter(function (row) { return !row.ok; }).length;
             var pending = rows.filter(function (row) { return row.ok && row.request && row.request.status === "pending"; }).length;
@@ -417,7 +479,13 @@ module.exports.createModule = function (context) {
     }
 
     var provider = {
-        type: "mycommands", moduleKey: "mycommands", title: "My Commands", tabTitle: "Commands", description: "Direct and multi-device command execution.", columns: ["createdAt", "title", "requester", "status"], normalizePayload: normalizePayload,
+        type: "mycommands",
+        moduleKey: "mycommands",
+        title: "My Commands",
+        tabTitle: "Commands",
+        description: "Direct and multi-device command execution.",
+        columns: ["createdAt", "title", "requester", "status"],
+        normalizePayload: normalizePayload,
         getTitle: function (payload) { return payload.label || payload.scriptPath || payload.commandId || "Command"; },
         getSummary: function (payload) { return "Device: " + (payload.nodeName || payload.nodeId || "unknown"); },
         getApprovalLevels: function (payload) { return payload.approvalLevels || []; },
@@ -437,7 +505,11 @@ module.exports.createModule = function (context) {
             return { key: "mycommands", name: "My Commands", menuTitle: "My Commands", script: "mycommands.js", style: "myscripts.css", showInMenu: false, showOnDevice: value.showOnDevice !== false, scriptsRoot: root, maxMultiHostNodes: Number(value.maxMultiHostNodes) || 200, multiHostConcurrency: Number(value.multiHostConcurrency) || 8, toolbar: { refresh: true, clear: false, favorites: true, search: true, manage: true, multiHost: true, settings: false } };
         },
         getAccess: function (user) { return { allowed: allowed(user), siteAdmin: shared.isSiteAdmin(user) }; },
-        initialize: function () { library.ensure(); if (!unregister) unregister = context.approval.registerProvider(provider); return Promise.resolve(); },
+        initialize: function () {
+            library.ensure();
+            if (!unregister) unregister = context.approval.registerProvider(provider);
+            return Promise.resolve();
+        },
         captureAgentData: function (command) {
             var id = command && (command.responseid || command.responseId);
             if (!id) return;
@@ -470,8 +542,8 @@ module.exports.createModule = function (context) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var value = req && req.body || {};
             if (asset === "execute") {
-                if (value.scriptPath) requireScriptAccess(user);
                 if (value.scriptPath) {
+                    requireScriptAccess(user);
                     var scriptAccess = effectiveScriptAvailability(value.scriptPath);
                     if (value.desktopDirect === true && scriptAccess.showOnDesktop !== true) throw new Error("This script is disabled during a Desktop connection.");
                     if (value.desktopDirect !== true && scriptAccess.showWithoutDesktop !== true) throw new Error("This script is available only during a Desktop connection.");
@@ -501,7 +573,9 @@ module.exports.createModule = function (context) {
                 return saved;
             }
             if (asset === "command-definition") {
-                requireAdmin(user); var command = requireCommandAccess(user, value.id).command; var definitions = commandOverrides();
+                requireAdmin(user);
+                var command = requireCommandAccess(user, value.id).command;
+                var definitions = commandOverrides();
                 definitions[command.id] = { label: shared.cleanText(value.label || command.label, 200), description: shared.cleanText(value.description, 1000), confirmExecution: value.confirmExecution === true, showOnDesktop: value.showOnDesktop === true, showWithoutDesktop: value.showWithoutDesktop === true };
                 context.settings.updateSync(function (current) { current.modules.mycommands.commandOverrides = definitions; return current; });
                 return { ok: true, catalog: visibleCatalog(user) };
