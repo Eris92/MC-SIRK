@@ -23,7 +23,7 @@
         "Task Manager": "Menedżer zadań", "Printer Management": "Zarządzanie drukarkami",
         "Certificates (computer)": "Certyfikaty komputera", "Certificates (user)": "Certyfikaty użytkownika",
         "Indexing Options": "Opcje indeksowania", "Disk Cleanup": "Oczyszczanie dysku",
-        "Flush DNS": "Wyczyść DNS", "Active network adapter settings": "Ustawienia aktywnej karty sieciowej", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
+        "Flush DNS": "Wyczyść DNS", "Network Connections": "Panel Sieciowy", "Network Adapter Properties": "Właściwości Sieciowe", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
         "Open ports": "Otwarte porty", "Filter by port": "Filtruj po porcie"
     };
 
@@ -50,6 +50,8 @@
         netstat: '<svg viewBox="0 0 24 24"><path d="M4 17V7M9 17v-5M14 17V4M19 17v-8"/></svg>',
         "netstat-port": '<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/><circle cx="17" cy="16" r="2"/></svg>'
     };
+
+    ICONS["network-adapter-properties"] = ICONS["network-settings"];
 
     var MENU_ICONS = {
         scripts: '<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/><path d="M8 12h8M8 15h6"/></svg>',
