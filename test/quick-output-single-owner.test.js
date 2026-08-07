@@ -6,6 +6,7 @@ var path = require("path");
 
 var root = path.join(__dirname, "..");
 var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
+var toolbar = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.js"), "utf8");
 var desktop = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
 var startup = fs.readFileSync(path.join(root, "plugin-main.js"), "utf8");
 
@@ -19,8 +20,15 @@ assert.ok(detailsAction.indexOf('onClick: function () { writeDetailsCollapsed(!s
     "The canonical details action must own the only user click that changes output visibility.");
 assert.strictEqual((detailsAction.match(/onClick:/g) || []).length, 1,
     "The Quick details action must expose exactly one click handler.");
-assert.ok(desktop.indexOf('custom.onclick = function () { if (typeof definition.onClick === "function") definition.onClick(); }') >= 0,
-    "The custom toolbar button must dispatch directly to its definition without wrapping an existing handler.");
+assert.ok(desktop.indexOf('var toolbar = window.SharedToolbar.mount({') >= 0 &&
+    desktop.indexOf('customButtons: [{') >= 0,
+    "Quick custom actions must be passed through the shared toolbar instead of creating private buttons.");
+assert.ok(toolbar.indexOf('button.onclick = function (event)') >= 0 &&
+    toolbar.indexOf('var handler = definition.onClick || handlers[definition.handler]') >= 0 &&
+    toolbar.indexOf('return handler(api, event, definition)') >= 0,
+    "SharedToolbar must be the single dispatcher for custom action clicks.");
+assert.strictEqual(desktop.indexOf('toolbar.buttons.details.onclick ='), -1,
+    "Quick must not replace the shared toolbar details click handler after mount.");
 assert.ok(desktop.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0 &&
     desktop.indexOf('toolbar.setTitle("details", state.detailsCollapsed ? text("showDetails") : text("hideDetails"))') >= 0,
     "State/title synchronization must be separate from the click owner.");
