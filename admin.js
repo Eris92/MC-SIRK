@@ -14,9 +14,7 @@ module.exports.admin = function (plugin) {
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],
         "main.css": ["public/shared/styles/main.css", "text/css; charset=utf-8"],
-        "mesh-plugin-core.js": ["public/native/mesh-plugin-core.js", "text/javascript; charset=utf-8"],
         "desktop-commands.js": ["public/native/desktop-commands.js", "text/javascript; charset=utf-8"],
-        "quick-output-state.js": ["public/native/quick-output-state.js", "text/javascript; charset=utf-8"],
         "desktop-commands.css": ["public/native/desktop-commands.css", "text/css; charset=utf-8"],
         "approvalcenter.js": ["public/modules/approvals/index.js", "text/javascript; charset=utf-8"],
         "native-approval.css": ["public/native/approval.css", "text/css; charset=utf-8"],
@@ -24,7 +22,6 @@ module.exports.admin = function (plugin) {
         "myscripts.css": ["public/modules/automation/style.css", "text/css; charset=utf-8"],
         "mycommands.js": ["public/modules/commands/index.js", "text/javascript; charset=utf-8"],
         "moverequests.js": ["public/modules/move-requests/index.js", "text/javascript; charset=utf-8"],
-
         "shared-ui/toolbar-config.js": ["public/shared/ui/toolbar-config.js", "text/javascript; charset=utf-8"],
         "shared-ui/toolbar-api.js": ["public/shared/ui/toolbar-api.js", "text/javascript; charset=utf-8"],
         "shared-ui/toolbar.js": ["public/shared/ui/toolbar.js", "text/javascript; charset=utf-8"],
@@ -68,7 +65,6 @@ module.exports.admin = function (plugin) {
             shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
             return;
         }
-
         var requested = String(req && req.query && req.query.path || "").trim();
         if (!requested || requested.indexOf("\0") >= 0) {
             shared.send(res, 400, "text/plain; charset=utf-8", "Invalid file path");
@@ -76,14 +72,8 @@ module.exports.admin = function (plugin) {
         }
 
         var target = path.resolve(requested);
-        var allowedRoots = [
-            path.join(root, "seed", "MyScripts"),
-            path.join(root, "seed", "MyCommands")
-        ];
-        var allowed = allowedRoots.some(function (allowedRoot) {
-            return isInside(allowedRoot, target);
-        });
-
+        var allowedRoots = [path.join(root, "seed", "MyScripts"), path.join(root, "seed", "MyCommands")];
+        var allowed = allowedRoots.some(function (allowedRoot) { return isInside(allowedRoot, target); });
         if (!allowed || path.extname(target).toLowerCase() !== ".csv") {
             shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
             return;
@@ -94,7 +84,6 @@ module.exports.admin = function (plugin) {
                 shared.send(res, 404, "text/plain; charset=utf-8", "File not found");
                 return;
             }
-
             var fileName = path.basename(target).replace(/[\r\n"]/g, "_");
             res.statusCode = 200;
             setHeader(res, "Content-Type", "text/csv; charset=utf-8");
@@ -125,8 +114,7 @@ module.exports.admin = function (plugin) {
     }
 
     function moduleObject(moduleName) {
-        return plugin.runtime && plugin.runtime.modules &&
-            plugin.runtime.modules[String(moduleName || "").toLowerCase()];
+        return plugin.runtime && plugin.runtime.modules && plugin.runtime.modules[String(moduleName || "").toLowerCase()];
     }
 
     function safeAdminJson(value) {
@@ -180,12 +168,9 @@ module.exports.admin = function (plugin) {
         var action = String(req && req.query && req.query.action || req && req.body && req.body.action || "");
 
         if (moduleName) {
-            if (req && req.body && typeof req.body.payload === "string") {
-                req.body = shared.parseJsonObject(req.body.payload, {});
-            }
+            if (req && req.body && typeof req.body.payload === "string") req.body = shared.parseJsonObject(req.body.payload, {});
             var module = moduleObject(moduleName);
-            if (asset === "settings" && shared.isSiteAdmin(user) && module &&
-                !module.__loadError && typeof module.apiPost === "function") {
+            if (asset === "settings" && shared.isSiteAdmin(user) && module && !module.__loadError && typeof module.apiPost === "function") {
                 try {
                     Promise.resolve(module.apiPost(asset, req, user))
                         .then(function (value) { shared.sendJson(res, 200, value || { ok: true }); })
@@ -209,7 +194,6 @@ module.exports.admin = function (plugin) {
                 .catch(function (error) { shared.sendJson(res, 403, { ok: false, error: errorText(error) }); });
             return;
         }
-
         shared.sendJson(res, 400, { ok: false, error: "Unknown SIRK Platform action." });
     }
 
