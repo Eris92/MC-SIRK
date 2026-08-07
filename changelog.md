@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1-dev.5 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the shared Edit/Multi geometry fix from current `main`.
+- Keep the normal second-column text track and label wrapping stable while Edit or Multi actions appear by reserving the measured action rail outside the captured text width.
+- Use the same post-atomic-commit lifecycle for Edit and Multi so action-mode switches do not transiently move or squeeze text.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.5.md`.
+
 ## 0.1.1-dev.4 — 2026-08-07
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current `main`.
@@ -7,7 +16,7 @@
 - Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.1-dev.4.md`.
+Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
