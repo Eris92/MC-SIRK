@@ -11,6 +11,7 @@ var tree = read("public/shared/ui/tree.js");
 var status = read("public/shared/ui/status-nav.js");
 var catalog = read("public/shared/ui/catalog.js");
 var css = read("public/shared/ui/toolbar.css");
+var sharedUiCss = read("public/shared/ui/shared-ui.css");
 var quickCss = read("public/native/desktop-commands.css");
 var adapter = read("public/shared/ui/toolbar-config.js");
 var startup = read("plugin-main.js");
@@ -50,9 +51,11 @@ assert.ok(css.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
     "All shared and Quick rows must use the same height, margin and padding.");
 assert.ok(css.indexOf(".sirk-shared-list-copy,.sirk-quick-command-copy{display:grid;grid-template-columns:minmax(0,1fr) auto") >= 0,
     "Shared and Quick copy tracks must reserve a compact first-line indicator column.");
-assert.ok(css.indexOf(".mc-tree-folder-body{margin-left:6px}") >= 0 &&
+assert.ok(sharedUiCss.indexOf(".mc-tree-folder-body{margin:0 0 0 6px}") >= 0 &&
     css.indexOf("var(--sdc-depth,0) * 6px") >= 0,
-    "Nested shared trees and Quick must use the same cumulative 6 px indentation step.");
+    "Nested shared trees and Quick must use the same cumulative 6 px indentation step from their canonical CSS owners.");
+assert.strictEqual(css.indexOf(".mc-tree-folder-body{"), -1,
+    "Toolbar CSS must not duplicate shared tree indentation ownership.");
 
 assert.ok(adapter.indexOf('.mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button') >= 0,
     "Shared and Quick rows must enter the same native navigation styling path.");
