@@ -24,11 +24,15 @@ function files(relative) {
 });
 
 [
-    "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
+    "README.md", "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
+    "config.json", "package.json", "changelog.md", "version-history.json",
+    "docs/INDEX.md", "docs/PROJECT-STATE.md", "docs/REPOSITORY-LAYOUT.md", "docs/releases/README.md",
     "views/SIRK-Portal.handlebars", "server/core/runtime.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js",
     "server/modules/commands/index.js", "server/modules/move-requests/index.js",
-    "public/shared/core.js", "public/shared/runtime.js", "public/shared/module-shell.js",
+    "public/INDEX.md", "public/shared/core.js", "public/shared/runtime.js", "public/shared/module-shell.js",
+    "public/shared/ui/layout.js", "public/shared/ui/shared-ui.css", "public/shared/ui/toolbar-config.js",
+    "public/shared/ui/toolbar.js", "public/shared/ui/toolbar-api.js", "public/shared/ui/results.js",
     "public/modules/approvals/index.js", "public/modules/automation/index.js",
     "public/modules/commands/index.js", "public/modules/move-requests/index.js",
     "web/admin/admin.js", "tools/install/Install-SIRK-Portal-FromGit.ps1",
@@ -43,6 +47,7 @@ function files(relative) {
     "Install-MyCompany-FromGit_RUN.ps1", "tools/install/Install-MyCompany-FromGit.ps1",
     "tools/install/Install-MyCompany-FromGit_RUN.ps1", "embedded-manifest.json", "docs-MIGRATION-COVERAGE.md",
     "server/core/runtime-base.js", "public/native/mesh-plugin-core.js", "public/native/quick-output-state.js",
+    "public/native/download-results.js", "public/shared/ui/script-edit-actions.js",
     "scripts/patches", "tmp.txt", "noop", "noop2"
 ].forEach(function (relative) {
     if (exists(relative)) errors.push("Legacy, temporary or superseded path must not exist: " + relative);
@@ -74,12 +79,37 @@ if (exists("web")) {
 
 var config = JSON.parse(read("config.json"));
 var packageJson = JSON.parse(read("package.json"));
+var version = String(packageJson.version || "");
 if (config.name !== "SIRK Management Platform") errors.push("Plugin display name must be SIRK Management Platform.");
 if (config.shortName !== "SIRKPortal") errors.push("MeshCentral plugin shortName must be SIRKPortal.");
 if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(config.shortName)) errors.push("MeshCentral plugin shortName must be JavaScript-safe.");
 if (packageJson.name !== "sirk-portal") errors.push("Package name must be sirk-portal.");
+if (!version) errors.push("package.json must contain a release version.");
+if (String(config.version || "") !== version) errors.push("config.json and package.json versions must match.");
 if (packageJson.scripts && packageJson.scripts.test !== "node scripts/run-tests.js") {
     errors.push("npm test must delegate to the deterministic test discovery runner.");
+}
+
+if (version) {
+    var releasePath = "docs/releases/" + version + ".md";
+    if (!exists(releasePath)) errors.push("Missing release notes for current version: " + releasePath);
+    var readme = read("README.md");
+    if (readme.indexOf(version) < 0) errors.push("README.md must identify the current release version " + version + ".");
+    var projectState = read("docs/PROJECT-STATE.md");
+    if (projectState.indexOf("Wersja: `" + version + "`") < 0) errors.push("PROJECT-STATE.md must identify the current release version " + version + ".");
+    var releaseIndex = read("docs/releases/README.md");
+    if (releaseIndex.indexOf("[`.replace") >= 0) errors.push("Release notes index contains invalid generated text.");
+    if (releaseIndex.indexOf("[" + version + "]") < 0 && releaseIndex.indexOf("[`" + version + "`]") < 0) {
+        errors.push("docs/releases/README.md must link the current release " + version + ".");
+    }
+    var changelog = read("changelog.md");
+    if (changelog.indexOf("## " + version) < 0) errors.push("changelog.md must contain the current release " + version + ".");
+    var versionHistory;
+    try { versionHistory = JSON.parse(read("version-history.json")); }
+    catch (error) { errors.push("version-history.json must contain valid JSON: " + error.message); versionHistory = []; }
+    if (!Array.isArray(versionHistory) || !versionHistory.length || String(versionHistory[0].version || "") !== version) {
+        errors.push("version-history.json must start with the current release " + version + ".");
+    }
 }
 
 var entry = read("SIRKPortal.js");
@@ -96,7 +126,7 @@ var pluginMain = read("plugin-main.js");
 if (pluginMain.indexOf("./server/core/runtime.js") < 0) errors.push("Plugin bootstrap must load server/core/runtime.js.");
 if (/MyCompanyRuntime|__MYCOMPANY_VERSION__|mycompany-data/.test(pluginMain)) errors.push("Plugin bootstrap contains removed MyCompany compatibility code.");
 if (/window\.(?:WebKit)?MutationObserver\s*=/.test(pluginMain)) errors.push("Plugin bootstrap must not replace browser MutationObserver globally.");
-if (/mesh-plugin-core|quick-output-state|runtime-base/.test(pluginMain)) errors.push("Plugin bootstrap references a removed compatibility layer.");
+if (/mesh-plugin-core|quick-output-state|runtime-base|download-results|script-edit-actions/.test(pluginMain)) errors.push("Plugin bootstrap references a removed compatibility layer.");
 if (/plugin-main-standalone|public\/portal\/standalone|server\/standalone/.test(entry + pluginMain)) errors.push("Standalone Portal loader must not remain.");
 
 var adminView = read("views/SIRK-Portal.handlebars");
@@ -116,7 +146,7 @@ var adminSource = read("admin.js");
 ].forEach(function (fragment) {
     if (adminSource.indexOf(fragment) < 0) errors.push("Asset router is missing canonical mapping: " + fragment);
 });
-if (/mesh-plugin-core|quick-output-state|runtime-base/.test(adminSource)) errors.push("Asset router references a removed compatibility layer.");
+if (/mesh-plugin-core|quick-output-state|runtime-base|download-results|script-edit-actions/.test(adminSource)) errors.push("Asset router references a removed compatibility layer.");
 if (/\["public\/(?:core|runtime|module-shell|portal-|my|defender|move|main\.)/.test(adminSource) || adminSource.indexOf("public/shared-ui/") >= 0) {
     errors.push("Asset router contains a removed flat public path.");
 }
@@ -170,6 +200,7 @@ if (errors.length) {
 
 console.log("Final repository layout validation: OK");
 console.log("SIRK Platform naming validation: OK");
+console.log("Current release metadata validation: OK");
 console.log("Single maintained workflow validation: OK");
 console.log("Canonical server/public loader validation: OK");
 console.log("Legacy and temporary path validation: OK");
