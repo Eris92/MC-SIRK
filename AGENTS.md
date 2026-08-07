@@ -41,6 +41,7 @@ Zawsze stosuj:
 - `docs/agent/03-Agent-Jakosc-Bezpieczenstwo.md`
 - `docs/agent/12-Agent-Wydajnosc-Reuse.md`
 - `docs/agent/13-Agent-Kontekst-Issues.md`
+- `docs/agent/14-Agent-Wersjonowanie-Pre1.md`
 
 Dobieraj tylko potrzebne moduły:
 
@@ -73,9 +74,20 @@ Dobieraj tylko potrzebne moduły:
 - dane runtime: `meshcentral-data/sirk-platform-data`;
 - owner stanu projektu: `docs/PROJECT-STATE.md`.
 
-MC-SIRK jest odrębnym projektem od nowego wielorepozytoryjnego SIRK Agent/Portal/Central/Updater. Nie kopiuj automatycznie architektury ani polityki wersji z tamtego projektu.
+MC-SIRK jest odrębnym projektem od wielorepozytoryjnego SIRK Agent/Portal/Central/Updater. Architektury nie kopiuj automatycznie między projektami. Oba projekty pozostają jednak przed pierwszym pełnym wydaniem i `1.0.0` jest w MC-SIRK zablokowane zgodnie z lokalną polityką `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
 Nie przywracaj historycznych aliasów, shimów, `MyCompany`, starych loaderów ani `mycompany-data`, chyba że użytkownik jawnie zleci audyt historyczny.
+
+## Wersjonowanie — twarda reguła
+
+MC-SIRK nie ma jeszcze pierwszego product release.
+
+- aktualna linia development: `0.1.1-dev.X`;
+- odpowiada ona preferowanej konwencji użytkownika `0.1.1.X`;
+- `package.json` i `config.json` muszą mieć identyczną wersję;
+- historyczne `1.8.x` są wewnętrznymi snapshotami developmentu i nie są źródłem kolejnego numeru;
+- nie twórz nowych `1.x`, `2.x`, `3.x` ani `1.0.0` bez jawnego otwarcia release gate przez użytkownika;
+- nie twórz automatycznie tagu/GitHub Release przy zwykłym bumpie development revision.
 
 ## GitHub Issues jako stan zadania
 
