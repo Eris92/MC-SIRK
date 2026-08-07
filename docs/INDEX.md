@@ -1,4 +1,4 @@
-# Indeks repozytorium SIRK-Portal
+# Indeks repozytorium MC-SIRK
 
 Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszego zakresu odczytu.
 
@@ -14,22 +14,27 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
 | release notes | `docs/releases/README.md` |
-| reguły pracy agenta | `docs/agent/11-Agent-SIRK-Portal.md` |
+| reguły runtime/pluginu | `docs/agent/10-Agent-MeshCentral-Plugin.md`, `docs/agent/11-Agent-SIRK-Portal.md` |
+| wydajność, reuse, duplikacja | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |
+| GitHub Issue / kontynuacja nowego czatu | `docs/agent/13-Agent-Kontekst-Issues.md` |
+| trwałe decyzje projektu | `docs/memory/PROJECT_MEMORY.md` |
 
 ## Reguła selektywnego odczytu
 
 1. Wybierz dokładnie jeden indeks główny odpowiadający zadaniu.
-2. Odczytaj wskazany entrypoint lub moduł.
-3. Przejdź tylko po bezpośrednich importach, mapach assetów, route’ach i testach związanych z tym elementem.
-4. Nie czytaj równolegle backendu, frontendu, panelu admina i testów, jeżeli zadanie dotyczy tylko jednej warstwy.
-5. Pełne wyszukiwanie repozytorium jest wyjątkiem dla rename, audytu bezpieczeństwa, zmiany publicznego API albo braku mapowania w indeksach.
+2. Jeśli zadanie pochodzi z Issue, przeczytaj Issue przed kodem.
+3. Odczytaj wskazany entrypoint lub owner.
+4. Przejdź tylko po bezpośrednich importach, mapach assetów, route'ach i testach związanych z tym elementem.
+5. Nie czytaj równolegle backendu, frontendu, panelu admina i wszystkich testów, jeśli zadanie dotyczy jednej warstwy.
+6. Pełne wyszukiwanie repozytorium jest wyjątkiem dla rename, audytu bezpieczeństwa, zmiany publicznego API albo potwierdzonego braku mapowania w indeksach.
 
 ## Dokumenty kanoniczne
 
-- nazwy i struktura: `docs/REPOSITORY-LAYOUT.md`;
-- stan wersji i architektury: `docs/PROJECT-STATE.md`;
-- release notes: `docs/releases/`;
 - router instrukcji: `AGENTS.md`;
-- reguły projektu: `docs/agent/11-Agent-SIRK-Portal.md`.
+- nazwy i struktura: `docs/REPOSITORY-LAYOUT.md`;
+- bieżący stan architektury: `docs/PROJECT-STATE.md`;
+- trwała pamięć decyzji: `docs/memory/PROJECT_MEMORY.md`;
+- release notes: `docs/releases/`;
+- task state: GitHub Issues w `Eris92/MC-SIRK`.
 
 Dokument nieujęty w tym indeksie nie powinien być czytany automatycznie tylko dlatego, że znajduje się w `docs/`.
