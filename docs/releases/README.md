@@ -1,20 +1,26 @@
-# Release notes
+# Release / development notes
 
-Aktualny release:
+MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
-- [`1.8.21`](1.8.21.md) — poprawki regresji UI 1.8.20: Edit/Multi, Favorites, zaznaczenie, stabilna geometria Quick/shared, jednokrotne Output attention i zapis icon mode.
+Aktualna linia development:
 
-Poprzedni release:
+- [`0.1.1-dev.1`](0.1.1-dev.1-draft.md) — bieżący pre-1.0 development baseline.
 
-- [`1.8.20`](1.8.20.md) — pre-handoff cleanup, konsolidacja właścicieli runtime/UI, atomic render, wspólny Collapse, uproszczenie Quick i finalna walidacja.
+Preferowana konwencja użytkownika `0.1.1.X` jest reprezentowana w npm/plugin metadata jako SemVer-compatible `0.1.1-dev.X`.
 
-Pozostałe historyczne release notes znajdują się w tym katalogu jako osobne pliki `X.Y.Z.md`.
+Pierwsze pełne wydanie produktu jest zarezerwowane dla `1.0.0` i wymaga jawnego release gate opisanego w `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Przy zmianie `config.json` / `package.json`:
+## Historyczne dokumenty
 
-1. dodaj plik release notes dla nowej wersji;
-2. aktualizuj `docs/PROJECT-STATE.md`, jeżeli zmienia się architektura lub stan projektu;
-3. aktualizuj root `changelog.md` i `version-history.json`, jeżeli wersja jest publikowana przez repozytorium;
-4. uruchom pełne `npm test`.
+Pliki `1.8.x.md` w tym katalogu są historycznymi snapshotami wewnętrznego developmentu. Nie są źródłem bieżącej numeracji i nie oznaczają, że produkt osiągnął pierwsze wydanie.
 
-Nie rekonstruuj brakujących historycznych wersji na podstawie przypuszczeń.
+Nie rekonstruuj, nie kontynuuj ani nie promuj numeracji `1.8.x` jako aktualnej linii produktu.
+
+## Przy zmianie wersji
+
+1. odczytaj `docs/agent/14-Agent-Wersjonowanie-Pre1.md`;
+2. zwiększ tylko rewizję `0.1.1-dev.X`, jeśli bump jest wymagany;
+3. utrzymaj identyczną wersję w `package.json` i `config.json`;
+4. zaktualizuj bieżący development draft, `changelog.md` i `version-history.json` jeśli zadanie obejmuje wersję;
+5. uruchom wymagane targeted tests, a przed świadomym release pełne `npm test` i real MeshCentral smoke test;
+6. nie twórz taga/GitHub Release bez jawnego polecenia użytkownika.
