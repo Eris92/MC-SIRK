@@ -23,7 +23,7 @@ var required = [
     "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js", "config.json", "package.json",
     "server/core/runtime.js", "server/core/settings-store.js", "server/core/secret-store.js",
     "server/core/approval-service.js", "server/core/device-service.js", "server/core/integration-service.js",
-    "server/core/audit-log.js", "server/core/shared.js",
+    "server/core/mesh-events.js", "server/core/shared.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js",
     "server/modules/commands/index.js", "server/modules/move-requests/index.js",
     "public/shared/core.js", "public/shared/runtime.js", "public/shared/module-shell.js",
@@ -78,10 +78,22 @@ if (exists("plugin-main-standalone.js") || exists("server/standalone.js") || dir
 }
 
 var serverRuntime = exists("server/core/runtime.js") ? read("server/core/runtime.js") : "";
-need(serverRuntime, 'require("./audit-log.js")', "Canonical runtime must own audit logging.");
+need(serverRuntime, 'require("./mesh-events.js")', "Canonical runtime must route SIRK actions through MeshCentral events.");
+need(serverRuntime, "createMeshEventLog", "Canonical runtime must initialize the MeshCentral event adapter.");
 need(serverRuntime, "function saveAdminSettings", "Canonical runtime must own admin settings persistence.");
-reject(serverRuntime, /runtime-base|originalApiPost|__sirk/, "Canonical runtime must not depend on compatibility wrappers or monkey patches.");
+reject(serverRuntime, /audit-log\.js|audit\.jsonl|auditLog|context\.audit|runtime-base|originalApiPost|__sirk/, "Canonical runtime must not retain standalone audit storage or compatibility wrappers.");
 if (exists("server/core/runtime-base.js")) errors.push("Duplicate runtime-base.js must not exist.");
+if (exists("server/core/audit-log.js")) errors.push("Standalone audit-log.js must not exist; use MeshCentral DispatchEvent.");
+
+var meshEvents = exists("server/core/mesh-events.js") ? read("server/core/mesh-events.js") : "";
+need(meshEvents, "DispatchEvent", "Mesh event adapter must use MeshCentral DispatchEvent.");
+need(meshEvents, "createMeshEventLog", "Mesh event adapter must expose createMeshEventLog().");
+reject(meshEvents, /appendFile|writeFile|audit\.jsonl|nolog\s*:/, "Mesh event adapter must not create alternate storage or suppress MeshCentral persistence.");
+
+walk("server").filter(function (relative) { return /\.js$/i.test(relative); }).forEach(function (relative) {
+    var source = read(relative);
+    if (/\bconsole\.log\s*\(/.test(source)) errors.push("Debug console.log must not remain in maintained server code: " + relative);
+});
 
 var browserRuntime = exists("public/shared/runtime.js") ? read("public/shared/runtime.js") : "";
 need(browserRuntime, "window.SirkPlatformRuntime", "Browser runtime must expose SirkPlatformRuntime.");
@@ -115,7 +127,12 @@ var view = exists("views/SIRK-Portal.handlebars") ? read("views/SIRK-Portal.hand
 need(view, "SIRK Management Platform", "Admin view must use SIRK Management Platform branding.");
 need(view, "SirkPlatformAdminData", "Admin view must expose SirkPlatformAdminData.");
 need(view, "sirk-platform-admin", "Admin view must use canonical SIRK admin identifiers.");
-reject(view, /MyCompanyAdminData|mycompany-admin|<style\b/i, "Admin view contains legacy identifiers or inline implementation styles.");
+reject(view, /MyCompanyAdminData|mycompany-admin|<style\b|data-tab=["']logs["']/i, "Admin view contains legacy identifiers, inline implementation styles or a removed Logs tab.");
+
+var adminUi = exists("web/admin/admin.js") ? read("web/admin/admin.js") : "";
+reject(adminUi, /renderLogs|auditLog|mc-admin-audit|tab\s*===\s*["']logs["']/, "Standalone audit log UI must not return to the admin panel.");
+var adminCss = exists("web/admin/admin.css") ? read("web/admin/admin.css") : "";
+reject(adminCss, /mc-admin-audit/, "Standalone audit log styles must not remain.");
 
 var sharedUiCss = exists("public/shared/ui/shared-ui.css") ? read("public/shared/ui/shared-ui.css") : "";
 var toolbarCss = exists("public/shared/ui/toolbar.css") ? read("public/shared/ui/toolbar.css") : "";
@@ -137,6 +154,7 @@ if (errors.length) {
 }
 
 console.log("SIRK Platform architecture validation: OK");
+console.log("Native MeshCentral event ownership validation: OK");
 console.log("Single runtime / loader lifecycle validation: OK");
 console.log("No browser polling or compatibility monkey-patches: OK");
 console.log("Static style ownership validation: OK");
