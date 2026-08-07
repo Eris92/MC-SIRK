@@ -89,6 +89,16 @@ details:            pozostała przestrzeń
 
 Globalna geometria workspace znajduje się w `public/shared/ui/shared-ui.css`. `layout.js` odpowiada tylko za strukturę DOM i stan Collapse.
 
+## MeshCentral Events
+
+SIRK nie utrzymuje własnego systemu audit logów. `server/core/mesh-events.js` przekazuje zdarzenia akcji do natywnego `MeshCentral.DispatchEvent()`.
+
+- nie powstaje `audit.jsonl`;
+- panel SIRK nie ma osobnej zakładki Logs;
+- persistence, filtrowanie i prezentacja zdarzeń należą do MeshCentral Events;
+- eventy SIRK zawierają użytkownika i, gdy dotyczy, urządzenie;
+- hasła, sekrety, tokeny, payloady i output poleceń nie są kopiowane do eventów.
+
 ## Atomic render
 
 `public/shared/module-shell.js` renderuje nowe `secondary` i `details` poza live DOM. `renderSequence` odrzuca nieaktualne operacje, a zawartość strony jest podmieniana dopiero podczas atomic commit.
@@ -148,6 +158,8 @@ download-results.js
 script-edit-actions.js
 mesh-plugin-core.js
 quick-output-state.js
+runtime-base.js
+audit-log.js
 ```
 
 Nie należy ich przywracać. Funkcje dawnych helperów mają obecnie jednoznacznych właścicieli opisanych w `docs/PROJECT-STATE.md`.
