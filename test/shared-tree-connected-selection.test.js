@@ -1,33 +1,4 @@
-from pathlib import Path
-
-
-def replace(path, old, new):
-    p = Path(path)
-    data = p.read_text(encoding="utf-8")
-    if old not in data:
-        raise SystemExit("missing patch target in %s: %s" % (path, old[:140]))
-    p.write_text(data.replace(old, new, 1), encoding="utf-8")
-
-
-replace(
-    "public/shared/ui/tree.js",
-    '''    function applyButton(button) {\n        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {\n            window.MeshThemeAdapter.button(button);\n        }\n    }\n\n    function createButton(options) {''',
-    '''    function applyButton(button) {\n        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {\n            window.MeshThemeAdapter.button(button);\n        }\n    }\n\n    function connectedSelectionHost(button) {\n        var current = button;\n        var outermost = button;\n        while (current) {\n            outermost = current;\n            if (current.classList && current.classList.contains("mc-shared-secondary")) return current;\n            current = current.parentNode;\n        }\n        return outermost;\n    }\n\n    function collectScriptButtons(node, output) {\n        output = output || [];\n        var children = node && node.children || [];\n        for (var index = 0; index < children.length; index++) {\n            var child = children[index];\n            if (child.classList && child.classList.contains("mc-tree-script")) output.push(child);\n            collectScriptButtons(child, output);\n        }\n        return output;\n    }\n\n    function syncScriptSelection(button) {\n        if (!button) return;\n        collectScriptButtons(connectedSelectionHost(button)).forEach(function (candidate) {\n            var selected = candidate === button;\n            candidate.classList.toggle("active", selected);\n            candidate.classList.toggle("is-active", selected);\n            candidate.setAttribute("aria-selected", selected ? "true" : "false");\n            var row = candidate.parentNode;\n            if (row && row.classList && row.classList.contains("mc-tree-script-row")) {\n                row.classList.toggle("active", selected);\n            }\n            applyNav(candidate);\n        });\n    }\n\n    function createButton(options) {'''
-)
-
-replace(
-    "public/shared/ui/tree.js",
-    '''            active: text(options.selectedScript) === text(script.path),\n            onClick: function () { options.onScript(script); }\n        });''',
-    '''            active: text(options.selectedScript) === text(script.path),\n            onClick: function () { options.onScript(script, button); }\n        });'''
-)
-
-replace(
-    "public/shared/ui/tree.js",
-    '''                onScript: function (script) {\n                    state.selectedScript = script.path;\n                    if (typeof options.onScript === "function") options.onScript(script);\n                    window.SharedDirectoryTree.mount(options);\n                }''',
-    '''                onScript: function (script, button) {\n                    state.selectedScript = script.path;\n                    syncScriptSelection(button);\n                    if (typeof options.onScript === "function") options.onScript(script);\n                }'''
-)
-
-Path("test/shared-tree-connected-selection.test.js").write_text(r'''"use strict";
+"use strict";
 
 var assert = require("assert");
 var fs = require("fs");
@@ -202,4 +173,3 @@ assert.ok(navCalls >= beforeClickNavCalls + 2,
     "Native theme mapping must be refreshed for both previous and newly selected rows.");
 
 console.log("Shared tree selection updates connected atomic-render DOM without stale remount: OK");
-''', encoding="utf-8")

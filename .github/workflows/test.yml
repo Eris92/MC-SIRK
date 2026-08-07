@@ -1,12 +1,11 @@
 name: Test
 
 on:
-  push:
-    branches:
-      - fix-shared-script-selection-115
+  pull_request:
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -15,56 +14,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: fix-shared-script-selection-115
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Apply selection fix
-        run: python scripts/agent-selection-fix.py
-      - name: Restore canonical workflow and remove helper
-        run: |
-          cat > .github/workflows/test.yml <<'EOF'
-          name: Test
-
-          on:
-            pull_request:
-            workflow_dispatch:
-
-          permissions:
-            contents: read
-
-          jobs:
-            test:
-              runs-on: ubuntu-latest
-              timeout-minutes: 15
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v7
-                - name: Setup Node.js
-                  uses: actions/setup-node@v7
-                  with:
-                    node-version: '24'
-                    package-manager-cache: false
-                - name: Run test suite
-                  run: npm test
-          EOF
-          rm scripts/agent-selection-fix.py
-      - name: Targeted tests
-        run: |
-          node test/shared-tree-connected-selection.test.js
-          node test/shared-catalog-direct-columns.test.js
-          node test/quick-shared-selection-style.test.js
-          node test/ui-visible-state-regression.test.js
-          node test/shared-list-quick-style.test.js
-      - name: Full test suite
+      - name: Run test suite
         run: npm test
-      - name: Commit verified fix
-        run: |
-          git config user.name "Eris92"
-          git config user.email "43513086+Eris92@users.noreply.github.com"
-          git add -A
-          git commit -m "fix: keep script selection on connected DOM"
-          git push origin HEAD:fix-shared-script-selection-115
