@@ -1,37 +1,26 @@
 (function () {
     "use strict";
 
-    var CATALOG_CONTRACT_VERSION = "1.8.18";
-
-    function selectResultsRow(button) {
-        var host = button && button.parentNode;
+    function setSelected(button, selected) {
         if (!button || !button.classList) return;
+        button.classList.toggle("active", selected);
+        button.classList.toggle("is-active", selected);
+        button.setAttribute("aria-selected", selected ? "true" : "false");
+    }
+
+    function selectOnly(button) {
+        var host = button && button.parentNode;
         Array.prototype.slice.call(host && host.children || []).forEach(function (item) {
-            if (!item || !item.classList) return;
-            var selected = item === button;
-            item.classList.toggle("active", selected);
-            item.classList.toggle("is-active", selected);
-            item.setAttribute("aria-selected", selected ? "true" : "false");
-            item.setAttribute("data-sirk-list-selected", selected ? "1" : "0");
+            setSelected(item, item === button);
         });
     }
 
-    function bindResultsClick(button, onClick) {
-        var handler = function (event) {
-            if (event && typeof event.preventDefault === "function") event.preventDefault();
-            if (event && typeof event.stopPropagation === "function") event.stopPropagation();
-            if (button.disabled) return false;
-            selectResultsRow(button);
-            if (typeof onClick === "function") onClick(event, button);
-            return false;
-        };
-
-        button.setAttribute("data-sirk-catalog-action", "results");
-        button.__sirkCatalogResultsHandler = handler;
-        if (typeof button.addEventListener === "function") {
-            button.addEventListener("click", handler, true);
-        } else {
-            button.onclick = handler;
+    function applyTheme(button) {
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
+            window.MeshThemeAdapter.nav(button);
+        }
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
+            window.MeshThemeAdapter.status(button);
         }
     }
 
@@ -45,23 +34,30 @@
         var icon = document.createElement("span");
         icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon";
         icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
-        button.appendChild(icon);
 
+        var copy = document.createElement("span");
+        copy.className = "sirk-shared-list-copy";
         var label = document.createElement("span");
         label.className = "mc-tree-label mc-portal-nav-label";
         label.textContent = "Results";
-        button.appendChild(label);
+        copy.appendChild(label);
 
-        button.classList.toggle("active", active === true);
-        button.classList.toggle("is-active", active === true);
-        button.setAttribute("aria-selected", active === true ? "true" : "false");
-        button.setAttribute("data-sirk-list-selected", active === true ? "1" : "0");
-        bindResultsClick(button, onClick);
+        button.appendChild(icon);
+        button.appendChild(copy);
+        setSelected(button, active === true);
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (button.disabled) return;
+            selectOnly(button);
+            if (typeof onClick === "function") onClick(event, button);
+        }, true);
         host.appendChild(button);
+        applyTheme(button);
         return button;
     }
 
-    function removeDirectRoots(host) {
+    function removeRoots(host) {
         Array.prototype.slice.call(host && host.children || []).forEach(function (child) {
             if (child && child.getAttribute && child.getAttribute("data-sirk-catalog-root") === "1") {
                 host.removeChild(child);
@@ -69,7 +65,7 @@
         });
     }
 
-    function directRootHost(host, anchor) {
+    function rootHost(host, anchor) {
         var roots = {
             appendChild: function (button) {
                 if (!button) return button;
@@ -79,16 +75,13 @@
                 return button;
             }
         };
-
         Object.defineProperty(roots, "innerHTML", {
             configurable: false,
             enumerable: true,
             get: function () { return ""; },
             set: function (value) {
-                if (String(value || "") !== "") {
-                    throw new Error("Shared catalog root host accepts only a clear operation.");
-                }
-                removeDirectRoots(host);
+                if (String(value || "") !== "") throw new Error("Catalog root host only supports clearing.");
+                removeRoots(host);
             }
         });
         return roots;
@@ -102,24 +95,19 @@
 
             host.innerHTML = "";
             host.classList.add("sirk-shared-catalog-primary");
-            host.setAttribute("data-sirk-catalog-contract-version", CATALOG_CONTRACT_VERSION);
+            var anchor = document.createComment("catalog-roots");
 
-            var rootAnchor = document.createComment("sirk-catalog-roots");
             function addResults() {
-                return createResultsButton(host, options.resultsActive, function (event, button) {
-                    if (typeof options.onResults === "function") options.onResults(event, button);
-                });
+                createResultsButton(host, options.resultsActive, options.onResults);
             }
 
             if (options.resultsPosition !== "end") addResults();
-            host.appendChild(rootAnchor);
+            host.appendChild(anchor);
             if (options.resultsPosition === "end") addResults();
 
-            var roots = directRootHost(host, rootAnchor);
-            var treeContainer = options.treeContainer || document.createElement("div");
             var state = window.SharedDirectoryTree.mount({
-                rootsContainer: roots,
-                treeContainer: treeContainer,
+                rootsContainer: rootHost(host, anchor),
+                treeContainer: options.treeContainer || document.createElement("div"),
                 tree: options.tree,
                 state: options.state,
                 search: options.search || "",
@@ -127,24 +115,16 @@
                 emptyFolderText: options.emptyFolderText,
                 filterScript: options.filterScript,
                 scriptActions: options.scriptActions,
-                onRootSelect: function (root) {
-                    if (typeof options.onRootSelect === "function") options.onRootSelect(root);
-                },
-                onScript: function (script) {
-                    if (typeof options.onScript === "function") options.onScript(script);
-                }
+                onRootSelect: options.onRootSelect,
+                onScript: options.onScript
             });
 
             if (options.resultsActive) {
                 Array.prototype.slice.call(host.children || []).forEach(function (button) {
-                    if (!button || !button.classList || button.getAttribute("data-sirk-catalog-root") !== "1") return;
-                    button.classList.remove("active", "is-active");
-                    button.setAttribute("aria-selected", "false");
-                    button.setAttribute("data-sirk-list-selected", "0");
+                    if (button && button.getAttribute && button.getAttribute("data-sirk-catalog-root") === "1") {
+                        setSelected(button, false);
+                    }
                 });
-            }
-            if (window.SirkSharedListContract && typeof window.SirkSharedListContract.schedule === "function") {
-                window.SirkSharedListContract.schedule(host);
             }
             return state;
         }
