@@ -9,6 +9,10 @@ var source = fs.readFileSync(
     path.join(__dirname, "..", "public", "shared", "ui", "toolbar-api.js"),
     "utf8"
 );
+var toolbarCss = fs.readFileSync(
+    path.join(__dirname, "..", "public", "shared", "ui", "toolbar.css"),
+    "utf8"
+);
 
 function classList(initial) {
     var values = Object.create(null);
@@ -196,8 +200,9 @@ assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], undefined,
 assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,
     "Closing Multi must release the measured action width.");
 
-assert.ok(source.indexOf("box-sizing:border-box!important") >= 0,
-    "Edit and Multi action buttons must include borders and padding inside their reserved width.");
-assert.strictEqual(appendedStyles.length, 1,
-    "The shared mode stylesheet must be installed exactly once.");
+assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-actions button") >= 0 &&
+    toolbarCss.indexOf("box-sizing:border-box") >= 0,
+    "Static toolbar CSS must keep Edit and Multi button borders and padding inside the reserved width.");
+assert.strictEqual(appendedStyles.length, 0,
+    "Toolbar geometry must not inject a runtime stylesheet; Edit and Multi styles are static assets.");
 console.log("Edit and Multi live geometry with measured action widths: OK");
