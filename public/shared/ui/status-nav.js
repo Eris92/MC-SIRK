@@ -15,12 +15,12 @@
         { key: "rejected", title: "Rejected", icon: svg('<circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/>') }
     ];
 
-    function applyTheme(element) {
+    function applyTheme(button, icon) {
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
-            window.MeshThemeAdapter.nav(element);
+            window.MeshThemeAdapter.nav(button);
         }
-        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
-            window.MeshThemeAdapter.status(element);
+        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
+            window.MeshThemeAdapter.status(icon);
         }
     }
 
@@ -39,12 +39,13 @@
             host.innerHTML = "";
             options = options || {};
             this.list(options.counts).forEach(function (item) {
+                var key = item.key || "all";
                 var button = document.createElement("button");
                 button.type = "button";
-                button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-result-status sirk-result-status-" + (item.key || "all") + " sirk-shared-list-item";
+                button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-shared-list-item";
 
                 var icon = document.createElement("span");
-                icon.className = "sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon sirk-shared-list-icon";
+                icon.className = "sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-" + key + " mc-portal-nav-icon sirk-shared-list-icon";
                 icon.innerHTML = item.icon;
 
                 var copy = document.createElement("span");
@@ -64,7 +65,7 @@
                     if (typeof options.onSelect === "function") options.onSelect(item.key);
                 };
                 host.appendChild(button);
-                applyTheme(button);
+                applyTheme(button, icon);
             });
         }
     };
