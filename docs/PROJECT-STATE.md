@@ -37,6 +37,7 @@ plugin-main.js
 
 ## Właściciele odpowiedzialności
 
+- `server/core/mesh-events.js` — adapter zdarzeń SIRK do natywnego `MeshCentral.DispatchEvent()`;
 - `public/shared/core.js` — workspace, menu i aktywny moduł SIRK;
 - `public/shared/module-shell.js` — lifecycle modułów i atomic render;
 - `public/shared/ui/layout.js` — struktura layoutu i stan Collapse, bez CSS runtime;
@@ -48,6 +49,17 @@ plugin-main.js
 - `public/native/desktop-commands.css` — geometria panelu Quick;
 - `public/shared/ui/results.js` — render wyników i obsługa linków do CSV;
 - `admin.js` — mapa assetów oraz chroniony endpoint pobierania wygenerowanych CSV.
+
+## Zdarzenia i logowanie
+
+Akcje SIRK są zapisywane w natywnym systemie **MeshCentral Events** przez `DispatchEvent()`.
+
+- nie istnieje osobny plik `audit.jsonl`;
+- nie istnieje osobny backend `audit-log.js`;
+- panel administracyjny SIRK nie ma własnej zakładki Logs;
+- event zawiera czytelne `msg`, `action`, użytkownika i — gdy dotyczy — `nodeid`;
+- hasła, sekrety, tokeny, payloady i output poleceń nie są kopiowane do zdarzeń SIRK;
+- brak `nolog` oznacza, że persistence pozostaje własnością MeshCentral.
 
 ## UI
 
@@ -97,6 +109,8 @@ download-results.js
 script-edit-actions.js
 mesh-plugin-core.js
 quick-output-state.js
+runtime-base.js
+audit-log.js
 ```
 
 Usunięto także historyczny snapshot testowy `ui-regression-1.8.19.test.js`.
@@ -137,6 +151,6 @@ Kanoniczna komenda:
 npm test
 ```
 
-Suite obejmuje testy funkcjonalne, security regression, walidację layoutu repozytorium oraz walidację architektury. CI korzysta z Node.js 24 i `actions/checkout@v7` / `actions/setup-node@v7`.
+Suite obejmuje testy funkcjonalne, security regression, walidację natywnego MeshCentral Events, layoutu repozytorium oraz architektury. CI korzysta z Node.js 24 i `actions/checkout@v7` / `actions/setup-node@v7`.
 
 Ostatni pełny wynik przed utworzeniem tego dokumentu: `SUCCESS` dla wersji `1.8.20`.
