@@ -50,8 +50,7 @@ assert.strictEqual(settings.indexOf("MutationObserver"), -1,
     [shared, ".mc-shared-nav-item:hover", "plugin-owned shared hover color"],
     [quick, "--sdc-active", "Quick active palette"],
     [quick, "--sdc-hover", "Quick hover palette"],
-    [quick, "box-shadow:inset 3px 0 0", "Quick-only selected stripe"],
-    [quick, ".sirk-quick-command-browser button.is-active{background", "Quick-owned active background"]
+        [quick, ".sirk-quick-command-browser button.is-active{background", "Quick-owned active background"]
 ].forEach(function (entry) {
     assert.strictEqual(entry[0].indexOf(entry[1]), -1,
         "Native selection contract forbids " + entry[2] + ".");

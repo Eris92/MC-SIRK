@@ -127,7 +127,9 @@
             var action = document.createElement("button");
             var active = definition.active === true;
             action.type = "button";
+            action.disabled = definition.disabled === true;
             action.className = "mc-tree-script-action";
+            action.classList.toggle("is-disabled", action.disabled);
             action.setAttribute("data-sirk-action-key", identity);
             if (definition.className) action.classList.add(definition.className);
             action.classList.toggle("active", active);
@@ -145,6 +147,7 @@
             action.onclick = function (event) {
                 event.preventDefault();
                 event.stopPropagation();
+                if (action.disabled) return;
                 if (typeof definition.onClick === "function") definition.onClick(script, event, action);
             };
             applyButton(action);

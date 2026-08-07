@@ -698,8 +698,10 @@
                     config = config || {}; var actions = [];
                     if (state.linkPickMode) actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
                     if (state.editMode) {
+                        var hasCredentials = !!(script.secretVariables && script.secretVariables.length);
+                        if (config.canEdit === true) actions.push({ key: "credentials", icon: "🔑", disabled: !hasCredentials, className: "mc-tree-credential-action", title: hasCredentials ? "Configure script credentials" : "No script credentials configured", onClick: function () { if (hasCredentials && config.onCredentials) config.onCredentials(script); } });
                         actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
-                        if (config.canEdit === true && script.secretVariables && script.secretVariables.length) actions.push({ key: "credentials", icon: "🔑", className: "mc-tree-credential-action", title: "Configure script credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
+                        actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
                         if (config.canEdit === true) actions.push({ key: "edit", icon: "✎", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
                     }
                     if (state.multiPickMode && config.enableMulti === true) actions.push({ key: "multi", icon: "⟳", title: "Run this script on selected devices", onClick: function () { if (config.onMulti) config.onMulti(script); } });

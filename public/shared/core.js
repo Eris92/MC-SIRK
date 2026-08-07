@@ -197,7 +197,7 @@
         var key = String(definition.mainId || "").replace(/^MainMenuSirkPlatform-/, "").toLowerCase();
         var useModernIcons = !(window.SirkIconMode && typeof window.SirkIconMode.useModern === "function") || window.SirkIconMode.useModern();
         var family = useModernIcons ? modernMenuIcons : classicMenuIcons;
-        var iconSource = definition.icon || family[key] || modernMenuIcons[key] || "";
+        var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";
         var open = definition.open;
 
         if (mainAnchor && mainAnchor.parentNode) {
@@ -242,24 +242,28 @@
             }
             left.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
 
+            left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
             if (iconSource) {
                 var legacyIcon = left.querySelector(".lbtg");
+                var currentIcon = left.querySelector(".sirk-platform-menu-icon") || left.querySelector("svg, i, img");
                 if (legacyIcon) {
                     legacyIcon.className = "lbtg";
                     legacyIcon.style.backgroundImage = 'url("' + iconSource + '")';
                     legacyIcon.style.backgroundPosition = "center";
                     legacyIcon.style.backgroundRepeat = "no-repeat";
                     legacyIcon.style.backgroundSize = "contain";
-                } else if (leftModern) {
-                    var nativeIcon = left.querySelector("svg, i, img");
+                    legacyIcon.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
+                }
+                if (!legacyIcon || leftModern) {
                     var image = document.createElement("img");
                     image.className = "sirk-platform-menu-icon";
                     image.alt = "";
                     image.src = iconSource;
+                    image.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
                     image.style.width = "24px";
                     image.style.height = "24px";
                     image.style.objectFit = "contain";
-                    if (nativeIcon && nativeIcon.parentNode) nativeIcon.parentNode.replaceChild(image, nativeIcon);
+                    if (currentIcon && currentIcon.parentNode && currentIcon !== legacyIcon) currentIcon.parentNode.replaceChild(image, currentIcon);
                     else left.insertBefore(image, left.firstChild);
                 }
             }

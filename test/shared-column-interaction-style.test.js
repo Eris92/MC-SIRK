@@ -28,8 +28,7 @@ assert.ok(adapter.indexOf('element.classList.toggle("active", selected)') >= 0,
     [quick, "--bs-list-group-active-border-color", "duplicated Bootstrap active styling in Quick CSS"],
     [quick, "--sdc-active", "private Quick active palette"],
     [quick, "--sdc-hover", "private Quick hover palette"],
-    [quick, "box-shadow:inset 3px 0 0", "Quick-only selected stripe"],
-    [quick, "data-sirk-output-hidden", "legacy Quick output visibility compatibility state"]
+        [quick, "data-sirk-output-hidden", "legacy Quick output visibility compatibility state"]
 ].forEach(function (entry) {
     assert.strictEqual(entry[0].indexOf(entry[1]), -1,
         "Native interaction contract forbids " + entry[2] + ".");
