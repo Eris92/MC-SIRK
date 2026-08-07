@@ -1,5 +1,18 @@
 [
   {
+    "version": "1.8.21",
+    "date": "2026-08-07",
+    "changes": [
+      "Restore visible Edit and Multi-device action icons and keep their action track inside the existing second-column width.",
+      "Allow Edit mode while the first column is collapsed without moving the details column.",
+      "Highlight only the Favorite star icon instead of the entire action button.",
+      "Apply native MeshCentral selected states synchronously for shared and Quick rows.",
+      "Prevent host hover transforms from resizing SIRK-owned Quick and shared surfaces while preserving native interaction colors.",
+      "Raise Quick hidden-output attention only for a new execution result and do not re-arm it on ordinary clicks, refreshes or metadata loads.",
+      "Persist General icon mode across runtime restart and prefer the freshly saved admin snapshot over a stale browser bootstrap."
+    ]
+  },
+  {
     "version": "1.8.20",
     "date": "2026-08-07",
     "changes": [
