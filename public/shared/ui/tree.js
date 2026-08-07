@@ -60,6 +60,43 @@
         }
     }
 
+    function connectedSelectionHost(button) {
+        var current = button;
+        var outermost = button;
+        while (current) {
+            outermost = current;
+            if (current.classList && current.classList.contains("mc-shared-secondary")) return current;
+            current = current.parentNode;
+        }
+        return outermost;
+    }
+
+    function collectScriptButtons(node, output) {
+        output = output || [];
+        var children = node && node.children || [];
+        for (var index = 0; index < children.length; index++) {
+            var child = children[index];
+            if (child.classList && child.classList.contains("mc-tree-script")) output.push(child);
+            collectScriptButtons(child, output);
+        }
+        return output;
+    }
+
+    function syncScriptSelection(button) {
+        if (!button) return;
+        collectScriptButtons(connectedSelectionHost(button)).forEach(function (candidate) {
+            var selected = candidate === button;
+            candidate.classList.toggle("active", selected);
+            candidate.classList.toggle("is-active", selected);
+            candidate.setAttribute("aria-selected", selected ? "true" : "false");
+            var row = candidate.parentNode;
+            if (row && row.classList && row.classList.contains("mc-tree-script-row")) {
+                row.classList.toggle("active", selected);
+            }
+            applyNav(candidate);
+        });
+    }
+
     function createButton(options) {
         var button = document.createElement("button");
         button.type = "button";
@@ -169,7 +206,7 @@
             fallbackKind: "script",
             fallbackMarkup: script.iconMarkup || "",
             active: text(options.selectedScript) === text(script.path),
-            onClick: function () { options.onScript(script); }
+            onClick: function () { options.onScript(script, button); }
         });
 
         if (script.requiresApproval) {
@@ -281,10 +318,10 @@
                 selectedScript: state.selectedScript,
                 filterScript: options.filterScript,
                 scriptActions: options.scriptActions,
-                onScript: function (script) {
+                onScript: function (script, button) {
                     state.selectedScript = script.path;
+                    syncScriptSelection(button);
                     if (typeof options.onScript === "function") options.onScript(script);
-                    window.SharedDirectoryTree.mount(options);
                 }
             });
 
