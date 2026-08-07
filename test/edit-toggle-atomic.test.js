@@ -87,6 +87,16 @@ function deferred() {
     assert.ok(events.indexOf("render:close:commit") < events.indexOf("active:manage:false"),
         "Closing Edit must remove action DOM before shrinking the live secondary track.");
 
+    events.length = 0;
+    var syncResult = tool.toggleEdit(toolbar, function () {
+        events.push("render:sync");
+        return "sync-result";
+    });
+    assert.strictEqual(syncResult, "sync-result", "Synchronous render callbacks must keep their return value.");
+    assert.strictEqual(active.manage, true, "Synchronous callbacks must still synchronize Edit geometry.");
+    assert.ok(events.indexOf("render:sync") < events.indexOf("active:manage:true"),
+        "Synchronous callbacks must run before Edit geometry is changed.");
+
     console.log("Edit mode geometry follows atomic action DOM commit: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);
