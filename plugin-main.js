@@ -133,7 +133,6 @@ function createSerializedStartupHook(version, pin) {
 
         var scripts = [
             ["sirk-platform-core", "core.js"],
-            ["sirk-platform-mesh-core", "mesh-plugin-core.js"],
             ["sirk-platform-toolbar-config", "shared-ui/toolbar-config.js"],
             ["sirk-platform-toolbar-api", "shared-ui/toolbar-api.js"],
             ["sirk-platform-toolbar", "shared-ui/toolbar.js"],
@@ -154,8 +153,7 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
             ["sirk-platform-runtime", "runtime.js"],
-            ["sirk-platform-desktop-commands", "desktop-commands.js"],
-            ["sirk-platform-quick-output-state", "quick-output-state.js"]
+            ["sirk-platform-desktop-commands", "desktop-commands.js"]
         ];
 
         scripts.reduce(function (chain, item) {
