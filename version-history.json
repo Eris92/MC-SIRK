@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-dev.2",
+    "date": "2026-08-07",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection can install the current main runtime instead of treating it as the already installed 0.1.1-dev.1 build.",
+      "Include the current runtime-smoke follow-up fixes for Quick collapse chevron semantics, stable shared toolbar Search geometry and connected-DOM script selection in My Commands/My Scripts.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.1",
     "date": "2026-08-07",
     "changes": [
