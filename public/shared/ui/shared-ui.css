@@ -16,3 +16,7 @@
 html.sirk-platform-native-ui body button.mc-tree-folder-header.sirk-shared-list-item,html.sirk-platform-native-ui body button.mc-tree-script.sirk-shared-list-item{padding-left:8px!important}
 @media(max-width:1000px){.mc-shared-layout,.mc-shared-layout.is-collapsed{grid-template-columns:minmax(190px,260px) minmax(210px,300px) minmax(360px,1fr)}}
 @media(max-width:800px){.mc-shared-layout,.mc-shared-layout.is-collapsed{grid-template-columns:1fr;height:auto;max-height:none;resize:none;overflow:visible}.mc-shared-primary,.mc-shared-secondary,.mc-shared-details{overflow:visible}.mc-shared-layout.is-collapsed .mc-shared-primary{display:flex;gap:4px;overflow:auto;padding:6px}.mc-shared-layout.is-collapsed .mc-shared-primary .mc-catalog-navigation,.mc-shared-layout.is-collapsed .mc-shared-primary .mc-catalog-roots{display:flex;flex-direction:row;gap:4px}.mc-approval-card-grid{grid-template-columns:1fr}.mc-results-output{max-width:none}.mc-results-viewer-overlay{padding:8px}}
+
+.mc-shared-layout{gap:0}
+.mc-shared-primary,.mc-shared-secondary,.mc-shared-details{border:1px solid var(--bs-border-color,currentColor)}
+.mc-shared-secondary,.mc-shared-details{border-left:0}

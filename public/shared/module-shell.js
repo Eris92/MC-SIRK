@@ -522,9 +522,50 @@
                 close: close,
                 mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: function () {
-                    if (!state.page) return;
-                    state.page.layout.clear();
-                    Promise.resolve(definition.render(api)).catch(function (error) { renderError(state.page.details, error); });
+                    if (!state.page) return Promise.resolve();
+                    var page = state.page;
+                    var sequence = Number(state.renderSequence || 0) + 1;
+                    state.renderSequence = sequence;
+                    var realSecondary = page.secondary;
+                    var realDetails = page.details;
+                    var nextSecondary = document.createElement("section");
+                    var nextDetails = document.createElement("section");
+                    nextSecondary.className = realSecondary.className;
+                    nextDetails.className = realDetails.className;
+                    page.secondary = nextSecondary;
+                    page.details = nextDetails;
+
+                    function restoreReferences() {
+                        if (page.secondary === nextSecondary) page.secondary = realSecondary;
+                        if (page.details === nextDetails) page.details = realDetails;
+                    }
+                    function replaceChildren(target, source) {
+                        while (target.firstChild) target.removeChild(target.firstChild);
+                        while (source.firstChild) target.appendChild(source.firstChild);
+                    }
+                    function commit() {
+                        restoreReferences();
+                        if (sequence !== state.renderSequence) return;
+                        replaceChildren(realSecondary, nextSecondary);
+                        replaceChildren(realDetails, nextDetails);
+                        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.refresh === "function") {
+                            window.MeshThemeAdapter.refresh(page.root || realDetails.parentNode);
+                        }
+                    }
+
+                    var operation;
+                    try { operation = definition.render(api); }
+                    catch (error) {
+                        restoreReferences();
+                        renderError(realDetails, error);
+                        return Promise.reject(error);
+                    }
+                    return Promise.resolve(operation).then(function () {
+                        commit();
+                    }).catch(function (error) {
+                        restoreReferences();
+                        if (sequence === state.renderSequence) renderError(realDetails, error);
+                    });
                 },
                 api: function (asset, parameters) { return core.api(definition.key, asset, null, parameters); },
                 post: function (asset, values) { return core.post(definition.key, asset, values); },
