@@ -1,13 +1,12 @@
 name: Runtime smoke follow-up
 on:
   push:
-    branches: [fix-runtime-smoke-117-118]
-    paths:
-      - '.github/workflows/agent-runtime-smoke-fix.yml'
+    branches:
+      - fix-runtime-smoke-117-118
 permissions:
   contents: write
 jobs:
-  patch-and-test:
+  patch:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -18,122 +17,10 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Apply runtime smoke fixes
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace(path, old, new):
-              p = Path(path)
-              data = p.read_text(encoding='utf-8')
-              if old not in data:
-                  raise SystemExit(f'missing patch target in {path}: {old[:120]}')
-              p.write_text(data.replace(old, new, 1), encoding='utf-8')
-
-          replace(
-              'public/native/desktop-commands.js',
-              'toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon);',
-              'toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.icon : collapseDefinition.expandIcon);'
-          )
-
-          replace(
-              'public/shared/ui/toolbar.js',
-              'if (context.buttons.search) left.appendChild(searchWrap);',
-              'if (context.buttons.search) center.appendChild(searchWrap);'
-          )
-
-          replace(
-              'public/native/desktop-commands.css',
-              '.sirk-quick-command-toolbar-host .mc-shared-toolbar-left{flex:1 1 auto;min-width:0}.sirk-quick-command-toolbar-host .mc-shared-toolbar-right{flex:0 0 auto;min-width:34px;margin-left:auto}',
-              '.sirk-quick-command-toolbar-host .mc-shared-toolbar-left{flex:0 0 auto;min-width:0}.sirk-quick-command-toolbar-host .mc-shared-toolbar-center{display:flex;flex:1 1 0;min-width:0}.sirk-quick-command-toolbar-host .mc-shared-toolbar-right{flex:0 0 auto;min-width:34px;margin-left:auto}'
-          )
-          replace(
-              'public/native/desktop-commands.css',
-              '.sirk-quick-command-toolbar-host .mc-shared-toolbar-left{width:auto;margin-left:0;flex:1 1 auto}.sirk-quick-command-toolbar-host .mc-shared-toolbar-right{width:auto;margin-left:auto;flex:0 0 auto}',
-              '.sirk-quick-command-toolbar-host .mc-shared-toolbar-left{width:auto;margin-left:0;flex:0 0 auto}.sirk-quick-command-toolbar-host .mc-shared-toolbar-center{display:flex;width:auto;flex:1 1 0;min-width:0}.sirk-quick-command-toolbar-host .mc-shared-toolbar-right{width:auto;margin-left:auto;flex:0 0 auto}'
-          )
-
-          replace(
-              'public/shared/ui/toolbar.css',
-              '.mc-shared-toolbar-center{display:none}',
-              '.mc-shared-toolbar-center{display:contents}.mc-shared-toolbar-center .mc-shared-toolbar-search{width:100%}.mc-shared-toolbar-center .mc-shared-toolbar-search input{width:100%}'
-          )
-
-          Path('test/quick-collapse-action-icon.test.js').write_text(r'''"use strict";
-
-var assert = require("assert");
-var fs = require("fs");
-var path = require("path");
-var root = path.resolve(__dirname, "..");
-var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
-var config = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"), "utf8");
-
-assert.ok(config.indexOf("collapse: { title: \"Collapse\", icon: svg('<path d=\"m15 18-6-6 6-6\"/>'), expandIcon: svg('<path d=\"m9 18 6-6-6-6\"/>')") >= 0,
-    "Shared collapse artwork must remain unchanged for My Scripts/My Commands consumers.");
-assert.ok(quick.indexOf('title: state.collapsed ? text("expand") : text("collapse")') >= 0 &&
-    quick.indexOf('toolbar.setTitle("collapse", state.collapsed ? text("expand") : text("collapse"))') >= 0,
-    "Quick title must continue to describe the action performed by the next click.");
-assert.ok(quick.indexOf('toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.icon : collapseDefinition.expandIcon)') >= 0,
-    "Quick visual chevron must follow the user runtime contract: collapsed = left, expanded = right.");
-assert.ok(quick.indexOf('writePreferences({ quickCollapsed: state.collapsed })') >= 0,
-    "The collapse state controlling icon/title must remain persisted after each toggle.");
-
-console.log("Quick collapse chevron follows the runtime state contract without changing shared artwork: OK");
-''', encoding='utf-8')
-
-          Path('test/quick-toolbar-nowrap.test.js').write_text(r'''"use strict";
-
-var assert = require("assert");
-var fs = require("fs");
-var path = require("path");
-var root = path.resolve(__dirname, "..");
-var css = fs.readFileSync(path.join(root, "public/native/desktop-commands.css"), "utf8");
-var shared = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
-assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar{align-items:center;min-height:34px;margin:0;gap:8px;max-width:100%;box-sizing:border-box;flex-wrap:nowrap}") >= 0,
-    "Quick toolbar must remain one row independently of shared toolbar wrapping.");
-assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-left{flex:0 0 auto;min-width:0}") >= 0 &&
-    css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-center{display:flex;flex:1 1 0;min-width:0}") >= 0 &&
-    css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-right{flex:0 0 auto;min-width:34px;margin-left:auto}") >= 0,
-    "Quick left/right actions must stay fixed while the center Search slot consumes only remaining space.");
-assert.ok(css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-search{flex:1 1 0;min-width:0;max-width:300px}") >= 0 &&
-    css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-search input{width:100%;min-width:0") >= 0,
-    "Quick Search must shrink inside the stable center slot before any fixed action moves.");
-assert.ok(css.indexOf("flex:0 0 34px") >= 0,
-    "Quick toolbar actions must not shrink below their canonical 34 px width.");
-assert.strictEqual(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar{flex-wrap:wrap}"), -1,
-    "Quick responsive CSS must not re-enable a second toolbar row.");
-assert.ok(shared.indexOf("@media(max-width:760px){.mc-shared-toolbar{flex-wrap:wrap}") >= 0,
-    "Non-Quick shared module toolbars may retain their responsive wrapping contract.");
-console.log("Quick toolbar keeps fixed actions around an elastic center Search slot: OK");
-''', encoding='utf-8')
-
-          Path('test/shared-toolbar-search-slot.test.js').write_text(r'''"use strict";
-
-var assert = require("assert");
-var fs = require("fs");
-var path = require("path");
-var root = path.resolve(__dirname, "..");
-var toolbar = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.js"), "utf8");
-var api = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-api.js"), "utf8");
-var css = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
-
-assert.ok(toolbar.indexOf('if (context.buttons.search) center.appendChild(searchWrap);') >= 0,
-    "Shared Search input must live in the existing center group so left/right action geometry is stable.");
-assert.strictEqual(toolbar.indexOf('if (context.buttons.search) left.appendChild(searchWrap);'), -1,
-    "Shared Search must not enter/leave the left action group.");
-assert.ok(toolbar.indexOf('center.hidden = center.childNodes.length === 0;') >= 0,
-    "Center group visibility must be derived from its stable Search child, not Search open/closed state.");
-assert.ok(api.indexOf('context.searchWrap.hidden = !context.state.searchVisible;') >= 0,
-    "Search toggle may hide only the Search content while preserving group ownership.");
-assert.ok(css.indexOf('.mc-shared-toolbar-center{flex:1;min-width:12px}') >= 0,
-    "Shared center group must remain the elastic spacer between fixed action groups.");
-assert.ok(css.indexOf('.mc-shared-toolbar-center{display:contents}.mc-shared-toolbar-center .mc-shared-toolbar-search{width:100%}') >= 0,
-    "Narrow shared toolbars must keep Search usable without injecting it into the action groups.");
-
-console.log("Shared toolbar Search uses a stable center slot without moving action groups: OK");
-''', encoding='utf-8')
-          PY
-          rm .github/workflows/agent-runtime-smoke-fix.yml
+      - name: Apply patch
+        run: python scripts/agent-runtime-smoke-fix.py
+      - name: Remove temporary helpers
+        run: rm .github/workflows/agent-runtime-smoke-fix.yml scripts/agent-runtime-smoke-fix.py
       - name: Targeted tests
         run: |
           node test/quick-collapse-action-icon.test.js
@@ -142,12 +29,12 @@ console.log("Shared toolbar Search uses a stable center slot without moving acti
           node test/quick-commands-compact-layout.test.js
           node test/quick-toolbar-order.test.js
           node test/desktop-commands-shell.test.js
-      - name: Full test suite
+      - name: Full suite
         run: npm test
       - name: Commit verified fixes
         run: |
           git config user.name "Eris92"
           git config user.email "43513086+Eris92@users.noreply.github.com"
-          git add public/native/desktop-commands.js public/native/desktop-commands.css public/shared/ui/toolbar.js public/shared/ui/toolbar.css test/quick-collapse-action-icon.test.js test/quick-toolbar-nowrap.test.js test/shared-toolbar-search-slot.test.js .github/workflows/agent-runtime-smoke-fix.yml
+          git add -A
           git commit -m "fix: follow runtime toolbar smoke feedback"
           git push origin HEAD:fix-runtime-smoke-117-118
