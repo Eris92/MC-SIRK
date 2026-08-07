@@ -34,6 +34,11 @@
         });
     }
 
+    function refreshQuickCommands() {
+        var quick = window.SirkDesktopCommands;
+        if (quick && typeof quick.refresh === "function") quick.refresh();
+    }
+
     function configureModule(key, module) {
         if (!module || !module.api || !module.api.definition) return;
         module.api.definition.viewMode = viewModes[key] || module.api.definition.viewMode || 960;
@@ -85,11 +90,13 @@
             core.activateMenu(core.workspaceState.viewMode);
         }
         notify("onNativePageEnd", view);
+        refreshQuickCommands();
     };
 
     runtime.onDeviceRefreshEnd = function (nodeId) {
         runtime.state.nodeId = String(nodeId || "");
         notify("onDeviceRefreshEnd", runtime.state.nodeId);
+        refreshQuickCommands();
     };
 
     runtime.commandResult = function (message) {
