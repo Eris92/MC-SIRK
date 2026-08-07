@@ -30,8 +30,10 @@ assert.ok(desktop.indexOf('function setOutput(panel, value, isError)') >= 0 &&
     desktop.indexOf('if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true') >= 0,
     "Completed output must raise attention only when the details pane is hidden.");
 assert.ok(desktop.indexOf('function transientOutput(value)') >= 0 &&
-    desktop.indexOf('state.outputPending = !isError && !transientOutput(next)') >= 0,
-    "Loading/submission messages must not be treated as completed unseen output.");
+    desktop.indexOf('else if (transientOutput(next))') >= 0 &&
+    desktop.indexOf('state.outputPending = true') >= 0 &&
+    desktop.indexOf('state.outputPending = false') >= 0,
+    "Loading/submission messages must mark output as pending and only final output may clear pending and raise unseen-result attention.");
 assert.ok(desktop.indexOf('button.classList.toggle("has-output-attention", state.outputAttention === true)') >= 0,
     "The canonical details button must render unseen-output attention directly from renderer state.");
 
