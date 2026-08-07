@@ -497,7 +497,7 @@
                 if (state.opening) return false;
                 state.opening = true;
                 try {
-                    if (typeof window.go === "function") window.go(1);
+                    if (!core.workspaceState && typeof window.go === "function") window.go(1);
                     if (core.activePlugin && core.activePlugin !== moduleInstance && typeof core.activePlugin.close === "function") {
                         core.activePlugin.close(false);
                     }
