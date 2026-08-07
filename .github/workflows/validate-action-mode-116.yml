@@ -1,0 +1,183 @@
+name: Validate action mode geometry 116
+
+on:
+  push:
+    branches: [fix-action-mode-text-116]
+    paths:
+      - '.github/workflows/validate-action-mode-116.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: fix-action-mode-text-116
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply shared Edit Multi geometry fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"missing expected fragment in {path}: {old[:100]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          # toolbar-api.js: measure the actual action track before the mode class is
+          # applied, so Multi never paints with the four-button default width.
+          path = Path('public/shared/ui/toolbar-api.js')
+          text = path.read_text()
+          text = text.replace(
+              'if (isFinite(parsedGap) && parsedGap >= 0) gap = parsedGap;',
+              'if (isFinite(parsedGap) && parsedGap >= 0) gap = Math.max(4, parsedGap);',
+              1
+          )
+          text = text.replace(
+              'width += rect && rect.width ? rect.width : 36;',
+              'width += Math.max(rect && rect.width ? rect.width : 0, 36);',
+              1
+          )
+          text = text.replace(
+              'return widest > 0 ? Math.ceil(widest + 12) : 0;',
+              'return widest > 0 ? Math.ceil(widest) : 0;',
+              1
+          )
+          old = '''        if (active && !page.classList.contains(className)) captureModeGeometry(page);\n        page.classList.toggle(className, active);\n        if (active) scheduleActionGeometry(page);'''
+          new = '''        if (active && !page.classList.contains(className)) {\n            captureModeGeometry(page);\n            var width = measuredActionWidth(page);\n            if (width > 0) setGeometryProperty(page, "--sirk-actions-width", width);\n        }\n        page.classList.toggle(className, active);\n        if (active) scheduleActionGeometry(page);'''
+          if old not in text:
+              raise SystemExit('toolbar-api updateModeClass fragment not found')
+          path.write_text(text.replace(old, new, 1))
+
+          # toolbar.css: Edit and Multi use the same geometry contract. The outer
+          # secondary track grows by action track + column gap, so the text track
+          # keeps exactly the normal-mode width and wrapping.
+          path = Path('public/shared/ui/toolbar.css')
+          text = path.read_text()
+          old = '.mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)}.mc-shared-page.is-edit-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)}.mc-shared-page.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)}.mc-shared-page.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)}'
+          new = '.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)}.mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)}'
+          if old not in text:
+              raise SystemExit('toolbar.css action-mode geometry fragment not found')
+          path.write_text(text.replace(old, new, 1))
+
+          # script-tools.js: one atomic lifecycle for both action modes. During the
+          # staged render syncToolbar must not mutate live Edit/Multi geometry.
+          path = Path('public/shared/ui/script-tools.js')
+          text = path.read_text()
+          old = '''            var state = {\n                favorites: [], favoritesOnly: false, editMode: false,\n                linkPickMode: false, multiPickMode: false, deepLinkApplied: false\n            };'''
+          new = old + '''\n            var actionModeRenderPending = false;'''
+          if old not in text:
+              raise SystemExit('script-tools state fragment not found')
+          text = text.replace(old, new, 1)
+
+          old = '''            function stopPickModes(except) {\n                if (except !== "link") state.linkPickMode = false;\n                if (except !== "multi") state.multiPickMode = false;\n            }'''
+          new = old + '''\n            function syncActionModes(toolbar) {\n                if (!toolbar) return;\n                if (state.editMode) {\n                    toolbar.setActive("manage", true);\n                    toolbar.setActive("multi", false);\n                } else if (state.multiPickMode) {\n                    toolbar.setActive("multi", true);\n                    toolbar.setActive("manage", false);\n                } else {\n                    toolbar.setActive("manage", false);\n                    toolbar.setActive("multi", false);\n                }\n            }\n            function renderActionModeChange(toolbar, onChange) {\n                var change;\n                actionModeRenderPending = true;\n                try { change = onChange ? onChange() : null; }\n                catch (error) {\n                    actionModeRenderPending = false;\n                    syncActionModes(toolbar);\n                    throw error;\n                }\n                if (change && typeof change.then === "function") {\n                    return Promise.resolve(change).then(function (result) {\n                        actionModeRenderPending = false;\n                        syncActionModes(toolbar);\n                        return result;\n                    }, function (error) {\n                        actionModeRenderPending = false;\n                        syncActionModes(toolbar);\n                        throw error;\n                    });\n                }\n                actionModeRenderPending = false;\n                syncActionModes(toolbar);\n                return change;\n            }'''
+          if old not in text:
+              raise SystemExit('script-tools stopPickModes fragment not found')
+          text = text.replace(old, new, 1)
+
+          old = '''                    toolbar.setActive("favorites", state.favoritesOnly && scriptsMode);\n                    toolbar.setActive("manage", state.editMode && scriptsMode);\n                    toolbar.setActive("link", state.linkPickMode && scriptsMode);\n                    toolbar.setActive("multi", state.multiPickMode && scriptsMode);'''
+          new = '''                    toolbar.setActive("favorites", state.favoritesOnly && scriptsMode);\n                    if (!scriptsMode) {\n                        toolbar.setActive("manage", false);\n                        toolbar.setActive("multi", false);\n                    } else if (!actionModeRenderPending) syncActionModes(toolbar);\n                    toolbar.setActive("link", state.linkPickMode && scriptsMode);'''
+          if old not in text:
+              raise SystemExit('script-tools syncToolbar mode fragment not found')
+          text = text.replace(old, new, 1)
+
+          start = text.index('                toggleEdit: function (toolbar, onChange) {')
+          end = text.index('                toggleLink: function (toolbar, selectedScript, onChange, onCopied) {', start)
+          text = text[:start] + '''                toggleEdit: function (toolbar, onChange) {\n                    state.editMode = !state.editMode;\n                    stopPickModes("edit");\n                    if (toolbar) toolbar.setActive("link", false);\n                    return renderActionModeChange(toolbar, onChange);\n                },\n''' + text[end:]
+
+          old = '                toggleMulti: function (toolbar, onChange) { state.multiPickMode = !state.multiPickMode; if (state.multiPickMode) state.editMode = false; stopPickModes(state.multiPickMode ? "multi" : ""); if (toolbar) { toolbar.setActive("multi", state.multiPickMode); toolbar.setActive("manage", false); toolbar.setActive("link", false); } if (onChange) onChange(); },'
+          new = '''                toggleMulti: function (toolbar, onChange) {\n                    state.multiPickMode = !state.multiPickMode;\n                    if (state.multiPickMode) state.editMode = false;\n                    stopPickModes(state.multiPickMode ? "multi" : "");\n                    if (toolbar) toolbar.setActive("link", false);\n                    return renderActionModeChange(toolbar, onChange);\n                },'''
+          if old not in text:
+              raise SystemExit('script-tools toggleMulti fragment not found')
+          path.write_text(text.replace(old, new, 1))
+
+          # Geometry regression expectations: exact action track, with the outer
+          # column gap added by CSS so the text width does not change.
+          path = Path('test/edit-live-geometry.test.js')
+          text = path.read_text()
+          text = text.replace('"168px"', '"156px"')
+          text = text.replace('"Four 36 px Edit buttons, three 4 px gaps and a 12 px gutter define the exact Edit expansion rail."', '"Four 36 px Edit buttons and three 4 px gaps define the exact Edit action track."')
+          text = text.replace('"48px"', '"36px"')
+          text = text.replace('"One 36 px Multi action and the 12 px gutter must fit inside the existing second column."', '"One 36 px Multi action defines the exact Multi action track without consuming text width."')
+          old = '''assert.ok(toolbarCss.indexOf(".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)") >= 0,\n    "Edit must add exactly the measured action rail to the captured normal secondary width.");\nassert.ok(toolbarCss.indexOf(".mc-shared-page.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)") >= 0,\n    "Multi must retain the normal captured secondary width.");'''
+          new = '''assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)") >= 0,\n    "Edit and Multi must expand outside the captured text track by the exact action track plus column gap.");'''
+          if old not in text:
+              raise SystemExit('edit-live CSS assertions not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('assert.ok(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width))") >= 0,\n    "Edit expansion must be derived from one captured baseline plus one measured action rail.");', 'assert.ok(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap))") >= 0,\n    "Both action modes must preserve the captured text width by adding action track and its column gap outside it.");')
+          text = text.replace('console.log("Edit and Multi keep fixed columns, visible actions and collapsed-mode activation: OK");', 'console.log("Edit and Multi preserve text width while reserving exact external action tracks: OK");')
+          path.write_text(text)
+
+          # Lifecycle regression: Multi must use the same post-commit mode sync as Edit,
+          # including direct Edit -> Multi switching.
+          path = Path('test/edit-toggle-atomic.test.js')
+          text = path.read_text()
+          text = text.replace('''var toolbar = {\n    setActive: function (key, value) {\n        active[key] = value === true;\n        events.push("active:" + key + ":" + String(value === true));\n    }\n};''', '''var toolbar = {\n    setActive: function (key, value) {\n        active[key] = value === true;\n        events.push("active:" + key + ":" + String(value === true));\n    },\n    setEnabled: function () {},\n    setVisible: function () {},\n    setTitle: function () {}\n};''', 1)
+          marker = '''    assert.ok(events.indexOf("render:sync") < events.indexOf("active:manage:true"),\n        "Synchronous callbacks must run before Edit geometry is changed.");\n\n'''
+          addition = '''    assert.ok(events.indexOf("render:sync") < events.indexOf("active:manage:true"),\n        "Synchronous callbacks must run before Edit geometry is changed.");\n\n    events.length = 0;\n    var multiOpening = deferred();\n    var multiResult = tool.toggleMulti(toolbar, function () {\n        events.push("render:multi:start");\n        tool.syncToolbar(toolbar, "commands", "", { canEdit: true, enableMulti: true });\n        return multiOpening.promise.then(function () { events.push("render:multi:commit"); });\n    });\n    assert.strictEqual(tool.state.editMode, false, "Opening Multi must disable Edit state before rendering.");\n    assert.strictEqual(tool.state.multiPickMode, true, "Multi state must toggle before rendering its action DOM.");\n    assert.strictEqual(active.manage, true,\n        "The old Edit geometry must remain live while the staged Multi render is pending.");\n    assert.strictEqual(active.multi, false,\n        "Staged syncToolbar must not mutate live Multi geometry before atomic commit.");\n    multiOpening.resolve();\n    await multiResult;\n    assert.strictEqual(active.manage, false, "Edit geometry must clear after the Multi DOM commits.");\n    assert.strictEqual(active.multi, true, "Multi geometry must activate after its action DOM commits.");\n    assert.ok(events.indexOf("render:multi:commit") < events.indexOf("active:multi:true"),\n        "Opening Multi must commit the new action DOM before changing live geometry.");\n\n    events.length = 0;\n    var multiClosing = deferred();\n    var multiCloseResult = tool.toggleMulti(toolbar, function () {\n        events.push("render:multi-close:start");\n        return multiClosing.promise.then(function () { events.push("render:multi-close:commit"); });\n    });\n    assert.strictEqual(active.multi, true,\n        "The live Multi geometry must remain until the action DOM has been removed.");\n    multiClosing.resolve();\n    await multiCloseResult;\n    assert.strictEqual(active.multi, false,\n        "Multi geometry must collapse only after the normal rows commit.");\n    assert.ok(events.indexOf("render:multi-close:commit") < events.indexOf("active:multi:false"),\n        "Closing Multi must remove action DOM before shrinking the live secondary track.");\n\n'''
+          if marker not in text:
+              raise SystemExit('edit-toggle insertion marker not found')
+          text = text.replace(marker, addition, 1)
+          text = text.replace('console.log("Edit mode geometry follows atomic action DOM commit: OK");', 'console.log("Edit and Multi geometry follow one atomic action DOM lifecycle: OK");')
+          path.write_text(text)
+
+          # Static shared contract test: no separate Multi text-shrinking geometry.
+          path = Path('test/script-mode-layout.test.js')
+          text = path.read_text()
+          old = '''assert.ok(css.indexOf(".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)}") >= 0,\n    "Edit must preserve the normal second-column baseline and add exactly the measured action rail.");\nassert.ok(css.indexOf(".mc-shared-page.is-edit-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)}") >= 0,\n    "Collapsed Edit must retain the collapsed first track while adding the same measured action rail.");\nassert.ok(css.indexOf(".mc-shared-page.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)}") >= 0 &&\n    css.indexOf(".mc-shared-page.is-multi-mode .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)}") >= 0,\n    "Multi must preserve the existing first and second columns in both expanded and collapsed layouts.");'''
+          new = '''assert.ok(css.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)}") >= 0,\n    "Edit and Multi must share one secondary-track contract that keeps the normal text width stable.");\nassert.ok(css.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)}") >= 0,\n    "Collapsed Edit and Multi must use the same external action rail while retaining the collapsed first track.");'''
+          if old not in text:
+              raise SystemExit('script-mode old geometry assertions not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('assert.ok(css.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width))") >= 0,\n    "Only Edit may widen its secondary track by the measured action rail.");', 'assert.ok(css.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap))") >= 0,\n    "Both action modes must add their action track outside the captured text width.");')
+          text = text.replace('console.log("Edit expands by its measured action rail while Multi preserves fixed columns: OK");', 'console.log("Edit and Multi share stable text geometry with measured external action rails: OK");')
+          path.write_text(text)
+
+          # Canonical docs: reflect the runtime contract being changed in this PR.
+          replace_once(
+              'docs/PROJECT-STATE.md',
+              'Edit i Multi są wzajemnie wykluczające. Edit może rozszerzyć `secondary` wyłącznie o zmierzoną szerokość action rail; Multi zachowuje bazową szerokość. Zmiana geometrii Edit następuje po atomic render commit, aby stary action DOM nie był ściskany podczas przełączenia.',
+              'Edit i Multi są wzajemnie wykluczające i używają jednego kontraktu geometrii: bazowy text track drugiej kolumny pozostaje bez zmian, a `secondary` rośnie wyłącznie o zmierzoną szerokość action rail oraz jego column gap. Zmiana geometrii obu trybów następuje po atomic render commit, aby action DOM nie ściskał ani nie przestawiał labeli podczas przełączenia.'
+          )
+          replace_once(
+              'README.md',
+              'Action track jest mierzony na żywo przez `toolbar-api.js`. Edit rozszerza `secondary` wyłącznie o zmierzoną szerokość action rail, Multi zachowuje bazową szerokość drugiej kolumny. Zmiana live geometrii Edit następuje po atomic render commit, dzięki czemu action DOM nie jest ściskany za labelami podczas przełączania trybu. Style geometrii są statyczne; runtime nie generuje arkusza CSS.',
+              'Action track jest mierzony na żywo przez `toolbar-api.js`. Edit i Multi zachowują identyczną szerokość bazowego text tracku; `secondary` rozszerza się tylko o rzeczywistą szerokość action rail oraz jego column gap. Zmiana live geometrii obu trybów następuje po atomic render commit, dzięki czemu pojawienie lub zniknięcie akcji nie zmienia wrappingu ani położenia labeli. Style geometrii są statyczne; runtime nie generuje arkusza CSS.'
+          )
+          PY
+          rm .github/workflows/validate-action-mode-116.yml
+      - name: Targeted shared action mode tests
+        run: |
+          node test/edit-live-geometry.test.js
+          node test/edit-toggle-atomic.test.js
+          node test/script-mode-layout.test.js
+          node test/tree-single-action-container.test.js
+          node test/button-style-contract.test.js
+      - name: Run full test suite
+        run: npm test
+      - name: Check diff
+        run: |
+          git diff --check
+          git status --short
+      - name: Save verified fix
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add public/shared/ui/toolbar-api.js public/shared/ui/toolbar.css public/shared/ui/script-tools.js test/edit-live-geometry.test.js test/edit-toggle-atomic.test.js test/script-mode-layout.test.js docs/PROJECT-STATE.md README.md .github/workflows/validate-action-mode-116.yml
+          git commit -m "fix: keep action mode text geometry stable"
+          git push origin HEAD:fix-action-mode-text-116
