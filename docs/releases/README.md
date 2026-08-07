@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.1`](0.1.1-dev.1.md) — bieżący pre-1.0 development baseline.
+- [`0.1.1-dev.2`](0.1.1-dev.2.md) — bieżąca rewizja development do aktualizacji i real MeshCentral re-smoke;
+- [`0.1.1-dev.1`](0.1.1-dev.1.md) — poprzedni pre-1.0 development baseline.
 
 Preferowana konwencja użytkownika `0.1.1.X` jest reprezentowana w npm/plugin metadata jako SemVer-compatible `0.1.1-dev.X`.
 
