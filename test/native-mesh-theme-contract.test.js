@@ -15,7 +15,7 @@ var toolbar = read("public/shared/ui/toolbar.css");
 var quick = read("public/native/desktop-commands.css");
 var admin = read("web/admin/admin.css");
 var status = read("public/shared/ui/status-nav.js");
-var editActions = read("public/shared/ui/script-edit-actions.js");
+var scriptTools = read("public/shared/ui/script-tools.js");
 var tree = read("public/shared/ui/tree.js");
 var view = read("views/SIRK-Portal.handlebars");
 
@@ -48,8 +48,8 @@ assert.ok(settings.indexOf("data-native-theme-sanitized") >= 0,
     [status, "--sirk-status", "private semantic status palette"],
     [status, "#198754", "hard-coded approval success color"],
     [status, "#dc3545", "hard-coded approval danger color"],
-    [editActions, "#e0a800", "generated credential color"],
-    [editActions, "#d39e00", "legacy generated credential color"],
+    [scriptTools, "#e0a800", "generated credential color"],
+    [scriptTools, "#d39e00", "legacy generated credential color"],
     [tree, "var(--bs-primary,#3b82f6)", "inline Bootstrap-only folder color"],
     [tree, "graphic.style.color", "inline tree icon color assignment"]
 ].forEach(function (entry) {
@@ -63,6 +63,8 @@ assert.ok(quick.indexOf("grid-template-columns") >= 0 && quick.indexOf("sirk-des
     "Quick may retain functional overlay and column geometry.");
 assert.ok(toolbar.indexOf("mc-script-form-row") >= 0 && toolbar.indexOf("mc-definition-top-grid") >= 0,
     "Forms may retain functional layout without owning their visual palette.");
+assert.ok(scriptTools.indexOf("createElement(\"style\")") < 0,
+    "Script tools must not reintroduce runtime-generated theme CSS.");
 assert.ok(view.indexOf("asset=shared-ui/toolbar-config.js") >= 0 && view.indexOf("asset=shared-ui/settings.js") >= 0,
     "The administration view must load the same native adapter and lifecycle as the user UI.");
 
