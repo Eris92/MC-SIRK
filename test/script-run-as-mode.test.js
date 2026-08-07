@@ -58,13 +58,15 @@ try {
     assert.ok(/^# runAsUser: 2$/mi.test(fs.readFileSync(scriptPath, "utf8")),
         "Saving logged-on-user mode must persist runAsUser:2.");
 
-    var browser = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "download-results.js"), "utf8");
-    assert.ok(browser.indexOf('addRunAsOption(select, "0", "SYSTEM")') >= 0,
-        "The script editor must expose SYSTEM as value 0.");
-    assert.ok(browser.indexOf('addRunAsOption(select, "2"') >= 0,
-        "The script editor must expose logged-on user as strict value 2.");
-    assert.ok(browser.indexOf('String(select.value) === "0" ? "0" : "2"') >= 0,
-        "Legacy user modes must be normalized to strict UserOnly in the editor.");
+    var browser = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "script-tools.js"), "utf8");
+    assert.ok(browser.indexOf('var runAs = createSelect(["0", "2"], String(value.runAsUser || 0))') >= 0,
+        "The canonical script editor must expose only SYSTEM and strict logged-on-user modes.");
+    assert.ok(browser.indexOf('option.textContent = option.value === "2" ? "Logged-on user" : "SYSTEM"') >= 0,
+        "The script editor must label values 0 and 2 explicitly.");
+    assert.ok(browser.indexOf('runAsUser: Number(runAs.value) || 0') >= 0,
+        "Saving from the editor must persist the selected canonical MeshAgent run-as value.");
+    assert.strictEqual(browser.indexOf('createSelect(["0", "1", "2"]'), -1,
+        "Legacy runAsUser:1 must not return as an editor choice.");
 
     console.log("Script run-as mode contract: OK");
 } finally {
