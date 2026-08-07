@@ -68,8 +68,8 @@ assert.ok(adapter.indexOf('syncOwnedClasses(element, ["list-group-item", "list-g
     ".sirk-quick-command-categories>button:hover",
     ".sirk-quick-command-tree>button.active"
 ].forEach(function (selector) {
-    assert.ok(css.indexOf(selector) >= 0 || css.indexOf(".sirk-shared-list-item:is(.active,.is-active)") >= 0,
-        "Shared selected state must remain visibly marked while using host theme tokens.");
+    assert.strictEqual(css.indexOf(selector), -1,
+        "Shared geometry CSS must not own native interaction selector " + selector + ".");
 });
 assert.strictEqual(quickCss.indexOf("--bs-list-group-action-hover-bg"), -1,
     "Quick CSS must not duplicate the native hover palette.");
