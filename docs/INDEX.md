@@ -13,7 +13,8 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | wybór testu lub analiza regresji | `test/INDEX.md` |
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
-| release notes | `docs/releases/README.md` |
+| release/development notes | `docs/releases/README.md` |
+| wersja, bump, tag, release | `docs/agent/14-Agent-Wersjonowanie-Pre1.md` |
 | reguły runtime/pluginu | `docs/agent/10-Agent-MeshCentral-Plugin.md`, `docs/agent/11-Agent-SIRK-Portal.md` |
 | wydajność, reuse, duplikacja | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |
 | GitHub Issue / kontynuacja nowego czatu | `docs/agent/13-Agent-Kontekst-Issues.md` |
@@ -33,8 +34,9 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 - router instrukcji: `AGENTS.md`;
 - nazwy i struktura: `docs/REPOSITORY-LAYOUT.md`;
 - bieżący stan architektury: `docs/PROJECT-STATE.md`;
+- polityka pre-1.0: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`;
 - trwała pamięć decyzji: `docs/memory/PROJECT_MEMORY.md`;
-- release notes: `docs/releases/`;
+- development/release notes: `docs/releases/`;
 - task state: GitHub Issues w `Eris92/MC-SIRK`.
 
 Dokument nieujęty w tym indeksie nie powinien być czytany automatycznie tylko dlatego, że znajduje się w `docs/`.
