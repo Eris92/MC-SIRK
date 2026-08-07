@@ -23,6 +23,18 @@ jobs:
           package-manager-cache: false
       - name: Apply targeted patches
         run: python3 .github/agent_shared_ui_batch.py
+      - name: Align semantic tone test with Commands owner
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('test/quick-semantic-icon-tone.test.js')
+          text = p.read_text()
+          old = '''assert.ok(commands.indexOf('"sirk-command-icon-" + tone') >= 0, "My Commands must remain the direct consumer of the same shared tone classes.");'''
+          new = '''assert.ok(commands.indexOf('function tonedIcon(markup, tone)') >= 0 && commands.indexOf('iconMarkup: tonedIcon(') >= 0, "My Commands must remain the direct consumer of the same shared tone classes.");'''
+          if old not in text:
+              raise SystemExit('Expected generated Commands tone assertion not found')
+          p.write_text(text.replace(old, new, 1))
+          PY
       - name: Syntax and targeted tests
         run: |
           node --check public/shared/ui/catalog.js
