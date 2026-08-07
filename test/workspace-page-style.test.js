@@ -284,9 +284,13 @@ assert.strictEqual(
     "SharedLayout JavaScript must not own CSS geometry."
 );
 assert.strictEqual(
-    toolbar.indexOf(".mc-shared-layout{grid-template-columns:"),
-    -1,
+    /(^|})\.mc-shared-layout\{grid-template-columns:/.test(toolbar),
+    false,
     "Toolbar CSS must not own a second global shared layout definition."
+);
+assert.ok(
+    toolbar.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout{grid-template-columns:") >= 0,
+    "Toolbar CSS may own only the Edit/Multi layout exception needed for the measured action track."
 );
 assert.ok(
     sharedUi.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >= 0 &&
