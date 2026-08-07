@@ -516,7 +516,7 @@
         toolbar.setTitle("collapse", state.collapsed ? text("expand") : text("collapse"));
         toolbar.setActive("collapse", state.collapsed);
         var collapseDefinition = window.SharedToolbarConfig.definitions && window.SharedToolbarConfig.definitions.collapse;
-        if (collapseDefinition) toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon);
+        if (collapseDefinition) toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.icon : collapseDefinition.expandIcon);
         toolbar.setTitle("favorites", state.favoritesOnly ? text("showAll") : text("favorites"));
         toolbar.setActive("favorites", state.favoritesOnly);
         toolbar.setTitle("refresh", text("refresh"));

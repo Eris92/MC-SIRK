@@ -36,11 +36,13 @@ assert.ok(quick.indexOf('key: "details"') >= 0 && quick.indexOf("order: 65") >= 
 assert.ok(quick.indexOf('key: "close"') >= 0 && quick.indexOf('side: "right", order: 200') >= 0,
     "Quick Close must remain isolated on the right side.");
 
-assert.ok(toolbar.indexOf("if (context.buttons.search) left.appendChild(searchWrap)") >= 0,
-    "The search field must stay directly after the ordered left-side Search button.");
+assert.ok(toolbar.indexOf("if (context.buttons.search) center.appendChild(searchWrap)") >= 0,
+    "The Search field must use the stable center slot instead of entering the ordered left action group.");
+assert.strictEqual(toolbar.indexOf("if (context.buttons.search) left.appendChild(searchWrap)"), -1,
+    "Search visibility must not change the geometry of the ordered left action group.");
 assert.ok(quick.indexOf('toolbar.setActive("collapse", state.collapsed)') >= 0 &&
-    quick.indexOf('toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon)') >= 0,
-    "Quick Collapse active state and icon must be derived from the one renderer-owned collapsed state.");
+    quick.indexOf('toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.icon : collapseDefinition.expandIcon)') >= 0,
+    "Quick Collapse active state and visual chevron must be derived from the one renderer-owned collapsed state.");
 assert.ok(quick.indexOf('toolbar.setActive("favorites", state.favoritesOnly)') >= 0 &&
     quick.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0 &&
     quick.indexOf('toolbar.setActive("search", state.searchVisible)') >= 0,
@@ -50,4 +52,4 @@ assert.strictEqual(toolbar.indexOf("keepQuickToolbarOnOneLine"), -1,
 assert.strictEqual(toolbar.indexOf("alignQuickCollapseWithMyScripts"), -1,
     "SharedToolbar must not override Quick collapse state after mount.");
 
-console.log("Canonical shared toolbar ordering and Quick action sequence: OK");
+console.log("Canonical shared toolbar ordering and stable Search slot: OK");
