@@ -9,8 +9,7 @@
         integrations: {},
         folderPermissions: {},
         userGroups: [],
-        uiSettings: {},
-        auditLog: []
+        uiSettings: {}
     };
     if (!root || !content) return;
 
@@ -329,46 +328,6 @@
         });
     }
 
-    function renderLogs(card) {
-        card.appendChild(element("h3", "", "Audit logs"));
-        card.appendChild(element("p", "mc-admin-card-description", "Persistent redacted action log. Passwords, secrets, tokens, payloads and command output are not stored."));
-        var toolbar = element("div", "mc-admin-toolbar");
-        var refresh = element("button", "mc-admin-secondary", "Refresh");
-        refresh.type = "button";
-        refresh.onclick = function () { window.location.reload(); };
-        toolbar.appendChild(refresh);
-        card.appendChild(toolbar);
-
-        var wrap = element("div", "mc-admin-audit-wrap");
-        var table = element("table", "mc-admin-audit-table");
-        var head = document.createElement("thead");
-        var headRow = document.createElement("tr");
-        ["Date/Time", "Actor", "Module", "Action", "Status", "Target"].forEach(function (title) {
-            headRow.appendChild(element("th", "", title));
-        });
-        head.appendChild(headRow);
-        table.appendChild(head);
-
-        var body = document.createElement("tbody");
-        (data.auditLog || []).forEach(function (entry) {
-            var row = document.createElement("tr");
-            [entry.timestamp, entry.actorName, entry.module, entry.action, entry.outcome, entry.target].forEach(function (value) {
-                row.appendChild(element("td", "", value || "—"));
-            });
-            body.appendChild(row);
-        });
-        if (!body.children.length) {
-            var empty = document.createElement("tr");
-            var cell = element("td", "", "No audit entries yet.");
-            cell.colSpan = 6;
-            empty.appendChild(cell);
-            body.appendChild(empty);
-        }
-        table.appendChild(body);
-        wrap.appendChild(table);
-        card.appendChild(wrap);
-    }
-
     function render(tab) {
         content.innerHTML = "";
         var card = element("section", "mc-admin-card");
@@ -377,8 +336,6 @@
 
         if (tab === "general") {
             renderGeneral(card);
-        } else if (tab === "logs") {
-            renderLogs(card);
         } else if (tab === "approvals") {
             card.appendChild(element("h3", "", "Approval Center"));
             card.appendChild(element("p", "mc-admin-card-description", "Approval rules shared by Move Requests, My Commands and My Scripts."));
