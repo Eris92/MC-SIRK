@@ -10,13 +10,18 @@ var source = fs.readFileSync(
 );
 
 assert.ok(
-    source.indexOf("html.sirk-platform-workspace-active #devListToolbarViewIcons{display:none!important}") >= 0,
-    "MeshCentral device-list view icons must be hidden while a SIRK workspace is active."
+    source.indexOf("#SirkPlatformWorkspace{width:100%;box-sizing:border-box;padding:0 12px 20px}") >= 0,
+    "Workspace geometry must be scoped to the SIRK workspace element."
 );
 assert.strictEqual(
-    source.indexOf("\n#devListToolbarViewIcons{display:none!important}"),
+    source.indexOf(".mc-workspace{"),
     -1,
-    "The native view icons must not be hidden globally outside SIRK workspaces."
+    "SIRK CSS must not use a generic workspace selector that can affect native MeshCentral surfaces."
+);
+assert.strictEqual(
+    source.indexOf("#devListToolbarViewIcons"),
+    -1,
+    "SIRK CSS must not hide, resize or otherwise style the native Devices view toolbar."
 );
 
-console.log("Native device-list view icons are isolated from SIRK workspaces: OK");
+console.log("Native Devices toolbar is outside SIRK CSS ownership: OK");
