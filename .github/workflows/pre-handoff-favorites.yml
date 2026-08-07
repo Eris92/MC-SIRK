@@ -1,0 +1,44 @@
+name: Apply pre-handoff Favorites cleanup
+
+on:
+  push:
+    branches:
+      - refactor/pre-handoff-cleanup-1.8.20
+    paths:
+      - scripts/pre-handoff-favorites.py
+      - .github/workflows/pre-handoff-favorites.yml
+
+permissions:
+  contents: write
+
+jobs:
+  transform:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/pre-handoff-cleanup-1.8.20
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Apply transform
+        run: python scripts/pre-handoff-favorites.py
+      - name: Validate transformed sources
+        run: |
+          node --check public/modules/commands/index.js
+          node --check public/modules/automation/index.js
+          node --check public/shared/ui/toolbar-config.js
+          grep -q 'mode = "commands"; treeState.selectedScript' public/modules/commands/index.js
+          grep -q 'mode = "scripts"' public/modules/automation/index.js
+          grep -q 'return "warning"' public/shared/ui/toolbar-config.js
+      - name: Remove one-shot tooling and commit
+        run: |
+          rm scripts/pre-handoff-favorites.py
+          rm .github/workflows/pre-handoff-favorites.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Preserve Favorites behavior without runtime patches"
+          git push origin HEAD:refactor/pre-handoff-cleanup-1.8.20
