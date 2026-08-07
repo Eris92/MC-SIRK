@@ -4,6 +4,7 @@
     var core = window.SirkPlatformCore;
     core.assetVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
     core.activePlugin = core.activePlugin || null;
+    core.requestTimeoutMs = Math.max(1000, Number(core.requestTimeoutMs) || 15000);
 
     function svgData(svg) {
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
@@ -28,9 +29,53 @@
     };
 
     core.api = function (moduleName, assetName, options, parameters) {
-        var request = options || {};
+        var request = {};
+        Object.keys(options || {}).forEach(function (key) { request[key] = options[key]; });
         request.credentials = "same-origin";
         request.cache = "no-store";
+
+        var sourceSignal = request.signal || null;
+        var boundedRead = String(request.method || "GET").toUpperCase() === "GET";
+        var controller = (sourceSignal || boundedRead) && typeof AbortController === "function"
+            ? new AbortController()
+            : null;
+        var timeoutMs = core.requestTimeoutMs;
+        var timedOut = false;
+        var externallyAborted = false;
+        var timer = null;
+
+        function abortFromSource() {
+            externallyAborted = true;
+            if (controller && !controller.signal.aborted) controller.abort();
+        }
+        function cleanup() {
+            if (timer != null) window.clearTimeout(timer);
+            if (sourceSignal && typeof sourceSignal.removeEventListener === "function") {
+                sourceSignal.removeEventListener("abort", abortFromSource);
+            }
+        }
+        function requestError(name, message) {
+            var error = new Error(message);
+            error.name = name;
+            return error;
+        }
+
+        if (controller) {
+            if (sourceSignal) {
+                if (sourceSignal.aborted) abortFromSource();
+                else if (typeof sourceSignal.addEventListener === "function") {
+                    sourceSignal.addEventListener("abort", abortFromSource, { once: true });
+                }
+            }
+            request.signal = controller.signal;
+            if (boundedRead) {
+                timer = window.setTimeout(function () {
+                    timedOut = true;
+                    if (!controller.signal.aborted) controller.abort();
+                }, timeoutMs);
+            }
+        }
+
         return window.fetch(core.assetUrl(moduleName, assetName, parameters), request).then(function (response) {
             return response.text().then(function (text) {
                 var result = {};
@@ -39,6 +84,21 @@
                 if (!response.ok || result.ok === false) throw new Error(result.error || "HTTP " + response.status);
                 return result;
             });
+        }).then(function (result) {
+            cleanup();
+            if (timedOut) {
+                throw requestError("SirkApiTimeoutError", "SIRK API timeout: " + String(moduleName || "runtime") + "/" + String(assetName || "request") + " did not respond within " + timeoutMs + " ms.");
+            }
+            return result;
+        }, function (error) {
+            cleanup();
+            if (timedOut) {
+                throw requestError("SirkApiTimeoutError", "SIRK API timeout: " + String(moduleName || "runtime") + "/" + String(assetName || "request") + " did not respond within " + timeoutMs + " ms.");
+            }
+            if (externallyAborted || (controller && controller.signal.aborted && error && error.name === "AbortError")) {
+                throw requestError("AbortError", "SIRK API request cancelled because the view changed.");
+            }
+            throw error;
         });
     };
 
@@ -67,10 +127,6 @@
     };
 
     core.enterNativeDevicePage = function () {
-        if (!core.workspaceState && typeof window.go === "function") {
-            window.go(1);
-            return true;
-        }
         if (typeof window.go === "function") {
             window.go(1);
             return true;
