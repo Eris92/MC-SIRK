@@ -225,6 +225,7 @@
             return true;
         }
         function restoreNativeFromTab(event) {
+            if (!enabled()) return;
             if (event && ((event.which === 3) || (event.button === 2))) return;
             selectNativePage();
             update(19);
@@ -287,7 +288,6 @@
         }
         function update(view) {
             var tab = document.getElementById(topTabId);
-            var plugins = document.getElementById("MainDevPlugins");
             var headers = document.getElementById("p19headers");
             if (view == null) view = currentView();
             var status = routeState(view, getStoredPage(), activePageId(), pageId);
@@ -296,11 +296,6 @@
             if (tab) {
                 tab.classList.remove("style3x", "style3sel");
                 tab.classList.add(active ? "style3sel" : "style3x");
-            }
-            if (plugins) {
-                plugins.classList.remove("style3x", "style3sel");
-                plugins.classList.add(status.pluginView && !active ? "style3sel" : "style3x");
-                plugins.style.display = "";
             }
             if (headers) {
                 if (active) headers.style.setProperty("display", "none", "important");
