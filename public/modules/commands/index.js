@@ -236,7 +236,7 @@
             link: false,
             manage: { title: "Edit", side: "left", order: 40, onClick: function (toolbar) { tools.toggleEdit(toolbar, module.api.render); } },
             refresh: { side: "left", order: 50, onClick: function () { refresh(module.api); } },
-            multi: { title: "Multi-device execution", side: "left", order: 60, onClick: function (toolbar) { tools.toggleMulti(toolbar, module.api.render); } },
+            multi: { title: "Multi-device execution", side: "left", order: 41, onClick: function (toolbar) { tools.toggleMulti(toolbar, module.api.render); } },
             search: { side: "left", order: 70 }, clear: false, settings: false
         },
         tabs: [], defaultTab: "commands",
