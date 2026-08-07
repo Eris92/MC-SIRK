@@ -268,13 +268,30 @@ assert.strictEqual(
 );
 assert.ok(
     toolbar.indexOf(".mc-shared-toolbar{") >= 0 &&
-    layout.indexOf(".mc-shared-layout{") >= 0,
-    "Both modules must receive toolbar geometry from toolbar.css and the single canonical layout from layout.js."
+    sharedUi.indexOf(".mc-shared-layout{") >= 0,
+    "Both modules must receive toolbar geometry from toolbar.css and canonical workspace geometry from shared-ui.css."
+);
+assert.ok(
+    layout.indexOf('root.className = "mc-shared-layout"') >= 0 &&
+    layout.indexOf('primary.className = "mc-shared-primary"') >= 0 &&
+    layout.indexOf('secondary.className = "mc-shared-secondary"') >= 0 &&
+    layout.indexOf('details.className = "mc-shared-details"') >= 0,
+    "SharedLayout JavaScript must own only canonical workspace structure/state classes."
+);
+assert.strictEqual(
+    layout.indexOf("grid-template-columns:"),
+    -1,
+    "SharedLayout JavaScript must not own CSS geometry."
 );
 assert.strictEqual(
     toolbar.indexOf(".mc-shared-layout{grid-template-columns:"),
     -1,
-    "Toolbar CSS must not own a second shared layout definition."
+    "Toolbar CSS must not own a second global shared layout definition."
+);
+assert.ok(
+    sharedUi.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >= 0 &&
+    sharedUi.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
+    "The shared stylesheet must own the one canonical desktop column geometry."
 );
 assert.ok(
     sharedUi.indexOf(".mc-approval-card-grid") >= 0 &&
