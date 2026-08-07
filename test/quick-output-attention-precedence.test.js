@@ -55,10 +55,12 @@ assert.ok(adapter.indexOf("function syncOwnedClasses(element, desired)") >= 0,
 
 assert.ok(toolbarCss.indexOf('.sirk-quick-command-details-toggle.has-output-attention') >= 0,
     "A completed hidden Quick result must retain a visible attention state on the canonical details control.");
-assert.ok(toolbarCss.indexOf("border-color:var(--bs-danger,currentColor)") >= 0 &&
-    toolbarCss.indexOf("color:var(--bs-danger,currentColor)") >= 0 &&
-    toolbarCss.indexOf("background:rgba(var(--bs-danger-rgb,220,53,69),.16)") >= 0,
-    "Modern attention styling must use host Bootstrap danger tokens.");
+assert.ok(toolbarCss.indexOf(".sirk-quick-command-details-toggle.has-output-attention .mc-shared-toolbar-icon{color:var(--bs-danger,currentColor)!important}") >= 0,
+    "Hidden-output attention must color only the existing toolbar icon with the host danger token.");
+assert.strictEqual(toolbarCss.indexOf(".sirk-quick-command-details-toggle.has-output-attention{border-color"), -1,
+    "Attention must not replace the native button border.");
+assert.strictEqual(toolbarCss.indexOf("background:rgba(var(--bs-danger-rgb"), -1,
+    "Attention must not replace the native button background.");
 assert.ok(toolbarCss.indexOf('.sirk-quick-command-toolbar-host{padding:8px 10px 10px}') >= 0,
     "Quick toolbar buttons must keep a bottom gutter before the column divider lines.");
 [

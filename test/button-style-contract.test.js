@@ -19,8 +19,8 @@ var mainCss = read("public/shared/styles/main.css");
 
 assert.ok(theme.indexOf('"btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-warning", "btn-sm"') >= 0,
     "MeshThemeAdapter must own the native Bootstrap button variants used by the plugin.");
-assert.ok(theme.indexOf('element.classList.contains("mc-tree-favorite-action") && active(element)') >= 0 && theme.indexOf('return "warning"') >= 0,
-    "Favorite may retain native active semantics while visual yellow is restricted to the star icon by static CSS.");
+assert.strictEqual(theme.indexOf('element.classList.contains("mc-tree-favorite-action") && active(element)'), -1,
+    "Favorite active state must not switch the whole native button to a warning variant.");
 assert.ok(theme.indexOf('element.classList.contains("sirk-action-approve")') >= 0 && theme.indexOf('return "success"') >= 0 && theme.indexOf('element.classList.contains("sirk-action-reject")') >= 0 && theme.indexOf('return "danger"') >= 0,
     "Approval buttons must keep native success/danger variants.");
 assert.ok(theme.indexOf('syncOwnedClasses(element, [selected ? "style10s" : "style10"])') >= 0,
@@ -53,8 +53,8 @@ assert.ok(tree.indexOf('action.classList.toggle("is-active", active)') >= 0 && t
 
 assert.ok(css.indexOf(".mc-tree-script-action") >= 0 && css.indexOf(".mc-shared-toolbar-button") >= 0,
     "Shared toolbar/script actions must have one static stylesheet owner.");
-assert.ok(css.indexOf('.mc-tree-favorite-action,.mc-tree-favorite-action:hover,.mc-tree-favorite-action:focus,.mc-tree-favorite-action:active{background-color:transparent!important;border-color:transparent!important;color:inherit!important}') >= 0,
-    "The Favorite action button itself must remain visually neutral in every interaction state.");
+assert.strictEqual(css.indexOf('.mc-tree-favorite-action,.mc-tree-favorite-action:hover,.mc-tree-favorite-action:focus,.mc-tree-favorite-action:active{background-color:transparent!important;border-color:transparent!important;color:inherit!important}'), -1,
+    "Per-row Favorite must retain the same native button surface as the other script actions.");
 assert.ok(css.indexOf('.mc-tree-favorite-action .mc-tree-script-action-icon.is-favorite-active{color:var(--bs-warning,#ffc107)!important}') >= 0 &&
     css.indexOf('.mc-shared-toolbar-icon.is-favorite-active{color:var(--bs-warning,#ffc107)}') >= 0,
     "Only the Favorite star icon may become warning/yellow.");

@@ -152,7 +152,7 @@
         }
     }
 
-    function addIcon(host, iconData, kind) {
+    function addIcon(host, iconData, kind, tone) {
         if (iconData) {
             var image = document.createElement("img");
             image.className = "sirk-quick-command-icon";
@@ -161,7 +161,7 @@
             host.appendChild(image);
             return;
         }
-        var icon = element("span", "sirk-quick-command-icon");
+        var icon = element("span", "sirk-quick-command-icon" + (tone ? " sirk-command-icon-" + tone : ""));
         var artwork = {
             folder: '<path d="M3 6h7l2 2h9v11H3V6Z"/>',
             network: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
@@ -248,7 +248,7 @@
             scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []), children: [] });
         }
         if (scriptGroups.length) {
-            result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });
+            result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });
         }
         (data.catalog || []).forEach(function (category) {
             var items = (category.commands || []).filter(function (command) {
@@ -267,7 +267,7 @@
                 result.push({
                     key: "catalog:" + category.key,
                     label: localized(category, "title") || category.title || category.key,
-                    iconKind: category.key, items: items
+                    iconKind: category.key, tone: ["network", "system"].indexOf(category.key) >= 0 ? category.key : "other", items: items
                 });
             }
         });
@@ -581,7 +581,7 @@
             var button = element("button", "");
             button.type = "button";
             button.title = category.label;
-            addIcon(button, category.iconData, category.iconKind || "folder");
+            addIcon(button, category.iconData, category.iconKind || "folder", category.tone);
             button.appendChild(element("span", "sirk-quick-command-label", category.label));
             button.onclick = function () {
                 state.category = category.key;
@@ -609,7 +609,7 @@
             button.type = "button";
             button.title = item.label;
             button.style.setProperty("--sdc-depth", String(depth));
-            addIcon(button, item.iconData, item.iconKind || "script");
+            addIcon(button, item.iconData, item.iconKind || "script", selected && selected.tone);
             var copy = element("span", "sirk-quick-command-copy");
             copy.appendChild(element("strong", "sirk-quick-command-label", item.label));
             button.appendChild(copy);
@@ -628,7 +628,7 @@
                 button.style.setProperty("--sdc-depth", String(depth));
                 var arrow = element("span", "sirk-quick-command-arrow", hasContents ? (expanded ? "▼" : "▶") : "");
                 button.appendChild(arrow);
-                addIcon(button, group.iconData, "folder");
+                addIcon(button, group.iconData, "folder", selected && selected.tone);
                 button.appendChild(element("span", "sirk-quick-command-label", group.label));
                 button.onclick = function () {
                     if (hasContents) state.expanded[group.key] = !state.expanded[group.key];

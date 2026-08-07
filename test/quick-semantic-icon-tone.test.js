@@ -1,0 +1,15 @@
+"use strict";
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8");
+var css = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
+["scripts", "network", "system", "other"].forEach(function (tone) { assert.ok(css.indexOf(".sirk-command-icon-" + tone + "{") >= 0, "Quick and My Commands must share semantic tone " + tone + "."); });
+assert.ok(quick.indexOf('function addIcon(host, iconData, kind, tone)') >= 0 && quick.indexOf('" sirk-command-icon-" + tone') >= 0, "Quick fallback SVG must reuse the shared semantic tone class.");
+assert.ok(quick.indexOf('image.className = "sirk-quick-command-icon"') >= 0, "Custom iconData must remain an unrecolored image.");
+assert.ok(quick.indexOf('tone: "scripts"') >= 0 && quick.indexOf('["network", "system"].indexOf(category.key) >= 0 ? category.key : "other"') >= 0, "Quick categories must map to the same scripts/network/system/other tone families as My Commands.");
+assert.ok(quick.indexOf('addIcon(button, item.iconData, item.iconKind || "script", selected && selected.tone)') >= 0, "Built-in Quick command icons must inherit their category tone.");
+assert.ok(commands.indexOf('function tonedIcon(markup, tone)') >= 0 && commands.indexOf('iconMarkup: tonedIcon(') >= 0, "My Commands must remain the direct consumer of the same shared tone classes.");
+console.log("Quick reuses My Commands semantic icon tones without recoloring custom iconData: OK");

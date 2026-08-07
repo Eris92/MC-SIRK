@@ -94,9 +94,10 @@
             host.innerHTML = "";
             host.classList.add("sirk-shared-catalog-primary");
             var anchor = document.createComment("catalog-roots");
+            var resultsButton = null;
 
             function addResults() {
-                createResultsButton(host, options.resultsActive, options.onResults);
+                resultsButton = createResultsButton(host, options.resultsActive, options.onResults);
             }
 
             if (options.resultsPosition !== "end") addResults();
@@ -113,7 +114,10 @@
                 emptyFolderText: options.emptyFolderText,
                 filterScript: options.filterScript,
                 scriptActions: options.scriptActions,
-                onRootSelect: options.onRootSelect,
+                onRootSelect: function (root) {
+                    setSelected(resultsButton, false);
+                    if (typeof options.onRootSelect === "function") options.onRootSelect(root);
+                },
                 onScript: options.onScript
             });
 
