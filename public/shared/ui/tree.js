@@ -34,7 +34,7 @@
     function appendIcon(host, node, className) {
         if (!node || !node.iconData) return null;
         var image = document.createElement("img");
-        image.className = className || "mc-tree-icon";
+        image.className = (className || "mc-tree-icon") + " sirk-shared-list-icon";
         image.alt = "";
         image.src = node.iconData;
         host.appendChild(image);
@@ -51,7 +51,7 @@
     function createButton(options) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = options.className || "mc-shared-nav-item";
+        button.className = (options.className || "mc-shared-nav-item") + " sirk-shared-list-item";
         var active = options.active === true;
         button.classList.toggle("active", active);
         button.classList.toggle("is-active", active);
@@ -59,7 +59,7 @@
 
         if (!appendIcon(button, options.node, options.iconClass)) {
             var fallback = document.createElement("span");
-            fallback.className = "mc-tree-fallback-icon";
+            fallback.className = "mc-tree-fallback-icon sirk-shared-list-icon";
             fallback.innerHTML = options.fallbackMarkup || options.node && options.node.iconMarkup || lineIcon(options.fallbackKind || "folder");
             button.appendChild(fallback);
         }
@@ -67,7 +67,7 @@
         var copy = document.createElement("span");
         copy.className = "sirk-shared-list-copy";
         var label = document.createElement("span");
-        label.className = "mc-tree-label";
+        label.className = "mc-tree-label sirk-shared-list-label";
         label.textContent = options.title || "";
         copy.appendChild(label);
         button.appendChild(copy);
