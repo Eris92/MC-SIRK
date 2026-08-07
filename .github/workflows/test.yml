@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test:
@@ -14,10 +14,108 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: issue-143-version-bump
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Synchronize development metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          readme = Path('README.md')
+          text = readme.read_text()
+          text = text.replace('# SIRK Management Platform 0.1.1-dev.3', '# SIRK Management Platform 0.1.1-dev.4', 1)
+          text = text.replace('[Aktualne development notes](docs/releases/0.1.1-dev.3.md)', '[Aktualne development notes](docs/releases/0.1.1-dev.4.md)', 1)
+          old_edit = 'Action track jest mierzony na żywo przez `toolbar-api.js`, ale pozostaje **wewnątrz istniejącej szerokości drugiej kolumny**. Włączenie Edit/Multi nie może poszerzać `secondary`, przesuwać `details` ani blokować aktywacji przy zwiniętej pierwszej kolumnie. Style geometrii są statyczne; runtime nie generuje arkusza CSS.'
+          new_edit = 'Action track jest mierzony na żywo przez `toolbar-api.js`. Edit rozszerza `secondary` wyłącznie o zmierzoną szerokość action rail, Multi zachowuje bazową szerokość drugiej kolumny. Zmiana live geometrii Edit następuje po atomic render commit, dzięki czemu action DOM nie jest ściskany za labelami podczas przełączania trybu. Style geometrii są statyczne; runtime nie generuje arkusza CSS.'
+          if old_edit not in text:
+              raise SystemExit('README Edit contract not found')
+          readme.write_text(text.replace(old_edit, new_edit, 1))
+
+          state = Path('docs/PROJECT-STATE.md')
+          text = state.read_text().replace('0.1.1-dev.3', '0.1.1-dev.4')
+          old_state = 'Edit i Multi są wzajemnie wykluczające. Włączenie trybu nie może poszerzać `secondary` ani przesuwać `details`.'
+          new_state = 'Edit i Multi są wzajemnie wykluczające. Edit może rozszerzyć `secondary` wyłącznie o zmierzoną szerokość action rail; Multi zachowuje bazową szerokość. Zmiana geometrii Edit następuje po atomic render commit, aby stary action DOM nie był ściskany podczas przełączenia.'
+          if old_state not in text:
+              raise SystemExit('PROJECT-STATE Edit contract not found')
+          state.write_text(text.replace(old_state, new_state, 1))
+
+          releases = Path('docs/releases/README.md')
+          text = releases.read_text()
+          old = '- [`0.1.1-dev.3`](0.1.1-dev.3.md) — bieżąca rewizja development z fixem Quick Search height do real MeshCentral re-smoke;'
+          new = '- [`0.1.1-dev.4`](0.1.1-dev.4.md) — bieżąca rewizja development z atomic Edit lifecycle fix do real MeshCentral re-smoke;\n- [`0.1.1-dev.3`](0.1.1-dev.3.md) — poprzednia rewizja development z fixem Quick Search height;'
+          if old not in text:
+              raise SystemExit('release index current version line not found')
+          releases.write_text(text.replace(old, new, 1))
+
+          changelog = Path('changelog.md')
+          text = changelog.read_text()
+          text = text.replace('Current development notes: `docs/releases/0.1.1-dev.3.md`.', 'Development notes: `docs/releases/0.1.1-dev.3.md`.', 1)
+          marker = '# Changelog\n\n'
+          entry = '''## 0.1.1-dev.4 — 2026-08-07\n\n- Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current `main`.\n- Keep Edit action DOM and live secondary-track geometry synchronized with atomic render commit so action buttons do not briefly hide behind script labels during Edit on/off.\n- Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.\n- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.\n\nCurrent development notes: `docs/releases/0.1.1-dev.4.md`.\n\n'''
+          if marker not in text:
+              raise SystemExit('changelog header not found')
+          changelog.write_text(text.replace(marker, marker + entry, 1))
+
+          history = Path('version-history.json')
+          values = json.loads(history.read_text())
+          if not values or values[0].get('version') != '0.1.1-dev.3':
+              raise SystemExit('unexpected version-history head')
+          values.insert(0, {
+              'version': '0.1.1-dev.4',
+              'date': '2026-08-07',
+              'changes': [
+                  'Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current main.',
+                  'Synchronize Edit action DOM removal/addition with live geometry changes after atomic render commit to prevent transient overlap behind script labels.',
+                  'Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.',
+                  'Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release.'
+              ]
+          })
+          history.write_text(json.dumps(values, indent=2, ensure_ascii=False) + '\n')
+          PY
+          cat > .github/workflows/test.yml <<'YAML'
+          name: Test
+
+          on:
+            pull_request:
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            test:
+              runs-on: ubuntu-latest
+              timeout-minutes: 15
+              steps:
+                - name: Checkout
+                  uses: actions/checkout@v7
+                - name: Setup Node.js
+                  uses: actions/setup-node@v7
+                  with:
+                    node-version: '24'
+                    package-manager-cache: false
+                - name: Run test suite
+                  run: npm test
+          YAML
+      - name: Validate development metadata
+        run: node scripts/validate-repository-layout.js
       - name: Run test suite
         run: npm test
+      - name: Check diff
+        run: git diff --check
+      - name: Save verified metadata
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/PROJECT-STATE.md docs/releases/README.md changelog.md version-history.json .github/workflows/test.yml
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "docs: synchronize 0.1.1-dev.4 metadata"
+          git push origin HEAD:issue-143-version-bump
