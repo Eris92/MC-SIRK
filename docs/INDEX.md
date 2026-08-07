@@ -13,6 +13,7 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | wybór testu lub analiza regresji | `test/INDEX.md` |
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
+| release notes | `docs/releases/README.md` |
 | reguły pracy agenta | `docs/agent/11-Agent-SIRK-Portal.md` |
 
 ## Reguła selektywnego odczytu
@@ -26,7 +27,8 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 ## Dokumenty kanoniczne
 
 - nazwy i struktura: `docs/REPOSITORY-LAYOUT.md`;
-- stan wersji i migracji: `docs/PROJECT-STATE.md`;
+- stan wersji i architektury: `docs/PROJECT-STATE.md`;
+- release notes: `docs/releases/`;
 - router instrukcji: `AGENTS.md`;
 - reguły projektu: `docs/agent/11-Agent-SIRK-Portal.md`.
 
