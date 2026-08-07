@@ -474,6 +474,11 @@
                 );
             }
 
+            function refreshMenu() {
+                if (menuEnabled()) registerMenu(definition, open);
+                syncMenu();
+            }
+
             function close(clearUrl) {
                 if (!state.active && core.activePlugin !== moduleInstance) {
                     if (clearUrl) setRequestedInUrl(false);
@@ -578,8 +583,7 @@
                     if (state.bootstrap && state.bootstrap.config) {
                         definition.menuIcon = state.bootstrap.config.leftMenuIconUrl || state.bootstrap.config.menuIcon || definition.menuIcon;
                     }
-                    if (menuEnabled()) registerMenu(definition, open);
-                    syncMenu();
+                    refreshMenu();
                     if (device) device.sync();
                     if (isRequestedInUrl()) window.setTimeout(function () { open(); }, 0);
                     return Promise.resolve();
@@ -589,6 +593,7 @@
                 mount: function (host, mode) { return mountPage(host, mode || "inline"); },
                 render: api.render,
                 api: api,
+                refreshMenu: refreshMenu,
                 onDeviceRefreshEnd: function (nodeId) {
                     state.nodeId = String(nodeId || "");
                     if (device) device.onDeviceRefreshEnd(nodeId);
@@ -598,8 +603,7 @@
                     if (device) device.onNativePageStart(view);
                 },
                 onNativePageEnd: function (view) {
-                    if (menuEnabled()) registerMenu(definition, open);
-                    syncMenu();
+                    refreshMenu();
                     if (device) device.onNativePageEnd(view);
                 }
             };

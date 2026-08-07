@@ -47,6 +47,20 @@
 
     window.SirkIconMode = {
         get: mode,
+        set: function (value) {
+            value = normalizeMode(value);
+            if (window.SirkPlatformAdminData) {
+                window.SirkPlatformAdminData.uiSettings = window.SirkPlatformAdminData.uiSettings || {};
+                window.SirkPlatformAdminData.uiSettings.iconMode = value;
+            }
+            var runtime = window.SirkPlatformRuntime;
+            if (runtime && runtime.state && runtime.state.bootstrap) {
+                runtime.state.bootstrap.ui = runtime.state.bootstrap.ui || {};
+                runtime.state.bootstrap.ui.iconMode = value;
+            }
+            if (runtime && typeof runtime.refreshMenus === "function") runtime.refreshMenus();
+            return value;
+        },
         useModern: function () {
             var value = mode();
             if (value === "modern") return true;
