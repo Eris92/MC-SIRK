@@ -1,29 +1,12 @@
 [
   {
-    "version": "1.8.21",
+    "version": "0.1.1-dev.1",
     "date": "2026-08-07",
     "changes": [
-      "Restore visible Edit and Multi-device action icons and keep their action track inside the existing second-column width.",
-      "Allow Edit mode while the first column is collapsed without moving the details column.",
-      "Highlight only the Favorite star icon instead of the entire action button.",
-      "Apply native MeshCentral selected states synchronously for shared and Quick rows.",
-      "Prevent host hover transforms from resizing SIRK-owned Quick and shared surfaces while preserving native interaction colors.",
-      "Raise Quick hidden-output attention only for a new execution result and do not re-arm it on ordinary clicks, refreshes or metadata loads.",
-      "Persist General icon mode across runtime restart and prefer the freshly saved admin snapshot over a stale browser bootstrap."
-    ]
-  },
-  {
-    "version": "1.8.20",
-    "date": "2026-08-07",
-    "changes": [
-      "Complete the pre-handoff cleanup and remove legacy compatibility layers.",
-      "Consolidate native MeshCentral theme, workspace layout, Collapse and Quick state ownership.",
-      "Use atomic module rendering and avoid intermediate Devices redraws between SIRK workspaces.",
-      "Route SIRK action history through native MeshCentral Events without standalone audit storage or a Logs tab.",
-      "Persist General icon mode through the canonical admin endpoint and keep Approval semantic colors on icons only.",
-      "Stop SIRK from styling the native Devices toolbar and Plugins tab.",
-      "Synchronize release metadata, documentation and CI with version 1.8.20 and Node.js 24.",
-      "Reset the public version history to the verified 1.8.20 handoff baseline; earlier development history remains available in Git and docs/releases."
+      "Reset active product numbering to the pre-1.0 development line because MC-SIRK has not reached its first complete product release.",
+      "Map the preferred human development convention 0.1.1.X to SemVer-compatible 0.1.1-dev.X for npm and plugin metadata.",
+      "Preserve the current native MeshCentral plugin architecture, shared UI owners, atomic rendering, Quick lifecycle and security contracts from the latest tested main line.",
+      "Treat previous 1.8.x numbering as historical internal development snapshots, not product releases and not a source for future version progression."
     ]
   }
 ]
