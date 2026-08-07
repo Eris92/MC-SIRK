@@ -48,9 +48,9 @@ assert.ok(css.indexOf(".is-details-collapsed{grid-template-columns:minmax(165px,
     css.indexOf(".is-details-collapsed .sirk-quick-command-details{display:none!important}") >= 0,
     "Quick commands must remove the complete details column when output is hidden.");
 assert.ok(script.indexOf("function refresh(panel)") >= 0 &&
-    script.indexOf('setOutput(panel, text("loading"), false)') >= 0 &&
+    script.indexOf('setOutput(panel, text("loading"), false, false)') >= 0 &&
     script.indexOf('onClick: function () { refresh(panel); }') >= 0,
-    "Quick refresh progress must stay inside the details output pane.");
+    "Quick refresh progress must stay inside the details pane without arming execution-result attention.");
 assert.ok(script.indexOf('panel.appendChild(element("div", "sirk-quick-command-loading"') < 0,
     "Quick refresh must not replace the whole panel with a full-width loading message.");
 assert.ok(css.indexOf(".sirk-quick-command-label") >= 0 &&
@@ -61,4 +61,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick commands toolbar, persistent Favorites, output collapse and compact columns: OK");
+console.log("Quick toolbar, Favorites, output collapse and non-attention refresh: OK");
