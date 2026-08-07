@@ -49,7 +49,7 @@
         if (!element || !element.classList) return "secondary";
         if (element.classList.contains("sirk-action-approve")) return "success";
         if (element.classList.contains("sirk-action-reject") || element.classList.contains("mc-admin-error-action")) return "danger";
-        if (element.classList.contains("mc-command-run-button") || element.classList.contains("mc-admin-primary") || element.classList.contains("sirk-primary-action")) return "primary";
+        if (element.classList.contains("mc-command-run-button") || element.classList.contains("mc-results-view-button") || element.classList.contains("mc-admin-primary") || element.classList.contains("sirk-primary-action")) return "primary";
         return "secondary";
     }
 
