@@ -15,24 +15,24 @@
         });
     }
 
-    function applyTheme(button) {
+    function applyTheme(button, icon) {
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
             window.MeshThemeAdapter.nav(button);
         }
-        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
-            window.MeshThemeAdapter.status(button);
+        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
+            window.MeshThemeAdapter.status(icon);
         }
     }
 
     function createResultsButton(host, active, onClick) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-result-status sirk-result-status-all sirk-shared-list-item";
+        button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item";
         button.title = "Results";
         button.setAttribute("aria-label", "Results");
 
         var icon = document.createElement("span");
-        icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon mc-portal-nav-icon sirk-shared-list-icon";
+        icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-all mc-portal-nav-icon sirk-shared-list-icon";
         icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
 
         var copy = document.createElement("span");
@@ -53,7 +53,7 @@
             if (typeof onClick === "function") onClick(event, button);
         }, true);
         host.appendChild(button);
-        applyTheme(button);
+        applyTheme(button, icon);
         return button;
     }
 
