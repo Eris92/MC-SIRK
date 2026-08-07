@@ -29,7 +29,7 @@ assert.ok(desktop.indexOf('function writeDetailsCollapsed(value)') >= 0 &&
     desktop.indexOf('writePreferences({ quickDetailsCollapsed: state.detailsCollapsed })') >= 0,
     "The real collapsed state and persistence must have one owner in the Quick renderer.");
 assert.ok(desktop.indexOf('key: "details"') >= 0 &&
-    desktop.indexOf('active: !state.detailsCollapsed') >= 0 &&
+    desktop.indexOf('toolbar.setActive("details", !state.detailsCollapsed)') >= 0 &&
     desktop.indexOf('writeDetailsCollapsed(!state.detailsCollapsed)') >= 0,
     "The Output toolbar action must derive its logical active state from the same collapsed state.");
 
