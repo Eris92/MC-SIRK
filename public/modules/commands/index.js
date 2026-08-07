@@ -23,7 +23,7 @@
         "Task Manager": "Menedżer zadań", "Printer Management": "Zarządzanie drukarkami",
         "Certificates (computer)": "Certyfikaty komputera", "Certificates (user)": "Certyfikaty użytkownika",
         "Indexing Options": "Opcje indeksowania", "Disk Cleanup": "Oczyszczanie dysku",
-        "Flush DNS": "Wyczyść DNS", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
+        "Flush DNS": "Wyczyść DNS", "Active network adapter settings": "Ustawienia aktywnej karty sieciowej", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
         "Open ports": "Otwarte porty", "Filter by port": "Filtruj po porcie"
     };
 
@@ -44,6 +44,7 @@
         indexing: '<svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5M10 7v6M7 10h6"/></svg>',
         cleanup: '<svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></svg>',
         flushdns: '<svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h5M18 3v5M15.5 5.5 18 8l2.5-2.5"/></svg>',
+        "network-settings": '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4M7 9h10M7 13h6"/><circle cx="18" cy="15" r="3"/><path d="M18 10v2M18 18v2M13 15h2M21 15h2"/></svg>',
         dns: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
         port: '<svg viewBox="0 0 24 24"><path d="M4 8h16v8H4zM8 12h.01M12 12h.01M16 12h.01"/></svg>',
         netstat: '<svg viewBox="0 0 24 24"><path d="M4 17V7M9 17v-5M14 17V4M19 17v-8"/></svg>',
@@ -53,7 +54,7 @@
     var MENU_ICONS = {
         scripts: '<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/><path d="M8 12h8M8 15h6"/></svg>',
         network: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
-        system: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>',
+        system: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m15.5 4.8.8 2.1 2.2.8 2-1 .9 1.6-1.8 1.4.3 2.3 2.3.8v2l-2.3.8-.3 2.3 1.8 1.4-.9 1.6-2-1-2.2.8-.8 2.1h-2l-.8-2.1-2.2-.8-2 1-.9-1.6 1.8-1.4-.3-2.3-2.3-.8v-2l2.3-.8.3-2.3-1.8-1.4.9-1.6 2 1 2.2-.8.8-2.1h2Z"/></svg>',
         other: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>'
     };
 
@@ -71,14 +72,15 @@
     function empty(shell) { note(shell, msg("Wynik", "Output"), tools.state.favoritesOnly && !tools.state.favorites.length ? msg("Brak ulubionych poleceń.", "No favorite commands.") : msg("Wybierz polecenie lub skrypt, aby je uruchomić.", "Select a command or script to run it.")); }
     function confirmExecution(item) { if (!item || item.confirmExecution !== true) return true; return window.confirm(msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?"); }
     function commandPath(category, command) { return "@command/" + category.key + "/" + command.id; }
+    function tonedIcon(markup, tone) { return String(markup || "").replace("<svg ", "<svg class=\"sirk-command-icon sirk-command-icon-" + String(tone || "other") + "\" "); }
 
     function buildTree() {
-        var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", iconMarkup: MENU_ICONS.scripts, children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
+        var children = [{ type: "directory", name: msg("Skrypty", "Scripts"), path: "@menu/scripts", iconMarkup: tonedIcon(MENU_ICONS.scripts, "scripts"), children: sourceTree && Array.isArray(sourceTree.children) ? sourceTree.children : [] }];
         (catalog || []).forEach(function (category) {
             var visibleCommands = (category.commands || []).filter(function (command) { return command.showWithoutDesktop === true || siteAdmin || tools.state.editMode; });
             if (!visibleCommands.length) return;
             children.push({
-                type: "directory", name: tr(category.title), path: "@menu/" + category.key, iconMarkup: MENU_ICONS[category.key] || MENU_ICONS.other,
+                type: "directory", name: tr(category.title), path: "@menu/" + category.key, iconMarkup: tonedIcon(MENU_ICONS[category.key] || MENU_ICONS.other, category.key),
                 children: visibleCommands.map(function (command) {
                     return {
                         type: "script", kind: "command", name: tr(command.label), label: tr(command.label),
@@ -87,7 +89,7 @@
                         requiresApproval: command.requiresApproval === true, runAsUser: command.runAsUser,
                         confirmExecution: command.confirmExecution === true, multiHost: true,
                         showOnDesktop: command.showOnDesktop === true, showWithoutDesktop: command.showWithoutDesktop === true,
-                        iconMarkup: ICONS[command.id] || ICONS.mmc
+                        iconMarkup: tonedIcon(ICONS[command.id] || ICONS.mmc, category.key)
                     };
                 })
             });

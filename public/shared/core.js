@@ -10,10 +10,15 @@
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     }
 
-    var menuIcons = {
+    var modernMenuIcons = {
         approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="12" y="9" width="34" height="46" rx="4" fill="#7b1fa2"/><rect x="20" y="4" width="20" height="10" rx="4" fill="#4a148c"/><path fill="#fff" d="M20 23h18v4H20zm0 9h12v4H20z"/><circle cx="45" cy="43" r="13" fill="#2e7d32" stroke="#fff" stroke-width="3"/><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="m39 43 4 4 8-9"/></svg>'),
         myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#7b1fa2" d="M12 5h31l9 9v45H12z"/><path fill="#fff" opacity=".9" d="M39 5v13h13z"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20"/></svg>'),
         mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="9" width="52" height="46" rx="6" fill="#263238"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m17 23 9 9-9 9m15 1h15"/></svg>')
+    };
+    var classicMenuIcons = {
+        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="13" y="9" width="34" height="46" rx="3" fill="none" stroke="#666" stroke-width="4"/><path d="M21 24h18M21 33h12" fill="none" stroke="#666" stroke-width="4"/><path d="m35 45 5 5 10-12" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+        myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M13 5h30l9 9v45H13Z M43 5v13h9" fill="none" stroke="#666" stroke-width="4" stroke-linejoin="round"/><path d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+        mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="9" width="52" height="46" rx="6" fill="none" stroke="#666" stroke-width="4"/><path d="m17 23 9 9-9 9m15 10h15" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>')
     };
 
     core.assetUrl = function (moduleName, assetName, parameters) {
@@ -190,7 +195,9 @@
         var mainAnchor = document.getElementById("MainMenuMyDevices");
         var leftAnchor = document.getElementById("LeftMenuMyDevices");
         var key = String(definition.mainId || "").replace(/^MainMenuSirkPlatform-/, "").toLowerCase();
-        var iconSource = definition.icon || menuIcons[key] || "";
+        var useModernIcons = !(window.SirkIconMode && typeof window.SirkIconMode.useModern === "function") || window.SirkIconMode.useModern();
+        var family = useModernIcons ? modernMenuIcons : classicMenuIcons;
+        var iconSource = definition.icon || family[key] || modernMenuIcons[key] || "";
         var open = definition.open;
 
         if (mainAnchor && mainAnchor.parentNode) {
