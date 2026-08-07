@@ -1,31 +1,12 @@
 # Changelog
 
-## 1.8.21 — 2026-08-07
+## 0.1.1-dev.1 — 2026-08-07
 
-- Restore visible Edit and Multi-device action icons.
-- Keep Edit/Multi actions inside the existing second-column width, including when the first column is collapsed.
-- Restrict Favorites highlighting to the star icon instead of coloring the entire action control.
-- Apply native MeshCentral selected states synchronously for shared trees and Quick rows.
-- Prevent MeshCentral hover transforms from resizing SIRK-owned Quick/shared surfaces while retaining native hover colors.
-- Make Quick hidden-output attention one-shot per new execution result; refresh, metadata loading and ordinary clicks do not re-arm it.
-- Persist General icon mode across a fresh runtime and prefer the freshly saved admin snapshot over a stale browser bootstrap.
+- Reset active versioning to the pre-1.0 development line because MC-SIRK has not reached its first complete product release.
+- Use SemVer-compatible `0.1.1-dev.X` as the repository/plugin representation of the preferred `0.1.1.X` development convention.
+- Preserve the latest tested `main` functionality: native MeshCentral integration, shared UI ownership, atomic rendering, Quick lifecycle, Edit/Multi behavior, native theme integration and security contracts.
+- Previous `1.8.x` numbers are historical internal development snapshots only. They do not represent product releases and must not be used to continue version numbering.
 
-Detailed release notes: `docs/releases/1.8.21.md`.
+Current development notes: `docs/releases/0.1.1-dev.1-draft.md`.
 
-## 1.8.20 — 2026-08-07
-
-- Complete the pre-handoff cleanup and remove legacy compatibility layers.
-- Consolidate native MeshCentral theme, workspace layout, Collapse and Quick state ownership.
-- Use atomic module rendering and avoid intermediate Devices redraws between SIRK workspaces.
-- Restore a single shared Collapse state for Approval Center, Commands and My Scripts.
-- Keep Edit and Multi mutually exclusive while preserving direct switching between them.
-- Remove duplicate Quick output controllers, DOM repair paths and plugin-owned hover/selected styling.
-- Route SIRK action history through native MeshCentral Events and remove standalone audit storage and Logs UI.
-- Persist General icon mode through the canonical administration settings endpoint.
-- Keep Approval status text native while applying semantic colors to icons only; align Approval Overview with Results.
-- Stop SIRK CSS and Commands routing from changing the visual state of the native Devices toolbar and Plugins tab.
-- Centralize generated CSV rendering/downloads and GET request timeout/cancellation ownership.
-- Synchronize package/plugin version, release documentation and CI with 1.8.20 and Node.js 24.
-- Reset this public changelog to the verified 1.8.20 handoff baseline. Earlier development history remains available in Git and `docs/releases/`.
-
-Detailed release notes: `docs/releases/1.8.20.md`.
+The first product release is reserved for `1.0.0` and requires an explicit release decision after full functionality, acceptance, security, update/rollback and real MeshCentral smoke validation are complete.
