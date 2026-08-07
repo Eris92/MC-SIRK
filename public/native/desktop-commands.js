@@ -186,6 +186,7 @@
         artwork.cleanup = '<path d="M5 7h14M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/>';
         artwork.flushdns = '<path d="M4 6h16v12H4z"/><path d="M8 10h8M8 14h5M18 3v5M15.5 5.5 18 8l2.5-2.5"/>';
         artwork["network-settings"] = '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4M7 9h10M7 13h6"/><circle cx="18" cy="15" r="3"/><path d="M18 10v2M18 18v2M13 15h2M21 15h2"/>';
+        artwork["network-adapter-properties"] = artwork["network-settings"];
         artwork.dns = artwork.network;
         artwork.port = '<path d="M4 8h16v8H4zM8 12h.01M12 12h.01M16 12h.01"/>';
         artwork.netstat = '<path d="M4 17V7M9 17v-5M14 17V4M19 17v-8"/>';
