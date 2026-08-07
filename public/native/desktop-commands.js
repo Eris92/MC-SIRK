@@ -112,23 +112,24 @@
     }
     function statusNode(panel) { return panel && panel.querySelector(".sirk-quick-command-status"); }
     function transientOutput(value) {
-        return /^(Ładowanie poleceń|Loading commands|Polecenie wysłano do agenta|Command sent to the agent|Lista poleceń została odświeżona|Command list refreshed)/i.test(String(value || "").trim());
+        return /^(Ładowanie poleceń|Loading commands|Polecenie wysłano do agenta|Command sent to the agent)/i.test(String(value || "").trim());
     }
     function syncOutputAttention(panel) {
         var button = panel && panel.querySelector('.sirk-quick-command-details-toggle,[data-sirk-toolbar-key="details"]');
         if (button) button.classList.toggle("has-output-attention", state.outputAttention === true);
     }
-    function setOutput(panel, value, isError) {
+    function setOutput(panel, value, isError, executionOutput) {
         var next = String(value == null ? "" : value);
         var changed = next !== state.output;
+        var tracked = executionOutput === true;
         state.output = next;
         state.outputError = isError === true;
         if (!next) {
             state.outputPending = false;
             state.outputAttention = false;
-        } else if (transientOutput(next)) {
+        } else if (tracked && transientOutput(next)) {
             state.outputPending = true;
-        } else {
+        } else if (tracked) {
             if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true;
             state.outputPending = false;
         }
@@ -139,6 +140,16 @@
             status.classList.toggle("is-error", state.outputError);
         }
         syncOutputAttention(panel);
+    }
+    function applyQuickNav(button, active) {
+        if (!button) return;
+        active = active === true;
+        button.classList.toggle("active", active);
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
+            window.MeshThemeAdapter.nav(button);
+        }
     }
 
     function addIcon(host, iconData, kind) {
@@ -317,13 +328,13 @@
 
     function submit(item, collect, button, panel) {
         if (!desktopConnected()) {
-            setOutput(panel, text("disconnected"), true);
+            setOutput(panel, text("disconnected"), true, false);
             return;
         }
         var values = collect();
         if (values.cancelled) return;
         if (!values.ok) {
-            setOutput(panel, text("required"), true);
+            setOutput(panel, text("required"), true, false);
             return;
         }
         if (item.confirmExecution && !window.confirm(text("confirm") + ' "' + item.label + '"?')) return;
@@ -333,24 +344,24 @@
             confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: ""
         };
         if (!payload.nodeId) {
-            setOutput(panel, "Device is not ready.", true);
+            setOutput(panel, "Device is not ready.", true, false);
             return;
         }
         if (item.kind === "command") payload.commandId = item.commandId;
         else payload.scriptPath = item.path;
         if (button) button.disabled = true;
-        setOutput(panel, text("loading"), false);
+        setOutput(panel, text("loading"), false, true);
         window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
             var request = response.request || {};
             var result = request.result || {};
             if (request.status === "pending") {
-                setOutput(panel, text("pending"), false);
+                setOutput(panel, text("pending"), false, true);
                 return;
             }
-            setOutput(panel, text("sent"), false);
+            setOutput(panel, text("sent"), false, true);
             if (result.id) waitForExecution(result.id, panel, 0);
         }).catch(function (error) {
-            setOutput(panel, text("failed") + " " + (error.message || String(error)), true);
+            setOutput(panel, text("failed") + " " + (error.message || String(error)), true, true);
         }).then(function () {
             if (button) button.disabled = false;
         });
@@ -361,13 +372,13 @@
             window.SirkPlatformCore.api("mycommands", "output", null, { id: id }).then(function (response) {
                 if (response.ready) {
                     var failed = ["failed", "error"].indexOf(String(response.status || "").toLowerCase()) >= 0;
-                    setOutput(panel, response.output || text(failed ? "failed" : "completed"), failed);
+                    setOutput(panel, response.output || text(failed ? "failed" : "completed"), failed, true);
                     return;
                 }
                 if (attempt < 20) waitForExecution(id, panel, attempt + 1);
-                else setOutput(panel, text("timeout"), true);
+                else setOutput(panel, text("timeout"), true, true);
             }).catch(function (error) {
-                setOutput(panel, text("failed") + " " + (error.message || String(error)), true);
+                setOutput(panel, text("failed") + " " + (error.message || String(error)), true, true);
             });
         }, attempt ? 750 : 250);
     }
@@ -378,18 +389,20 @@
             if ((value.variables || []).length) writeDetailsCollapsed(false);
             state.output = "";
             state.outputError = false;
+            state.outputPending = false;
+            state.outputAttention = false;
             render(panel);
             if (!(value.variables || []).length) {
                 submit(value, function () { return { ok: true, values: {} }; }, null, panel);
             }
         }
-        setOutput(panel, "", false);
+        setOutput(panel, "", false, false);
         if (item.kind !== "script") {
             use(item);
             return;
         }
         button.disabled = true;
-        setOutput(panel, text("loading"), false);
+        setOutput(panel, text("loading"), false, false);
         window.SirkPlatformCore.api("mycommands", "script", null, { path: item.path }).then(function (response) {
             var script = response.script || item;
             button.disabled = false;
@@ -402,7 +415,7 @@
             });
         }).catch(function (error) {
             button.disabled = false;
-            setOutput(panel, error.message || String(error), true);
+            setOutput(panel, error.message || String(error), true, false);
         });
     }
 
@@ -415,7 +428,7 @@
     function refresh(panel) {
         if (state.refreshing) return;
         state.refreshing = true;
-        setOutput(panel, text("loading"), false);
+        setOutput(panel, text("loading"), false, false);
         render(panel);
         window.SirkPlatformCore.api("mycommands", "scripts", null, { surface: "desktop" }).then(function (response) {
             state.data = response;
@@ -423,11 +436,15 @@
             state.detail = null;
             state.output = text("refreshed");
             state.outputError = false;
+            state.outputPending = false;
+            state.outputAttention = false;
             render(panel);
         }).catch(function (error) {
             state.refreshing = false;
             state.output = error.message || String(error);
             state.outputError = true;
+            state.outputPending = false;
+            state.outputAttention = false;
             render(panel);
         });
     }
@@ -461,6 +478,8 @@
                         state.detail = null;
                         state.output = "";
                         state.outputError = false;
+                        state.outputPending = false;
+                        state.outputAttention = false;
                         render(panel);
                     }
                 },
@@ -558,7 +577,8 @@
         var details = element("section", "sirk-quick-command-details mc-shared-details");
 
         all.forEach(function (category) {
-            var button = element("button", category.key === state.category ? "is-active" : "");
+            var activeCategory = category.key === state.category;
+            var button = element("button", "");
             button.type = "button";
             button.title = category.label;
             addIcon(button, category.iconData, category.iconKind || "folder");
@@ -568,8 +588,11 @@
                 state.detail = null;
                 state.output = "";
                 state.outputError = false;
+                state.outputPending = false;
+                state.outputAttention = false;
                 render(panel);
             };
+            applyQuickNav(button, activeCategory);
             nav.appendChild(button);
         });
 
@@ -582,7 +605,7 @@
         function appendItem(item, depth) {
             if (!matches(item)) return;
             var selectedItem = state.detail && (state.detail.path || state.detail.commandId) === (item.path || item.commandId);
-            var button = element("button", selectedItem ? "is-active" : "");
+            var button = element("button", "");
             button.type = "button";
             button.title = item.label;
             button.style.setProperty("--sdc-depth", String(depth));
@@ -591,6 +614,7 @@
             copy.appendChild(element("strong", "sirk-quick-command-label", item.label));
             button.appendChild(copy);
             button.onclick = function () { selectItem(panel, item, button); };
+            applyQuickNav(button, selectedItem);
             tree.appendChild(button);
         }
         function appendGroups(entries, depth) {
@@ -610,6 +634,7 @@
                     if (hasContents) state.expanded[group.key] = !state.expanded[group.key];
                     render(panel);
                 };
+                applyQuickNav(button, false);
                 tree.appendChild(button);
                 if (expanded) {
                     (group.items || []).forEach(function (item) { appendItem(item, depth + 1); });
@@ -647,17 +672,23 @@
         state.refreshing = true;
         state.output = text("loading");
         state.outputError = false;
+        state.outputPending = false;
+        state.outputAttention = false;
         render(panel);
         window.SirkPlatformCore.api("mycommands", "scripts", null, { surface: "desktop" }).then(function (response) {
             state.data = response;
             state.refreshing = false;
             state.output = "";
             state.outputError = false;
+            state.outputPending = false;
+            state.outputAttention = false;
             render(panel);
         }).catch(function (error) {
             state.refreshing = false;
             state.output = error.message || String(error);
             state.outputError = true;
+            state.outputPending = false;
+            state.outputAttention = false;
             render(panel);
         });
     }

@@ -11,7 +11,8 @@ var groupId = "ugrp/domain/level1";
 var web = { users: {}, userGroups: {} };
 web.userGroups[groupId] = { _id: groupId, name: "Level 1" };
 var parent = { fs: fs, path: path, pluginPath: root, parent: { datapath: temporary, webserver: web } };
-var runtime = require(path.join(root, "server/core/runtime.js")).createRuntime({ parent: parent, pluginRoot: root, source: {} });
+var runtimeFactory = require(path.join(root, "server/core/runtime.js"));
+var runtime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {} });
 var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
 var adminHandler = require(path.join(root, "admin.js")).admin({ shortName: "SIRKPortal", runtime: runtime });
 
@@ -52,6 +53,16 @@ runtime.saveAdminSettings(admin, {
                     assert.strictEqual(result.snapshot.uiSettings.iconMode, "modern", "General icon mode must round-trip through the admin POST response.");
                     var persisted = JSON.parse(fs.readFileSync(path.join(temporary, "sirk-platform-data", "settings.json"), "utf8"));
                     assert.strictEqual(persisted.ui.iconMode, "modern", "General icon mode must persist in settings.json.");
+
+                    var restartedRuntime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {} });
+                    var restartedSnapshot = restartedRuntime.adminSnapshot(admin);
+                    assert.strictEqual(restartedSnapshot.uiSettings.iconMode, "modern",
+                        "A fresh runtime must reload the saved icon mode from disk after restart.");
+
+                    var iconSettingsSource = fs.readFileSync(path.join(root, "public/shared/ui/settings.js"), "utf8");
+                    assert.ok(iconSettingsSource.indexOf("var adminData = window.SirkPlatformAdminData") >= 0 &&
+                        iconSettingsSource.indexOf("if (adminMode != null && adminMode !== \"\") return normalizeMode(adminMode)") >= 0,
+                        "The current browser must prefer the freshly saved admin snapshot over a stale bootstrap icon mode.");
                     resolve();
                 } catch (error) { reject(error); }
             }
@@ -67,7 +78,7 @@ runtime.saveAdminSettings(admin, {
     });
 }).then(function () {
     fs.rmSync(temporary, { recursive: true, force: true });
-    console.log("Admin settings save including General icon mode: OK");
+    console.log("Admin icon mode saves, survives restart and overrides stale browser bootstrap: OK");
 }).catch(function (error) {
     console.error(error);
     process.exitCode = 1;

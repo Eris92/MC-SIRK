@@ -2,7 +2,7 @@
 
 Status: `verified`  
 Data weryfikacji: `2026-08-07`  
-Wersja: `1.8.20`
+Wersja: `1.8.21`
 
 ## Stan
 
@@ -70,7 +70,7 @@ Plugin nie utrzymuje własnej palety dla standardowych kontrolek MeshCentral.
 - Classic: `style10`, `style10s`, `style3x`, `style3sel`;
 - Modern: Bootstrap używany przez MeshCentral, m.in. `btn-*`, `nav-link`, `list-group-item`, `card`, `form-control`, `form-select`, `table`.
 
-CSS pluginu odpowiada za geometrię, przewijanie i responsywność. Hover, selected, standardowe powierzchnie i warianty przycisków pozostają własnością aktywnego UI MeshCentral.
+CSS pluginu odpowiada za geometrię, przewijanie i responsywność. Hover, selected, standardowe powierzchnie i warianty przycisków pozostają własnością aktywnego UI MeshCentral. SIRK może neutralizować hostowy `transform/scale/zoom` wyłącznie wewnątrz własnych powierzchni, gdy zmienia on geometrię.
 
 Kanoniczne kolumny desktop:
 
@@ -80,7 +80,11 @@ secondary: 285–340 px
 collapsed primary: 64 px
 ```
 
-Edit i Multi są wzajemnie wykluczające się. Ich dodatkowy action track jest mierzony na żywo, bez runtime stylesheet.
+Edit i Multi są wzajemnie wykluczające się. Action track jest mierzony na żywo i rezerwowany wewnątrz istniejącej szerokości `secondary`; włączenie trybu nie może poszerzać drugiej kolumny ani przesuwać `details`. Edit działa również wtedy, gdy pierwsza kolumna jest już zwinięta.
+
+Favorites zachowuje aktywny stan logiczny/accessibility, ale semantyczny żółty kolor należy wyłącznie do ikony gwiazdki.
+
+Zaznaczenie w shared trees i Quick jest nakładane synchronicznie przez `MeshThemeAdapter`, a observer pozostaje jedynie fallbackiem dla zmian hostowego motywu.
 
 ## Renderowanie
 
@@ -94,11 +98,18 @@ Quick ma jednego właściciela stanu w `public/native/desktop-commands.js`.
 
 - Collapse i Output są przechowywane w shared preferences My Commands;
 - attention/pending są stanem runtime, nie osobnym storage contract;
+- attention jest uzbrajany wyłącznie przez nowy wynik wykonania;
+- zwykłe kliknięcia, Refresh i ładowanie metadanych nie uzbrajają ponownie attention;
+- pokazanie Output kasuje attention;
 - brak osobnego output controllera;
 - brak obserwatora DOM Quick;
 - launcher ma stałą geometrię 38 px;
 - ukrycie Output używa wyłącznie klasy `is-details-collapsed`;
-- panel korzysta z natywnych klas interakcji MeshCentral.
+- panel korzysta z natywnych klas interakcji MeshCentral i geometrycznego guardu przeciw hostowemu skalowaniu na hover.
+
+## Admin icon mode
+
+`General -> Menu icon mode` zapisuje `auto`, `classic` albo `modern` do `settings.json`. Test regresji wymaga poprawnego round-trip przez `pluginadmin.ashx`, trwałości po utworzeniu nowego runtime oraz preferowania świeżo zapisanego `SirkPlatformAdminData.uiSettings.iconMode` nad starym browser bootstrapem.
 
 ## Usunięte warstwy compatibility
 
@@ -153,4 +164,4 @@ npm test
 
 Suite obejmuje testy funkcjonalne, security regression, walidację natywnego MeshCentral Events, layoutu repozytorium oraz architektury. CI korzysta z Node.js 24 i `actions/checkout@v7` / `actions/setup-node@v7`.
 
-Ostatni pełny wynik przed utworzeniem tego dokumentu: `SUCCESS` dla wersji `1.8.20`.
+Ostatni pełny wynik dla zmian regresyjnych przed bumpem release: `SUCCESS` — GitHub Actions #282.

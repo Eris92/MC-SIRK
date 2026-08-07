@@ -2,6 +2,10 @@
 
 Aktualny release:
 
+- [`1.8.21`](1.8.21.md) — poprawki regresji UI 1.8.20: Edit/Multi, Favorites, zaznaczenie, stabilna geometria Quick/shared, jednokrotne Output attention i zapis icon mode.
+
+Poprzedni release:
+
 - [`1.8.20`](1.8.20.md) — pre-handoff cleanup, konsolidacja właścicieli runtime/UI, atomic render, wspólny Collapse, uproszczenie Quick i finalna walidacja.
 
 Pozostałe historyczne release notes znajdują się w tym katalogu jako osobne pliki `X.Y.Z.md`.

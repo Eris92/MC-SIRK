@@ -16,15 +16,20 @@ var adapter = read("public/shared/ui/toolbar-config.js");
 assert.ok(desktop.indexOf('function syncOutputAttention(panel)') >= 0 &&
     desktop.indexOf('button.classList.toggle("has-output-attention", state.outputAttention === true)') >= 0,
     "Quick renderer must own the visible hidden-output attention state directly.");
-assert.ok(desktop.indexOf('if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true') >= 0,
-    "A new final result must raise attention only when Output is hidden.");
+assert.ok(desktop.indexOf('var tracked = executionOutput === true') >= 0 &&
+    desktop.indexOf('} else if (tracked) {') >= 0 &&
+    desktop.indexOf('if (state.detailsCollapsed && (state.outputPending || changed)) state.outputAttention = true') >= 0,
+    "A new final result may raise attention only inside an explicitly tracked execution lifecycle.");
 assert.ok(desktop.indexOf('if (!state.detailsCollapsed) state.outputAttention = false') >= 0,
     "Opening Output must clear attention immediately.");
 assert.ok(desktop.indexOf('function transientOutput(value)') >= 0 &&
-    desktop.indexOf('Loading commands') >= 0 &&
-    desktop.indexOf('Command sent to the agent') >= 0 &&
-    desktop.indexOf('Command list refreshed') >= 0,
-    "Loading, submission and refresh messages must remain transient and must not create a completed-result alert.");
+    desktop.indexOf('Command sent to the agent') >= 0,
+    "Execution loading/submission messages must remain pending until final output.");
+assert.ok(desktop.indexOf('Command list refreshed') >= 0 &&
+    desktop.indexOf('setOutput(panel, text("loading"), false, false)') >= 0,
+    "Refresh and ordinary UI loading must remain outside the execution-attention lifecycle.");
+assert.ok(desktop.indexOf('state.outputPending = false;\n            state.outputAttention = false;\n            render(panel);') >= 0,
+    "Ordinary selection/reset paths must explicitly acknowledge stale result attention before rerendering.");
 assert.ok(desktop.indexOf('function writeDetailsCollapsed(value)') >= 0 &&
     desktop.indexOf('writePreferences({ quickDetailsCollapsed: state.detailsCollapsed })') >= 0,
     "The real collapsed state and persistence must have one owner in the Quick renderer.");
@@ -53,7 +58,7 @@ assert.ok(toolbarCss.indexOf('.sirk-quick-command-details-toggle.has-output-atte
 assert.ok(toolbarCss.indexOf("border-color:var(--bs-danger,currentColor)") >= 0 &&
     toolbarCss.indexOf("color:var(--bs-danger,currentColor)") >= 0 &&
     toolbarCss.indexOf("background:rgba(var(--bs-danger-rgb,220,53,69),.16)") >= 0,
-    "Modern attention styling must use host Bootstrap danger tokens and only fallback values for non-Bootstrap hosts.");
+    "Modern attention styling must use host Bootstrap danger tokens.");
 assert.ok(toolbarCss.indexOf('.sirk-quick-command-toolbar-host{padding:8px 10px 10px}') >= 0,
     "Quick toolbar buttons must keep a bottom gutter before the column divider lines.");
 [
@@ -73,4 +78,4 @@ assert.ok(toolbarCss.indexOf('.sirk-quick-command-toolbar-host{padding:8px 10px 
         "Native Quick output contract forbids " + entry[2] + ".");
 });
 
-console.log("Quick hidden-output attention has one canonical state owner and native styling: OK");
+console.log("Quick hidden-output attention is one-shot per tracked execution result: OK");

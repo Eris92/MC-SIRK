@@ -21,14 +21,11 @@
 
         var primaryRect = primary.getBoundingClientRect ? primary.getBoundingClientRect() : null;
         var secondaryRect = secondary.getBoundingClientRect ? secondary.getBoundingClientRect() : null;
-        var row = secondary.querySelector && secondary.querySelector(".mc-tree-script-row");
-        var rowRect = row && row.getBoundingClientRect ? row.getBoundingClientRect() : null;
 
         if (!layout.classList.contains("is-collapsed")) {
             setGeometryProperty(page, "--sirk-mode-primary-width", primaryRect && primaryRect.width);
         }
         setGeometryProperty(page, "--sirk-mode-secondary-width", secondaryRect && secondaryRect.width);
-        setGeometryProperty(page, "--sirk-mode-row-width", rowRect && rowRect.width);
         page.__sirkModeGeometryCaptured = true;
     }
 
@@ -56,7 +53,7 @@
             if (children.length > 1) width += gap * (children.length - 1);
             widest = Math.max(widest, width);
         }
-        return widest > 0 ? Math.ceil(widest + 16) : 0;
+        return widest > 0 ? Math.ceil(widest + 12) : 0;
     }
 
     function isActionMode(page) {
@@ -89,7 +86,7 @@
 
     function clearModeGeometry(page) {
         if (!page) return;
-        ["--sirk-mode-primary-width", "--sirk-mode-secondary-width", "--sirk-mode-row-width", "--sirk-actions-width"].forEach(function (name) {
+        ["--sirk-mode-primary-width", "--sirk-mode-secondary-width", "--sirk-actions-width"].forEach(function (name) {
             if (page.style && typeof page.style.removeProperty === "function") page.style.removeProperty(name);
         });
         page.__sirkModeGeometryCaptured = false;
@@ -131,6 +128,8 @@
                     var active = value === true;
                     item.classList.toggle("is-active", active);
                     item.setAttribute("aria-pressed", active ? "true" : "false");
+                    var icon = item.querySelector && item.querySelector(".mc-shared-toolbar-icon");
+                    if (icon) icon.classList.toggle("is-favorite-active", key === "favorites" && active);
                     updateModeClass(context, key, active);
                     if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {
                         window.MeshThemeAdapter.button(item);

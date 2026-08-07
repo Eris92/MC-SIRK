@@ -1,4 +1,4 @@
-# SIRK Management Platform 1.8.20
+# SIRK Management Platform 1.8.21
 
 **Repozytorium:** `MC-SIRK`  
 **Techniczny identyfikator pluginu MeshCentral:** `SIRKPortal`  
@@ -24,7 +24,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Release notes 1.8.20](docs/releases/1.8.20.md)
+- [Release notes 1.8.21](docs/releases/1.8.21.md)
 
 ## Warstwy
 
@@ -76,7 +76,7 @@ Plugin nie posiada niezależnego motywu dla standardowych kontrolek.
 - Classic: `style10`, `style10s`, `style3x`, `style3sel`;
 - Modern: Bootstrap używany przez MeshCentral, m.in. `btn-*`, `nav-link`, `list-group-item`, `card`, `form-control`, `form-select`, `table`.
 
-CSS pluginu odpowiada za geometrię, przewijanie i responsywność. Hover, selected, standardowe powierzchnie, przyciski, formularze i tabele pozostają własnością MeshCentral.
+CSS pluginu odpowiada za geometrię, przewijanie i responsywność. Hover, selected, standardowe powierzchnie, przyciski, formularze i tabele pozostają własnością MeshCentral. SIRK może neutralizować wyłącznie hostowe transformacje zmieniające geometrię własnych powierzchni, bez przejmowania kolorów hover/selected.
 
 Kanoniczne desktopowe kolumny shared UI:
 
@@ -109,7 +109,7 @@ Przejście pomiędzy workspace SIRK nie wykonuje pośredniego `go(1)`, dzięki c
 
 Edit i Multi-device są wzajemnie wykluczające się, ale oba przyciski pozostają widoczne, jeżeli użytkownik ma wymagane uprawnienia.
 
-Dodatkowy action track jest mierzony na żywo przez `toolbar-api.js`. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
+Action track jest mierzony na żywo przez `toolbar-api.js`, ale pozostaje **wewnątrz istniejącej szerokości drugiej kolumny**. Włączenie Edit/Multi nie może poszerzać `secondary`, przesuwać `details` ani blokować aktywacji przy zwiniętej pierwszej kolumnie. Style geometrii są statyczne; runtime nie generuje arkusza CSS.
 
 ## Quick
 
@@ -123,8 +123,10 @@ public/native/desktop-commands.js
 - Collapse i Output korzystają ze wspólnych preferences My Commands;
 - ukrycie Output używa klasy `is-details-collapsed`;
 - attention/pending są stanem runtime;
+- czerwony attention jest uzbrajany wyłącznie przez nowy wynik wykonania i kasowany po pokazaniu wyniku;
+- zwykłe kliknięcia, Refresh i ładowanie metadanych nie uzbrajają ponownie attention;
 - Quick nie używa własnego MutationObservera;
-- wiersze korzystają z natywnych klas MeshCentral.
+- wiersze otrzymują natywne zaznaczenie MeshCentral synchronicznie podczas renderu.
 
 Nie istnieją już warstwy `mesh-plugin-core.js` ani `quick-output-state.js`.
 
