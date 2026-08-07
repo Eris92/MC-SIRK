@@ -709,7 +709,6 @@
                     if (onChange) onChange(); return Promise.resolve(false);
                 },
                 toggleMulti: function (toolbar, onChange) { state.multiPickMode = !state.multiPickMode; if (state.multiPickMode) state.editMode = false; stopPickModes(state.multiPickMode ? "multi" : ""); if (toolbar) { toolbar.setActive("multi", state.multiPickMode); toolbar.setActive("manage", false); toolbar.setActive("link", false); } if (onChange) onChange(); },
-                openDefinitionEditor: openDefinitionEditor,
                 openCredentialsEditor: openCredentialsEditor,
                 openMultiExecution: openMultiExecution,
                 scriptActions: function (script, config) {
