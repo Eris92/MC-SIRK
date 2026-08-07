@@ -27,7 +27,7 @@ var required = [
     "server/modules/approval-center/index.js", "server/modules/automation/index.js",
     "server/modules/commands/index.js", "server/modules/move-requests/index.js",
     "public/shared/core.js", "public/shared/runtime.js", "public/shared/module-shell.js",
-    "public/shared/ui/toolbar-config.js", "public/shared/ui/toolbar.css",
+    "public/shared/ui/shared-ui.css", "public/shared/ui/toolbar-config.js", "public/shared/ui/toolbar.css",
     "public/modules/approvals/index.js", "public/modules/automation/index.js",
     "public/modules/commands/index.js", "public/modules/move-requests/index.js",
     "views/SIRK-Portal.handlebars", "web/admin/admin.js", "web/admin/admin.css",
@@ -117,10 +117,12 @@ need(view, "SirkPlatformAdminData", "Admin view must expose SirkPlatformAdminDat
 need(view, "sirk-platform-admin", "Admin view must use canonical SIRK admin identifiers.");
 reject(view, /MyCompanyAdminData|mycompany-admin|<style\b/i, "Admin view contains legacy identifiers or inline implementation styles.");
 
+var sharedUiCss = exists("public/shared/ui/shared-ui.css") ? read("public/shared/ui/shared-ui.css") : "";
 var toolbarCss = exists("public/shared/ui/toolbar.css") ? read("public/shared/ui/toolbar.css") : "";
 need(toolbarCss, ".sirk-shared-list-item", "Shared list geometry must have one static CSS owner.");
-need(toolbarCss, ".mc-tree-folder-body{margin-left:6px}", "Nested trees must use the canonical 6 px indentation.");
+need(sharedUiCss, ".mc-tree-folder-body{margin:0 0 0 6px}", "Nested trees must use the canonical 6 px indentation.");
 need(toolbarCss, "var(--sdc-depth,0) * 6px", "Quick second-column indentation must match the shared 6 px step.");
+reject(toolbarCss, /\.mc-tree-folder-body\s*\{/, "Tree indentation belongs to shared-ui.css, not toolbar.css.");
 
 if (exists("AGENTS.md")) {
     var agents = read("AGENTS.md");
