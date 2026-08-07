@@ -12,7 +12,3 @@ module.exports.SIRKPortal = function (parent) {
     agentCommandGuard.apply(plugin);
     return plugin;
 };
-
-module.exports.applyElevatedQuickCommandPolicy = elevatedQuickCommands.apply;
-module.exports.applyLoggedOnUserCommandPolicy = loggedOnUserCommands.apply;
-module.exports.applyAgentCommandGuard = agentCommandGuard.apply;
