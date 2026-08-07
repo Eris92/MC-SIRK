@@ -6,7 +6,7 @@ var secretsFactory = require("./secret-store.js");
 var approvalFactory = require("./approval-service.js");
 var deviceFactory = require("./device-service.js");
 var integrationFactory = require("./integration-service.js");
-var auditFactory = require("./audit-log.js");
+var eventFactory = require("./mesh-events.js");
 var folderAccess = require("./folder-access.js");
 
 var VERSION = require("../../config.json").version;
@@ -105,15 +105,8 @@ module.exports.createRuntime = function (options) {
         settings: settings,
         secrets: secrets
     });
-    var audit = auditFactory.createAuditLog({
-        fs: fs,
-        path: nativePath,
-        filePath: nativePath.join(dataRoot, "audit.jsonl"),
-        maxEntries: 5000,
-        maxBytes: 10485760
-    });
+    var eventLog = eventFactory.createMeshEventLog({ parent: parent });
     var context = {
-        audit: audit,
         dataRoot: dataRoot,
         fs: fs,
         integrations: integrations,
@@ -165,7 +158,7 @@ module.exports.createRuntime = function (options) {
         return shared.userName(user) || user && user._id || "system";
     }
 
-    function auditDetails(req, result) {
+    function eventDetails(req, result) {
         var source = req && req.body || {};
         if (source && typeof source.payload === "string") source = shared.parseJsonObject(source.payload, {});
         source = source && typeof source === "object" && !Array.isArray(source) ? source : {};
@@ -183,10 +176,10 @@ module.exports.createRuntime = function (options) {
         return details;
     }
 
-    function writeAudit(user, moduleName, action, outcome, startedAt, req, result, error) {
-        var details = auditDetails(req, result);
+    function writeEvent(user, moduleName, action, outcome, startedAt, req, result, error) {
+        var details = eventDetails(req, result);
         if (error) details.message = shared.cleanText(error && error.message || error, 1000);
-        audit.writeSync({
+        eventLog.writeSync({
             actorId: user && user._id || "",
             actorName: userName(user),
             module: moduleName || "runtime",
@@ -272,16 +265,16 @@ module.exports.createRuntime = function (options) {
                 ? module.apiPost(asset, req, user)
                 : module.apiGet(asset, req, user);
         } catch (error) {
-            if (method === "POST") writeAudit(user, module.key, asset, "failed", startedAt, req, null, error);
+            if (method === "POST") writeEvent(user, module.key, asset, "failed", startedAt, req, null, error);
             shared.sendJson(res, 400, { ok: false, error: String(error && error.message || error) });
             return;
         }
 
         Promise.resolve(operation).then(function (value) {
-            if (method === "POST") writeAudit(user, module.key, asset, "success", startedAt, req, value);
+            if (method === "POST") writeEvent(user, module.key, asset, "success", startedAt, req, value);
             shared.sendJson(res, 200, value);
         }).catch(function (error) {
-            if (method === "POST") writeAudit(user, module.key, asset, "failed", startedAt, req, null, error);
+            if (method === "POST") writeEvent(user, module.key, asset, "failed", startedAt, req, null, error);
             var message = String(error && error.message || error);
             var status = /permission|access|disabled/i.test(message)
                 ? 403
@@ -366,7 +359,7 @@ module.exports.createRuntime = function (options) {
                 return current;
             });
 
-            audit.writeSync({
+            eventLog.writeSync({
                 actorId: user && user._id || "",
                 actorName: userName(user),
                 module: "admin",
@@ -377,7 +370,7 @@ module.exports.createRuntime = function (options) {
             });
             return Promise.resolve(adminSnapshot(user));
         } catch (error) {
-            audit.writeSync({
+            eventLog.writeSync({
                 actorId: user && user._id || "",
                 actorName: userName(user),
                 module: "admin",
@@ -408,7 +401,6 @@ module.exports.createRuntime = function (options) {
             modules: diagnostics(user),
             moduleSettings: current.modules,
             uiSettings: shared.copy(current.ui || { iconMode: "auto" }),
-            auditLog: audit.tail(500),
             folderPermissions: {
                 myscripts: moduleFolders("myscripts"),
                 mycommands: moduleFolders("mycommands")
@@ -440,7 +432,7 @@ module.exports.createRuntime = function (options) {
         }
         var responseId = command && (command.responseid || command.responseId);
         if (responseId) {
-            audit.writeSync({
+            eventLog.writeSync({
                 actorName: "MeshCentral Agent",
                 module: "mycommands",
                 action: "agent-result",
@@ -456,7 +448,6 @@ module.exports.createRuntime = function (options) {
 
     return {
         adminSnapshot: adminSnapshot,
-        audit: audit,
         bootstrap: bootstrap,
         captureAgentData: captureAgentData,
         context: context,
