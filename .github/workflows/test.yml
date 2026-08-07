@@ -19,7 +19,5 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - name: Targeted Quick toolbar tests
-        run: node test/quick-toolbar-nowrap.test.js && node test/quick-commands-compact-layout.test.js && node test/quick-toolbar-order.test.js && node test/desktop-commands-shell.test.js
       - name: Run test suite
         run: npm test
