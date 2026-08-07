@@ -38,31 +38,19 @@ function styleStore() {
     };
 }
 
-var rowWidth = 282;
 var primaryWidth = 218;
 var secondaryWidth = 306;
-var row = {
-    getBoundingClientRect: function () { return { width: rowWidth }; }
-};
-var layout = {
-    classList: classList([])
-};
+var layout = { classList: classList([]) };
 var primary = {
     getBoundingClientRect: function () { return { width: primaryWidth }; }
 };
 function actionButton() {
-    return {
-        getBoundingClientRect: function () { return { width: 36 }; }
-    };
+    return { getBoundingClientRect: function () { return { width: 36 }; } };
 }
-var actionGroup = {
-    children: [actionButton(), actionButton(), actionButton(), actionButton()]
-};
+var actionGroup = { children: [actionButton(), actionButton(), actionButton(), actionButton()] };
 var secondary = {
     getBoundingClientRect: function () { return { width: secondaryWidth }; },
-    querySelector: function (selector) {
-        return selector === ".mc-tree-script-row" ? row : null;
-    }
+    querySelector: function () { return null; }
 };
 var pageStyle = styleStore();
 var page = {
@@ -88,9 +76,7 @@ function toolbarButton() {
 var manageButton = toolbarButton();
 var multiButton = toolbarButton();
 var toolbarRoot = {
-    closest: function (selector) {
-        return selector === ".mc-shared-page" ? page : null;
-    }
+    closest: function (selector) { return selector === ".mc-shared-page" ? page : null; }
 };
 var appendedStyles = [];
 var frameQueue = [];
@@ -112,9 +98,7 @@ var context = {
             frameQueue.push(callback);
             return frameQueue.length;
         },
-        getComputedStyle: function () {
-            return { columnGap: "4px", gap: "4px" };
-        }
+        getComputedStyle: function () { return { columnGap: "4px", gap: "4px" }; }
     }
 };
 context.window.window = context.window;
@@ -136,73 +120,70 @@ var api = context.window.SharedToolbarApi.create({
 
 api.setActive("manage", true);
 flushFrames();
-
 assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
     "Edit must retain the exact rendered first-column width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
-    "Edit must retain the exact rendered normal second-column width.");
-assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
-    "Edit must retain the exact rendered script-row width so wrapping does not change.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "172px",
-    "Four 36 px Edit buttons, three 4 px gaps and the safety gutter must fit without clipping.");
+    "Edit must retain the exact rendered second-column width without widening it.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
+    "Four 36 px Edit buttons, three 4 px gaps and a 12 px gutter must fit inside the existing second column.");
+assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], undefined,
+    "Edit must not preserve a separate old row width that pushes actions outside the second column.");
 assert.strictEqual(page.classList.contains("is-edit-mode"), true,
-    "Edit class must be added after the normal geometry is captured.");
-assert.strictEqual(page.__sirkModeGeometryCaptured, true,
-    "The captured normal geometry must not be overwritten by later Edit rerenders.");
+    "Edit class must be active after geometry capture.");
 
 primaryWidth = 300;
 secondaryWidth = 620;
-rowWidth = 430;
 api.setActive("manage", true);
 flushFrames();
 assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
-    "Repeated toolbar synchronization must not recapture the already expanded Edit layout.");
+    "Repeated toolbar synchronization must not recapture expanded geometry.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
-    "Repeated toolbar synchronization must keep the original normal second-column width.");
-assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
-    "Repeated toolbar synchronization must keep the original normal text width.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "172px",
-    "Repeated Edit action measurement must remain stable.");
+    "Repeated toolbar synchronization must keep the original second-column width.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
+    "Repeated action measurement must remain stable.");
 
 api.setActive("manage", false);
 assert.strictEqual(page.classList.contains("is-edit-mode"), false,
     "Closing Edit must remove the mode class.");
 assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,
-    "Closing Edit must release the measured action width.");
+    "Closing Edit must release action geometry.");
 
 primaryWidth = 218;
 secondaryWidth = 306;
-rowWidth = 282;
 actionGroup.children = [actionButton()];
 api.setActive("multi", true);
 flushFrames();
-
 assert.strictEqual(page.classList.contains("is-multi-mode"), true,
-    "Multi class must be added after the normal geometry is captured.");
+    "Multi must activate normally.");
 assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], "218px",
-    "Multi must keep the exact same first-column width as normal mode.");
+    "Multi must preserve the normal first-column width.");
 assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
-    "Multi must keep the exact normal second-column width.");
-assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], "282px",
-    "Multi must keep script label wrapping identical to normal mode.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], "52px",
-    "One 36 px Multi button and the 16 px safety gutter must fit without changing text width.");
-
+    "Multi must preserve the normal second-column width.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "48px",
+    "One 36 px Multi action and the 12 px gutter must fit inside the existing second column.");
 api.setActive("multi", false);
-assert.strictEqual(page.classList.contains("is-multi-mode"), false,
-    "Closing Multi must remove the mode class.");
-assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], undefined,
-    "Closing the last active mode must release the captured first-column width.");
-assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], undefined,
-    "Closing the last active mode must release the captured second-column width.");
-assert.strictEqual(pageStyle.values["--sirk-mode-row-width"], undefined,
-    "Closing the last active mode must release the captured text width.");
-assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,
-    "Closing Multi must release the measured action width.");
 
-assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-tree-script-actions button") >= 0 &&
-    toolbarCss.indexOf("box-sizing:border-box") >= 0,
-    "Static toolbar CSS must keep Edit and Multi button borders and padding inside the reserved width.");
+layout.classList.toggle("is-collapsed", true);
+actionGroup.children = [actionButton(), actionButton(), actionButton(), actionButton()];
+api.setActive("manage", true);
+flushFrames();
+assert.strictEqual(page.classList.contains("is-edit-mode"), true,
+    "Edit must activate while the first column is already collapsed.");
+assert.strictEqual(pageStyle.values["--sirk-mode-primary-width"], undefined,
+    "Collapsed Edit must keep the canonical collapsed first-column track instead of capturing a fake expanded width.");
+assert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], "306px",
+    "Collapsed Edit must still preserve the existing second-column width.");
+assert.strictEqual(pageStyle.values["--sirk-actions-width"], "168px",
+    "Collapsed Edit must still expose all action icons within the second column.");
+api.setActive("manage", false);
+
+assert.ok(toolbarCss.indexOf("grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)") >= 0,
+    "Edit and Multi must not widen the shared second column.");
+assert.ok(toolbarCss.indexOf("grid-template-columns:minmax(0,1fr) var(--sirk-actions-width)") >= 0,
+    "Action icons must consume space inside the existing second-column row.");
+assert.strictEqual(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)"), -1,
+    "Action modes must never grow the second column or push the details column.");
 assert.strictEqual(appendedStyles.length, 0,
-    "Toolbar geometry must not inject a runtime stylesheet; Edit and Multi styles are static assets.");
-console.log("Edit and Multi live geometry with measured action widths: OK");
+    "Toolbar geometry must not inject a runtime stylesheet.");
+
+console.log("Edit and Multi keep fixed columns, visible actions and collapsed-mode activation: OK");
