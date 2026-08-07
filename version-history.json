@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-dev.3",
+    "date": "2026-08-07",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from main.",
+      "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the toolbar row height.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.2",
     "date": "2026-08-07",
     "changes": [

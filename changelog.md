@@ -1,12 +1,18 @@
 # Changelog
 
+## 0.1.1-dev.3 — 2026-08-07
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
+- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.3.md`.
+
 ## 0.1.1-dev.2 — 2026-08-07
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the current `main` runtime instead of treating it as the already installed `0.1.1-dev.1` build.
 - Include the current runtime-smoke follow-up fixes for Quick collapse chevron semantics, stable shared toolbar Search geometry and connected-DOM script selection in My Commands/My Scripts.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
-
-Current development notes: `docs/releases/0.1.1-dev.2.md`.
 
 ## 0.1.1-dev.1 — 2026-08-07
 
