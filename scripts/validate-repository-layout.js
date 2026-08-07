@@ -27,7 +27,7 @@ function files(relative) {
     "README.md", "SIRKPortal.js", "SIRKPortalAdmin.js", "plugin-main.js", "admin.js",
     "config.json", "package.json", "changelog.md", "version-history.json",
     "docs/INDEX.md", "docs/PROJECT-STATE.md", "docs/REPOSITORY-LAYOUT.md", "docs/releases/README.md",
-    "views/SIRK-Portal.handlebars", "server/core/runtime.js",
+    "views/SIRK-Portal.handlebars", "server/core/runtime.js", "server/core/mesh-events.js",
     "server/modules/approval-center/index.js", "server/modules/automation/index.js",
     "server/modules/commands/index.js", "server/modules/move-requests/index.js",
     "public/INDEX.md", "public/shared/core.js", "public/shared/runtime.js", "public/shared/module-shell.js",
@@ -46,7 +46,7 @@ function files(relative) {
     "core", "modules", "public/shared-ui", "Install-MyCompany-FromGit.ps1",
     "Install-MyCompany-FromGit_RUN.ps1", "tools/install/Install-MyCompany-FromGit.ps1",
     "tools/install/Install-MyCompany-FromGit_RUN.ps1", "embedded-manifest.json", "docs-MIGRATION-COVERAGE.md",
-    "server/core/runtime-base.js", "public/native/mesh-plugin-core.js", "public/native/quick-output-state.js",
+    "server/core/runtime-base.js", "server/core/audit-log.js", "public/native/mesh-plugin-core.js", "public/native/quick-output-state.js",
     "public/native/download-results.js", "public/shared/ui/script-edit-actions.js",
     "scripts/patches", "tmp.txt", "noop", "noop2"
 ].forEach(function (relative) {
@@ -135,6 +135,7 @@ if (adminView.indexOf("SIRK Management Platform") < 0 || adminView.indexOf("Sirk
 if (/<style\b|<script>(?!window\.SirkPlatformAdminData=)/i.test(adminView)) {
     errors.push("Administration template must remain declarative; implementation belongs in admin.js/admin.css.");
 }
+if (/data-tab=["']logs["']/i.test(adminView)) errors.push("Administration template must not expose a standalone Logs tab.");
 
 var adminSource = read("admin.js");
 [
