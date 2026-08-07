@@ -1,12 +1,21 @@
 # Changelog
 
+## 0.1.1-dev.4 — 2026-08-07
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current `main`.
+- Keep Edit action DOM and live secondary-track geometry synchronized with atomic render commit so action buttons do not briefly hide behind script labels during Edit on/off.
+- Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.4.md`.
+
 ## 0.1.1-dev.3 — 2026-08-07
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.1-dev.3.md`.
+Development notes: `docs/releases/0.1.1-dev.3.md`.
 
 ## 0.1.1-dev.2 — 2026-08-07
 

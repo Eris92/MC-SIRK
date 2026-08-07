@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.3`  
+Current version: `0.1.1-dev.4`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -74,7 +74,7 @@ secondary: 285–340 px
 collapsed primary: 64 px
 ```
 
-Edit i Multi są wzajemnie wykluczające. Włączenie trybu nie może poszerzać `secondary` ani przesuwać `details`.
+Edit i Multi są wzajemnie wykluczające. Edit może rozszerzyć `secondary` wyłącznie o zmierzoną szerokość action rail; Multi zachowuje bazową szerokość. Zmiana geometrii Edit następuje po atomic render commit, aby stary action DOM nie był ściskany podczas przełączenia.
 
 Moduły renderują do odłączonych elementów i wykonują atomic commit. `renderSequence` odrzuca nieaktualny render. Przejście SIRK -> SIRK nie powinno przechodzić przez pusty stan ani odtwarzać Devices.
 
@@ -121,15 +121,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.3
-config.json  -> 0.1.1-dev.3
+package.json -> 0.1.1-dev.4
+config.json  -> 0.1.1-dev.4
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.3.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.4.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
