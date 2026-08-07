@@ -1,0 +1,122 @@
+from pathlib import Path
+
+
+def replace(path, old, new):
+    p = Path(path)
+    text = p.read_text()
+    if old not in text:
+        raise SystemExit(f"Expected fragment not found in {path}: {old[:120]!r}")
+    p.write_text(text.replace(old, new, 1))
+
+
+# #120: reuse My Commands semantic tone classes for Quick fallback SVG only.
+replace('public/native/desktop-commands.js',
+    'function addIcon(host, iconData, kind) {',
+    'function addIcon(host, iconData, kind, tone) {')
+replace('public/native/desktop-commands.js',
+    'var icon = element("span", "sirk-quick-command-icon");',
+    'var icon = element("span", "sirk-quick-command-icon" + (tone ? " sirk-command-icon-" + tone : ""));')
+replace('public/native/desktop-commands.js',
+    'result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []) });',
+    'result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });')
+replace('public/native/desktop-commands.js',
+    'iconKind: category.key, items: items\n                });',
+    'iconKind: category.key, tone: ["network", "system"].indexOf(category.key) >= 0 ? category.key : "other", items: items\n                });')
+replace('public/native/desktop-commands.js',
+    'addIcon(button, category.iconData, category.iconKind || "folder");',
+    'addIcon(button, category.iconData, category.iconKind || "folder", category.tone);')
+replace('public/native/desktop-commands.js',
+    'addIcon(button, item.iconData, item.iconKind || "script");',
+    'addIcon(button, item.iconData, item.iconKind || "script", selected && selected.tone);')
+replace('public/native/desktop-commands.js',
+    'addIcon(button, group.iconData, "folder");',
+    'addIcon(button, group.iconData, "folder", selected && selected.tone);')
+
+# #115: direct-column test covers immediate Results -> root exclusivity.
+replace('test/shared-catalog-direct-columns.test.js',
+    'assert.strictEqual(primary.children[1].getAttribute("aria-selected"), "false",\n    "Clicking Results must clear root selection before the module rerender.");',
+    'assert.strictEqual(primary.children[1].getAttribute("aria-selected"), "false",\n    "Clicking Results must clear root selection before the module rerender.");\nlastTreeOptions.onRootSelect({ path: "Scripts" });\nassert.strictEqual(resultsButton.getAttribute("aria-selected"), "false",\n    "Selecting a catalog root must clear Results immediately before the module rerender.");\nassert.strictEqual(resultsButton.classList.contains("active"), false,\n    "Results and a catalog root must never remain active at the same time.");')
+replace('test/shared-list-quick-style.test.js',
+    'assert.strictEqual(quickCss.indexOf("--bs-list-group-active-border-color"), -1,\n    "Quick CSS must not duplicate the native selected-state palette.");',
+    'assert.strictEqual(quickCss.indexOf("--bs-list-group-active-border-color"), -1,\n    "Quick CSS must not duplicate the native selected-state palette.");\nassert.ok(css.indexOf(".mc-shared-page .sirk-shared-list-item:is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)") >= 0,\n    "A single shared theme-safe fallback must keep selected rows perceivable when host native classes provide insufficient contrast.");\nassert.strictEqual(sharedUiCss.indexOf("sirk-shared-list-item:is(.active,.is-active)"), -1,\n    "Selected fallback styling must have one shared owner.");\nassert.strictEqual(quickCss.indexOf("sirk-shared-list-item:is(.active,.is-active)"), -1,\n    "Quick geometry CSS must not duplicate the shared selected fallback.");')
+
+# #116: Edit expands by exactly the measured action rail; Multi keeps its baseline track.
+replace('test/edit-live-geometry.test.js',
+    '"Edit must retain the exact rendered second-column width without widening it.");',
+    '"Edit must retain the pre-mode second-column width as the non-cumulative baseline.");')
+replace('test/edit-live-geometry.test.js',
+    '"Four 36 px Edit buttons, three 4 px gaps and a 12 px gutter must fit inside the existing second column.");',
+    '"Four 36 px Edit buttons, three 4 px gaps and a 12 px gutter define the exact Edit expansion rail.");')
+replace('test/edit-live-geometry.test.js',
+    '"Repeated toolbar synchronization must keep the original second-column width.");',
+    '"Repeated toolbar synchronization must keep the original second-column baseline without cumulative growth.");')
+replace('test/edit-live-geometry.test.js',
+    '"Collapsed Edit must still preserve the existing second-column width.");',
+    '"Collapsed Edit must preserve the same baseline before CSS adds the action rail.");')
+replace('test/edit-live-geometry.test.js',
+    'assert.ok(toolbarCss.indexOf("grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)") >= 0,\n    "Edit and Multi must not widen the shared second column.");',
+    'assert.ok(toolbarCss.indexOf(".mc-shared-page.is-edit-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)) var(--sirk-edit-details-track)") >= 0,\n    "Edit must add exactly the measured action rail to the captured normal secondary width.");\nassert.ok(toolbarCss.indexOf(".mc-shared-page.is-multi-mode .mc-shared-layout{grid-template-columns:var(--sirk-mode-primary-width,220px) var(--sirk-mode-secondary-width,340px) var(--sirk-edit-details-track)") >= 0,\n    "Multi must retain the normal captured secondary width.");')
+replace('test/edit-live-geometry.test.js',
+    'assert.strictEqual(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width)"), -1,\n    "Action modes must never grow the second column or push the details column.");',
+    'assert.ok(toolbarCss.indexOf("calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width))") >= 0,\n    "Edit expansion must be derived from one captured baseline plus one measured action rail.");')
+replace('test/edit-live-geometry.test.js',
+    'assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,\n    "Closing Edit must release action geometry.");',
+    'assert.strictEqual(pageStyle.values["--sirk-actions-width"], undefined,\n    "Closing Edit must release action geometry.");\nassert.strictEqual(pageStyle.values["--sirk-mode-secondary-width"], undefined,\n    "Closing Edit must release the captured secondary baseline so the normal layout is restored.");')
+replace('test/button-style-contract.test.js',
+    'assert.ok(theme.indexOf(\'element.classList.contains("mc-tree-favorite-action") && active(element)\') >= 0 && theme.indexOf(\'return "warning"\') >= 0,\n    "Favorite may retain native active semantics while visual yellow is restricted to the star icon by static CSS.");',
+    'assert.strictEqual(theme.indexOf(\'element.classList.contains("mc-tree-favorite-action") && active(element)\'), -1,\n    "Favorite active state must not switch the whole native button to a warning variant.");')
+replace('test/button-style-contract.test.js',
+    'assert.ok(css.indexOf(\'.mc-tree-favorite-action,.mc-tree-favorite-action:hover,.mc-tree-favorite-action:focus,.mc-tree-favorite-action:active{background-color:transparent!important;border-color:transparent!important;color:inherit!important}\') >= 0,\n    "The Favorite action button itself must remain visually neutral in every interaction state.");',
+    'assert.strictEqual(css.indexOf(\'.mc-tree-favorite-action,.mc-tree-favorite-action:hover,.mc-tree-favorite-action:focus,.mc-tree-favorite-action:active{background-color:transparent!important;border-color:transparent!important;color:inherit!important}\'), -1,\n    "Per-row Favorite must retain the same native button surface as the other script actions.");')
+
+Path('test/quick-toolbar-nowrap.test.js').write_text(r'''"use strict";
+
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var css = fs.readFileSync(path.join(root, "public/native/desktop-commands.css"), "utf8");
+var shared = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
+assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar{align-items:center;min-height:34px;margin:0;gap:8px;max-width:100%;box-sizing:border-box;flex-wrap:nowrap}") >= 0, "Quick toolbar must remain one row independently of shared toolbar wrapping.");
+assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-left{flex:1 1 auto;min-width:0}") >= 0 && css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar-right{flex:0 0 auto;min-width:34px;margin-left:auto}") >= 0, "Quick left actions/search must consume flexible space while Close stays fixed.");
+assert.ok(css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-search{flex:1 1 0;min-width:0;max-width:300px}") >= 0 && css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-search input{width:100%;min-width:0") >= 0, "Quick Search must shrink before any fixed toolbar action moves.");
+assert.ok(css.indexOf("flex:0 0 34px") >= 0, "Quick toolbar actions must not shrink below their canonical 34 px width.");
+assert.strictEqual(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar{flex-wrap:wrap}"), -1, "Quick responsive CSS must not re-enable a second toolbar row.");
+assert.ok(shared.indexOf("@media(max-width:760px){.mc-shared-toolbar{flex-wrap:wrap}") >= 0, "The Quick-specific fix must not remove wrapping support from other shared module toolbars.");
+console.log("Quick toolbar search remains one row with fixed action geometry: OK");
+''')
+
+Path('test/quick-collapse-action-icon.test.js').write_text(r'''"use strict";
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+var config = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"), "utf8");
+assert.ok(config.indexOf("collapse: { title: \"Collapse\", icon: svg('<path d=\"m15 18-6-6 6-6\"/>'), expandIcon: svg('<path d=\"m9 18 6-6-6-6\"/>')") >= 0, "Shared collapse artwork must keep left-chevron Collapse and right-chevron Expand actions.");
+assert.ok(quick.indexOf('title: state.collapsed ? text("expand") : text("collapse")') >= 0 && quick.indexOf('toolbar.setTitle("collapse", state.collapsed ? text("expand") : text("collapse"))') >= 0, "Quick title must describe the next action for both collapsed states.");
+assert.ok(quick.indexOf('toolbar.setIcon("collapse", state.collapsed ? collapseDefinition.expandIcon : collapseDefinition.icon)') >= 0, "Quick icon must describe the same next action as the title.");
+assert.ok(quick.indexOf('writePreferences({ quickCollapsed: state.collapsed })') >= 0, "The state controlling icon/title must remain persisted after each toggle.");
+console.log("Quick collapse title and chevron both represent the next action: OK");
+''')
+
+replace('test/quick-output-attention-precedence.test.js',
+    'assert.ok(toolbarCss.indexOf("border-color:var(--bs-danger,currentColor)") >= 0 &&\n    toolbarCss.indexOf("color:var(--bs-danger,currentColor)") >= 0 &&\n    toolbarCss.indexOf("background:rgba(var(--bs-danger-rgb,220,53,69),.16)") >= 0,\n    "Modern attention styling must use host Bootstrap danger tokens.");',
+    'assert.ok(toolbarCss.indexOf(".sirk-quick-command-details-toggle.has-output-attention .mc-shared-toolbar-icon{color:var(--bs-danger,currentColor)!important}") >= 0,\n    "Hidden-output attention must color only the existing toolbar icon with the host danger token.");\nassert.strictEqual(toolbarCss.indexOf(".sirk-quick-command-details-toggle.has-output-attention{border-color"), -1,\n    "Attention must not replace the native button border.");\nassert.strictEqual(toolbarCss.indexOf("background:rgba(var(--bs-danger-rgb"), -1,\n    "Attention must not replace the native button background.");')
+
+Path('test/quick-semantic-icon-tone.test.js').write_text(r'''"use strict";
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8");
+var css = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
+["scripts", "network", "system", "other"].forEach(function (tone) { assert.ok(css.indexOf(".sirk-command-icon-" + tone + "{") >= 0, "Quick and My Commands must share semantic tone " + tone + "."); });
+assert.ok(quick.indexOf('function addIcon(host, iconData, kind, tone)') >= 0 && quick.indexOf('" sirk-command-icon-" + tone') >= 0, "Quick fallback SVG must reuse the shared semantic tone class.");
+assert.ok(quick.indexOf('image.className = "sirk-quick-command-icon"') >= 0, "Custom iconData must remain an unrecolored image.");
+assert.ok(quick.indexOf('tone: "scripts"') >= 0 && quick.indexOf('["network", "system"].indexOf(category.key) >= 0 ? category.key : "other"') >= 0, "Quick categories must map to the same scripts/network/system/other tone families as My Commands.");
+assert.ok(quick.indexOf('addIcon(button, item.iconData, item.iconKind || "script", selected && selected.tone)') >= 0, "Built-in Quick command icons must inherit their category tone.");
+assert.ok(commands.indexOf('"sirk-command-icon-" + tone') >= 0, "My Commands must remain the direct consumer of the same shared tone classes.");
+console.log("Quick reuses My Commands semantic icon tones without recoloring custom iconData: OK");
+''')
