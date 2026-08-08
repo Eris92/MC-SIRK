@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   finalize:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -26,26 +25,25 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import json
-
           old = '0.1.1-dev.21'
           new = '0.1.1-dev.22'
 
-          readme = Path('README.md')
-          text = readme.read_text()
+          p = Path('README.md')
+          text = p.read_text()
           text = text.replace('# SIRK Management Platform ' + old, '# SIRK Management Platform ' + new, 1)
           text = text.replace('docs/releases/' + old + '.md', 'docs/releases/' + new + '.md', 1)
-          readme.write_text(text)
+          p.write_text(text)
 
-          project = Path('docs/PROJECT-STATE.md')
-          text = project.read_text()
+          p = Path('docs/PROJECT-STATE.md')
+          text = p.read_text()
           text = text.replace('Current version: `' + old + '`', 'Current version: `' + new + '`', 1)
           text = text.replace('package.json -> ' + old, 'package.json -> ' + new, 1)
           text = text.replace('config.json  -> ' + old, 'config.json  -> ' + new, 1)
           text = text.replace('Aktualne development notes: `docs/releases/' + old + '.md`.', 'Aktualne development notes: `docs/releases/' + new + '.md`.', 1)
-          project.write_text(text)
+          p.write_text(text)
 
-          changelog = Path('changelog.md')
-          current = changelog.read_text()
+          p = Path('changelog.md')
+          text = p.read_text()
           block = '''## 0.1.1-dev.22 - 2026-08-08
 
 - Deliver the shared startup/readiness fix from PR #212 for Issues #177 and #178.
@@ -56,22 +54,22 @@ jobs:
 Current development notes: `docs/releases/0.1.1-dev.22.md`.
 
 '''
-          if not current.startswith('## 0.1.1-dev.22'):
-              changelog.write_text(block + current)
+          if not text.startswith('## 0.1.1-dev.22'):
+              p.write_text(block + text)
 
-          release_index = Path('docs/releases/README.md')
-          text = release_index.read_text()
+          p = Path('docs/releases/README.md')
+          text = p.read_text()
           marker = 'Aktualna linia development:\n\n'
           new_line = '- [`0.1.1-dev.22`](0.1.1-dev.22.md) — bieżąca rewizja development z wcześniejszym permission-safe bootstrap menu, równoległym bounded startupem rendererów i replay natywnego node/page contextu;\n'
           old_line = '- [`0.1.1-dev.21`](0.1.1-dev.21.md) — bieżąca rewizja development z usuniętym Move Request host-button readiness retry staircase i synchronicznym reuse natywnych lifecycle callbacks;\n'
-          previous_line = '- [`0.1.1-dev.21`](0.1.1-dev.21.md) — poprzednia rewizja development z usuniętym Move Request host-button readiness retry staircase i synchronicznym reuse natywnych lifecycle callbacks;\n'
-          text = text.replace(old_line, previous_line, 1)
+          prev_line = '- [`0.1.1-dev.21`](0.1.1-dev.21.md) — poprzednia rewizja development z usuniętym Move Request host-button readiness retry staircase i synchronicznym reuse natywnych lifecycle callbacks;\n'
+          text = text.replace(old_line, prev_line, 1)
           if new_line not in text:
               text = text.replace(marker, marker + new_line, 1)
-          release_index.write_text(text)
+          p.write_text(text)
 
-          history_path = Path('version-history.json')
-          history = json.loads(history_path.read_text())
+          p = Path('version-history.json')
+          history = json.loads(p.read_text())
           if not history or history[0].get('version') != new:
               history.insert(0, {
                   'version': new,
@@ -83,10 +81,9 @@ Current development notes: `docs/releases/0.1.1-dev.22.md`.
                       'Keep one canonical startup/menu owner without polling, MutationObserver, readiness timer staircases, tag or GitHub Release.'
                   ]
               })
-          history_path.write_text(json.dumps(history, indent=2, ensure_ascii=False) + '\n')
+          p.write_text(json.dumps(history, indent=2, ensure_ascii=False) + '\n')
 
-          note = Path('docs/releases/0.1.1-dev.22.md')
-          note.write_text('''# MC-SIRK 0.1.1-dev.22
+          Path('docs/releases/0.1.1-dev.22.md').write_text('''# MC-SIRK 0.1.1-dev.22
 
 Status: development pre-1.0. No tag or GitHub Release.
 
@@ -122,7 +119,6 @@ Status: development pre-1.0. No tag or GitHub Release.
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add README.md changelog.md config.json docs/PROJECT-STATE.md docs/releases/README.md docs/releases/0.1.1-dev.22.md package.json version-history.json .github/workflows/dev22-bump.yml
-          if git diff --cached --quiet; then exit 0; fi
+          git add -A
           git commit -m "chore: finalize 0.1.1-dev.22 metadata"
           git push origin HEAD:issue-214-dev22
