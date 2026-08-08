@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.23`
+Current version: `0.1.1-dev.24`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,7 +49,8 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `public/shared/core.js` — workspace, menu, aktywny moduł i request guard;
+- `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz zastosowanie wybranej rodziny/source ikon menu;
+- `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
 - `public/shared/runtime.js` — browser bootstrap, permission-safe native surface readiness, native page/device lifecycle i bounded module startup;
 - `public/shared/module-shell.js` — lifecycle modułów i atomic render;
 - `public/shared/ui/layout.js` — layout i Collapse;
@@ -60,6 +61,8 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
 - `admin.js` — mapa assetów i chroniony download CSV.
+
+`public/shared/ui/page.js` może normalizować natywne klasy/active state left menu, ale nie wybiera ani nie podmienia rodziny/source ikon Modern; ta odpowiedzialność pozostaje w `SirkIconMode -> core.ensureMenu()`.
 
 Przed dodaniem nowego ownera sprawdź `docs/agent/12-Agent-Wydajnosc-Reuse.md`.
 
@@ -122,15 +125,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.23
-config.json  -> 0.1.1-dev.23
+package.json -> 0.1.1-dev.24
+config.json  -> 0.1.1-dev.24
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.23.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.24.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
