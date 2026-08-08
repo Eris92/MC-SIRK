@@ -107,9 +107,9 @@ assert.ok(commandsUi.indexOf("command.showWithoutDesktop === true || siteAdmin |
 
 assert.ok(desktop.indexOf('document.getElementById("deskarea3x")') >= 0 && desktop.indexOf('{ surface: "desktop" }') >= 0,
     "Quick commands must mount on the native Desktop stage and request Desktop-filtered data.");
-assert.ok(desktop.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0 &&
+assert.ok(desktop.indexOf('key: "scripts", label: text("scripts"), iconKind: "scripts", groups: scriptGroups') >= 0 &&
     desktop.indexOf("function scriptGroup") >= 0,
-    "Quick commands must preserve the Scripts tree and nested folders.");
+    "Quick commands must preserve the Scripts tree/nested folders while using the distinct Scripts artwork.");
 assert.ok(desktop.indexOf("function desktopConnected()") >= 0 && desktop.indexOf("window.desktop.State") >= 0,
     "Quick commands must require an active MeshCentral Desktop session.");
 assert.ok(desktop.indexOf("function protectInput(control)") >= 0 && desktop.indexOf("event.stopPropagation()") >= 0,

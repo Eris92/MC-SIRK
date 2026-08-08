@@ -164,8 +164,9 @@
         var icon = element("span", "sirk-quick-command-icon" + (tone ? " sirk-command-icon-" + tone : ""));
         var artwork = {
             folder: '<path d="M3 6h7l2 2h9v11H3V6Z"/>',
+            scripts: '<path d="M6 3h9l3 3v15H6V3Z"/><path d="m9 11 2 2-2 2M13 15h3"/>',
             network: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-            system: '<circle cx="12" cy="12" r="3"/><path d="M19 12h2M3 12h2M12 3v2M12 19v2M17 7l1.5-1.5M5.5 18.5 7 17M17 17l1.5 1.5M5.5 5.5 7 7"/><path d="m15.5 4.8.8 2.1 2.2.8 2-1 .9 1.6-1.8 1.4.3 2.3 2.3.8v2l-2.3.8-.3 2.3 1.8 1.4-.9 1.6-2-1-2.2.8-.8 2.1h-2l-.8-2.1-2.2-.8-2 1-.9-1.6 1.8-1.4-.3-2.3-2.3-.8v-2l2.3-.8.3-2.3-1.8-1.4.9-1.6 2 1 2.2-.8.8-2.1h2Z"/>',
+            system: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/>',
             other: '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>',
             script: '<path d="M6 3h9l3 3v15H6V3Z"/><path d="M9 11h6M9 15h6"/>'
         };
@@ -249,7 +250,7 @@
             scriptGroups.unshift({ key: "__root__", label: text("scripts"), items: flattenScripts({ children: looseScripts }, []), children: [] });
         }
         if (scriptGroups.length) {
-            result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });
+            result.push({ key: "scripts", label: text("scripts"), iconKind: "scripts", groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });
         }
         (data.catalog || []).forEach(function (category) {
             var items = (category.commands || []).filter(function (command) {
