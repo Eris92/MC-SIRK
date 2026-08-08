@@ -20,11 +20,15 @@ assert.ok(source.indexOf('style("sirk-platform-desktop-commands-style", "desktop
     "Quick must load its static Desktop stylesheet from the canonical startup hook.");
 assert.ok(source.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
     "Quick must load its canonical Desktop renderer through the normal serialized asset list.");
-assert.ok(source.indexOf("scripts.reduce(function (chain, item)") >= 0,
-    "Browser assets must be loaded serially without a secondary Quick lifecycle loader.");
-assert.ok(source.indexOf("window.SirkPlatformRuntime.initialize()") >= 0 &&
+assert.ok(source.indexOf("var bootstrapScripts = [") >= 0 &&
+    source.indexOf("Promise.all(deferredScripts.map") >= 0,
+    "Browser startup may parallelize deferred shared assets but must keep one canonical startup owner.");
+assert.ok(source.indexOf("window.SirkPlatformRuntime.prepare()") >= 0 &&
+    source.indexOf("window.SirkPlatformRuntime.initialize(dependenciesReady)") >= 0 &&
     source.indexOf("window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId)") >= 0,
-    "Quick lifecycle must enter through the shared browser runtime after assets load.");
+    "Quick lifecycle must remain owned by the shared browser runtime after canonical assets are ready.");
+assert.strictEqual(source.indexOf("loadQuick"), -1,
+    "Parallel startup must not introduce a secondary Quick-specific lifecycle loader.");
 
 assert.strictEqual(source.indexOf("MutationObserver"), -1,
     "Startup must never replace or scope the browser's global MutationObserver.");

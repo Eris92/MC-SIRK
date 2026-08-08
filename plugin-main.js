@@ -131,14 +131,17 @@ function createSerializedStartupHook(version, pin) {
         style("sirk-platform-desktop-commands-style", "desktop-commands.css");
         style("sirk-platform-toolbar-style", "shared-ui/toolbar.css");
 
-        var scripts = [
+        var bootstrapScripts = [
             ["sirk-platform-core", "core.js"],
             ["sirk-platform-toolbar-config", "shared-ui/toolbar-config.js"],
+            ["sirk-platform-settings", "shared-ui/settings.js"],
+            ["sirk-platform-runtime", "runtime.js"]
+        ];
+        var deferredScripts = [
             ["sirk-platform-toolbar-api", "shared-ui/toolbar-api.js"],
             ["sirk-platform-toolbar", "shared-ui/toolbar.js"],
             ["sirk-platform-tabs", "shared-ui/tabs.js"],
             ["sirk-platform-layout", "shared-ui/layout.js"],
-            ["sirk-platform-settings", "shared-ui/settings.js"],
             ["sirk-platform-status-nav", "shared-ui/status-nav.js"],
             ["sirk-platform-tree", "shared-ui/tree.js"],
             ["sirk-platform-catalog", "shared-ui/catalog.js"],
@@ -146,17 +149,24 @@ function createSerializedStartupHook(version, pin) {
             ["sirk-platform-script-tools", "shared-ui/script-tools.js"],
             ["sirk-platform-page", "shared-ui/page.js"],
             ["sirk-platform-module-shell", "module-shell.js"],
-            ["sirk-platform-runtime", "runtime.js"],
             ["sirk-platform-desktop-commands", "desktop-commands.js"]
         ];
 
-        scripts.reduce(function (chain, item) {
+        var critical = bootstrapScripts.reduce(function (chain, item) {
             return chain.then(function () { return load(item[0], asset(item[1])); });
-        }, Promise.resolve()).then(function () {
-            if (!window.SirkPlatformRuntime || typeof window.SirkPlatformRuntime.initialize !== "function") {
+        }, Promise.resolve());
+
+        critical.then(function () {
+            if (!window.SirkPlatformRuntime || typeof window.SirkPlatformRuntime.prepare !== "function") {
                 throw new Error("SIRK Platform browser runtime was not loaded.");
             }
-            return window.SirkPlatformRuntime.initialize().then(function () {
+            var bootstrapReady = window.SirkPlatformRuntime.prepare();
+            var dependenciesReady = Promise.all(deferredScripts.map(function (item) {
+                return load(item[0], asset(item[1]));
+            }));
+            return window.SirkPlatformRuntime.initialize(dependenciesReady).then(function () {
+                return bootstrapReady;
+            }).then(function () {
                 var nodeId = String(window.__SIRK_CURRENT_NODE_ID__ || "");
                 if (nodeId && typeof window.SirkPlatformRuntime.onDeviceRefreshEnd === "function") {
                     window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId);
@@ -210,11 +220,15 @@ function createPlugin(parent, shortName) {
 
     obj.onWebUIStartupEnd = createSerializedStartupHook(VERSION, obj.shortName);
     obj.goPageStart = function (view) {
-        var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
+        if (typeof window === "undefined") return;
+        window.__SIRK_LAST_NATIVE_PAGE_START__ = view;
+        var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageStart === "function") runtime.onNativePageStart(view);
     };
     obj.goPageEnd = function (view) {
-        var runtime = typeof window === "undefined" ? null : window.SirkPlatformRuntime || null;
+        if (typeof window === "undefined") return;
+        window.__SIRK_LAST_NATIVE_PAGE_END__ = view;
+        var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
     };
     obj.onDeviceRefreshEnd = function (nodeId) {
