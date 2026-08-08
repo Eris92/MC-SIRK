@@ -5,12 +5,19 @@ var fs = require("fs");
 var path = require("path");
 var root = path.resolve(__dirname, "..");
 var source = fs.readFileSync(path.join(root, "public/modules/move-requests/index.js"), "utf8");
+var theme = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"), "utf8");
 
 assert.ok(source.indexOf('function setDialogStatus(status, state, message)') >= 0 &&
     source.indexOf('window.MeshThemeAdapter.status(status)') >= 0,
     "Move Request must reuse the shared semantic status owner on its existing status node.");
 assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') >= 0,
     "Submit must expose an in-flight pending state in the dialog.");
+assert.ok(source.indexOf('submit.className = "sirk-primary-action"') >= 0,
+    "Move Request submit must expose the existing semantic primary action class instead of hard-coding Bootstrap classes.");
+assert.strictEqual(source.indexOf('submit.className = "btn btn-primary"'), -1,
+    "Move Request submit must let MeshThemeAdapter own native button classes.");
+assert.ok(theme.indexOf('element.classList.contains("sirk-primary-action")') >= 0,
+    "The shared button adapter must map the semantic submit action to native primary treatment.");
 assert.ok(source.indexOf('var sourceMeshName = sourceMesh && sourceMesh.name || ""') >= 0 &&
     source.indexOf('sourceMeshName: sourceMeshName') >= 0,
     "Move Request submit must reuse the already loaded mesh resources to send human-readable source group metadata.");

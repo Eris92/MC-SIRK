@@ -188,7 +188,7 @@
 
             var submit = document.createElement("button");
             submit.type = "button";
-            submit.className = "btn btn-primary";
+            submit.className = "sirk-primary-action";
             submit.textContent = "Submit request";
             submit.disabled = !select.options.length;
             var submitting = false;
