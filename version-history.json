@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.19",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request native host dialog-manager fix from current main.",
+      "Delegate Move Request presentation to the host setDialogMode lifecycle instead of building a parallel overlay/modal tree with copied Bootstrap classes.",
+      "Reuse the host OK, Cancel and close controls while preserving guarded asynchronous pending/success/error feedback in the same dialog.",
+      "Preserve source/target mesh metadata and backend semantics without new background workarounds, observers, timers, polling loops or modal frameworks.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.18",
     "date": "2026-08-08",
     "changes": [
