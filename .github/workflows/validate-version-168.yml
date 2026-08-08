@@ -1,0 +1,92 @@
+name: Validate version 168
+on:
+  push:
+    branches:
+      - issue-168-version-bump
+    paths:
+      - '.github/workflows/validate-version-168.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issue-168-version-bump
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          old = '0.1.1-dev.9'
+          new = '0.1.1-dev.10'
+
+          def replace_once(path, before, after):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if before not in text:
+                  raise SystemExit(f'missing replacement target in {path}: {before[:120]}')
+              p.write_text(text.replace(before, after, 1), encoding='utf-8')
+
+          for path in ['package.json', 'config.json']:
+              replace_once(path, f'"version": "{old}"', f'"version": "{new}"')
+
+          for path in ['README.md', 'docs/PROJECT-STATE.md']:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing current version in {path}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          release_index = Path('docs/releases/README.md')
+          text = release_index.read_text(encoding='utf-8')
+          current_line = '- [`0.1.1-dev.9`](0.1.1-dev.9.md) — bieżąca rewizja development po corrective runtime smoke follow-up dla row geometry, command labels, Results containment i human-readable Move Request summaries;'
+          replacement = '- [`0.1.1-dev.10`](0.1.1-dev.10.md) — bieżąca rewizja development po corrective runtime smoke follow-up dla wspólnej osi first-column icons i kompaktowej kolumny View;\n- [`0.1.1-dev.9`](0.1.1-dev.9.md) — poprzednia rewizja development po corrective runtime smoke follow-up dla row geometry, command labels, Results containment i human-readable Move Request summaries;'
+          if current_line not in text:
+              raise SystemExit('missing dev.9 release index current line')
+          release_index.write_text(text.replace(current_line, replacement, 1), encoding='utf-8')
+
+          changelog = Path('changelog.md')
+          text = changelog.read_text(encoding='utf-8')
+          marker = '# Changelog\n\n'
+          entry = '''## 0.1.1-dev.10 — 2026-08-08\n\n- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest dev.9 runtime smoke follow-up from current `main`.\n- Keep first-column icon centers on one shared horizontal axis across expanded/collapsed states and apply the same 28 px / 44 px first-column geometry to Approval Center.\n- Give shared Results `View` a dedicated compact 72 px semantic track while preserving the wider `Actions` track required by Approve/Reject controls.\n- Preserve selected-state semantics, secondary-column compact geometry, permissions and runtime lifecycle without measurement, observers or per-module CSS.\n- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.\n\nCurrent development notes: `docs/releases/0.1.1-dev.10.md`.\n\n'''
+          if marker not in text:
+              raise SystemExit('missing changelog marker')
+          changelog.write_text(text.replace(marker, marker + entry, 1), encoding='utf-8')
+
+          history = Path('version-history.json')
+          text = history.read_text(encoding='utf-8')
+          marker = '[\n'
+          entry = '''  {\n    "version": "0.1.1-dev.10",\n    "date": "2026-08-08",\n    "changes": [\n      "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest runtime smoke follow-up from current main.",\n      "Keep first-column icon centers stable across expanded/collapsed states and reuse the same first-column geometry in Approval Center.",\n      "Use a dedicated compact 72 px View track while retaining the wider Actions track for decision controls.",\n      "Preserve selected-state semantics, secondary-column geometry, permissions and runtime lifecycle without measurement or per-module CSS.",\n      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."\n    ]\n  },\n'''
+          if not text.startswith(marker):
+              raise SystemExit('invalid version-history start')
+          history.write_text(marker + entry + text[len(marker):], encoding='utf-8')
+
+          Path('docs/releases/0.1.1-dev.10.md').write_text('''# MC-SIRK 0.1.1-dev.10 — development revision\n\nStatus: **development pre-1.0, not a product release**.\n\nThis revision exposes the corrective runtime smoke follow-up from PR #167 to MeshCentral update detection.\n\n## Included runtime baseline\n\n- Shared first-column navigation keeps one horizontal icon axis between expanded and collapsed states.\n- Approval Center uses the same first-column 28 px icon box and 44 px row geometry instead of a separate collapsed geometry.\n- Shared Results gives `View` a compact 72 px semantic column while keeping `Actions` wide enough for Approve/Reject.\n- Existing selected-state, permissions, secondary-column compact geometry and runtime lifecycle are preserved.\n\n## Version policy\n\n`0.1.1-dev.10` remains below `1.0.0`. It does not open the product release gate and does not create a tag or GitHub Release.\n\nRuntime implementation baseline: PR #167, `main` commit `01922ee7e071b326b695cdd08c975d9b440bb237`.\n''', encoding='utf-8')
+          PY
+      - name: Remove temporary validation workflow
+        shell: bash
+        run: rm -f .github/workflows/validate-version-168.yml
+      - name: Targeted metadata validation
+        run: node scripts/validate-repository-layout.js
+      - name: Full test suite
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Save verified metadata
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs: synchronize 0.1.1-dev.10 metadata'
+          git push origin HEAD:issue-168-version-bump
