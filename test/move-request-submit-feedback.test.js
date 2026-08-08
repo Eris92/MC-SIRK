@@ -11,6 +11,10 @@ assert.ok(source.indexOf('function setDialogStatus(status, state, message)') >= 
     "Move Request must reuse the shared semantic status owner on its existing status node.");
 assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') >= 0,
     "Submit must expose an in-flight pending state in the dialog.");
+assert.ok(source.indexOf('var sourceMeshName = sourceMesh && sourceMesh.name || ""') >= 0 &&
+    source.indexOf('sourceMeshName: sourceMeshName') >= 0,
+    "Move Request submit must reuse the already loaded mesh resources to send human-readable source group metadata.");
+
 assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")') >= 0,
     "Success must remain visible in the same dialog status node.");
 assert.ok(source.indexOf('setDialogStatus(status, "failed", error.message || String(error))') >= 0,

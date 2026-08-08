@@ -151,6 +151,11 @@ module.exports.createApprovalService = function (options) {
 
     function publicRequest(user, request) {
         var result = shared.copy(request);
+        var provider = providers[String(result.type || "").toLowerCase()];
+        if (provider && typeof provider.presentRequest === "function") {
+            var presented = provider.presentRequest(user, result);
+            if (presented && typeof presented === "object" && !Array.isArray(presented)) result = presented;
+        }
         delete result.payload;
         result.canDecide = canDecide(user, request);
         result.currentApprovalLevel = currentLevel(request);

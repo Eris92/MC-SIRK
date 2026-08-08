@@ -35,8 +35,8 @@ assert.ok(results.indexOf('mc-results-structured-table " + tableWidthClass(colum
 });
 assert.ok(css.indexOf('.mc-results-table .mc-results-col-short{min-width:105px;white-space:nowrap}') >= 0,
     "DateTime/Status/Approval style columns must stay compact and unbroken.");
-assert.ok(css.indexOf('.mc-results-table .mc-results-col-text{min-width:210px;width:280px;max-width:420px;white-space:normal;word-break:normal;overflow-wrap:normal}') >= 0,
-    "Request/Summary/Command/Script/Device text must wrap normally only after a readable minimum.");
+assert.ok(css.indexOf('.mc-results-table .mc-results-col-text{min-width:210px;width:280px;max-width:420px;white-space:normal;word-break:normal;overflow-wrap:anywhere}') >= 0,
+    "Semantic text columns must contain long unbroken IDs/tokens without painting across View/Actions cells.");
 assert.strictEqual(/\.mc-results-table[^}]*word-break:break-all/.test(css), false,
     "Result tables must never break words character-by-character to avoid horizontal scrolling.");
 assert.ok(approvals.indexOf('{ title: "Request"') >= 0 && approvals.indexOf('{ title: "Summary"') >= 0 && approvals.indexOf('{ title: "Status"') >= 0,
