@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.8",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current main.",
+      "Keep direct first-column shared and Quick icons at one 28 px box / 24 px SVG size in expanded and collapsed states instead of scaling during Collapse/Expand.",
+      "Preserve compact second-column icon geometry, the 64 px collapsed track, neutral icon colors and shared selected-state indicators without runtime measurement or extra lifecycle work.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.7",
     "date": "2026-08-08",
     "changes": [

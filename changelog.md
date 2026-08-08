@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1-dev.8 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current `main`.
+- Keep direct first-column shared/Quick icons at one 28 px box / 24 px SVG size in both expanded and collapsed states instead of scaling artwork during Collapse/Expand.
+- Preserve compact second-column icon geometry, the 64 px collapsed track, neutral icon colors and shared selected-state indicators without runtime measurement or extra lifecycle work.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.8.md`.
+
 ## 0.1.1-dev.7 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the current shared UI and Results batch from `main`.
@@ -8,7 +17,7 @@
 - Keep shared Results tables readable with semantic column roles and horizontal scrolling instead of fixed-layout compression.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.1-dev.7.md`.
+Development notes: `docs/releases/0.1.1-dev.7.md`.
 
 ## 0.1.1-dev.6 — 2026-08-08
 
