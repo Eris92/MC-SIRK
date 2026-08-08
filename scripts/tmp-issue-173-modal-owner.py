@@ -47,6 +47,12 @@ if anchor not in text:
 text = text.replace(anchor, addition, 1)
 surface.write_text(text, encoding="utf-8")
 
+replace_once(
+    "test/shared-workspace-surface.test.js",
+    'assert.ok(themeAdapter.indexOf(\'var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog"\') >= 0,\n    "The native adapter must recognize every SIRK surface root.");',
+    'assert.ok(themeAdapter.indexOf(\'var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog-overlay,.mc-move-dialog"\') >= 0,\n    "The native adapter must recognize every SIRK surface root, including the modal variable-owner overlay.");'
+)
+
 # Temporary validation helpers must never survive into the validated commit.
 (root / ".github/workflows/issue-173-modal-owner-validate.yml").unlink(missing_ok=True)
 Path(__file__).unlink(missing_ok=True)
