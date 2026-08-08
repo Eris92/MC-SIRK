@@ -142,6 +142,8 @@
             var select = document.createElement("select");
             select.className = "mc-move-dialog-input";
             var sourceMeshId = currentMeshId(nodeId);
+            var sourceMesh = (result.meshes || []).filter(function (mesh) { return String(mesh.id) === sourceMeshId; })[0];
+            var sourceMeshName = sourceMesh && sourceMesh.name || "";
 
             (result.meshes || [])
                 .filter(function (mesh) {
@@ -207,6 +209,7 @@
                     nodeId: nodeId,
                     nodeName: nodeName(nodeId),
                     sourceMeshId: sourceMeshId,
+                    sourceMeshName: sourceMeshName,
                     targetMeshId: option.value,
                     targetMeshName: option.textContent,
                     note: note.value || ""

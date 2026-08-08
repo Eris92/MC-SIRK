@@ -112,11 +112,19 @@ module.exports.createModule = function (context) {
         levels = Array.isArray(levels) ? levels.map(Number) : [];
         return [1, 2, 3].filter(function (level) { return levels.indexOf(level) >= 0; });
     }
+    var legacyDefaultLabels = {
+        "network-settings": ["Network Connections", "Panel Sieciowy"],
+        "network-adapter-properties": ["Network Adapter Properties", "Właściwości Sieciowe"],
+        powershell: ["Open PowerShell", "Otwórz PowerShell"],
+        cmd: ["Open CMD", "Otwórz CMD"]
+    };
     function commandOverrides() { return (context.settings.read().modules.mycommands || {}).commandOverrides || {}; }
     function effectiveCommand(command, categoryKey) {
         var override = commandOverrides()[command.id] || {};
         var result = shared.copy(command);
-        if (override.label) result.label = shared.cleanText(override.label, 200);
+        var overrideLabel = shared.cleanText(override.label, 200);
+        var obsoleteDefaults = legacyDefaultLabels[command.id] || [];
+        if (overrideLabel && obsoleteDefaults.indexOf(overrideLabel) < 0) result.label = overrideLabel;
         if (Object.prototype.hasOwnProperty.call(override, "description")) result.description = shared.cleanText(override.description, 1000);
         result.approvalLevels = [];
         result.confirmExecution = override.confirmExecution === true;

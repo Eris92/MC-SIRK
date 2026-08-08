@@ -25,6 +25,12 @@ module.exports.createModule = function (context) {
         });
     }
 
+    function meshNameMap(user) {
+        var result = Object.create(null);
+        meshRows(user).forEach(function (mesh) { result[String(mesh.id)] = mesh.name; });
+        return result;
+    }
+
     function normalizeLevelList(value) {
         if (value === 0 || value === "0") return [];
         if (!Array.isArray(value)) value = value == null ? [] : [value];
@@ -89,16 +95,30 @@ module.exports.createModule = function (context) {
         tabTitle: "Move Requests",
         description: "Device move requests and approval-aware group changes.",
         columns: ["createdAt", "title", "requester", "status"],
-        normalizePayload: function (payload) {
+        normalizePayload: function (payload, user) {
             payload = payload || {};
+            var sourceMeshId = shared.cleanText(payload.sourceMeshId, 300);
+            var targetMeshId = shared.cleanText(payload.targetMeshId, 300);
+            var names = meshNameMap(user);
             return {
                 nodeId: shared.cleanText(payload.nodeId, 300),
                 nodeName: shared.cleanText(payload.nodeName, 300),
-                sourceMeshId: shared.cleanText(payload.sourceMeshId, 300),
-                sourceMeshName: shared.cleanText(payload.sourceMeshName, 300),
-                targetMeshId: shared.cleanText(payload.targetMeshId, 300),
-                targetMeshName: shared.cleanText(payload.targetMeshName, 300)
+                sourceMeshId: sourceMeshId,
+                sourceMeshName: sourceMeshId ? (names[sourceMeshId] || "") : shared.cleanText(payload.sourceMeshName, 300),
+                targetMeshId: targetMeshId,
+                targetMeshName: targetMeshId ? (names[targetMeshId] || "") : shared.cleanText(payload.targetMeshName, 300)
             };
+        },
+        presentRequest: function (user, request) {
+            request = shared.copy(request || {});
+            var payload = request.payload || {};
+            var names = meshNameMap(user);
+            var sourceMeshId = String(payload.sourceMeshId || "");
+            var targetMeshId = String(payload.targetMeshId || "");
+            var source = sourceMeshId ? (names[sourceMeshId] || sourceMeshId) : (payload.sourceMeshName || "Current group");
+            var target = targetMeshId ? (names[targetMeshId] || targetMeshId) : (payload.targetMeshName || "");
+            if (source || target) request.summary = source + " → " + target;
+            return request;
         },
         getTitle: function (payload) {
             return "Move " + (payload.nodeName || payload.nodeId || "device");

@@ -17,6 +17,11 @@ assert.ok(toolbar.indexOf('.mc-shared-primary>.sirk-shared-list-item .sirk-share
 assert.ok(toolbar.indexOf('.mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon svg,.sirk-quick-command-browser .mc-shared-primary>button .sirk-quick-command-icon svg{width:24px;height:24px}') >= 0,
     "Monochrome first-column SVG artwork must stay 24x24 in every Collapse state.");
 
+assert.ok(toolbar.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>button{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0}') >= 0,
+    "Collapsed first-column rows must keep the same 44 px vertical step as expanded 28 px icons with 8 px padding.");
+assert.ok(shared.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 6px;overflow:hidden}') >= 0,
+    "Collapse must preserve the expanded primary column's 12 px vertical origin while only tightening horizontal padding.");
+
 assert.ok(toolbar.indexOf('.sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:20px;min-width:20px;height:20px;max-width:20px;object-fit:contain}') >= 0,
     "Second-column/shared list icons must retain their existing compact 20 px geometry.");
 assert.ok(toolbar.indexOf('.sirk-shared-list-icon svg,.sirk-quick-command-icon svg{display:block;width:20px;height:20px}') >= 0,
