@@ -1,0 +1,45 @@
+name: Validate version 161
+
+on:
+  push:
+    branches:
+      - issue-161-version-bump
+    paths:
+      - .github/workflows/validate-version-161.yml
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: issue-161-version-bump
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply metadata
+        run: |
+          python scripts/tmp-version-161.py
+          rm scripts/tmp-version-161.py
+          rm .github/workflows/validate-version-161.yml
+      - name: Validate metadata
+        run: node scripts/validate-repository-layout.js
+      - name: Test
+        run: npm test
+      - name: Diff check
+        run: |
+          git diff --check
+          git status --short
+      - name: Save
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "docs: synchronize 0.1.1-dev.8 metadata"
+          git push origin HEAD:issue-161-version-bump
