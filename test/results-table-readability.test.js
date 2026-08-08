@@ -35,6 +35,16 @@ assert.ok(results.indexOf('mc-results-structured-table " + tableWidthClass(colum
 });
 assert.ok(css.indexOf('.mc-results-table .mc-results-col-short{min-width:105px;white-space:nowrap}') >= 0,
     "DateTime/Status/Approval style columns must stay compact and unbroken.");
+assert.ok(results.indexOf('if (key === "view") return "mc-results-col-view"') >= 0 &&
+    results.indexOf('if (key === "actions" || key === "action") return "mc-results-col-actions"') >= 0,
+    "View and Actions must have distinct shared semantic width roles.");
+assert.ok(css.indexOf('.mc-results-table .mc-results-col-view{min-width:72px;width:72px;max-width:72px;white-space:nowrap}') >= 0,
+    "View must use a compact fixed track sized for one button.");
+assert.ok(css.indexOf('.mc-results-table .mc-results-col-actions{min-width:120px;white-space:nowrap}') >= 0,
+    "Actions must retain enough width for Approve/Reject controls.");
+assert.ok(results.indexOf('viewHead.className = "mc-results-col-view"') >= 0 &&
+    results.indexOf('viewCell.className = "mc-results-col-view"') >= 0,
+    "Shared mountTable must apply the compact View role to both header and body cells.");
 assert.ok(css.indexOf('.mc-results-table .mc-results-col-text{min-width:210px;width:280px;max-width:420px;white-space:normal;word-break:normal;overflow-wrap:anywhere}') >= 0,
     "Semantic text columns must contain long unbroken IDs/tokens without painting across View/Actions cells.");
 assert.strictEqual(/\.mc-results-table[^}]*word-break:break-all/.test(css), false,

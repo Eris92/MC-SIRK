@@ -169,7 +169,8 @@
 
     function tableColumnClass(title) {
         var key = String(title || "").trim().toLowerCase().replace(/\s+/g, "");
-        if (key === "view" || key === "actions" || key === "action") return "mc-results-col-actions";
+        if (key === "view") return "mc-results-col-view";
+        if (key === "actions" || key === "action") return "mc-results-col-actions";
         if (key === "datetime" || key === "date" || key === "time" || key === "status" || key === "approval") return "mc-results-col-short";
         if (key === "request" || key === "summary" || key === "command" || key === "script" || key === "device" || key === "result") return "mc-results-col-text";
         if (key === "requester" || key === "approver") return "mc-results-col-medium";
@@ -332,7 +333,7 @@
                 var renderedColumnCount = columns.length + (options.showView !== false ? 1 : 0) + (typeof options.actions === "function" ? 1 : 0);
                 var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-table-" + String(options.kind || "scripts") + " " + tableWidthClass(renderedColumnCount); wrapper.appendChild(table); tableHost.appendChild(wrapper);
                 var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.className = tableColumnClass(column.title); cell.textContent = column.title; header.appendChild(cell); });
-                if (options.showView !== false) { var viewHead = document.createElement("th"); viewHead.className = "mc-results-col-actions"; viewHead.textContent = "View"; header.appendChild(viewHead); }
+                if (options.showView !== false) { var viewHead = document.createElement("th"); viewHead.className = "mc-results-col-view"; viewHead.textContent = "View"; header.appendChild(viewHead); }
                 if (typeof options.actions === "function") { var actionHead = document.createElement("th"); actionHead.className = "mc-results-col-actions"; actionHead.textContent = "Actions"; header.appendChild(actionHead); }
                 var body = table.createTBody(); rows.forEach(function (row) {
                     var tableRow = body.insertRow();
@@ -345,7 +346,7 @@
                         if (stateClass) cell.className += " " + stateClass;
                         appendValue(cell, value);
                     });
-                    if (options.showView !== false) { var viewCell = tableRow.insertCell(), view = document.createElement("button"); viewCell.className = "mc-results-col-actions"; view.type = "button"; view.className = "btn btn-primary btn-sm mc-results-view-button"; view.textContent = "View"; view.onclick = function () { openViewer(row, options); }; viewCell.appendChild(view); }
+                    if (options.showView !== false) { var viewCell = tableRow.insertCell(), view = document.createElement("button"); viewCell.className = "mc-results-col-view"; view.type = "button"; view.className = "btn btn-primary btn-sm mc-results-view-button"; view.textContent = "View"; view.onclick = function () { openViewer(row, options); }; viewCell.appendChild(view); }
                     if (typeof options.actions === "function") { var actionCell = tableRow.insertCell(); actionCell.className = "mc-results-col-actions"; options.actions(actionCell, row); }
                 });
             }
