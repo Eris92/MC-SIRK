@@ -5,7 +5,9 @@ var fs = require("fs");
 var path = require("path");
 var vm = require("vm");
 
-function ClassList() { this.values = []; }
+function ClassList(initial) {
+    this.values = String(initial || "").split(/\s+/).filter(Boolean);
+}
 ClassList.prototype.add = function () {
     for (var index = 0; index < arguments.length; index += 1) {
         var value = String(arguments[index]);
@@ -14,62 +16,64 @@ ClassList.prototype.add = function () {
 };
 ClassList.prototype.remove = function () {
     for (var index = 0; index < arguments.length; index += 1) {
-        var value = String(arguments[index]);
-        var position = this.values.indexOf(value);
+        var position = this.values.indexOf(String(arguments[index]));
         if (position >= 0) this.values.splice(position, 1);
     }
 };
-ClassList.prototype.contains = function (value) {
-    return this.values.indexOf(String(value)) >= 0;
-};
+ClassList.prototype.contains = function (value) { return this.values.indexOf(String(value)) >= 0; };
 ClassList.prototype.toString = function () { return this.values.join(" "); };
 
-function Style() {
-    this.cssText = "";
-    this.backgroundImage = "";
-    this.backgroundPosition = "";
-    this.backgroundRepeat = "";
-    this.backgroundSize = "";
-}
-
-function Element(tagName) {
+function Element(tagName, className) {
     this.tagName = String(tagName || "div").toUpperCase();
     this.id = "";
     this.attributes = {};
     this.children = [];
     this.parentNode = null;
-    this.classList = new ClassList();
-    this.style = new Style();
+    this.classList = new ClassList(className);
+    this.style = {};
+    this.src = "";
+    this.textContent = "";
 }
 Object.defineProperty(Element.prototype, "className", {
     get: function () { return this.classList.toString(); },
-    set: function (value) {
-        this.classList.values = String(value || "").split(/\s+/).filter(Boolean);
-    }
+    set: function (value) { this.classList = new ClassList(value); }
 });
 Object.defineProperty(Element.prototype, "firstChild", {
     get: function () { return this.children[0] || null; }
 });
+Object.defineProperty(Element.prototype, "nextSibling", {
+    get: function () {
+        if (!this.parentNode) return null;
+        var index = this.parentNode.children.indexOf(this);
+        return index >= 0 ? this.parentNode.children[index + 1] || null : null;
+    }
+});
 Element.prototype.setAttribute = function (name, value) {
     this.attributes[name] = String(value);
     if (name === "id") this.id = String(value);
-    if (name === "class") this.className = value;
 };
 Element.prototype.getAttribute = function (name) {
     if (name === "id") return this.id || null;
-    if (name === "class") return this.className || null;
-    return Object.prototype.hasOwnProperty.call(this.attributes, name)
-        ? this.attributes[name]
-        : null;
+    return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
+};
+Element.prototype.hasAttribute = function (name) {
+    return name === "id" ? !!this.id : Object.prototype.hasOwnProperty.call(this.attributes, name);
 };
 Element.prototype.removeAttribute = function (name) {
     delete this.attributes[name];
     if (name === "id") this.id = "";
-    if (name === "class") this.className = "";
 };
 Element.prototype.appendChild = function (child) {
     if (child.parentNode) child.parentNode.removeChild(child);
     this.children.push(child);
+    child.parentNode = this;
+    return child;
+};
+Element.prototype.insertBefore = function (child, reference) {
+    if (child === reference) return child;
+    if (child.parentNode) child.parentNode.removeChild(child);
+    var index = reference ? this.children.indexOf(reference) : -1;
+    if (index < 0) this.children.push(child); else this.children.splice(index, 0, child);
     child.parentNode = this;
     return child;
 };
@@ -84,33 +88,30 @@ Element.prototype.replaceChild = function (replacement, current) {
     if (index < 0) throw new Error("Child not found");
     if (replacement.parentNode) replacement.parentNode.removeChild(replacement);
     this.children[index] = replacement;
-    current.parentNode = null;
     replacement.parentNode = this;
+    current.parentNode = null;
     return current;
 };
 Element.prototype.cloneNode = function (deep) {
-    var copy = new Element(this.tagName);
-    copy.className = this.className;
-    copy.style.cssText = this.style.cssText;
-    copy.style.backgroundImage = this.style.backgroundImage;
-    copy.style.backgroundPosition = this.style.backgroundPosition;
-    copy.style.backgroundRepeat = this.style.backgroundRepeat;
-    copy.style.backgroundSize = this.style.backgroundSize;
-    Object.keys(this.attributes).forEach(function (key) {
-        copy.attributes[key] = this.attributes[key];
-    }, this);
-    if (deep) this.children.forEach(function (child) {
-        copy.appendChild(child.cloneNode(true));
-    });
+    var copy = new Element(this.tagName, this.className);
+    copy.id = this.id;
+    copy.src = this.src;
+    copy.textContent = this.textContent;
+    Object.keys(this.attributes).forEach(function (name) { copy.attributes[name] = this.attributes[name]; }, this);
+    Object.keys(this.style).forEach(function (name) { copy.style[name] = this.style[name]; }, this);
+    if (deep) this.children.forEach(function (child) { copy.appendChild(child.cloneNode(true)); });
     return copy;
 };
 Element.prototype.querySelector = function (selector) {
-    if (selector.charAt(0) !== ".") return null;
-    var className = selector.slice(1);
+    var selectors = String(selector || "").split(",").map(function (item) { return item.trim(); });
     var queue = this.children.slice();
     while (queue.length) {
         var current = queue.shift();
-        if (current.classList.contains(className)) return current;
+        for (var index = 0; index < selectors.length; index += 1) {
+            var value = selectors[index];
+            if (value.charAt(0) === "." && current.classList.contains(value.slice(1))) return current;
+            if (value && value.charAt(0) !== "." && current.tagName.toLowerCase() === value.toLowerCase()) return current;
+        }
         queue = queue.concat(current.children);
     }
     return null;
@@ -120,12 +121,10 @@ var html = new Element("html");
 var leftHost = new Element("div");
 leftHost.id = "page_leftbar";
 html.appendChild(leftHost);
-
-var nativeItem = new Element("div");
+var nativeItem = new Element("div", "lbbutton lbbuttonsel");
 nativeItem.id = "LeftMenuMyDevices";
-nativeItem.className = "lbbutton lbbuttonsel";
-var nativeIcon = new Element("div");
-nativeIcon.className = "lbtg lb2";
+var nativeIcon = new Element("div", "lbtg lb2");
+nativeIcon.id = "native-device-icon";
 nativeItem.appendChild(nativeIcon);
 leftHost.appendChild(nativeItem);
 
@@ -138,96 +137,75 @@ function descendants(root) {
     return result;
 }
 
-var document = {
+var documentObject = {
     documentElement: html,
+    createElement: function (tagName) { return new Element(tagName); },
     getElementById: function (id) {
-        return [html].concat(descendants(html)).filter(function (item) {
-            return item.id === id;
-        })[0] || null;
-    }
-};
-
-var core = {
-    ensureMenu: function (definition) {
-        var item = document.getElementById(definition.leftId);
-        if (!item) {
-            item = nativeItem.cloneNode(true);
-            item.id = definition.leftId;
-            leftHost.appendChild(item);
-        }
-        item.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
-        var icon = item.querySelector(".lbtg");
-        icon.className = "lbtg";
-        icon.style.backgroundImage = 'url("approval.svg")';
-        icon.style.backgroundPosition = "center";
-        icon.style.backgroundRepeat = "no-repeat";
-        icon.style.backgroundSize = "contain";
-        return true;
+        return [html].concat(descendants(html)).filter(function (item) { return item.id === id; })[0] || null;
     },
-    setPluginMenuActive: function (_main, left, active) {
-        left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
-        if (active) left.classList.add("lbbuttonsel2");
-    }
+    querySelector: function () { return null; },
+    querySelectorAll: function () { return []; }
 };
-
-var context = {
-    console: console,
-    document: document,
-    window: {
-        document: document,
-        SirkPlatformCore: core
-    }
+var windowObject = {
+    document: documentObject,
+    location: { href: "https://mesh.example/" },
+    SirkIconMode: { useModern: function () { return false; } },
+    __SIRK_PLATFORM_VERSION__: "test"
 };
-context.window.window = context.window;
+windowObject.window = windowObject;
 
-var root = path.join(__dirname, "..");
 vm.runInNewContext(
-    fs.readFileSync(path.join(root, "public", "shared", "ui", "page.js"), "utf8"),
-    context
+    fs.readFileSync(path.join(__dirname, "..", "public", "shared", "core.js"), "utf8"),
+    { window: windowObject, document: documentObject, console: console, URL: URL, Promise: Promise },
+    { filename: "core.js" }
 );
 
 var definition = {
+    mainId: "MainMenuSirkPlatform-approvalcenter",
     leftId: "LeftMenuSirkPlatform-approvalcenter",
-    title: "Approval Center"
+    title: "Approval Center",
+    viewMode: 105,
+    order: 110,
+    open: function () { return false; }
 };
-core.ensureMenu(definition);
+windowObject.SirkPlatformCore.ensureMenu(definition);
 
-var pluginItem = document.getElementById(definition.leftId);
+var pluginItem = documentObject.getElementById(definition.leftId);
 var pluginIcon = pluginItem.querySelector(".lbtg");
 assert.strictEqual(pluginItem.className, "lbbutton",
-    "Plugin entry must use the exact native base class without a custom selected variant.");
+    "Classic SIRK entry must receive the final native base class on its first core mount.");
 assert.strictEqual(pluginIcon.className, nativeIcon.className,
-    "Plugin icon host must preserve the native lbtg class structure.");
-assert.strictEqual(pluginIcon.style.backgroundImage, 'url("approval.svg")',
-    "Normalizing the native icon host must preserve the module icon.");
-assert.strictEqual(pluginIcon.style.backgroundPosition, "center",
-    "Module icon must remain centered in the native host.");
-assert.strictEqual(pluginIcon.style.backgroundSize, "40px 40px",
-    "Module icon must use a fixed native-sized drawing instead of stretching to contain.");
-assert.strictEqual(nativeItem.className, "lbbutton lbbuttonsel",
-    "Normalizing a plugin entry must not change the native Devices item.");
-assert.strictEqual(nativeIcon.className, "lbtg lb2",
-    "Normalizing a plugin entry must not change the native Devices icon host.");
+    "Classic SIRK icon host must preserve the native lbtg class geometry from the first mount.");
+assert.strictEqual(pluginIcon.getAttribute("id"), null,
+    "Cloned native icon ids must be removed to avoid duplicate DOM ids.");
+assert.strictEqual(pluginIcon.style.backgroundSize, "48px 48px",
+    "Classic SIRK artwork must use the enlarged native-sized drawing immediately, without a later resize pass.");
+assert.strictEqual(pluginItem.getAttribute("data-sirk-icon-family"), "classic");
+assert.strictEqual(pluginIcon.getAttribute("data-sirk-icon-family"), "classic");
+assert.ok(pluginIcon.style.backgroundImage.indexOf("%23fff") >= 0,
+    "Classic icon family must use the requested white/native artwork.");
+assert.strictEqual(pluginIcon.style.backgroundImage.indexOf("%23666"), -1,
+    "Classic icon family must not retain the old gray outline source.");
 
-var originalPluginItem = pluginItem;
-core.ensureMenu(definition);
-assert.strictEqual(document.getElementById(definition.leftId), originalPluginItem,
-    "Repeated menu synchronization must not duplicate or replace the plugin menu entry.");
-assert.strictEqual(originalPluginItem.children.length, 1,
-    "Repeated menu synchronization must keep exactly one native icon host.");
+var firstItem = pluginItem;
+var firstIcon = pluginIcon;
+windowObject.SirkPlatformCore.setPluginMenuActive(null, pluginItem, true);
+assert.ok(pluginItem.classList.contains("lbbuttonsel"));
+assert.ok(!pluginItem.classList.contains("lbbuttonsel2"));
+assert.strictEqual(pluginItem.getAttribute("aria-current"), "page");
 
-core.setPluginMenuActive(null, pluginItem, true);
-assert.ok(pluginItem.classList.contains("lbbuttonsel"),
-    "Active plugin entry must use the same lbbuttonsel class as native MeshCentral entries.");
-assert.ok(!pluginItem.classList.contains("lbbuttonsel2"),
-    "Active plugin entry must never use the wider lbbuttonsel2 variant.");
-assert.strictEqual(pluginItem.getAttribute("aria-current"), "page",
-    "Active plugin entry must expose the native current-page state.");
+windowObject.SirkPlatformCore.ensureMenu(definition);
+assert.strictEqual(documentObject.getElementById(definition.leftId), firstItem,
+    "Repeated menu reconciliation must reuse the same Classic menu node.");
+assert.strictEqual(firstItem.querySelector(".lbtg"), firstIcon,
+    "Repeated menu reconciliation must not replace the Classic icon host.");
+assert.ok(firstItem.classList.contains("lbbuttonsel"),
+    "Repeated menu reconciliation must preserve active selection instead of causing a visual jump.");
 
-core.setPluginMenuActive(null, pluginItem, false);
-assert.strictEqual(pluginItem.className, "lbbutton",
-    "Inactive plugin entry must return to the exact native base class.");
-assert.strictEqual(pluginItem.getAttribute("aria-current"), null,
-    "Inactive plugin entry must clear the current-page state.");
+var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
+assert.strictEqual(pageSource.indexOf("installNativeLeftMenuContract"), -1,
+    "Deferred SharedPage must not install a second left-menu owner.");
+assert.strictEqual(pageSource.indexOf("originalEnsureMenu"), -1,
+    "Deferred SharedPage must not wrap core.ensureMenu after first paint.");
 
-console.log("Native MeshCentral left-menu class and icon geometry: OK");
+console.log("Classic left menu is final on first core mount with stable node, white artwork and native-sized geometry: OK");

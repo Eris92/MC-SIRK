@@ -1,3 +1,12 @@
+## 0.1.1-dev.25 - 2026-08-08
+
+- Continue #121/#177 after real `0.1.1-dev.24` smoke showed undersized SIRK left-menu artwork and a remaining visible second-pass menu shift after F5.
+- Move final native left-menu classes, active state, icon family/source and icon geometry into the first permission-safe `core.ensureMenu()` pass; deferred `page.js` no longer wraps or normalizes the left menu.
+- Use white/native-style Classic artwork with 48 px drawing geometry and larger colored Modern artwork with a 32 px image box while reusing existing menu/icon nodes and avoiding redundant reorder inserts.
+- Keep the existing Auto/Classic/Modern policy and add no CSS filter, fourth mode, polling, MutationObserver, timer, second renderer, tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.25.md`.
+
 ## 0.1.1-dev.24 - 2026-08-08
 
 - Continue #121 after real `0.1.1-dev.23` smoke showed configured colored/custom SIRK menu SVGs being replaced after first paint by white/currentColor Font Awesome icons.

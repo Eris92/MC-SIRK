@@ -16,25 +16,23 @@ ClassList.prototype.add = function () {
 };
 ClassList.prototype.remove = function () {
     for (var index = 0; index < arguments.length; index += 1) {
-        var value = String(arguments[index]);
-        var position = this.values.indexOf(value);
+        var position = this.values.indexOf(String(arguments[index]));
         if (position >= 0) this.values.splice(position, 1);
     }
 };
-ClassList.prototype.contains = function (value) {
-    return this.values.indexOf(String(value)) >= 0;
-};
+ClassList.prototype.contains = function (value) { return this.values.indexOf(String(value)) >= 0; };
 ClassList.prototype.toString = function () { return this.values.join(" "); };
 
 function Element(tagName, className) {
     this.tagName = String(tagName || "div").toUpperCase();
     this.id = "";
-    this.classList = new ClassList(className);
     this.attributes = {};
     this.children = [];
     this.parentNode = null;
+    this.classList = new ClassList(className);
     this.style = {};
     this.src = "";
+    this.textContent = "";
 }
 Object.defineProperty(Element.prototype, "className", {
     get: function () { return this.classList.toString(); },
@@ -43,15 +41,23 @@ Object.defineProperty(Element.prototype, "className", {
 Object.defineProperty(Element.prototype, "firstChild", {
     get: function () { return this.children[0] || null; }
 });
+Object.defineProperty(Element.prototype, "nextSibling", {
+    get: function () {
+        if (!this.parentNode) return null;
+        var index = this.parentNode.children.indexOf(this);
+        return index >= 0 ? this.parentNode.children[index + 1] || null : null;
+    }
+});
 Element.prototype.setAttribute = function (name, value) {
     this.attributes[name] = String(value);
     if (name === "id") this.id = String(value);
 };
 Element.prototype.getAttribute = function (name) {
     if (name === "id") return this.id || null;
-    return Object.prototype.hasOwnProperty.call(this.attributes, name)
-        ? this.attributes[name]
-        : null;
+    return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
+};
+Element.prototype.hasAttribute = function (name) {
+    return name === "id" ? !!this.id : Object.prototype.hasOwnProperty.call(this.attributes, name);
 };
 Element.prototype.removeAttribute = function (name) {
     delete this.attributes[name];
@@ -64,6 +70,7 @@ Element.prototype.appendChild = function (child) {
     return child;
 };
 Element.prototype.insertBefore = function (child, reference) {
+    if (child === reference) return child;
     if (child.parentNode) child.parentNode.removeChild(child);
     var index = reference ? this.children.indexOf(reference) : -1;
     if (index < 0) this.children.push(child); else this.children.splice(index, 0, child);
@@ -89,12 +96,9 @@ Element.prototype.cloneNode = function (deep) {
     var copy = new Element(this.tagName, this.className);
     copy.id = this.id;
     copy.src = this.src;
-    Object.keys(this.attributes).forEach(function (name) {
-        copy.attributes[name] = this.attributes[name];
-    }, this);
-    Object.keys(this.style).forEach(function (name) {
-        copy.style[name] = this.style[name];
-    }, this);
+    copy.textContent = this.textContent;
+    Object.keys(this.attributes).forEach(function (name) { copy.attributes[name] = this.attributes[name]; }, this);
+    Object.keys(this.style).forEach(function (name) { copy.style[name] = this.style[name]; }, this);
     if (deep) this.children.forEach(function (child) { copy.appendChild(child.cloneNode(true)); });
     return copy;
 };
@@ -113,101 +117,92 @@ Element.prototype.querySelector = function (selector) {
     return null;
 };
 
-var root = new Element("html");
+var html = new Element("html");
 var host = new Element("nav", "nav flex-column");
-root.appendChild(host);
-var native = new Element("a", "nav-link active text-center text-white lbbuttonsel");
-native.id = "LeftMenuMyDevices";
+html.appendChild(host);
+var nativeItem = new Element("a", "nav-link active text-center text-white lbbuttonsel");
+nativeItem.id = "LeftMenuMyDevices";
 var nativeIcon = new Element("svg", "svg-inline--fa fa-computer me-2");
-native.appendChild(nativeIcon);
-host.appendChild(native);
+nativeItem.appendChild(nativeIcon);
+host.appendChild(nativeItem);
 
-function descendants(element) {
+function descendants(root) {
     var result = [];
-    element.children.forEach(function walk(child) {
+    root.children.forEach(function walk(child) {
         result.push(child);
         child.children.forEach(walk);
     });
     return result;
 }
 
-var document = {
-    documentElement: root,
+var documentObject = {
+    documentElement: html,
     createElement: function (tagName) { return new Element(tagName); },
     getElementById: function (id) {
-        return [root].concat(descendants(root)).filter(function (item) { return item.id === id; })[0] || null;
-    }
-};
-
-var expectedSource = "data:image/svg+xml;charset=utf-8,%3Csvg%20data-test%3D%22purple%22%3E%3C%2Fsvg%3E";
-var core = {
-    ensureMenu: function (definition) {
-        var item = document.getElementById(definition.leftId);
-        if (!item) {
-            item = native.cloneNode(true);
-            item.id = definition.leftId;
-            host.appendChild(item);
-        }
-        item.classList.remove("active", "lbbuttonsel", "lbbuttonsel2");
-        item.setAttribute("data-sirk-icon-family", "modern");
-        var current = item.querySelector("svg, i, img");
-        var image = new Element("img", "sirk-platform-menu-icon");
-        image.src = expectedSource;
-        image.setAttribute("data-sirk-icon-family", "modern");
-        image.style.width = "24px";
-        image.style.height = "24px";
-        image.style.objectFit = "contain";
-        if (current) current.parentNode.replaceChild(image, current);
-        else item.insertBefore(image, item.firstChild || null);
-        return true;
+        return [html].concat(descendants(html)).filter(function (item) { return item.id === id; })[0] || null;
     },
-    setPluginMenuActive: function () {}
+    querySelector: function () { return null; },
+    querySelectorAll: function () { return []; }
 };
-var context = {
-    console: console,
-    document: document,
-    window: { document: document, SirkPlatformCore: core }
+var windowObject = {
+    document: documentObject,
+    location: { href: "https://mesh.example/" },
+    SirkIconMode: { useModern: function () { return true; } },
+    __SIRK_PLATFORM_VERSION__: "test"
 };
-context.window.window = context.window;
+windowObject.window = windowObject;
 
 vm.runInNewContext(
-    fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8"),
-    context,
-    { filename: "page.js" }
+    fs.readFileSync(path.join(__dirname, "..", "public", "shared", "core.js"), "utf8"),
+    { window: windowObject, document: documentObject, console: console, URL: URL, Promise: Promise },
+    { filename: "core.js" }
 );
 
-["approvalcenter", "myscripts", "mycommands", "moverequests"].forEach(function (key) {
-    var definition = { leftId: "LeftMenuSirkPlatform-" + key };
-    core.ensureMenu(definition);
-    var item = document.getElementById(definition.leftId);
-    var icon = item.querySelector("img");
+var definition = {
+    mainId: "MainMenuSirkPlatform-approvalcenter",
+    leftId: "LeftMenuSirkPlatform-approvalcenter",
+    title: "Approval Center",
+    viewMode: 105,
+    order: 110,
+    open: function () { return false; }
+};
+windowObject.SirkPlatformCore.ensureMenu(definition);
 
-    assert.strictEqual(item.className, "nav-link text-center text-white",
-        key + " must use the exact inactive native anchor classes.");
-    assert.ok(icon, key + " must preserve the icon element selected by core.ensureMenu/SirkIconMode.");
-    assert.strictEqual(icon.src, expectedSource,
-        key + " must preserve the selected custom SVG source instead of replacing it with Font Awesome.");
-    assert.strictEqual(icon.getAttribute("data-sirk-icon-family"), "modern",
-        key + " must preserve the effective SirkIconMode family marker.");
-    assert.strictEqual(item.querySelector("i"), null,
-        key + " must not be normalized to a later white/currentColor Font Awesome icon.");
+var pluginItem = documentObject.getElementById(definition.leftId);
+var pluginIcon = pluginItem.querySelector("img");
+assert.strictEqual(pluginItem.className, "nav-link text-center text-white",
+    "Modern SIRK entry must receive its final native base classes on the first core mount.");
+assert.ok(pluginIcon, "Modern SIRK entry must use the SirkIconMode-owned image source.");
+assert.strictEqual(pluginIcon.className, "sirk-platform-menu-icon");
+assert.strictEqual(pluginIcon.style.width, "32px");
+assert.strictEqual(pluginIcon.style.height, "32px");
+assert.strictEqual(pluginIcon.style.objectFit, "contain");
+assert.strictEqual(pluginItem.getAttribute("data-sirk-icon-family"), "modern");
+assert.strictEqual(pluginIcon.getAttribute("data-sirk-icon-family"), "modern");
+assert.ok(pluginIcon.src.indexOf("%237b1fa2") >= 0,
+    "Modern family must retain the configured colored artwork.");
+assert.strictEqual(pluginItem.querySelector("i"), null,
+    "Modern family must not be replaced by a later white Font Awesome icon.");
 
-    core.setPluginMenuActive(null, item, true);
-    assert.ok(item.classList.contains("active") && item.classList.contains("lbbuttonsel2"),
-        key + " must use the same modern active classes as native top-level pages.");
-    assert.strictEqual(item.getAttribute("aria-current"), "page",
-        key + " must expose the current page state.");
-});
+var firstItem = pluginItem;
+var firstIcon = pluginIcon;
+windowObject.SirkPlatformCore.setPluginMenuActive(null, pluginItem, true);
+assert.ok(pluginItem.classList.contains("active"));
+assert.ok(pluginItem.classList.contains("lbbuttonsel2"));
+assert.strictEqual(pluginItem.getAttribute("aria-current"), "page");
 
-assert.strictEqual(native.className, "nav-link active text-center text-white lbbuttonsel",
-    "Normalizing plugin entries must not modify the native My Devices entry.");
-assert.strictEqual(native.querySelector("svg"), nativeIcon,
-    "Normalizing plugin entries must not replace the native MeshCentral SVG.");
+windowObject.SirkPlatformCore.ensureMenu(definition);
+assert.strictEqual(documentObject.getElementById(definition.leftId), firstItem,
+    "Repeated menu reconciliation must reuse the same Modern menu node.");
+assert.strictEqual(firstItem.querySelector("img"), firstIcon,
+    "Repeated menu reconciliation must reuse the same Modern icon node.");
+assert.ok(firstItem.classList.contains("active") && firstItem.classList.contains("lbbuttonsel2"),
+    "Repeated menu reconciliation must preserve Modern active selection.");
 
 var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
-assert.strictEqual(pageSource.indexOf("modernIconNames"), -1,
-    "SharedPage must not keep a second Modern icon-family map.");
+assert.strictEqual(pageSource.indexOf("installNativeLeftMenuContract"), -1,
+    "Deferred SharedPage must not own Modern left-menu presentation after first paint.");
 assert.strictEqual(pageSource.indexOf("normalizeModernIcon"), -1,
-    "SharedPage must not replace SirkIconMode-owned Modern icons after first paint.");
+    "Deferred SharedPage must not replace SirkIconMode-owned Modern icons.");
 
-console.log("Modern SIRK menu preserves the SirkIconMode-owned icon source and native classes: OK");
+console.log("Modern left menu is final on first core mount with stable node and enlarged colored artwork: OK");

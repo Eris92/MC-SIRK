@@ -23,21 +23,26 @@ assert.ok(core.indexOf("core.activePlugin = core.activePlugin || null") >= 0,
 assert.ok(core.indexOf("core.setPluginMenuActive = function (main, left, active)") >= 0,
     "Core must expose one menu activation API for every SIRK module.");
 assert.ok(core.indexOf('"#MainMenuSpan .fullselect"') >= 0 &&
+    core.indexOf('"#page_leftbar .lbbuttonsel"') >= 0 &&
     core.indexOf('"#page_leftbar .lbbuttonsel2"') >= 0,
-    "Selection clearing must target native MeshCentral selected states only.");
+    "Selection clearing must target both Classic and Modern native MeshCentral selected states.");
 assert.ok(core.indexOf("[id^='MainMenu']") < 0 && core.indexOf("[id^='LeftMenu']") < 0,
     "SIRK must not clear arbitrary menu entries belonging to unrelated plugins.");
 assert.ok(core.indexOf("core.installNativeRestoreGuard") < 0,
     "SIRK must not intercept pointer events from other plugins or native navigation.");
 
-assert.ok(page.indexOf("installNativeLeftMenuContract();") >= 0,
-    "Native menu normalization must have one explicit owner in SharedPage.");
-assert.ok(page.indexOf("core.setPluginMenuActive = function (main, left, active)") >= 0,
-    "SharedPage must normalize activation to the current MeshCentral menu shape.");
-assert.ok(page.indexOf('item.classList.remove("lbbuttonsel", "lbbuttonsel2", "active")') >= 0,
-    "Menu normalization must clear only known native selected classes from the SIRK item itself.");
-assert.ok(page.indexOf("core.__nativeLeftMenuContractInstalled") >= 0,
-    "The native menu contract must install once and remain idempotent.");
+assert.ok(core.indexOf("function baseMenuClassName(anchor)") >= 0 &&
+    core.indexOf("function applyLegacyMenuIcon(anchor, item, iconSource, familyName)") >= 0,
+    "Core must own the final native left-menu class and Classic icon geometry on the first permission-safe mount.");
+assert.ok(core.indexOf('left.className = baseMenuClassName(leftAnchor)') >= 0,
+    "First core mount must apply the final native left-menu base classes without a deferred repair pass.");
+assert.ok(core.indexOf('if (isModernMenuItem(left)) left.classList.add("active", "lbbuttonsel2")') >= 0 &&
+    core.indexOf('else left.classList.add("lbbuttonsel")') >= 0,
+    "Core must own Modern and Classic activation shapes directly.");
+assert.strictEqual(page.indexOf("installNativeLeftMenuContract"), -1,
+    "Deferred SharedPage must not install a second native menu normalization owner.");
+assert.strictEqual(page.indexOf("core.setPluginMenuActive = function (main, left, active)"), -1,
+    "Deferred SharedPage must not replace the core activation contract after first paint.");
 
 assert.ok(shell.indexOf('if (!core.workspaceState && typeof window.go === "function") window.go(1)') >= 0,
     "Entering SIRK from a native page must use MeshCentral's device lifecycle, without redrawing Devices during SIRK-to-SIRK switches.");
@@ -73,4 +78,4 @@ assert.ok(runtime.indexOf("notify(\"onNativePageStart\", view)") >= 0 &&
     runtime.indexOf("notify(\"onNativePageEnd\", view)") >= 0,
     "MeshCentral page hooks must reach every module lifecycle.");
 
-console.log("Canonical SIRK menu lifecycle and selection ownership: OK");
+console.log("Canonical SIRK first-paint menu lifecycle and selection ownership: OK");

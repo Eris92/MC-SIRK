@@ -16,8 +16,7 @@ ClassList.prototype.add = function () {
 };
 ClassList.prototype.remove = function () {
     for (var index = 0; index < arguments.length; index += 1) {
-        var value = String(arguments[index]);
-        var position = this.values.indexOf(value);
+        var position = this.values.indexOf(String(arguments[index]));
         if (position >= 0) this.values.splice(position, 1);
     }
 };
@@ -42,30 +41,33 @@ Element.prototype.getAttribute = function (name) {
         : null;
 };
 
-var core = {
-    ensureMenu: function () { return true; },
-    setPluginMenuActive: function () {}
-};
-var document = {
+var documentObject = {
     documentElement: { classList: new ClassList() },
+    querySelectorAll: function () { return []; },
     getElementById: function () { return null; }
 };
+var windowObject = {
+    document: documentObject,
+    SirkPlatformCore: {},
+    location: { href: "https://mesh.example/" },
+    __SIRK_PLATFORM_VERSION__: "test"
+};
+windowObject.window = windowObject;
 var context = {
     console: console,
-    document: document,
-    window: {
-        document: document,
-        SirkPlatformCore: core
-    }
+    document: documentObject,
+    window: windowObject,
+    URL: URL,
+    Promise: Promise
 };
-context.window.window = context.window;
 
 vm.runInNewContext(
-    fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8"),
+    fs.readFileSync(path.join(__dirname, "..", "public", "shared", "core.js"), "utf8"),
     context,
-    { filename: "page.js" }
+    { filename: "core.js" }
 );
 
+var core = windowObject.SirkPlatformCore;
 [
     "LeftMenuSirkPlatform-myscripts",
     "LeftMenuSirkPlatform-mycommands",
@@ -79,9 +81,9 @@ vm.runInNewContext(
     assert.ok(modern.classList.contains("active"),
         id + " must retain the Bootstrap active state.");
     assert.ok(modern.classList.contains("lbbuttonsel2"),
-        id + " must also receive MeshCentral's visible left-menu selection class.");
+        id + " must also receive MeshCentral's visible Modern left-menu selection class.");
     assert.ok(!modern.classList.contains("lbbuttonsel"),
-        id + " must not use the semi-active device-subpage class.");
+        id + " must not use the Classic compact selection class.");
     assert.strictEqual(modern.getAttribute("aria-current"), "page",
         id + " must expose the current-page state.");
 
@@ -97,8 +99,12 @@ vm.runInNewContext(
 var legacy = new Element("div", "lbbutton");
 core.setPluginMenuActive(null, legacy, true);
 assert.ok(legacy.classList.contains("lbbuttonsel"),
-    "Classic MeshCentral must preserve its compact native selected class.");
+    "Classic MeshCentral must use its compact native selected class from the core first-paint owner.");
 assert.ok(!legacy.classList.contains("active") && !legacy.classList.contains("lbbuttonsel2"),
     "Classic MeshCentral must not receive modern or wider selection classes.");
 
-console.log("Modern MeshCentral left-menu active highlight: OK");
+var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
+assert.strictEqual(pageSource.indexOf("core.setPluginMenuActive = function"), -1,
+    "Deferred SharedPage must not replace the active-state owner after first paint.");
+
+console.log("Canonical core Modern/Classic left-menu active highlight: OK");

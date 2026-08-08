@@ -11,15 +11,56 @@
     }
 
     var modernMenuIcons = {
-        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="12" y="9" width="34" height="46" rx="4" fill="#7b1fa2"/><rect x="20" y="4" width="20" height="10" rx="4" fill="#4a148c"/><path fill="#fff" d="M20 23h18v4H20zm0 9h12v4H20z"/><circle cx="45" cy="43" r="13" fill="#2e7d32" stroke="#fff" stroke-width="3"/><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="m39 43 4 4 8-9"/></svg>'),
-        myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#7b1fa2" d="M12 5h31l9 9v45H12z"/><path fill="#fff" opacity=".9" d="M39 5v13h13z"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20"/></svg>'),
-        mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="9" width="52" height="46" rx="6" fill="#263238"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m17 23 9 9-9 9m15 1h15"/></svg>')
+        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 0 52 60"><rect x="12" y="9" width="34" height="46" rx="4" fill="#7b1fa2"/><rect x="20" y="4" width="20" height="10" rx="4" fill="#4a148c"/><path fill="#fff" d="M20 23h18v4H20zm0 9h12v4H20z"/><circle cx="45" cy="43" r="13" fill="#2e7d32" stroke="#fff" stroke-width="3"/><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="m39 43 4 4 8-9"/></svg>'),
+        myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 1 48 62"><path fill="#7b1fa2" d="M12 5h31l9 9v45H12z"/><path fill="#fff" opacity=".9" d="M39 5v13h13z"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20"/></svg>'),
+        mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 5 58 54"><rect x="6" y="9" width="52" height="46" rx="6" fill="#263238"/><path fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="m17 23 9 9-9 9m15 1h15"/></svg>')
     };
     var classicMenuIcons = {
-        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="13" y="9" width="34" height="46" rx="3" fill="none" stroke="#666" stroke-width="4"/><path d="M21 24h18M21 33h12" fill="none" stroke="#666" stroke-width="4"/><path d="m35 45 5 5 10-12" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
-        myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M13 5h30l9 9v45H13Z M43 5v13h9" fill="none" stroke="#666" stroke-width="4" stroke-linejoin="round"/><path d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
-        mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="9" width="52" height="46" rx="6" fill="none" stroke="#666" stroke-width="4"/><path d="m17 23 9 9-9 9m15 10h15" fill="none" stroke="#666" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+        approvalcenter: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 0 52 60"><rect x="13" y="9" width="34" height="46" rx="3" fill="none" stroke="#fff" stroke-width="5"/><path d="M21 24h18M21 33h12" fill="none" stroke="#fff" stroke-width="5"/><path d="m35 45 5 5 10-12" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+        myscripts: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 1 48 62"><path d="M13 5h30l9 9v45H13Z M43 5v13h9" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><path d="m25 29-7 6 7 6m14-12 7 6-7 6m-4-16-6 20" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+        mycommands: svgData('<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 5 58 54"><rect x="6" y="9" width="52" height="46" rx="6" fill="none" stroke="#fff" stroke-width="5"/><path d="m17 23 9 9-9 9m15 10h15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>')
     };
+
+    function isModernMenuItem(item) {
+        return String(item && item.tagName || "").toLowerCase() === "a" ||
+            !!(item && item.classList && item.classList.contains("nav-link"));
+    }
+
+    function baseMenuClassName(anchor) {
+        return String(anchor && anchor.className || "").split(/\s+/).filter(function (name) {
+            return name && name !== "fullselect" && name !== "semiselect" &&
+                name !== "lbbuttonsel" && name !== "lbbuttonsel2" && name !== "active";
+        }).join(" ");
+    }
+
+    function menuItemActive(item) {
+        return !!(item && ((item.getAttribute && item.getAttribute("aria-current") === "page") ||
+            (item.classList && (item.classList.contains("fullselect") || item.classList.contains("semiselect") ||
+                item.classList.contains("lbbuttonsel") || item.classList.contains("lbbuttonsel2") ||
+                item.classList.contains("active")))));
+    }
+
+    function applyLegacyMenuIcon(anchor, item, iconSource, familyName) {
+        if (!anchor || !item || !iconSource) return null;
+        var nativeIcon = anchor.querySelector && anchor.querySelector(".lbtg");
+        var icon = item.querySelector && item.querySelector(".lbtg");
+        if (!icon && nativeIcon && typeof nativeIcon.cloneNode === "function") {
+            icon = nativeIcon.cloneNode(true);
+            if (item.insertBefore) item.insertBefore(icon, item.firstChild || null);
+            else if (item.appendChild) item.appendChild(icon);
+        }
+        if (!icon) return null;
+        if (nativeIcon) icon.className = nativeIcon.className;
+        if (icon.removeAttribute) icon.removeAttribute("id");
+        if (icon.style) {
+            icon.style.backgroundImage = 'url("' + iconSource + '")';
+            icon.style.backgroundPosition = "center";
+            icon.style.backgroundRepeat = "no-repeat";
+            icon.style.backgroundSize = "48px 48px";
+        }
+        if (icon.setAttribute) icon.setAttribute("data-sirk-icon-family", familyName);
+        return icon;
+    }
 
     core.assetUrl = function (moduleName, assetName, parameters) {
         var endpoint = new URL("pluginadmin.ashx", window.location.href);
@@ -156,7 +197,7 @@
     core.preparePluginMenuItem = function (item) {
         if (!item) return item;
         var handler = item.onclick || item.onmouseup;
-        var modern = String(item.tagName || "").toLowerCase() === "a" || item.classList.contains("nav-link");
+        var modern = isModernMenuItem(item);
         item.onclick = item.onmouseup = item.onkeypress = null;
         item.removeAttribute("onclick");
         item.removeAttribute("onmouseup");
@@ -185,7 +226,7 @@
         });
         var cursor = anchor;
         items.forEach(function (entry) {
-            host.insertBefore(entry, cursor.nextSibling);
+            if (cursor.nextSibling !== entry) host.insertBefore(entry, cursor.nextSibling);
             cursor = entry;
         });
         return true;
@@ -196,18 +237,22 @@
         var leftAnchor = document.getElementById("LeftMenuMyDevices");
         var key = String(definition.mainId || "").replace(/^MainMenuSirkPlatform-/, "").toLowerCase();
         var useModernIcons = !(window.SirkIconMode && typeof window.SirkIconMode.useModern === "function") || window.SirkIconMode.useModern();
+        var familyName = useModernIcons ? "modern" : "classic";
         var family = useModernIcons ? modernMenuIcons : classicMenuIcons;
         var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";
         var open = definition.open;
 
         if (mainAnchor && mainAnchor.parentNode) {
-            var main = document.getElementById(definition.mainId) || mainAnchor.cloneNode(false);
-            var modern = String(main.tagName || "").toLowerCase() === "a" || main.classList.contains("nav-link");
+            var existingMain = document.getElementById(definition.mainId);
+            var mainWasActive = !!existingMain && menuItemActive(existingMain);
+            var main = existingMain || mainAnchor.cloneNode(false);
+            var modern = isModernMenuItem(main);
             main.id = definition.mainId;
             main.textContent = definition.title;
             main.title = definition.title;
             main.tabIndex = 0;
             main.classList.remove("fullselect", "semiselect", "active");
+            main.removeAttribute("aria-current");
             main.onclick = main.onmouseup = main.onkeypress = null;
             if (modern) {
                 main.href = "#";
@@ -220,16 +265,21 @@
             }
             main.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
             core.placeMenuItem(main, mainAnchor, definition.order);
+            if (mainWasActive) core.setPluginMenuActive(main, null, true);
         }
 
         if (leftAnchor && leftAnchor.parentNode) {
-            var left = document.getElementById(definition.leftId) || leftAnchor.cloneNode(true);
-            var leftModern = String(left.tagName || "").toLowerCase() === "a" || left.classList.contains("nav-link");
+            var existingLeft = document.getElementById(definition.leftId);
+            var leftWasActive = !!existingLeft && menuItemActive(existingLeft);
+            var left = existingLeft || leftAnchor.cloneNode(true);
+            var leftModern = isModernMenuItem(left);
             left.id = definition.leftId;
+            left.className = baseMenuClassName(leftAnchor);
             left.title = definition.title;
             left.setAttribute("aria-label", definition.title);
             left.tabIndex = 0;
             left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
+            left.removeAttribute("aria-current");
             left.onclick = left.onmouseup = left.onkeypress = null;
             if (leftModern) {
                 left.href = "#";
@@ -241,33 +291,33 @@
                 };
             }
             left.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
+            left.setAttribute("data-sirk-icon-family", familyName);
 
-            left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
             if (iconSource) {
                 var legacyIcon = left.querySelector(".lbtg");
-                var currentIcon = left.querySelector(".sirk-platform-menu-icon") || left.querySelector("svg, i, img");
-                if (legacyIcon) {
-                    legacyIcon.className = "lbtg";
-                    legacyIcon.style.backgroundImage = 'url("' + iconSource + '")';
-                    legacyIcon.style.backgroundPosition = "center";
-                    legacyIcon.style.backgroundRepeat = "no-repeat";
-                    legacyIcon.style.backgroundSize = "contain";
-                    legacyIcon.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
-                }
-                if (!legacyIcon || leftModern) {
-                    var image = document.createElement("img");
+                var currentIcon = left.querySelector(".sirk-platform-menu-icon") || left.querySelector("svg, i, img") || legacyIcon;
+                if (legacyIcon && !leftModern) {
+                    applyLegacyMenuIcon(leftAnchor, left, iconSource, familyName);
+                } else {
+                    var image = currentIcon && String(currentIcon.tagName || "").toLowerCase() === "img" &&
+                        currentIcon.classList && currentIcon.classList.contains("sirk-platform-menu-icon")
+                        ? currentIcon
+                        : document.createElement("img");
                     image.className = "sirk-platform-menu-icon";
                     image.alt = "";
                     image.src = iconSource;
-                    image.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic");
-                    image.style.width = "24px";
-                    image.style.height = "24px";
+                    image.setAttribute("data-sirk-icon-family", familyName);
+                    image.style.width = "32px";
+                    image.style.height = "32px";
                     image.style.objectFit = "contain";
-                    if (currentIcon && currentIcon.parentNode && currentIcon !== legacyIcon) currentIcon.parentNode.replaceChild(image, currentIcon);
-                    else left.insertBefore(image, left.firstChild);
+                    if (image !== currentIcon) {
+                        if (currentIcon && currentIcon.parentNode) currentIcon.parentNode.replaceChild(image, currentIcon);
+                        else left.insertBefore(image, left.firstChild);
+                    }
                 }
             }
             core.placeMenuItem(left, leftAnchor, definition.order);
+            if (leftWasActive) core.setPluginMenuActive(null, left, true);
         }
     };
 
@@ -276,7 +326,7 @@
             main.classList.remove("fullselect", "semiselect", "active");
             main.removeAttribute("aria-current");
             if (active) {
-                main.classList.add((String(main.tagName || "").toLowerCase() === "a" || main.classList.contains("nav-link")) ? "active" : "fullselect");
+                main.classList.add(isModernMenuItem(main) ? "active" : "fullselect");
                 main.setAttribute("aria-current", "page");
             }
         }
@@ -284,7 +334,8 @@
             left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
             left.removeAttribute("aria-current");
             if (active) {
-                left.classList.add((String(left.tagName || "").toLowerCase() === "a" || left.classList.contains("nav-link")) ? "active" : "lbbuttonsel2");
+                if (isModernMenuItem(left)) left.classList.add("active", "lbbuttonsel2");
+                else left.classList.add("lbbuttonsel");
                 left.setAttribute("aria-current", "page");
             }
         }
