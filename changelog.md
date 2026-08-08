@@ -1,3 +1,12 @@
+## 0.1.1-dev.23 - 2026-08-08
+
+- Continue #177/#178 after real `0.1.1-dev.22` hard-refresh smoke still showed roughly one second of delayed SIRK native UI pop-in.
+- Start the single canonical bootstrap request immediately after `core.js`, while theme/settings/runtime critical scripts load concurrently, and reuse that Promise in `runtime.prepare()` without a duplicate request.
+- Reconcile permission-approved native surfaces from the shared runtime lifecycle and move `MoveRequestHostButton` DOM ownership out of the deferred renderer so it can appear with the ready native host action row.
+- Keep dialog/backend semantics unchanged and add no polling, MutationObserver, readiness timer staircase, pre-permission placeholder, second menu renderer, tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.23.md`.
+
 ## 0.1.1-dev.22 - 2026-08-08
 
 - Deliver the shared startup/readiness fix from PR #212 for Issues #177 and #178.

@@ -10,6 +10,7 @@
     if (runtime.state.bootstrap == null) runtime.state.bootstrap = null;
     if (runtime.state.preparePromise == null) runtime.state.preparePromise = null;
     if (runtime.state.initializePromise == null) runtime.state.initializePromise = null;
+    if (runtime.state.dependenciesReady == null) runtime.state.dependenciesReady = null;
     if (!runtime.state.modulePromises) runtime.state.modulePromises = {};
     if (runtime.state.nodeId == null) runtime.state.nodeId = "";
     if (runtime.state.nativePageStart == null) runtime.state.nativePageStart = null;
@@ -17,7 +18,19 @@
 
     var definitions = {
         approvalcenter: { file: "approvalcenter.js", title: "Approval Center", viewMode: 105, menuOrder: 110, showInMenu: true },
-        moverequests: { file: "moverequests.js", title: "Move Requests", viewMode: 106, showInMenu: false },
+        moverequests: {
+            file: "moverequests.js",
+            title: "Move Requests",
+            viewMode: 106,
+            showInMenu: false,
+            hostAction: {
+                id: "MoveRequestHostButton",
+                legacyIds: ["MainDevSirkPlatform-MoveRequest"],
+                title: "Move Request",
+                tooltip: "Submit a device move request",
+                anchorLabels: ["share", "udostępnij", "udostepnij", "chat", "czat"]
+            }
+        },
         mycommands: { file: "mycommands.js", title: "My Commands", viewMode: 102, showInMenu: false },
         myscripts: { file: "myscripts.js", title: "My Scripts", viewMode: 101, menuOrder: 160, showInMenu: true }
     };
@@ -133,21 +146,129 @@
         });
     }
 
+    function removeElement(id) {
+        var element = document.getElementById(id);
+        if (element && element.parentNode) element.parentNode.removeChild(element);
+    }
+
+    function hostActionButtonText(button) {
+        return String(button && (button.value || button.textContent) || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    function deferredHostAction(key, event) {
+        if (event && ((event.which === 3) || (event.button === 2))) return false;
+        if (event && event.preventDefault) event.preventDefault();
+        if (event && event.stopPropagation) event.stopPropagation();
+
+        Promise.resolve(runtime.state.dependenciesReady || Promise.resolve()).then(function () {
+            return ensureModule(key);
+        }).then(function (module) {
+            if (module && typeof module.openHostAction === "function") {
+                module.openHostAction(runtime.state.nodeId);
+            }
+        }).catch(function (error) {
+            if (window.console) console.error("SirkPlatform " + key + " host action failed", error);
+        });
+        return false;
+    }
+
+    function mountBootstrapHostAction(key, state) {
+        var definition = definitions[key];
+        var action = definition && definition.hostAction;
+        if (!action) return false;
+
+        (action.legacyIds || []).forEach(removeElement);
+        var config = state && state.config || {};
+        if (!canLoad(state) || config.hostButtonEnabled === false) {
+            removeElement(action.id);
+            return false;
+        }
+
+        var host = document.getElementById("p10html") || document.getElementById("p10");
+        if (!host) return false;
+
+        var existing = document.getElementById(action.id);
+        if (existing && host.contains(existing)) {
+            if (String(existing.tagName || "").toLowerCase() === "input") existing.value = action.title;
+            else existing.textContent = action.title;
+            existing.title = action.tooltip || action.title;
+            existing.disabled = false;
+            existing.removeAttribute("onclick");
+            existing.removeAttribute("onmouseup");
+            existing.onclick = function (event) { return deferredHostAction(key, event); };
+            return true;
+        }
+        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+        var buttons = host.querySelectorAll('input[type="button"],button');
+        var labels = action.anchorLabels || [];
+        var anchor = null;
+        var fallback = null;
+        for (var index = 0; index < buttons.length; index += 1) {
+            var value = hostActionButtonText(buttons[index]);
+            fallback = buttons[index];
+            if (labels.indexOf(value) >= 0) {
+                anchor = buttons[index];
+                if (value === "share" || value === "udostępnij" || value === "udostepnij") break;
+            }
+        }
+        anchor = anchor || fallback;
+        if (!anchor || !anchor.parentNode) return false;
+
+        var button = anchor.cloneNode(false);
+        button.id = action.id;
+        button.type = "button";
+        if (String(button.tagName || "").toLowerCase() === "input") button.value = action.title;
+        else button.textContent = action.title;
+        button.title = action.tooltip || action.title;
+        button.disabled = false;
+        button.setAttribute("data-meshcentral-plugin-pin", "SirkPlatform");
+        button.setAttribute("data-meshcentral-plugin-click", action.title + " host action");
+        button.removeAttribute("onclick");
+        button.removeAttribute("onmouseup");
+        button.onclick = function (event) { return deferredHostAction(key, event); };
+        anchor.parentNode.insertBefore(button, anchor.nextSibling);
+        return true;
+    }
+
+    function mountBootstrapHostActions(bootstrap) {
+        order.forEach(function (key) {
+            mountBootstrapHostAction(key, bootstrap.modules && bootstrap.modules[key]);
+        });
+    }
+
+    function reconcileBootstrapSurfaces() {
+        var bootstrap = runtime.state.bootstrap;
+        if (!bootstrap) return;
+        mountBootstrapMenus(bootstrap);
+        mountBootstrapHostActions(bootstrap);
+    }
+
     runtime.refreshMenus = function () {
-        if (runtime.state.bootstrap) mountBootstrapMenus(runtime.state.bootstrap);
+        reconcileBootstrapSurfaces();
         notify("refreshMenu");
     };
 
-    runtime.prepare = function () {
+    runtime.prepare = function (bootstrapReady) {
         if (runtime.state.preparePromise) return runtime.state.preparePromise;
-        runtime.state.preparePromise = core.api("", "bootstrap").then(function (bootstrap) {
+
+        var bootstrapSource = bootstrapReady || window.__SIRK_PLATFORM_BOOTSTRAP_PROMISE__;
+        if (!bootstrapSource) {
+            bootstrapSource = core.api("", "bootstrap");
+            window.__SIRK_PLATFORM_BOOTSTRAP_PROMISE__ = bootstrapSource;
+        }
+
+        runtime.state.preparePromise = Promise.resolve(bootstrapSource).then(function (bootstrap) {
             runtime.state.bootstrap = bootstrap;
             runtime.state.nodeId = String(runtime.state.nodeId || window.__SIRK_CURRENT_NODE_ID__ || "");
             if (window.__SIRK_LAST_NATIVE_PAGE_START__ != null) runtime.state.nativePageStart = window.__SIRK_LAST_NATIVE_PAGE_START__;
             if (window.__SIRK_LAST_NATIVE_PAGE_END__ != null) runtime.state.nativePageEnd = window.__SIRK_LAST_NATIVE_PAGE_END__;
-            mountBootstrapMenus(bootstrap);
+            reconcileBootstrapSurfaces();
             return bootstrap;
         }).catch(function (error) {
+            if (window.__SIRK_PLATFORM_BOOTSTRAP_PROMISE__ === bootstrapSource) {
+                window.__SIRK_PLATFORM_BOOTSTRAP_PROMISE__ = null;
+            }
             runtime.state.preparePromise = null;
             throw error;
         });
@@ -155,10 +276,14 @@
     };
 
     runtime.initialize = function (dependenciesReady) {
+        if (dependenciesReady && !runtime.state.dependenciesReady) {
+            runtime.state.dependenciesReady = Promise.resolve(dependenciesReady);
+        }
         if (runtime.state.initializePromise) return runtime.state.initializePromise;
+
         runtime.state.initializePromise = Promise.all([
             runtime.prepare(),
-            dependenciesReady ? Promise.resolve(dependenciesReady) : Promise.resolve()
+            runtime.state.dependenciesReady || Promise.resolve()
         ]).then(function () {
             return Promise.all(order.map(function (key) { return ensureModule(key); }));
         }).catch(function (error) {
@@ -184,12 +309,14 @@
         if (core.workspaceState && typeof core.activateMenu === "function") {
             core.activateMenu(core.workspaceState.viewMode);
         }
+        reconcileBootstrapSurfaces();
         notify("onNativePageEnd", view);
         refreshQuickCommands();
     };
 
     runtime.onDeviceRefreshEnd = function (nodeId) {
         runtime.state.nodeId = String(nodeId || "");
+        reconcileBootstrapSurfaces();
         notify("onDeviceRefreshEnd", runtime.state.nodeId);
         refreshQuickCommands();
     };

@@ -2,8 +2,6 @@
     "use strict";
 
     var selectedStatus = "";
-    var hostButtonId = "MoveRequestHostButton";
-    var legacyTopButtonId = "MainDevSirkPlatform-MoveRequest";
 
     function renderRows(shell) {
         return shell.api("requests", { status: selectedStatus, q: shell.state.search, page: 1, perPage: 100 }).then(function (result) {
@@ -98,24 +96,10 @@
         }).catch(function (error) { window.alert(error.message || String(error)); });
     }
 
-    function hostButtonEnabled() { var bootstrap = module.api.state.bootstrap || {}; var config = bootstrap.config || {}; return config.hostButtonEnabled !== false; }
-    function removeElement(id) { var element = document.getElementById(id); if (element && element.parentNode) element.parentNode.removeChild(element); }
-    function removeHostButton() { removeElement(hostButtonId); removeElement(legacyTopButtonId); }
-    function buttonText(button) { return String(button.value || button.textContent || "").replace(/\s+/g, " ").trim().toLowerCase(); }
-    function handleHostButtonClick(event) { if (event && event.preventDefault) event.preventDefault(); if (event && event.stopPropagation) event.stopPropagation(); var host = document.getElementById("p10html") || document.getElementById("p10"); openMoveDialog(resolveHostNodeId(host)); return false; }
-    function installHostButton() {
-        removeElement(legacyTopButtonId); if (!hostButtonEnabled()) { removeElement(hostButtonId); return false; }
-        var host = document.getElementById("p10html") || document.getElementById("p10"); if (!host) return false; var existing = document.getElementById(hostButtonId);
-        if (existing && host.contains(existing)) { if (String(existing.tagName).toLowerCase() === "input") existing.value = "Move Request"; else existing.textContent = "Move Request"; existing.disabled = false; existing.removeAttribute("onclick"); existing.removeAttribute("onmouseup"); existing.onclick = handleHostButtonClick; return true; }
-        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
-        var buttons = host.querySelectorAll('input[type="button"],button'); var anchor = null; var fallback = null;
-        for (var index = 0; index < buttons.length; index++) { var value = buttonText(buttons[index]); fallback = buttons[index]; if (value === "share" || value === "udostępnij" || value === "udostepnij") { anchor = buttons[index]; break; } if (!anchor && (value === "chat" || value === "czat")) anchor = buttons[index]; }
-        anchor = anchor || fallback; if (!anchor || !anchor.parentNode) return false; var button = anchor.cloneNode(false); button.id = hostButtonId; button.type = "button"; if (String(button.tagName).toLowerCase() === "input") button.value = "Move Request"; else button.textContent = "Move Request"; button.title = "Submit a device move request"; button.disabled = false; button.setAttribute("data-meshcentral-plugin-pin", "SirkPlatform"); button.setAttribute("data-meshcentral-plugin-click", "Move Request host action"); button.removeAttribute("onclick"); button.removeAttribute("onmouseup"); button.onclick = handleHostButtonClick; anchor.parentNode.insertBefore(button, anchor.nextSibling); return true;
-    }
-    function syncHostButton() { return installHostButton(); }
-
     var module = window.SirkPlatformModuleShell.create({ key: "moverequests", title: "Move Requests", menuTitle: "Move Requests", showInMenu: false, order: 120, preset: "standard", buttons: { favorites: false, manage: false, settings: false }, tabs: [{ key: "requests", title: "Requests" }], defaultTab: "requests", render: function (shell) { shell.nav(shell.state.page.primary, [{ key: "moverequests", title: "Move Requests", icon: "⇄" }], "moverequests", function () {}); window.SharedStatusNav.mount(shell.state.page.secondary, { selected: selectedStatus, onSelect: function (value) { selectedStatus = value; shell.render(); } }); return renderRows(shell); } });
-    var baseDeviceRefresh = module.onDeviceRefreshEnd; module.onDeviceRefreshEnd = function (nodeId) { baseDeviceRefresh(nodeId); syncHostButton(); };
-    var basePageEnd = module.onNativePageEnd; module.onNativePageEnd = function (view) { basePageEnd(view); syncHostButton(); };
+    module.openHostAction = function (nodeId) {
+        var host = document.getElementById("p10html") || document.getElementById("p10");
+        openMoveDialog(normalizeNodeId(nodeId) || resolveHostNodeId(host));
+    };
     window.SirkPlatformModules.moverequests = module;
 }());

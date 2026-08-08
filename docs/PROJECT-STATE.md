@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.22`
+Current version: `0.1.1-dev.23`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -50,6 +50,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `public/shared/core.js` — workspace, menu, aktywny moduł i request guard;
+- `public/shared/runtime.js` — browser bootstrap, permission-safe native surface readiness, native page/device lifecycle i bounded module startup;
 - `public/shared/module-shell.js` — lifecycle modułów i atomic render;
 - `public/shared/ui/layout.js` — layout i Collapse;
 - `public/shared/ui/shared-ui.css` — współdzielona geometria workspace/kolumn;
@@ -121,15 +122,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.22
-config.json  -> 0.1.1-dev.22
+package.json -> 0.1.1-dev.23
+config.json  -> 0.1.1-dev.23
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.22.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.23.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

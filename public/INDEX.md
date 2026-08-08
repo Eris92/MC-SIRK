@@ -42,6 +42,7 @@ public/shared/ui/tree.js
 Najważniejszy podział odpowiedzialności:
 
 - `core.js` — workspace/menu/request API;
+- `runtime.js` — bootstrap/permissions, permission-safe native surfaces, native page/device lifecycle i bounded module startup;
 - `module-shell.js` — lifecycle i atomic render;
 - `layout.js` — DOM i Collapse state, bez CSS runtime;
 - `shared-ui.css` — globalna geometria workspace;
