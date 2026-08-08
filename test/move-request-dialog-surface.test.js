@@ -9,8 +9,10 @@ var theme = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"
 
 var dialogRule = css.match(/\.mc-move-dialog\{([^}]*)\}/);
 assert.ok(dialogRule, "Move Request dialog must have a dedicated shared surface rule.");
-assert.ok(/background-color:var\(--bs-card-bg,var\(--bs-body-bg,Canvas\)\)/.test(dialogRule[1]),
-    "Move Request dialog must use native Bootstrap surface tokens with an opaque Canvas fallback.");
+assert.ok(/background:linear-gradient\(var\(--bs-card-bg,var\(--bs-body-bg,Canvas\)\),var\(--bs-card-bg,var\(--bs-body-bg,Canvas\)\)\),Canvas/.test(dialogRule[1]),
+    "Move Request dialog must composite the native card/body token over an opaque Canvas base so a transparent host card token cannot expose the host page.");
+assert.strictEqual(/background-color:var\(--bs-card-bg/.test(dialogRule[1]), false,
+    "A single background-color token fallback is insufficient because a defined host card token may itself be transparent.");
 assert.ok(/border:1px solid var\(--bs-border-color,currentColor\)/.test(dialogRule[1]),
     "Move Request dialog must keep a theme-native visible border fallback.");
 assert.strictEqual(/background(?:-color)?:transparent/.test(dialogRule[1]), false,
@@ -23,4 +25,4 @@ assert.ok(theme.indexOf('PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-
     theme.indexOf('.mc-move-dialog,.mc-results-viewer", applyCard') >= 0,
     "Opaque fallback must preserve the existing MeshThemeAdapter card ownership for the dialog.");
 
-console.log("Move Request dialog keeps native card ownership with an opaque theme-safe surface: OK");
+console.log("Move Request dialog keeps native card ownership with an opacity-safe theme surface: OK");
