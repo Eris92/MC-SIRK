@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.25`
+Current version: `0.1.1-dev.26`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,9 +49,9 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu;
+- `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu; brakujący menu node jest tworzony dopiero po zakończeniu bieżącego natywnego `goPageEnd`;
 - `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
-- `public/shared/runtime.js` — browser bootstrap, permission-safe native surface readiness, native page/device lifecycle i bounded module startup;
+- `public/shared/runtime.js` — browser bootstrap, permission-safe native surface readiness, native page/device lifecycle i bounded module startup; `goPageStart` unieważnia poprzedni page-ready state, a `goPageEnd` wykonuje jeden bounded menu reconcile;
 - `public/shared/module-shell.js` — lifecycle modułów i atomic render;
 - `public/shared/ui/layout.js` — layout i Collapse;
 - `public/shared/ui/shared-ui.css` — współdzielona geometria workspace/kolumn;
@@ -125,15 +125,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.25
-config.json  -> 0.1.1-dev.25
+package.json -> 0.1.1-dev.26
+config.json  -> 0.1.1-dev.26
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.25.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.26.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
