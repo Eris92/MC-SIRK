@@ -7,16 +7,20 @@ var root = path.resolve(__dirname, "..");
 function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
 var core = read("public/shared/core.js");
+var page = read("public/shared/ui/page.js");
 var tools = read("public/shared/ui/script-tools.js");
 var tree = read("public/shared/ui/tree.js");
 var css = read("public/shared/ui/toolbar.css");
 
 assert.ok(core.indexOf('var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";') >= 0,
     "Admin icon family must win over a module/default icon override.");
-assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic")') >= 0,
-    "Rendered plugin menu entries must expose the selected icon family.");
-assert.ok(core.indexOf('if (!legacyIcon || leftModern)') >= 0,
-    "Menu icons must have an explicit image fallback when the host does not expose legacy .lbtg markup.");
+assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", familyName)') >= 0,
+    "Rendered plugin menu entries must expose the selected icon family on the first core mount.");
+assert.ok(core.indexOf('if (legacyIcon && !leftModern)') >= 0 &&
+    core.indexOf('var image = currentIcon && String(currentIcon.tagName || "").toLowerCase() === "img"') >= 0,
+    "Core must preserve Classic .lbtg markup and provide the canonical image path for Modern/non-legacy menu hosts.");
+assert.strictEqual(page.indexOf("installNativeLeftMenuContract"), -1,
+    "Deferred SharedPage must not rewrite the rendered icon family or geometry after first paint.");
 
 var actionsStart = tools.indexOf("scriptActions: function (script, config)");
 assert.ok(actionsStart >= 0, "Shared scriptActions owner must remain present.");
@@ -40,4 +44,4 @@ assert.ok(css.indexOf('.sirk-quick-command-browser button:is(.active,.is-active)
 assert.ok(css.indexOf('var(--bs-primary,currentColor)') >= 0,
     "Visible selection must derive from the active host theme rather than a private fixed color.");
 
-console.log("Visible menu icon family, Edit actions and selected rows regression contract: OK");
+console.log("Visible first-paint menu icon family, Edit actions and selected rows regression contract: OK");
