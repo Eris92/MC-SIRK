@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.17",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal DOM fix from current main.",
+      "Match the current MeshCentral ModernModal structure with modal -> modal-dialog modal-dialog-centered -> modal-content instead of attaching modal-content directly below the overlay.",
+      "Keep the existing Move Request lifecycle and MeshThemeAdapter ownership without adding a new modal framework, background workaround, observer, timer, polling loop or DOM repair layer.",
+      "Preserve Classic style10, native primary Submit request and the existing guarded Move Request submit/status lifecycle.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.16",
     "date": "2026-08-08",
     "changes": [
@@ -80,7 +91,7 @@
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
       "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
-      "Normalize persisted historical built-in command default labels while preserving genuine custom labels and stable command IDs/execution.",
+      "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
