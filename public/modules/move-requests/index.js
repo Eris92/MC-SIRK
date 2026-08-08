@@ -32,17 +32,23 @@
             var overlay = document.createElement("div"); overlay.className = "mc-move-dialog-overlay";
             var dialogFrame = document.createElement("div"); dialogFrame.className = "mc-move-dialog-frame" + (modern ? " modal-dialog modal-dialog-centered" : ""); overlay.appendChild(dialogFrame);
             var dialog = document.createElement("div"); dialog.className = "mc-move-dialog"; dialogFrame.appendChild(dialog);
-            var title = document.createElement("h3"); title.textContent = "Move Request"; dialog.appendChild(title);
-            var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); dialog.appendChild(device);
-            var groupLabel = document.createElement("label"); groupLabel.textContent = "Target group"; dialog.appendChild(groupLabel);
+
+            var header = document.createElement("div"); header.className = "mc-move-dialog-header" + (modern ? " modal-header" : ""); dialog.appendChild(header);
+            var heading = document.createElement("div"); heading.className = "mc-move-dialog-heading"; header.appendChild(heading);
+            var title = document.createElement("h3"); title.className = modern ? "modal-title" : ""; title.textContent = "Move Request"; heading.appendChild(title);
+            var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); heading.appendChild(device);
+
+            var body = document.createElement("div"); body.className = "mc-move-dialog-body" + (modern ? " modal-body" : ""); dialog.appendChild(body);
+            var groupLabel = document.createElement("label"); groupLabel.textContent = "Target group"; body.appendChild(groupLabel);
             var select = document.createElement("select"); select.className = "mc-move-dialog-input";
             var sourceMeshId = currentMeshId(nodeId); var sourceMesh = (result.meshes || []).filter(function (mesh) { return String(mesh.id) === sourceMeshId; })[0]; var sourceMeshName = sourceMesh && sourceMesh.name || "";
-            (result.meshes || []).filter(function (mesh) { return !sourceMeshId || String(mesh.id) !== sourceMeshId; }).forEach(function (mesh) { var option = document.createElement("option"); option.value = mesh.id; option.textContent = mesh.name; select.appendChild(option); }); dialog.appendChild(select);
-            var noteLabel = document.createElement("label"); noteLabel.textContent = "Requester note"; dialog.appendChild(noteLabel);
-            var note = document.createElement("textarea"); note.className = "mc-move-dialog-input"; note.rows = 4; dialog.appendChild(note);
-            var status = document.createElement("div"); status.className = "mc-move-dialog-status"; dialog.appendChild(status);
+            (result.meshes || []).filter(function (mesh) { return !sourceMeshId || String(mesh.id) !== sourceMeshId; }).forEach(function (mesh) { var option = document.createElement("option"); option.value = mesh.id; option.textContent = mesh.name; select.appendChild(option); }); body.appendChild(select);
+            var noteLabel = document.createElement("label"); noteLabel.textContent = "Requester note"; body.appendChild(noteLabel);
+            var note = document.createElement("textarea"); note.className = "mc-move-dialog-input"; note.rows = 4; body.appendChild(note);
+            var status = document.createElement("div"); status.className = "mc-move-dialog-status"; body.appendChild(status);
             if (!select.options.length) { select.disabled = true; setDialogStatus(status, "failed", "No target group is available."); }
-            var actions = document.createElement("div"); actions.className = "mc-move-dialog-actions"; dialog.appendChild(actions);
+
+            var actions = document.createElement("div"); actions.className = "mc-move-dialog-actions" + (modern ? " modal-footer" : ""); dialog.appendChild(actions);
             var cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = "Cancel"; cancel.onclick = function () { closeDialog(overlay); }; actions.appendChild(cancel);
             var submit = document.createElement("button"); submit.type = "button"; submit.className = "sirk-primary-action"; submit.textContent = "Submit request"; submit.disabled = !select.options.length;
             var submitting = false; var submitted = false;
