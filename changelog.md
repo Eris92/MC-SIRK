@@ -1,3 +1,12 @@
+## 0.1.1-dev.22 - 2026-08-08
+
+- Deliver the shared startup/readiness fix from PR #212 for Issues #177 and #178.
+- Mount enabled+allowed SIRK native menu entries immediately after bootstrap instead of waiting for renderer/module initialization.
+- Fetch deferred shared UI assets concurrently and initialize allowed modules in one bounded parallel fan-out, while retaining and replaying pre-runtime native page/device context.
+- Keep one canonical startup/menu owner with no polling, MutationObserver, readiness timer staircase, tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.22.md`.
+
 ## 0.1.1-dev.21 - 2026-08-08
 
 - Deliver the Move Request #178 host-button readiness fix from PR #209 so MeshCentral update detection installs the synchronous native lifecycle behavior.
