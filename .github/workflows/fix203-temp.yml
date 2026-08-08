@@ -1,0 +1,35 @@
+name: Fix203 Temp
+on:
+  push:
+    branches: [fix/203-dialog-manager-routing]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply patch
+        run: python3 scripts/tmp-fix203.py
+      - name: Remove temporary helpers before validation
+        run: rm scripts/tmp-fix203.py .github/workflows/fix203-temp.yml
+      - name: Targeted tests
+        run: |
+          node test/move-request-dialog-surface.test.js
+          node test/move-request-submit-feedback.test.js
+      - name: Full test
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Commit verified patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(move-requests): route native dialog by host UI"
+          git push
