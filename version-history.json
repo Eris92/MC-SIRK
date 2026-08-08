@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.21",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request host-button readiness fix from current main.",
+      "Remove the historical 0/100/400/1000/2000/4000 ms readiness retry staircase and reuse the existing idempotent host-button installer directly from native page and device completion callbacks.",
+      "Preserve hostButtonEnabled, single connected host action reuse, current node resolution, native cloned presentation and dialog flow without adding a MutationObserver, polling loop or extra request.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.20",
     "date": "2026-08-08",
     "changes": [

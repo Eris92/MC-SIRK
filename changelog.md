@@ -1,3 +1,12 @@
+## 0.1.1-dev.21 - 2026-08-08
+
+- Deliver the Move Request #178 host-button readiness fix from PR #209 so MeshCentral update detection installs the synchronous native lifecycle behavior.
+- Remove the historical `0/100/400/1000/2000/4000 ms` readiness retry staircase and reuse the existing idempotent `installHostButton()` owner from `onDeviceRefreshEnd` and `onNativePageEnd`.
+- Preserve `hostButtonEnabled`, single-node reuse, node resolution, native cloned presentation and dialog flow without adding a `MutationObserver`, polling loop or request.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.21.md`.
+
 ## 0.1.1-dev.20 - 2026-08-08
 
 - Deliver the Move Request #173 correction after real dev.19 smoke exposed `Cannot set properties of null (setting 'innerHTML')` in Modern MeshCentral.
