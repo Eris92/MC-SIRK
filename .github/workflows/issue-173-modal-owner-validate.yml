@@ -28,6 +28,8 @@ jobs:
         run: python3 scripts/tmp-issue-173-modal-owner.py
       - name: Targeted Move Request surface regression
         run: node test/move-request-dialog-surface.test.js
+      - name: Targeted shared surface regression
+        run: node test/shared-workspace-surface.test.js
       - name: Targeted Move Request submit regression
         run: node test/move-request-submit-feedback.test.js
       - name: Full test suite
