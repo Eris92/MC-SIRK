@@ -6,13 +6,6 @@
         if (!core || core.__nativeLeftMenuContractInstalled) return;
         core.__nativeLeftMenuContractInstalled = true;
 
-        var modernIconNames = {
-            approvalcenter: "clipboard-check",
-            myscripts: "file-code",
-            mycommands: "terminal",
-            moverequests: "right-left"
-        };
-
         function isModern(element) {
             return String(element && element.tagName || "").toLowerCase() === "a" ||
                 !!(element && element.classList && element.classList.contains("nav-link"));
@@ -22,12 +15,6 @@
             return String(anchor && anchor.className || "").split(/\s+/).filter(function (name) {
                 return name && name !== "lbbuttonsel" && name !== "lbbuttonsel2" && name !== "active";
             }).join(" ");
-        }
-
-        function definitionKey(definition) {
-            return String(definition && (definition.leftId || definition.mainId) || "")
-                .replace(/^(?:Left|Main)MenuSirkPlatform-/, "")
-                .toLowerCase();
         }
 
         function normalizeLegacyIcon(anchor, item) {
@@ -52,42 +39,6 @@
             }
         }
 
-        function findModernIcon(item) {
-            if (!item || typeof item.querySelector !== "function") return null;
-            return item.querySelector("svg, i, img");
-        }
-
-        function modernIconMatches(icon, key, iconName) {
-            if (!icon) return false;
-            var tag = String(icon.tagName || "").toLowerCase();
-            if (tag !== "i" && tag !== "svg") return false;
-            if (icon.getAttribute && icon.getAttribute("data-sirk-platform-menu-icon") === key) return true;
-            return !!(icon.classList && icon.classList.contains("fa-" + iconName));
-        }
-
-        function normalizeModernIcon(anchor, item, definition) {
-            if (!anchor || !item || typeof document === "undefined") return;
-            var key = definitionKey(definition);
-            var iconName = modernIconNames[key] || "puzzle-piece";
-            var currentIcon = findModernIcon(item);
-
-            if (modernIconMatches(currentIcon, key, iconName)) return;
-
-            var icon = document.createElement("i");
-            icon.className = "fa-solid fa-" + iconName + " me-2";
-            icon.setAttribute("data-sirk-platform-menu-icon", key);
-            icon.setAttribute("aria-hidden", "true");
-
-            if (currentIcon && currentIcon.parentNode &&
-                typeof currentIcon.parentNode.replaceChild === "function") {
-                currentIcon.parentNode.replaceChild(icon, currentIcon);
-            } else if (typeof item.insertBefore === "function") {
-                item.insertBefore(icon, item.firstChild || null);
-            } else if (typeof item.appendChild === "function") {
-                item.appendChild(icon);
-            }
-        }
-
         var originalEnsureMenu = core.ensureMenu;
         if (typeof originalEnsureMenu === "function") {
             core.ensureMenu = function (definition) {
@@ -104,8 +55,7 @@
                 item.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
                 item.removeAttribute("aria-current");
 
-                if (isModern(item)) normalizeModernIcon(anchor, item, definition);
-                else normalizeLegacyIcon(anchor, item);
+                if (!isModern(item)) normalizeLegacyIcon(anchor, item);
                 return result;
             };
         }
@@ -142,7 +92,6 @@
                 tag === "select" || tag === "textarea" || tag === "script" ||
                 tag === "style";
         }
-
         function meaningfulTextNode(root) {
             if (!root || !root.childNodes) return null;
             for (var index = 0; index < root.childNodes.length; index += 1) {
