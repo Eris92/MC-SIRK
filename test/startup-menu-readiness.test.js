@@ -34,6 +34,10 @@ async function main() {
         "Runtime must accept the prefetched bootstrap promise.");
     assert.ok(runtimeSource.indexOf("reconcileBootstrapSurfaces()") >= 0,
         "Allowed native surfaces must reconcile from the shared bootstrap owner.");
+    assert.ok(runtimeSource.indexOf("if (runtime.state.nativePageEnd == null) return;") >= 0,
+        "Bootstrap menu insertion must wait for the current native MeshCentral page completion signal.");
+    assert.ok(runtimeSource.indexOf("runtime.state.nativePageEnd = null;") >= 0,
+        "A new native page start must invalidate the previous page-end readiness state.");
     assert.ok(runtimeSource.indexOf("state.access.allowed === true") >= 0,
         "Early menu, host action and module loading must be permission-safe.");
     assert.ok(runtimeSource.indexOf("config.hostButtonEnabled === false") >= 0,
@@ -128,7 +132,17 @@ async function main() {
     assert.strictEqual(lifecycle.some(function (entry) { return entry.indexOf("myscripts:") === 0; }), false,
         "A denied module must not initialize or receive native lifecycle callbacks.");
 
-    console.log("Startup bootstrap prefetch, native surface readiness and parallel module lifecycle: OK");
+    menus.length = 0;
+    windowObject.SirkPlatformRuntime.onNativePageStart(2);
+    windowObject.SirkPlatformRuntime.refreshMenus();
+    assert.strictEqual(menus.length, 0,
+        "A new native page start must not recreate bootstrap menu entries while MeshCentral is still redrawing its page.");
+
+    windowObject.SirkPlatformRuntime.onNativePageEnd(2);
+    assert.deepStrictEqual(menus.map(function (item) { return item.leftId; }), ["LeftMenuSirkPlatform-approvalcenter"],
+        "The current native page-end callback must restore the full allowed menu in one bounded pass.");
+
+    console.log("Startup bootstrap prefetch, native page-ready menu gate and parallel module lifecycle: OK");
 }
 
 main().catch(function (error) {
