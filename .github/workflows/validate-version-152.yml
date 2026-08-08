@@ -1,0 +1,116 @@
+name: Validate version 152
+
+on:
+  push:
+    branches: [issue-152-version-bump]
+    paths:
+      - '.github/workflows/validate-version-152.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issue-152-version-bump
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Synchronize development metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          old = '0.1.1-dev.5'
+          new = '0.1.1-dev.6'
+
+          for name in ('package.json', 'config.json'):
+              path = Path(name)
+              data = json.loads(path.read_text())
+              if data.get('version') != old:
+                  raise SystemExit(f'{name} expected {old}, got {data.get("version")}')
+              data['version'] = new
+              path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+
+          path = Path('README.md')
+          text = path.read_text()
+          text = text.replace('# SIRK Management Platform 0.1.1-dev.5', '# SIRK Management Platform 0.1.1-dev.6', 1)
+          text = text.replace('[Aktualne development notes](docs/releases/0.1.1-dev.5.md)', '[Aktualne development notes](docs/releases/0.1.1-dev.6.md)', 1)
+          path.write_text(text)
+
+          path = Path('docs/PROJECT-STATE.md')
+          text = path.read_text()
+          for a, b in (
+              ('Current version: `0.1.1-dev.5`', 'Current version: `0.1.1-dev.6`'),
+              ('package.json -> 0.1.1-dev.5', 'package.json -> 0.1.1-dev.6'),
+              ('config.json  -> 0.1.1-dev.5', 'config.json  -> 0.1.1-dev.6'),
+              ('Aktualne development notes: `docs/releases/0.1.1-dev.5.md`.', 'Aktualne development notes: `docs/releases/0.1.1-dev.6.md`.')
+          ):
+              if a not in text:
+                  raise SystemExit(f'PROJECT-STATE missing {a}')
+              text = text.replace(a, b, 1)
+          path.write_text(text)
+
+          path = Path('docs/releases/README.md')
+          text = path.read_text()
+          current = '- [`0.1.1-dev.5`](0.1.1-dev.5.md) — bieżąca rewizja development ze wspólną stabilną geometrią Edit/Multi do real MeshCentral re-smoke;'
+          replacement = '- [`0.1.1-dev.6`](0.1.1-dev.6.md) — bieżąca rewizja development z poprawką collapsed-primary dla geometrii Edit/Multi do real MeshCentral re-smoke;\n- [`0.1.1-dev.5`](0.1.1-dev.5.md) — poprzednia rewizja development ze wspólną geometrią Edit/Multi;'
+          if current not in text:
+              raise SystemExit('release index current dev.5 line missing')
+          path.write_text(text.replace(current, replacement, 1))
+
+          path = Path('changelog.md')
+          text = path.read_text()
+          marker = '# Changelog\n\n'
+          if marker not in text:
+              raise SystemExit('changelog marker missing')
+          section = '''## 0.1.1-dev.6 — 2026-08-08\n\n- Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current `main`.\n- Remove the base collapsed-grid `!important` that suppressed the measured Edit/Multi secondary-track override when the first shared column was collapsed.\n- Preserve the 64 px collapsed primary track while keeping the normal second-column text width and wrapping unchanged and placing the measured action rail outside it.\n- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.\n\nCurrent development notes: `docs/releases/0.1.1-dev.6.md`.\n\n'''
+          text = text.replace(marker, marker + section, 1)
+          text = text.replace('Current development notes: `docs/releases/0.1.1-dev.5.md`.', 'Development notes: `docs/releases/0.1.1-dev.5.md`.', 1)
+          path.write_text(text)
+
+          path = Path('version-history.json')
+          data = json.loads(path.read_text())
+          if not data or data[0].get('version') != old:
+              raise SystemExit('version-history current entry is not dev.5')
+          data.insert(0, {
+              'version': new,
+              'date': '2026-08-08',
+              'changes': [
+                  'Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current main.',
+                  'Remove the base collapsed-grid !important that suppressed the measured Edit/Multi secondary-track override while the first shared column was collapsed.',
+                  'Preserve the 64 px collapsed primary while keeping the captured second-column text width stable and reserving the measured action rail outside it.',
+                  'Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release.'
+              ]
+          })
+          path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+
+          Path('docs/releases/0.1.1-dev.6.md').write_text('''# MC-SIRK 0.1.1-dev.6 — collapsed action-mode geometry revision\n\nStatus: development pre-1.0, not a product release.\n\n`0.1.1-dev.6` podnosi rewizję development, aby mechanizm aktualizacji MeshCentral pobrał poprawkę wynikającą z real My Scripts / My Commands smoke dla Issue #116.\n\nTa rewizja obejmuje aktualny stan `main`, w tym:\n\n- standardowy Collapse nadal utrzymuje pierwszy track na 64 px;\n- bazowy collapsed grid nie używa już `!important`, które blokowało bardziej specyficzną geometrię Edit/Multi;\n- przy collapsed primary Edit i Multi zachowują bazowy text track drugiej kolumny bez zmiany wrappingu labeli;\n- zmierzony action rail oraz jego column gap pozostają poza captured text trackiem;\n- fix jest shared dla My Scripts i My Commands, bez per-module CSS, nowego JS ownera, observera, timera lub request loop.\n\nBump nie zmienia release gate: wszystkie development revisions pozostają `< 1.0.0`. `1.0.0` jest zarezerwowane dla pierwszego kompletnego product release po jawnej decyzji użytkownika i wymaganym real MeshCentral smoke.\n\nNie tworzyć tagu ani GitHub Release dla tej development revision bez jawnego polecenia użytkownika.\n''')
+          PY
+          rm .github/workflows/validate-version-152.yml
+      - name: Validate development metadata
+        run: node scripts/validate-repository-layout.js
+      - name: Run full test suite
+        run: npm test
+      - name: Check final diff
+        run: |
+          git diff --check
+          git status --short
+      - name: Save verified metadata
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+Eris92@users.noreply.github.com
+          git add package.json config.json README.md docs/PROJECT-STATE.md docs/releases/README.md docs/releases/0.1.1-dev.6.md changelog.md version-history.json .github/workflows/validate-version-152.yml
+          git commit -m "docs: synchronize 0.1.1-dev.6 metadata"
+          git push origin HEAD:issue-152-version-bump
