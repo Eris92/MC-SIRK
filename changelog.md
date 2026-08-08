@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1-dev.6 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current `main`.
+- Remove the base collapsed-grid `!important` that suppressed the measured Edit/Multi secondary-track override when the first shared column was collapsed.
+- Preserve the 64 px collapsed primary track while keeping the normal second-column text width and wrapping unchanged and placing the measured action rail outside it.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.6.md`.
+
 ## 0.1.1-dev.5 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the shared Edit/Multi geometry fix from current `main`.
@@ -7,7 +16,7 @@
 - Use the same post-atomic-commit lifecycle for Edit and Multi so action-mode switches do not transiently move or squeeze text.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.1-dev.5.md`.
+Development notes: `docs/releases/0.1.1-dev.5.md`.
 
 ## 0.1.1-dev.4 — 2026-08-07
 
