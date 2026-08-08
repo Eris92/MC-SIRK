@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.13",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current main.",
+      "Composite native Move Request card/body surface tokens over an always-opaque Canvas base so transparent or alpha host tokens cannot expose the device page.",
+      "Preserve Move Request submit/backend behavior and the existing guarded status lifecycle.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.12",
     "date": "2026-08-08",
     "changes": [

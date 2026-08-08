@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1-dev.13 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current `main`.
+- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host card tokens cannot expose the device page.
+- Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.13.md`.
+
 ## 0.1.1-dev.12 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request dialog surface fix from current `main`.
