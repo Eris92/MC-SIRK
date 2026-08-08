@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.13`](0.1.1-dev.13.md) — bieżąca rewizja development z opacity-safe surface dialogu Move Request po real dev.12 re-smoke;
+- [`0.1.1-dev.14`](0.1.1-dev.14.md) — bieżąca rewizja development z class-specific opaque surface dla `.mc-move-dialog.card` po real dev.13 re-smoke;
+- [`0.1.1-dev.13`](0.1.1-dev.13.md) — poprzednia rewizja development z opacity-safe layered surface dialogu Move Request;
 - [`0.1.1-dev.12`](0.1.1-dev.12.md) — poprzednia rewizja development z pierwszą próbą nieprzezroczystego surface dialogu Move Request;
 - [`0.1.1-dev.11`](0.1.1-dev.11.md) — poprzednia rewizja development po corrective UI smoke follow-up dla stabilnego indicator/icon geometry, wspólnego Approval list style i wycentrowanych Results actions;
 - [`0.1.1-dev.10`](0.1.1-dev.10.md) — poprzednia rewizja development po corrective runtime smoke follow-up dla wspólnej osi first-column icons i kompaktowej kolumny View;

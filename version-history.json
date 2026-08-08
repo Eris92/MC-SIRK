@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.14",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Move Request dialog card-cascade fix from current main.",
+      "Give the real .mc-move-dialog.card combination explicit higher-specificity opaque surface ownership while preserving MeshThemeAdapter.card().",
+      "Separate the always-opaque Canvas base from the optional native card/body token layer and keep a Classic style10 opaque fallback.",
+      "Preserve Move Request submit/backend behavior and the existing guarded status lifecycle.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.13",
     "date": "2026-08-08",
     "changes": [
