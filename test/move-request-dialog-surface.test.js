@@ -6,23 +6,20 @@ var path = require("path");
 var root = path.resolve(__dirname, "..");
 var source = fs.readFileSync(path.join(root, "public/modules/move-requests/index.js"), "utf8");
 
-assert.ok(source.indexOf('function hostDialogManager()') >= 0 && source.indexOf('window.setDialogMode') >= 0,
-    "Move Request must delegate modal ownership to the native MeshCentral dialog manager.");
-assert.ok(source.indexOf('showDialog(2, "Move Request", 3, null, content.innerHTML);') >= 0,
-    "Move Request must open through native setDialogMode mode 2 with the native OK/Cancel footer.");
-assert.ok(source.indexOf('document.getElementById("idx_dlgOkButton")') >= 0 &&
-    source.indexOf('document.getElementById("idx_dlgCancelButton")') >= 0 &&
-    source.indexOf('document.getElementById("id_dialogclose")') >= 0,
-    "Move Request must reuse the native host dialog controls instead of rendering plugin modal buttons.");
-assert.ok(source.indexOf('writeButtonText(submit, "Submit request")') >= 0,
-    "The native host OK control must be relabeled to Submit request without replacing its native styling.");
-assert.strictEqual(source.indexOf('overlay.className = "mc-move-dialog-overlay"'), -1,
-    "Move Request must not create a parallel plugin overlay once native setDialogMode owns the dialog.");
-assert.strictEqual(source.indexOf('dialogFrame.className = "mc-move-dialog-frame"'), -1,
-    "Move Request must not recreate the host modal-dialog frame.");
-assert.strictEqual(source.indexOf('document.body.appendChild(overlay)'), -1,
-    "Move Request must not append a custom modal tree to document.body.");
-assert.strictEqual(source.indexOf('submit.className = "sirk-primary-action"'), -1,
-    "Move Request must use the host OK button surface instead of styling a plugin submit button.");
-
-console.log("Move Request delegates dialog surface and footer ownership to MeshCentral setDialogMode: OK");
+assert.ok(source.indexOf('typeof window.setModalContent === "function"') >= 0 && source.indexOf('typeof window.showModal === "function"') >= 0,
+    "Move Request must detect the Modern MeshCentral modal manager.");
+assert.ok(source.indexOf('document.getElementById("xxAddAgentModal")') >= 0 && source.indexOf('document.getElementById("dialog2")') >= 0,
+    "Modern routing must be bounded to the actual Modern modal DOM/content target.");
+assert.ok(source.indexOf('dialogManager.setContent("xxAddAgent", "Move Request", content.innerHTML)') >= 0,
+    "Modern Move Request must populate the native xxAddAgent modal through setModalContent.");
+assert.ok(source.indexOf('dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest)') >= 0,
+    "Modern Move Request must open the native modal through showModal and reuse its OK control.");
+assert.ok(source.indexOf('return false;') >= 0,
+    "Native Modern submit callback must return false so pending/success/error remains visible in the open modal.");
+assert.ok(source.indexOf('document.getElementById("dialog")') >= 0 && source.indexOf('document.getElementById("id_dialogOptions")') >= 0,
+    "Classic setDialogMode routing must be bounded to Classic dialog DOM targets.");
+assert.ok(source.indexOf('else dialogManager.show(2, "Move Request", 3, null, content.innerHTML)') >= 0,
+    "Classic may continue using setDialogMode only through the Classic manager branch.");
+assert.strictEqual(source.indexOf('mc-move-dialog-overlay'), -1,
+    "Move Request runtime must not restore the plugin-built overlay/modal tree.");
+console.log("Move Request routes to native Modern/Classic dialog managers: OK");
