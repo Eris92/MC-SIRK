@@ -10,6 +10,7 @@ var shared = read("public/shared/ui/shared-ui.css");
 var layout = read("public/shared/ui/layout.js");
 var tree = read("public/shared/ui/tree.js");
 var approvals = read("public/modules/approvals/index.js");
+var quick = read("public/native/desktop-commands.css");
 
 assert.ok(toolbar.indexOf('.mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser .mc-shared-primary>button{grid-template-columns:28px minmax(0,1fr)}') >= 0,
     "Expanded and collapsed first-column rows must reserve one stable 28 px icon box.");
@@ -18,19 +19,25 @@ assert.ok(toolbar.indexOf('.mc-shared-primary>.sirk-shared-list-item .sirk-share
 assert.ok(toolbar.indexOf('.mc-shared-primary>.sirk-shared-list-item .sirk-shared-list-icon svg,.sirk-quick-command-browser .mc-shared-primary>button .sirk-quick-command-icon svg{width:24px;height:24px}') >= 0,
     "Monochrome first-column SVG artwork must stay 24x24 in every Collapse state.");
 
-assert.ok(toolbar.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>button{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0}') >= 0,
+assert.ok(toolbar.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>button{display:flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0}') >= 0,
     "Collapsed first-column rows must keep the same 44 px vertical step as expanded 28 px icons with 8 px padding.");
-assert.ok(shared.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 6px;overflow:hidden}') >= 0,
+assert.ok(shared.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 9px;overflow:hidden}') >= 0,
     "Collapse must preserve the expanded primary column's 12 px vertical origin while only tightening horizontal padding.");
 
 assert.ok(shared.indexOf('.mc-shared-primary{padding:12px 9px}') >= 0,
     "Expanded first-column horizontal padding must place the 28 px icon center on the collapsed 64 px track axis.");
 assert.ok(shared.indexOf('.mc-shared-primary .mc-shared-nav-item .mc-nav-icon{width:28px;min-width:28px;height:28px}') >= 0,
     "Approval Center first-column navigation must reuse the same 28 px icon box as Commands/Scripts/Quick.");
-assert.ok(shared.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary .mc-shared-nav-item{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0}') >= 0,
+assert.ok(shared.indexOf('.mc-shared-layout.is-collapsed .mc-shared-primary .mc-shared-nav-item{display:flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0}') >= 0,
     "Approval Center collapsed navigation must keep the same 44 px row geometry as expanded first-column rows.");
-assert.ok(approvals.indexOf('button.className = "mc-shared-nav-item "') >= 0 && approvals.indexOf('icon.className = "mc-nav-icon"') >= 0,
+assert.ok(approvals.indexOf('button.className = "mc-shared-nav-item sirk-shared-list-item "') >= 0 && approvals.indexOf('icon.className = "mc-nav-icon sirk-shared-list-icon"') >= 0,
     "Approval Center must remain a direct consumer of the shared first-column geometry owner.");
+
+assert.ok(quick.indexOf('.sirk-quick-command-browser .mc-shared-primary{padding-left:9px;padding-right:9px}') >= 0 &&
+    quick.indexOf('.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories{padding:12px 9px;overflow:hidden}') >= 0,
+    "Quick expanded/collapsed primary must keep the same horizontal icon/indicator origin.");
+assert.ok(quick.indexOf('width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px') >= 0,
+    "Quick collapsed category row must reuse the 44 px shared first-column row geometry.");
 
 assert.ok(toolbar.indexOf('.sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:20px;min-width:20px;height:20px;max-width:20px;object-fit:contain}') >= 0,
     "Second-column/shared list icons must retain their existing compact 20 px geometry.");

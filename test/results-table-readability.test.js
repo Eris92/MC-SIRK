@@ -42,6 +42,12 @@ assert.ok(css.indexOf('.mc-results-table .mc-results-col-view{min-width:72px;wid
     "View must use a compact fixed track sized for one button.");
 assert.ok(css.indexOf('.mc-results-table .mc-results-col-actions{min-width:120px;white-space:nowrap}') >= 0,
     "Actions must retain enough width for Approve/Reject controls.");
+assert.ok(css.indexOf('.mc-results-table th.mc-results-col-view,.mc-results-table th.mc-results-col-actions{text-align:center}') >= 0 &&
+    css.indexOf('.mc-results-table td.mc-results-col-view,.mc-results-table td.mc-results-col-actions{vertical-align:middle;text-align:center}') >= 0,
+    "View/Actions headers and body cells must share centered alignment.");
+assert.ok(css.indexOf('.mc-results-table td.mc-results-col-view .mc-results-view-button{margin:0}') >= 0 &&
+    css.indexOf('.mc-results-table td.mc-results-col-actions>div{justify-content:center;margin-top:0;margin-bottom:0}') >= 0,
+    "Table action controls must drop card spacing and center within their semantic cells.");
 assert.ok(results.indexOf('viewHead.className = "mc-results-col-view"') >= 0 &&
     results.indexOf('viewCell.className = "mc-results-col-view"') >= 0,
     "Shared mountTable must apply the compact View role to both header and body cells.");

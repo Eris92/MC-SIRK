@@ -52,19 +52,19 @@
     function nav(host, options, shell) {
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "mc-shared-nav-item " + (options.className || "");
+        button.className = "mc-shared-nav-item sirk-shared-list-item " + (options.className || "");
         button.classList.toggle("is-active", options.active === true);
         button.classList.toggle("active", options.active === true);
         button.setAttribute("aria-selected", options.active === true ? "true" : "false");
         button.title = options.title;
 
         var icon = document.createElement("span");
-        icon.className = "mc-nav-icon" + (options.iconClassName ? " " + options.iconClassName : "");
+        icon.className = "mc-nav-icon sirk-shared-list-icon" + (options.iconClassName ? " " + options.iconClassName : "");
         icon.setAttribute("aria-hidden", "true");
         icon.innerHTML = options.icon || icons.all;
 
         var label = document.createElement("span");
-        label.className = "mc-approval-label";
+        label.className = "mc-approval-label sirk-shared-list-label";
         label.textContent = options.title + (options.count == null ? "" : " - " + options.count);
 
         button.appendChild(icon);
