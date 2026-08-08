@@ -161,6 +161,21 @@
         } else cell.textContent = value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
     }
 
+    function tableWidthClass(columnCount) {
+        if (columnCount >= 7) return "mc-results-table-wide";
+        if (columnCount >= 4) return "mc-results-table-medium";
+        return "mc-results-table-compact";
+    }
+
+    function tableColumnClass(title) {
+        var key = String(title || "").trim().toLowerCase().replace(/\s+/g, "");
+        if (key === "view" || key === "actions" || key === "action") return "mc-results-col-actions";
+        if (key === "datetime" || key === "date" || key === "time" || key === "status" || key === "approval") return "mc-results-col-short";
+        if (key === "request" || key === "summary" || key === "command" || key === "script" || key === "device" || key === "result") return "mc-results-col-text";
+        if (key === "requester" || key === "approver") return "mc-results-col-medium";
+        return "mc-results-col-default";
+    }
+
     function renderStructured(host, data) {
         if (data.portal) {
             var portalHeading = document.createElement("h3"); portalHeading.textContent = data.portal.title || "Portal"; host.appendChild(portalHeading);
@@ -183,9 +198,9 @@
                         return value == null ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
                     }).join(" ").toLocaleLowerCase().indexOf(query) >= 0;
                 }) : rows;
-                var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-structured-table";
-                var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.textContent = column; header.appendChild(cell); });
-                var body = table.createTBody(); visible.forEach(function (source) { var row = body.insertRow(); columns.forEach(function (column) { appendValue(row.insertCell(), source && source[column]); }); });
+                var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-structured-table " + tableWidthClass(columns.length);
+                var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.className = tableColumnClass(column); cell.textContent = column; header.appendChild(cell); });
+                var body = table.createTBody(); visible.forEach(function (source) { var row = body.insertRow(); columns.forEach(function (column) { var cell = row.insertCell(); cell.className = tableColumnClass(column); appendValue(cell, source && source[column]); }); });
                 wrapper.appendChild(table);
             }
             var timer = 0; filter.oninput = function () { clearTimeout(timer); timer = setTimeout(draw, 100); }; draw(); return;
@@ -314,20 +329,24 @@
                     var message = document.createElement("div"); message.className = "mc-shared-muted"; message.textContent = options.emptyText || "No results match the selected status or filter."; empty.appendChild(message); tableHost.appendChild(empty); return;
                 }
                 var wrapper = document.createElement("div"); wrapper.className = "mc-results-table-wrap";
-                var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-table-" + String(options.kind || "scripts"); wrapper.appendChild(table); tableHost.appendChild(wrapper);
-                var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.textContent = column.title; header.appendChild(cell); });
-                if (options.showView !== false) { var viewHead = document.createElement("th"); viewHead.textContent = "View"; header.appendChild(viewHead); }
-                if (typeof options.actions === "function") { var actionHead = document.createElement("th"); actionHead.textContent = "Actions"; header.appendChild(actionHead); }
+                var renderedColumnCount = columns.length + (options.showView !== false ? 1 : 0) + (typeof options.actions === "function" ? 1 : 0);
+                var table = document.createElement("table"); table.className = "style1 mc-results-table mc-results-table-" + String(options.kind || "scripts") + " " + tableWidthClass(renderedColumnCount); wrapper.appendChild(table); tableHost.appendChild(wrapper);
+                var header = table.createTHead().insertRow(); columns.forEach(function (column) { var cell = document.createElement("th"); cell.className = tableColumnClass(column.title); cell.textContent = column.title; header.appendChild(cell); });
+                if (options.showView !== false) { var viewHead = document.createElement("th"); viewHead.className = "mc-results-col-actions"; viewHead.textContent = "View"; header.appendChild(viewHead); }
+                if (typeof options.actions === "function") { var actionHead = document.createElement("th"); actionHead.className = "mc-results-col-actions"; actionHead.textContent = "Actions"; header.appendChild(actionHead); }
                 var body = table.createTBody(); rows.forEach(function (row) {
                     var tableRow = body.insertRow();
                     columns.forEach(function (column) {
                         var cell = tableRow.insertCell();
+                        cell.className = tableColumnClass(column.title);
                         if (typeof column.render === "function") { column.render(cell, row); return; }
                         var value = typeof column.value === "function" ? column.value(row) : valueAt(row, column.path, "—");
-                        cell.className = typeof column.className === "function" ? column.className(row) || "" : column.className || ""; appendValue(cell, value);
+                        var stateClass = typeof column.className === "function" ? column.className(row) || "" : column.className || "";
+                        if (stateClass) cell.className += " " + stateClass;
+                        appendValue(cell, value);
                     });
-                    if (options.showView !== false) { var viewCell = tableRow.insertCell(), view = document.createElement("button"); view.type = "button"; view.className = "btn btn-primary btn-sm mc-results-view-button"; view.textContent = "View"; view.onclick = function () { openViewer(row, options); }; viewCell.appendChild(view); }
-                    if (typeof options.actions === "function") { var actionCell = tableRow.insertCell(); options.actions(actionCell, row); }
+                    if (options.showView !== false) { var viewCell = tableRow.insertCell(), view = document.createElement("button"); viewCell.className = "mc-results-col-actions"; view.type = "button"; view.className = "btn btn-primary btn-sm mc-results-view-button"; view.textContent = "View"; view.onclick = function () { openViewer(row, options); }; viewCell.appendChild(view); }
+                    if (typeof options.actions === "function") { var actionCell = tableRow.insertCell(); actionCell.className = "mc-results-col-actions"; options.actions(actionCell, row); }
                 });
             }
             var timer = 0; filter.oninput = function () { clearTimeout(timer); timer = setTimeout(render, 120); }; render();
