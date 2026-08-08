@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.11`](0.1.1-dev.11.md) — bieżąca rewizja development po corrective UI smoke follow-up dla stabilnego indicator/icon geometry, wspólnego Approval list style i wycentrowanych Results actions;
+- [`0.1.1-dev.12`](0.1.1-dev.12.md) — bieżąca rewizja development z nieprzezroczystym, theme-safe surface dialogu Move Request po real smoke;
+- [`0.1.1-dev.11`](0.1.1-dev.11.md) — poprzednia rewizja development po corrective UI smoke follow-up dla stabilnego indicator/icon geometry, wspólnego Approval list style i wycentrowanych Results actions;
 - [`0.1.1-dev.10`](0.1.1-dev.10.md) — poprzednia rewizja development po corrective runtime smoke follow-up dla wspólnej osi first-column icons i kompaktowej kolumny View;
 - [`0.1.1-dev.9`](0.1.1-dev.9.md) — poprzednia rewizja development po corrective runtime smoke follow-up dla row geometry, command labels, Results containment i human-readable Move Request summaries;
 - [`0.1.1-dev.8`](0.1.1-dev.8.md) — poprzednia rewizja development ze stałym rozmiarem ikon 1. kolumny przy Collapse/Expand do real MeshCentral smoke;

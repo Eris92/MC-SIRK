@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.1-dev.12 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request dialog surface fix from current `main`.
+- Keep the existing native `MeshThemeAdapter.card()` ownership while guaranteeing an opaque dialog background through Bootstrap card/body tokens with a Classic/system `Canvas` fallback.
+- Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.12.md`.
+
 ## 0.1.1-dev.11 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current `main`.
