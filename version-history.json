@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.24",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the Issue #121 icon-owner fix after real dev.23 smoke exposed a colored/custom-to-white icon replacement.",
+      "Keep SirkIconMode through core.ensureMenu as the single Modern icon family/source owner and remove the deferred page.js Modern Font Awesome replacement map.",
+      "Preserve native menu classes, active state and Classic lbtg geometry without adding a CSS filter toggle, observer, timer or second menu renderer.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.23",
     "date": "2026-08-08",
     "changes": [
@@ -214,7 +224,7 @@
     "version": "0.1.1-dev.3",
     "date": "2026-08-07",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from main.",
       "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the toolbar row height.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]

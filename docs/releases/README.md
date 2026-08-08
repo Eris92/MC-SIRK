@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.23`](0.1.1-dev.23.md) — bieżąca rewizja development z bootstrap requestem uruchamianym zaraz po `core.js` i runtime-owned permission-safe Move Request host action;
+- [`0.1.1-dev.24`](0.1.1-dev.24.md) — bieżąca rewizja development z jednym ownerem rodziny/source ikon menu i bez późnej podmiany Modern SVG na białe Font Awesome;
+- [`0.1.1-dev.23`](0.1.1-dev.23.md) — poprzednia rewizja development z bootstrap requestem uruchamianym zaraz po `core.js` i runtime-owned permission-safe Move Request host action;
 - [`0.1.1-dev.22`](0.1.1-dev.22.md) — poprzednia rewizja development z wcześniejszym permission-safe bootstrap menu, równoległym bounded startupem rendererów i replay natywnego node/page contextu;
 - [`0.1.1-dev.21`](0.1.1-dev.21.md) — poprzednia rewizja development z usuniętym Move Request host-button readiness retry staircase i synchronicznym reuse natywnych lifecycle callbacks;
 - [`0.1.1-dev.20`](0.1.1-dev.20.md) — poprzednia rewizja development z poprawnym routingiem Move Request do natywnego Modern `setModalContent`/`showModal` albo Classic `setDialogMode`;

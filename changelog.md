@@ -1,3 +1,12 @@
+## 0.1.1-dev.24 - 2026-08-08
+
+- Continue #121 after real `0.1.1-dev.23` smoke showed configured colored/custom SIRK menu SVGs being replaced after first paint by white/currentColor Font Awesome icons.
+- Keep `SirkIconMode -> core.ensureMenu()` as the single family/source owner and remove the second Modern icon map/replacement path from deferred `public/shared/ui/page.js`.
+- Preserve native left-menu classes, active state and Classic `.lbtg` geometry without adding a CSS filter, extra setting, observer, timer or second menu renderer.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.24.md`.
+
 ## 0.1.1-dev.23 - 2026-08-08
 
 - Continue #177/#178 after real `0.1.1-dev.22` hard-refresh smoke still showed roughly one second of delayed SIRK native UI pop-in.
