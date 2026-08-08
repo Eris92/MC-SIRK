@@ -15,9 +15,11 @@ jobs:
         with:
           node-version: 20
       - name: Apply patch
-        run: python3 scripts/tmp-fix203.py
+        run: |
+          python3 scripts/tmp-fix203.py
+          python3 scripts/tmp-fix203-test.py
       - name: Remove temporary helpers before validation
-        run: rm scripts/tmp-fix203.py .github/workflows/fix203-temp.yml
+        run: rm scripts/tmp-fix203.py scripts/tmp-fix203-test.py .github/workflows/fix203-temp.yml
       - name: Targeted tests
         run: |
           node test/move-request-dialog-surface.test.js
