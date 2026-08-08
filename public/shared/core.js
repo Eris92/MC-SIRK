@@ -40,6 +40,11 @@
                 item.classList.contains("active")))));
     }
 
+    function nativeMenuCreateReady() {
+        var runtime = window.SirkPlatformRuntime;
+        return !(runtime && runtime.state) || runtime.state.nativePageEnd != null;
+    }
+
     function applyLegacyMenuIcon(anchor, item, iconSource, familyName) {
         if (!anchor || !item || !iconSource) return null;
         var nativeIcon = anchor.querySelector && anchor.querySelector(".lbtg");
@@ -241,9 +246,10 @@
         var family = useModernIcons ? modernMenuIcons : classicMenuIcons;
         var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";
         var open = definition.open;
+        var canCreateMenu = nativeMenuCreateReady();
 
-        if (mainAnchor && mainAnchor.parentNode) {
-            var existingMain = document.getElementById(definition.mainId);
+        var existingMain = mainAnchor && mainAnchor.parentNode ? document.getElementById(definition.mainId) : null;
+        if (mainAnchor && mainAnchor.parentNode && (existingMain || canCreateMenu)) {
             var mainWasActive = !!existingMain && menuItemActive(existingMain);
             var main = existingMain || mainAnchor.cloneNode(false);
             var modern = isModernMenuItem(main);
@@ -268,8 +274,8 @@
             if (mainWasActive) core.setPluginMenuActive(main, null, true);
         }
 
-        if (leftAnchor && leftAnchor.parentNode) {
-            var existingLeft = document.getElementById(definition.leftId);
+        var existingLeft = leftAnchor && leftAnchor.parentNode ? document.getElementById(definition.leftId) : null;
+        if (leftAnchor && leftAnchor.parentNode && (existingLeft || canCreateMenu)) {
             var leftWasActive = !!existingLeft && menuItemActive(existingLeft);
             var left = existingLeft || leftAnchor.cloneNode(true);
             var leftModern = isModernMenuItem(left);

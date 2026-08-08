@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.25`](0.1.1-dev.25.md) — bieżąca rewizja development z finalnym left-menu contractem już w pierwszym `core.ensureMenu()`, większym artworkiem i białą Classic family bez deferred reflow;
+- [`0.1.1-dev.26`](0.1.1-dev.26.md) — bieżąca rewizja development z tworzeniem brakujących SIRK left-menu nodes dopiero po bieżącym natywnym `goPageEnd`, bez host-redraw blink/recreate race;
+- [`0.1.1-dev.25`](0.1.1-dev.25.md) — poprzednia rewizja development z finalnym left-menu contractem już w pierwszym `core.ensureMenu()`, większym artworkiem i białą Classic family bez deferred reflow;
 - [`0.1.1-dev.24`](0.1.1-dev.24.md) — poprzednia rewizja development z jednym ownerem rodziny/source ikon menu i bez późnej podmiany Modern SVG na białe Font Awesome;
 - [`0.1.1-dev.23`](0.1.1-dev.23.md) — poprzednia rewizja development z bootstrap requestem uruchamianym zaraz po `core.js` i runtime-owned permission-safe Move Request host action;
 - [`0.1.1-dev.22`](0.1.1-dev.22.md) — poprzednia rewizja development z wcześniejszym permission-safe bootstrap menu, równoległym bounded startupem rendererów i replay natywnego node/page contextu;

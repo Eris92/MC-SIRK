@@ -1,3 +1,12 @@
+## 0.1.1-dev.26 - 2026-08-08
+
+- Continue #177 after real `0.1.1-dev.25` smoke reduced the left-menu shift to one remaining short blink after F5.
+- Gate creation of missing SIRK menu nodes on the current native MeshCentral `goPageEnd`, invalidating readiness on every `goPageStart`, so host redraw cannot remove an early plugin node and trigger one recreation.
+- Keep existing menu nodes refreshable, retain permission-safe bootstrap and bounded parallel module startup, and add host-redraw/startup regressions without timers, observers, CSS masking or extra requests.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.26.md`.
+
 ## 0.1.1-dev.25 - 2026-08-08
 
 - Continue #121/#177 after real `0.1.1-dev.24` smoke showed undersized SIRK left-menu artwork and a remaining visible second-pass menu shift after F5.
