@@ -163,7 +163,7 @@ page.appendChild(titleHost); page.appendChild(nativeContent);
 html.appendChild(mainHost); html.appendChild(leftHost); html.appendChild(page);
 
 var mainDevices = new Element("div"); mainDevices.id = "MainMenuMyDevices"; mainDevices.className = "fullselect"; mainHost.appendChild(mainDevices);
-var leftDevices = new Element("div"); leftDevices.id = "LeftMenuMyDevices"; leftDevices.className = "lbbutton lbbuttonsel2";
+var leftDevices = new Element("div"); leftDevices.id = "LeftMenuMyDevices"; leftDevices.className = "lbbutton lbbuttonsel";
 var devicesIcon = new Element("div"); devicesIcon.className = "lbtg lb2"; leftDevices.appendChild(devicesIcon); leftHost.appendChild(leftDevices);
 var thirdParty = new Element("div"); thirdParty.id = "LeftMenuThirdParty"; thirdParty.className = "lbbutton"; leftHost.appendChild(thirdParty);
 
@@ -240,7 +240,7 @@ context.window.go = function (view) {
     thirdParty.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
     if (Number(view) === 1) {
         mainDevices.classList.add("fullselect");
-        leftDevices.classList.add("lbbuttonsel2");
+        leftDevices.classList.add("lbbuttonsel");
     }
     context.window.xxcurrentView = Number(view);
     modules.forEach(function (module) { module.onNativePageEnd(view); });
@@ -252,19 +252,19 @@ scripts.initialize({ config: {} });
 approval.open();
 var approvalLeft = document.getElementById("LeftMenuSirkPlatform-approvalcenter");
 var scriptsLeft = document.getElementById("LeftMenuSirkPlatform-myscripts");
-assert.ok(approvalLeft.classList.contains("lbbuttonsel2"), "Approval Center must become the selected native left-menu entry.");
-assert.ok(!leftDevices.classList.contains("lbbuttonsel2"), "Devices must lose selection after Approval Center opens.");
+assert.ok(approvalLeft.classList.contains("lbbuttonsel"), "Approval Center must become the selected native Classic left-menu entry.");
+assert.ok(!leftDevices.classList.contains("lbbuttonsel"), "Devices must lose Classic selection after Approval Center opens.");
 assert.strictEqual(context.window.SirkPlatformCore.activePlugin, approval, "Approval Center must own the shared workspace.");
 
 scripts.open();
-assert.ok(scriptsLeft.classList.contains("lbbuttonsel2"), "My Scripts must become selected when switching directly from Approval Center.");
-assert.ok(!approvalLeft.classList.contains("lbbuttonsel2"), "Approval Center must be unselected after switching to My Scripts.");
-assert.ok(!leftDevices.classList.contains("lbbuttonsel2"), "Devices must remain unselected while My Scripts is active.");
+assert.ok(scriptsLeft.classList.contains("lbbuttonsel"), "My Scripts must become selected when switching directly from Approval Center.");
+assert.ok(!approvalLeft.classList.contains("lbbuttonsel"), "Approval Center must be unselected after switching to My Scripts.");
+assert.ok(!leftDevices.classList.contains("lbbuttonsel"), "Devices must remain unselected while My Scripts is active.");
 assert.strictEqual(context.window.SirkPlatformCore.activePlugin, scripts, "My Scripts must replace Approval Center as workspace owner.");
 
 context.window.go(1);
-assert.ok(leftDevices.classList.contains("lbbuttonsel2"), "Native Devices must be restored after leaving SIRK.");
-assert.ok(!scriptsLeft.classList.contains("lbbuttonsel2"), "My Scripts must be unselected after native navigation.");
+assert.ok(leftDevices.classList.contains("lbbuttonsel"), "Native Classic Devices must be restored after leaving SIRK.");
+assert.ok(!scriptsLeft.classList.contains("lbbuttonsel"), "My Scripts must be unselected after native navigation.");
 assert.strictEqual(context.window.SirkPlatformCore.activePlugin, null, "No SIRK module may stay active after native navigation.");
 
 approval.open();
@@ -272,6 +272,6 @@ context.window.go(1);
 thirdParty.classList.add("lbbuttonsel2");
 modules.forEach(function (module) { module.onNativePageEnd(901); });
 assert.ok(thirdParty.classList.contains("lbbuttonsel2"), "Inactive SIRK modules must not clear another plugin's selected menu entry.");
-assert.ok(!approvalLeft.classList.contains("lbbuttonsel2"), "Approval Center must remain inactive after another plugin opens.");
+assert.ok(!approvalLeft.classList.contains("lbbuttonsel"), "Approval Center must remain inactive after another plugin opens.");
 
-console.log("Functional SIRK/native/third-party menu lifecycle: OK");
+console.log("Functional SIRK/native/third-party Classic menu lifecycle: OK");
