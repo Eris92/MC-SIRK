@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.16",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal variable-owner fix from current main.",
+      "Keep modal-content on the Move Request dialog and give its existing Modern overlay the native modal class that owns Bootstrap modal surface variables.",
+      "Reuse the existing MeshThemeAdapter refresh path before first paint without adding a background workaround, observer, timer, request loop or new modal framework.",
+      "Preserve Classic style10, native primary Submit request and the existing guarded Move Request submit/status lifecycle.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.15",
     "date": "2026-08-08",
     "changes": [
