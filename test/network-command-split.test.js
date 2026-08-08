@@ -19,16 +19,18 @@ function entry(id) {
 
 var panel = entry("network-settings");
 var properties = entry("network-adapter-properties");
-assert.ok(panel.indexOf('label: "Network Connections"') >= 0 && panel.indexOf('label: "Panel Sieciowy"') >= 0,
-    "Existing network-settings ID must become Network Connections / Panel Sieciowy.");
+assert.ok(panel.indexOf('label: "Network Control"') >= 0 &&
+    panel.indexOf('locales: { pl: { label: "Network Control" }, en: { label: "Network Control" } }') >= 0,
+    "Existing network-settings ID must expose the exact Network Control label in both locales.");
 assert.ok(panel.indexOf('runAsUser: 2') >= 0 && panel.indexOf('control.exe ncpa.cpl') >= 0,
     "Network panel must run in the interactive user context and open native Network Connections.");
 ["Get-NetRoute", "Get-NetAdapter", "Start-Sleep", "InvokeVerb"].forEach(function (fragment) {
     assert.strictEqual(panel.indexOf(fragment), -1, "Network panel must not perform adapter-property automation: " + fragment);
 });
 
-assert.ok(properties.indexOf('label: "Network Adapter Properties"') >= 0 && properties.indexOf('label: "Właściwości Sieciowe"') >= 0,
-    "New adapter-properties command must expose unambiguous EN/PL labels.");
+assert.ok(properties.indexOf('label: "Network Settings"') >= 0 &&
+    properties.indexOf('locales: { pl: { label: "Network Settings" }, en: { label: "Network Settings" } }') >= 0,
+    "Adapter-properties command must expose the exact Network Settings label in both locales.");
 assert.ok(properties.indexOf('runAsUser: 2') >= 0,
     "Adapter properties must run in the interactive user context.");
 assert.ok(properties.indexOf("DestinationPrefix '0.0.0.0/0'") >= 0 && properties.indexOf("DestinationPrefix '::/0'") >= 0,
@@ -49,9 +51,10 @@ assert.strictEqual(properties.indexOf('control.exe ncpa.cpl'), -1,
 
 assert.ok(server.indexOf('locales: command.locales || {}') >= 0,
     "Public catalog must carry command locales so Quick and My Commands share labels.");
-assert.ok(commands.indexOf('"Network Connections": "Panel Sieciowy"') >= 0 &&
-    commands.indexOf('"Network Adapter Properties": "Właściwości Sieciowe"') >= 0,
-    "My Commands PL map must match the split catalog labels.");
+assert.strictEqual(commands.indexOf('"Network Connections": "Panel Sieciowy"'), -1,
+    "My Commands must not retain the obsolete Network Connections PL alias.");
+assert.strictEqual(commands.indexOf('"Network Adapter Properties": "Właściwości Sieciowe"'), -1,
+    "My Commands must not retain the obsolete adapter-properties PL alias.");
 assert.ok(commands.indexOf('ICONS["network-adapter-properties"] = ICONS["network-settings"]') >= 0,
     "My Commands must reuse the existing Network artwork for the new command.");
 assert.ok(quick.indexOf('artwork["network-adapter-properties"] = artwork["network-settings"]') >= 0,
