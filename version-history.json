@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.25",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the first-paint left-menu fix after real dev.24 smoke exposed undersized icons and a remaining deferred menu shift.",
+      "Move final left-menu classes, active state, icon family/source and geometry into the first permission-safe core.ensureMenu pass and remove the deferred page.js menu wrapper.",
+      "Use white native-style Classic artwork with 48 px drawing geometry and larger colored Modern artwork with a 32 px image box while preserving menu/icon node identity and avoiding redundant reorder inserts.",
+      "Keep Auto/Classic/Modern as the only icon policy and add no CSS filter, fourth mode, polling, MutationObserver, timer, second renderer, tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.24",
     "date": "2026-08-08",
     "changes": [
