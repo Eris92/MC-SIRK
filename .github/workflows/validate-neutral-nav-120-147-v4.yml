@@ -1,0 +1,93 @@
+name: Validate neutral nav 120 147 v4
+
+on:
+  push:
+    branches: [issues-120-147-neutral-nav]
+    paths:
+      - '.github/workflows/validate-neutral-nav-120-147-v4.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issues-120-147-neutral-nav
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply neutral navigation patch and test corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/validate-neutral-nav-120-147.yml').read_text()
+          marker = '      - name: Apply neutral navigation contract\n'
+          start = source.index(marker) + len(marker)
+          run_marker = '        run: |\n'
+          start = source.index(run_marker, start) + len(run_marker)
+          end = source.index('      - name: Targeted neutral navigation tests\n', start)
+          lines = source[start:end].splitlines()
+          Path('/tmp/apply-neutral-nav.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n')
+          PY
+          bash /tmp/apply-neutral-nav.sh
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('test/approval-selected-state.test.js')
+          text = p.read_text()
+          old = '    assert.strictEqual(assertOne(page.primary, "Approval primary").title, undefined);'
+          new = '    assert.strictEqual(assertOne(page.primary, "Approval primary").title, "Overview");'
+          if text.count(old) != 1: raise SystemExit('bad Overview title assertion not found')
+          p.write_text(text.replace(old, new, 1))
+
+          p = Path('test/native-ui-contract.test.js')
+          text = p.read_text()
+          old = '''assert.ok(desktop.indexOf('key: "scripts", label: text("scripts"), groups: scriptGroups') >= 0 &&\n    desktop.indexOf("function scriptGroup") >= 0,\n    "Quick commands must preserve the Scripts tree and nested folders.");'''
+          new = '''assert.ok(desktop.indexOf('key: "scripts", label: text("scripts"), iconKind: "scripts", groups: scriptGroups') >= 0 &&\n    desktop.indexOf("function scriptGroup") >= 0,\n    "Quick commands must preserve the Scripts tree/nested folders while using the distinct Scripts artwork.");'''
+          if text.count(old) != 1: raise SystemExit('stale Quick Scripts native UI assertion not found')
+          p.write_text(text.replace(old, new, 1))
+
+          p = Path('test/ui-visible-state-regression.test.js')
+          text = p.read_text()
+          old = '''assert.ok(css.indexOf('.mc-shared-page .sirk-shared-list-item:is(.active,.is-active)') >= 0,\n    "First and second shared columns must have a visible selected-state fallback.");'''
+          new = '''assert.ok(css.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,\n    "All shared first/second-column navigation rows, including Approval, must use one visible selected-state fallback.");'''
+          if text.count(old) != 1: raise SystemExit('stale visible selected-state fallback assertion not found')
+          p.write_text(text.replace(old, new, 1))
+          PY
+          rm -f .github/workflows/validate-neutral-nav-120-147.yml \
+                .github/workflows/validate-neutral-nav-120-147-v2.yml \
+                .github/workflows/validate-neutral-nav-120-147-v3.yml \
+                .github/workflows/validate-neutral-nav-120-147-v4.yml
+      - name: Targeted neutral navigation tests
+        run: |
+          node test/quick-semantic-icon-tone.test.js
+          node test/neutral-navigation-icons.test.js
+          node test/approval-selected-state.test.js
+          node test/shared-list-quick-style.test.js
+          node test/semantic-visual-contract.test.js
+          node test/shared-tree-connected-selection.test.js
+          node test/native-ui-contract.test.js
+          node test/ui-visible-state-regression.test.js
+      - name: Run full test suite
+        run: npm test
+      - name: Check diff
+        run: |
+          git diff --check
+          git status --short
+      - name: Save verified changes
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "ux: neutralize shared navigation icons"
+          git push origin HEAD:issues-120-147-neutral-nav
