@@ -5,6 +5,7 @@ var path = require("path");
 var vm = require("vm");
 var source = fs.readFileSync(path.join(__dirname, "..", "public/modules/approvals/index.js"), "utf8");
 var toolbarCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/toolbar.css"), "utf8");
+var sharedCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/shared-ui.css"), "utf8");
 
 function ClassList() { this.values = []; }
 ClassList.prototype.add = function (name) { if (this.values.indexOf(name) < 0) this.values.push(name); };
@@ -89,6 +90,9 @@ function assertOne(host, title) {
         assert.strictEqual(item.getAttribute("aria-selected"), item.classActive() ? "true" : "false",
             title + " aria-selected must match visible active state.");
         assert.strictEqual(item.getAttribute("data-themed"), "1", title + " rows must enter native nav mapping immediately.");
+        assert.ok(item.classList.contains("sirk-shared-list-item"), title + " rows must reuse shared list geometry.");
+        assert.ok(item.children[0] && item.children[0].classList.contains("sirk-shared-list-icon"), title + " icons must reuse shared list geometry.");
+        assert.ok(item.children[1] && item.children[1].classList.contains("sirk-shared-list-label"), title + " labels must reuse shared list geometry.");
     });
     return active[0];
 }
@@ -115,6 +119,10 @@ function assertOne(host, title) {
     assertOne(page.secondary, "Approval returned overview filter");
     assert.ok(page.primary.children[0].classActive(), "Overview must be the only selected primary item after return.");
 
+    assert.strictEqual(sharedCss.indexOf('.mc-approval-provider{'), -1,
+        "Approval providers must not keep a separate typography owner outside shared list geometry.");
+    assert.strictEqual(sharedCss.indexOf('.mc-approval-status{'), -1,
+        "Approval statuses must not keep separate row padding/font geometry outside shared list geometry.");
     assert.ok(toolbarCss.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,
         "Shared selected-state fallback must cover Approval nav items, including collapsed icon-only primary.");
     console.log("Approval navigation keeps exactly one visible aria-selected item per active column: OK");
