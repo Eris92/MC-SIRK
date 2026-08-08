@@ -31,8 +31,10 @@ assert.ok(sharedCss.indexOf("--sirk-shared-primary-track:minmax(165px,205px)") >
     "Shared desktop tracks must match the canonical Quick primary and secondary geometry.");
 assert.ok(sharedCss.indexOf("grid-template-columns:var(--sirk-shared-primary-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)") >= 0,
     "Expanded modules must use the shared static tracks.");
-assert.ok(sharedCss.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
-    "Collapsed modules must preserve the same second and third tracks after the 64 px primary track.");
+assert.ok(sharedCss.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)}") >= 0,
+    "The base collapsed track must keep the 64 px primary without !important so action modes can override secondary geometry.");
+assert.ok(toolbarCss.indexOf(".mc-shared-page:is(.is-edit-mode,.is-multi-mode) .mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) calc(var(--sirk-mode-secondary-width,340px) + var(--sirk-actions-width) + var(--sirk-actions-column-gap)) var(--sirk-edit-details-track)}") >= 0,
+    "Collapsed Edit and Multi must keep their measured action rail outside the captured secondary text track.");
 assert.ok(sharedCss.indexOf(".mc-shared-nav-item{display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:36px;padding:8px") >= 0,
     "Shared navigation rows must retain the compact canonical row geometry.");
 assert.strictEqual(toolbarCss.indexOf(".mc-shared-layout:has(.mc-tree-script-actions:not(:empty))"), -1,

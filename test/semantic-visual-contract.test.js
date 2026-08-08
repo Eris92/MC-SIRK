@@ -75,8 +75,10 @@ assert.ok(approvals.indexOf("mc-approval-request-status-") >= 0,
 
 assert.strictEqual(mainCss.indexOf(".mc-module-approvalcenter .mc-shared-layout"), -1,
     "Approval Center must not have a module-specific collapsed-layout exception.");
-assert.ok(sharedUi.indexOf("grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)!important") >= 0,
-    "The canonical collapsed layout must retain stable shared second and third columns for every module.");
+assert.ok(sharedUi.indexOf(".mc-shared-layout.is-collapsed{grid-template-columns:var(--sirk-primary-collapsed-track) var(--sirk-shared-secondary-track) var(--sirk-shared-details-track)}") >= 0,
+    "The canonical base collapsed layout must retain stable shared second and third columns without blocking action-mode overrides.");
+assert.strictEqual(sharedUi.indexOf("var(--sirk-shared-details-track)!important"), -1,
+    "The base collapsed geometry must not use !important because it would suppress measured Edit/Multi secondary tracks.");
 assert.ok(sharedUi.indexOf("--sirk-primary-collapsed-track:64px") >= 0 &&
     sharedUi.indexOf("--sirk-shared-secondary-track:minmax(285px,340px)") >= 0,
     "The collapsed shared layout must retain the Quick-aligned first and second-column tracks.");
