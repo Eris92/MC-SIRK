@@ -26,8 +26,8 @@ assert.strictEqual(sharedUi.indexOf("--mc-shared-page-surface"), -1,
 
 assert.ok(themeAdapter.indexOf('syncOwnedClasses(element, [isModern() ? "card" : "style10"])') >= 0,
     "Panels and cards must use the active Modern or Classic MeshCentral surface class.");
-assert.ok(themeAdapter.indexOf('var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog"') >= 0,
-    "The native adapter must recognize every SIRK surface root.");
+assert.ok(themeAdapter.indexOf('var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog-overlay,.mc-move-dialog"') >= 0,
+    "The native adapter must recognize every SIRK surface root, including the modal variable-owner overlay.");
 assert.ok(themeAdapter.indexOf("function installObserver()") >= 0 &&
     themeAdapter.indexOf("contentObserver.observe(target, { childList: true, subtree: true })") >= 0,
     "New asynchronous SIRK roots must be normalized by the single native adapter observer.");
