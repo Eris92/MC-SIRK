@@ -1,3 +1,10 @@
+## 0.1.1-dev.19 - 2026-08-08
+
+- Deliver the Move Request #173 follow-up that delegates dialog presentation and lifecycle to MeshCentral's native `setDialogMode(2, ...)` owner instead of constructing a parallel plugin modal tree.
+- Reuse the host `idx_dlgOkButton`, `idx_dlgCancelButton` and close control so modal surface, hover and footer button styling are exactly host-native.
+- Keep guarded asynchronous Submit feedback in the same native dialog by intercepting the host OK click before `dialogclose(1)`, while preserving source/target group names and backend semantics.
+- No new background/opacity workaround, observer, timer, polling loop, modal framework, tag or GitHub Release.
+
 # Changelog
 
 ## 0.1.1-dev.18 — 2026-08-08
