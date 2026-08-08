@@ -1,86 +1,6 @@
 (function () {
     "use strict";
 
-    function installNativeLeftMenuContract() {
-        var core = window.SirkPlatformCore;
-        if (!core || core.__nativeLeftMenuContractInstalled) return;
-        core.__nativeLeftMenuContractInstalled = true;
-
-        function isModern(element) {
-            return String(element && element.tagName || "").toLowerCase() === "a" ||
-                !!(element && element.classList && element.classList.contains("nav-link"));
-        }
-
-        function baseClassName(anchor) {
-            return String(anchor && anchor.className || "").split(/\s+/).filter(function (name) {
-                return name && name !== "lbbuttonsel" && name !== "lbbuttonsel2" && name !== "active";
-            }).join(" ");
-        }
-
-        function normalizeLegacyIcon(anchor, item) {
-            if (!anchor || !item || typeof anchor.querySelector !== "function" ||
-                typeof item.querySelector !== "function") return;
-
-            var nativeIcon = anchor.querySelector(".lbtg");
-            var currentIcon = item.querySelector(".lbtg");
-            if (!nativeIcon || !currentIcon || typeof nativeIcon.cloneNode !== "function") return;
-
-            var source = currentIcon.style && currentIcon.style.backgroundImage || "";
-            var icon = nativeIcon.cloneNode(true);
-            if (icon.removeAttribute) icon.removeAttribute("id");
-            if (icon.style && source) {
-                icon.style.backgroundImage = source;
-                icon.style.backgroundPosition = "center";
-                icon.style.backgroundRepeat = "no-repeat";
-                icon.style.backgroundSize = "40px 40px";
-            }
-            if (currentIcon.parentNode && typeof currentIcon.parentNode.replaceChild === "function") {
-                currentIcon.parentNode.replaceChild(icon, currentIcon);
-            }
-        }
-
-        var originalEnsureMenu = core.ensureMenu;
-        if (typeof originalEnsureMenu === "function") {
-            core.ensureMenu = function (definition) {
-                var result = originalEnsureMenu.call(core, definition);
-                var anchor = typeof document !== "undefined"
-                    ? document.getElementById("LeftMenuMyDevices")
-                    : null;
-                var item = definition && definition.leftId && typeof document !== "undefined"
-                    ? document.getElementById(definition.leftId)
-                    : null;
-                if (!anchor || !item) return result;
-
-                item.className = baseClassName(anchor);
-                item.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
-                item.removeAttribute("aria-current");
-
-                if (!isModern(item)) normalizeLegacyIcon(anchor, item);
-                return result;
-            };
-        }
-
-        core.setPluginMenuActive = function (main, left, active) {
-            if (main) {
-                main.classList.remove("fullselect", "semiselect", "active");
-                main.removeAttribute("aria-current");
-                if (active) {
-                    main.classList.add(isModern(main) ? "active" : "fullselect");
-                    main.setAttribute("aria-current", "page");
-                }
-            }
-            if (left) {
-                left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
-                left.removeAttribute("aria-current");
-                if (active) {
-                    if (isModern(left)) left.classList.add("active", "lbbuttonsel2");
-                    else left.classList.add("lbbuttonsel");
-                    left.setAttribute("aria-current", "page");
-                }
-            }
-        };
-    }
-
     function installNativeWorkspaceTitleContract() {
         var core = window.SirkPlatformCore;
         if (!core || core.__nativeWorkspaceTitleContractInstalled) return;
@@ -221,7 +141,6 @@
         };
     }
 
-    installNativeLeftMenuContract();
     installNativeWorkspaceTitleContract();
 
     function storageKey(options) {
