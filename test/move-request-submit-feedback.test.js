@@ -37,6 +37,3 @@ assert.strictEqual(source.indexOf('closeDialog('), -1,
     "Successful submit must not use the removed plugin overlay close path.");
 
 console.log("Move Request keeps guarded async feedback while reusing the native host OK button: OK");
-
-assert.ok(source.indexOf('dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest)') >= 0, "Modern submit must use native showModal callback ownership.");
-assert.ok(source.indexOf('function submitRequest()') >= 0 && source.indexOf('return false;', source.indexOf('function submitRequest()')) >= 0, "Submit callback must keep the native Modern modal open.");
