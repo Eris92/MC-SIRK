@@ -1,0 +1,137 @@
+name: Validate version 171
+
+on:
+  push:
+    branches: [issue-171-version-bump]
+    paths:
+      - '.github/workflows/validate-version-171.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issue-171-version-bump
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          old = '0.1.1-dev.10'
+          new = '0.1.1-dev.11'
+
+          def replace_once(path, before, after):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if before not in text:
+                  raise SystemExit(f'missing anchor in {path}: {before[:100]}')
+              p.write_text(text.replace(before, after, 1), encoding='utf-8')
+
+          for path in ['package.json', 'config.json']:
+              data = json.loads(Path(path).read_text(encoding='utf-8'))
+              if data.get('version') != old:
+                  raise SystemExit(f'unexpected current version in {path}: {data.get("version")}')
+              data['version'] = new
+              Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          replace_once('README.md', '# SIRK Management Platform ' + old, '# SIRK Management Platform ' + new)
+          replace_once('README.md', 'docs/releases/' + old + '.md', 'docs/releases/' + new + '.md')
+
+          replace_once('docs/PROJECT-STATE.md', 'Current version: `' + old + '`', 'Current version: `' + new + '`')
+          project = Path('docs/PROJECT-STATE.md')
+          text = project.read_text(encoding='utf-8')
+          text = text.replace('docs/releases/' + old + '.md', 'docs/releases/' + new + '.md')
+          project.write_text(text, encoding='utf-8')
+
+          release_index = Path('docs/releases/README.md')
+          text = release_index.read_text(encoding='utf-8')
+          anchor = '- [`' + old + '`](' + old + '.md) — bieżąca rewizja development po corrective runtime smoke follow-up dla wspólnej osi first-column icons i kompaktowej kolumny View;'
+          replacement = '- [`' + new + '`](' + new + '.md) — bieżąca rewizja development po corrective UI smoke follow-up dla stabilnego indicator/icon geometry, wspólnego Approval list style i wycentrowanych Results actions;\n- [`' + old + '`](' + old + '.md) — poprzednia rewizja development po corrective runtime smoke follow-up dla wspólnej osi first-column icons i kompaktowej kolumny View;'
+          if anchor not in text:
+              raise SystemExit('missing release-index current anchor')
+          release_index.write_text(text.replace(anchor, replacement, 1), encoding='utf-8')
+
+          note = Path('docs/releases/' + new + '.md')
+          note.write_text('''# MC-SIRK 0.1.1-dev.11 — development revision
+
+Status: **development pre-1.0, not a product release**.
+
+This revision exposes the corrective UI smoke follow-up from PR #170 to MeshCentral update detection.
+
+## Included runtime baseline
+
+- Shared first-column navigation keeps the selected indicator, row origin and icon center on one stable horizontal geometry across expanded/collapsed states, including Quick.
+- Approval Center reuses the same `sirk-shared-list-*` row/icon/label geometry as My Scripts and My Commands while preserving native MeshCentral selected-state mapping.
+- Shared Results keeps `View` at 72 px and `Actions` at 120 px minimum while centering their headers and controls on the same horizontal/vertical axes.
+- Existing permissions, execution behavior, selected-state logical owners, horizontal Results scrolling and runtime lifecycle are preserved.
+
+## Version policy
+
+`0.1.1-dev.11` remains below `1.0.0`. It does not open the product release gate and does not create a tag or GitHub Release.
+
+Runtime implementation baseline: PR #170, `main` commit `f12750feebf32e59b9bb2f17c67350d92e7402f2`.
+''', encoding='utf-8')
+
+          changelog = Path('changelog.md')
+          text = changelog.read_text(encoding='utf-8')
+          if not text.startswith('# Changelog\n'):
+              raise SystemExit('unexpected changelog header')
+          section = '''# Changelog
+
+## 0.1.1-dev.11 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current `main`.
+- Keep selected first-column indicator distance and icon position stable across Collapse/Expand by using one 9 px primary inset and 44 px collapsed row geometry, including Quick and Approval Center.
+- Make Approval Center consume the same shared list row/icon/label geometry as My Scripts/My Commands instead of separate provider/status spacing rules.
+- Center shared Results `View` and `Actions` headers and controls while preserving their compact 72 px / 120 px width contract and local horizontal scrolling.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.11.md`.
+'''
+          changelog.write_text(section + text[len('# Changelog\n'):], encoding='utf-8')
+
+          history = Path('version-history.json')
+          rows = json.loads(history.read_text(encoding='utf-8'))
+          if not rows or rows[0].get('version') != old:
+              raise SystemExit('unexpected current version-history head')
+          rows.insert(0, {
+              'version': new,
+              'date': '2026-08-08',
+              'changes': [
+                  'Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current main.',
+                  'Keep first-column selected indicator distance, row origin and icon center stable across expanded/collapsed states, including Quick and Approval Center.',
+                  'Make Approval Center reuse the shared list geometry contract instead of separate provider/status row styling.',
+                  'Center View and Actions headers and controls while preserving the 72 px / 120 px Results width contract and horizontal scrolling.',
+                  'Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release.'
+              ]
+          })
+          history.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+          rm .github/workflows/validate-version-171.yml
+      - name: Targeted metadata validation
+        run: node scripts/validate-repository-layout.js
+      - name: Full test suite
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Save verified metadata
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs: synchronize 0.1.1-dev.11 metadata'
+          git push origin HEAD:issue-171-version-bump
