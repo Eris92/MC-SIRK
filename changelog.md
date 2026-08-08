@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.1-dev.7 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the current shared UI and Results batch from `main`.
+- Use canonical short built-in command labels (`Network Control`, `Network Settings`, `PowerShell`, `CMD`) without changing stable command IDs or execution semantics.
+- Keep ordinary first/second-column navigation icons neutral/native, reuse the shared visible selected-state contract in Approval Center, and preserve semantic colors only for meaningful states such as active Favorites and Quick Output attention.
+- Keep shared Results tables readable with semantic column roles and horizontal scrolling instead of fixed-layout compression.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.7.md`.
+
 ## 0.1.1-dev.6 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current `main`.
@@ -7,7 +17,7 @@
 - Preserve the 64 px collapsed primary track while keeping the normal second-column text width and wrapping unchanged and placing the measured action rail outside it.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.1-dev.6.md`.
+Development notes: `docs/releases/0.1.1-dev.6.md`.
 
 ## 0.1.1-dev.5 — 2026-08-08
 
