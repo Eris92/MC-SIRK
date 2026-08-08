@@ -1,0 +1,41 @@
+name: Validate issue 173 native modal surface
+on:
+  push:
+    branches:
+      - issue-173-native-modal
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issue-173-native-modal
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Prepare native modal fix
+        run: node scripts/tmp-issue-173-native-modal.js
+      - name: Remove temporary helpers
+        run: rm scripts/tmp-issue-173-native-modal.js .github/workflows/issue-173-native-modal-validate.yml
+      - name: Targeted dialog surface regression
+        run: node test/move-request-dialog-surface.test.js
+      - name: Targeted submit lifecycle regression
+        run: node test/move-request-submit-feedback.test.js
+      - name: Full test suite
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Commit validated runtime fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/shared/ui/toolbar-config.js public/shared/styles/main.css public/modules/move-requests/index.js test/move-request-dialog-surface.test.js test/move-request-submit-feedback.test.js
+          git add -u scripts/tmp-issue-173-native-modal.js .github/workflows/issue-173-native-modal-validate.yml
+          git commit -m "fix: use native modal surface for move request"
+          git push origin HEAD:issue-173-native-modal
