@@ -1,0 +1,151 @@
+name: Validate command labels 128 150
+
+on:
+  push:
+    branches: [issues-128-150-command-labels]
+    paths:
+      - '.github/workflows/validate-command-labels-128-150.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issues-128-150-command-labels
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply canonical command labels
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {text.count(old)}')
+              p.write_text(text.replace(old, new, 1))
+
+          server = 'server/modules/commands/index.js'
+          replace_once(server,
+              '{ id: "network-settings", label: "Network Connections", locales: { pl: { label: "Panel Sieciowy" }, en: { label: "Network Connections" } },',
+              '{ id: "network-settings", label: "Network Control", locales: { pl: { label: "Network Control" }, en: { label: "Network Control" } },',
+              'network-settings label')
+          replace_once(server,
+              '{ id: "network-adapter-properties", label: "Network Adapter Properties", locales: { pl: { label: "Właściwości Sieciowe" }, en: { label: "Network Adapter Properties" } },',
+              '{ id: "network-adapter-properties", label: "Network Settings", locales: { pl: { label: "Network Settings" }, en: { label: "Network Settings" } },',
+              'network-adapter-properties label')
+          replace_once(server,
+              '{ id: "powershell", label: "Open PowerShell",',
+              '{ id: "powershell", label: "PowerShell",',
+              'powershell label')
+          replace_once(server,
+              '{ id: "cmd", label: "Open CMD",',
+              '{ id: "cmd", label: "CMD",',
+              'cmd label')
+
+          commands = 'public/modules/commands/index.js'
+          replace_once(commands,
+              '        "Open PowerShell": "Otwórz PowerShell", "Open CMD": "Otwórz CMD", "Registry Editor": "Edytor rejestru",',
+              '        "Registry Editor": "Edytor rejestru",',
+              'obsolete PL PowerShell/CMD aliases')
+          replace_once(commands,
+              '        "Flush DNS": "Wyczyść DNS", "Network Connections": "Panel Sieciowy", "Network Adapter Properties": "Właściwości Sieciowe", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",',
+              '        "Flush DNS": "Wyczyść DNS", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",',
+              'obsolete PL network aliases')
+
+          test = Path('test/network-command-split.test.js')
+          text = test.read_text()
+          pairs = [
+              ('''assert.ok(panel.indexOf('label: "Network Connections"') >= 0 && panel.indexOf('label: "Panel Sieciowy"') >= 0,\n    "Existing network-settings ID must become Network Connections / Panel Sieciowy.");''',
+               '''assert.ok(panel.indexOf('label: "Network Control"') >= 0 &&\n    panel.indexOf('locales: { pl: { label: "Network Control" }, en: { label: "Network Control" } }') >= 0,\n    "Existing network-settings ID must expose the exact Network Control label in both locales.");'''),
+              ('''assert.ok(properties.indexOf('label: "Network Adapter Properties"') >= 0 && properties.indexOf('label: "Właściwości Sieciowe"') >= 0,\n    "New adapter-properties command must expose unambiguous EN/PL labels.");''',
+               '''assert.ok(properties.indexOf('label: "Network Settings"') >= 0 &&\n    properties.indexOf('locales: { pl: { label: "Network Settings" }, en: { label: "Network Settings" } }') >= 0,\n    "Adapter-properties command must expose the exact Network Settings label in both locales.");'''),
+              ('''assert.ok(commands.indexOf('"Network Connections": "Panel Sieciowy"') >= 0 &&\n    commands.indexOf('"Network Adapter Properties": "Właściwości Sieciowe"') >= 0,\n    "My Commands PL map must match the split catalog labels.");''',
+               '''assert.strictEqual(commands.indexOf('"Network Connections": "Panel Sieciowy"'), -1,\n    "My Commands must not retain the obsolete Network Connections PL alias.");\nassert.strictEqual(commands.indexOf('"Network Adapter Properties": "Właściwości Sieciowe"'), -1,\n    "My Commands must not retain the obsolete adapter-properties PL alias.");''')
+          ]
+          for old, new in pairs:
+              if text.count(old) != 1:
+                  raise SystemExit('network-command-split stale assertion not found exactly once')
+              text = text.replace(old, new, 1)
+          test.write_text(text)
+          PY
+          cat > test/command-label-contract.test.js <<'EOF'
+          "use strict";
+
+          var assert = require("assert");
+          var fs = require("fs");
+          var path = require("path");
+          var root = path.resolve(__dirname, "..");
+          var server = fs.readFileSync(path.join(root, "server/modules/commands/index.js"), "utf8");
+          var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8");
+          var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+
+          function entry(id) {
+              var marker = '{ id: "' + id + '"';
+              var start = server.indexOf(marker);
+              assert.ok(start >= 0, "Missing command " + id);
+              var end = server.indexOf('\n                { id:', start + marker.length);
+              if (end < 0) end = server.indexOf('\n            ]', start + marker.length);
+              return server.slice(start, end);
+          }
+
+          var powershell = entry("powershell");
+          var cmd = entry("cmd");
+          var networkControl = entry("network-settings");
+          var networkSettings = entry("network-adapter-properties");
+
+          assert.ok(powershell.indexOf('label: "PowerShell"') >= 0 && powershell.indexOf('runAsUser: 2') >= 0 && powershell.indexOf('powershell.exe -NoExit') >= 0,
+              "PowerShell must use the short canonical label without changing interactive execution.");
+          assert.ok(cmd.indexOf('label: "CMD"') >= 0 && cmd.indexOf('runAsUser: 2') >= 0 && cmd.indexOf('cmd.exe /K') >= 0,
+              "CMD must use the short canonical label without changing interactive execution.");
+          assert.strictEqual(server.indexOf('label: "Open PowerShell"'), -1, "Obsolete Open PowerShell label must be removed from the canonical catalog.");
+          assert.strictEqual(server.indexOf('label: "Open CMD"'), -1, "Obsolete Open CMD label must be removed from the canonical catalog.");
+          assert.strictEqual(commands.indexOf('"Open PowerShell": "Otwórz PowerShell"'), -1, "Obsolete PL PowerShell alias must not survive in My Commands.");
+          assert.strictEqual(commands.indexOf('"Open CMD": "Otwórz CMD"'), -1, "Obsolete PL CMD alias must not survive in My Commands.");
+
+          assert.ok(networkControl.indexOf('label: "Network Control"') >= 0 && networkControl.indexOf('control.exe ncpa.cpl') >= 0,
+              "network-settings must keep its stable ID/execution while becoming Network Control.");
+          assert.ok(networkSettings.indexOf('label: "Network Settings"') >= 0 && networkSettings.indexOf('Get-NetRoute') >= 0 && networkSettings.indexOf("InvokeVerb('properties')") >= 0,
+              "network-adapter-properties must keep its adapter-properties execution while becoming Network Settings.");
+          assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1, "network-settings stable ID must remain unique.");
+          assert.strictEqual((server.match(/id: "network-adapter-properties"/g) || []).length, 1, "network-adapter-properties stable ID must remain unique.");
+          assert.ok(server.indexOf('locales: command.locales || {}') >= 0, "Public catalog must still carry locales to all consumers.");
+          assert.ok(quick.indexOf('function localized(item, field)') >= 0, "Quick must keep consuming canonical catalog locales rather than a Quick-only label map.");
+          assert.strictEqual(quick.indexOf('Network Connections'), -1, "Quick must not hardcode the obsolete Network Connections label.");
+          assert.strictEqual(quick.indexOf('Network Adapter Properties'), -1, "Quick must not hardcode the obsolete adapter-properties label.");
+          assert.strictEqual(quick.indexOf('Open PowerShell'), -1, "Quick must not hardcode the obsolete PowerShell label.");
+          assert.strictEqual(quick.indexOf('Open CMD'), -1, "Quick must not hardcode the obsolete CMD label.");
+
+          console.log("Canonical short command labels preserve stable IDs and execution: OK");
+          EOF
+          rm .github/workflows/validate-command-labels-128-150.yml
+      - name: Targeted command label tests
+        run: |
+          node test/network-command-split.test.js
+          node test/command-label-contract.test.js
+      - name: Run full test suite
+        run: npm test
+      - name: Check diff
+        run: |
+          git diff --check
+          git status --short
+      - name: Save verified changes
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "ux: shorten built-in command labels"
+          git push origin HEAD:issues-128-150-command-labels
