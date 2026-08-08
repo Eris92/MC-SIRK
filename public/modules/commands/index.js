@@ -17,13 +17,13 @@
 
     var PL = {
         Results: "Wyniki", Scripts: "Skrypty", Network: "Sieć", System: "System", Other: "Inne",
-        "Open PowerShell": "Otwórz PowerShell", "Open CMD": "Otwórz CMD", "Registry Editor": "Edytor rejestru",
+        "Registry Editor": "Edytor rejestru",
         "Local Security Policy": "Lokalne zasady zabezpieczeń", "Windows Firewall": "Zapora Windows",
         MMC: "MMC", Services: "Usługi", "Device Manager": "Menedżer urządzeń", "Event Viewer": "Podgląd zdarzeń",
         "Task Manager": "Menedżer zadań", "Printer Management": "Zarządzanie drukarkami",
         "Certificates (computer)": "Certyfikaty komputera", "Certificates (user)": "Certyfikaty użytkownika",
         "Indexing Options": "Opcje indeksowania", "Disk Cleanup": "Oczyszczanie dysku",
-        "Flush DNS": "Wyczyść DNS", "Network Connections": "Panel Sieciowy", "Network Adapter Properties": "Właściwości Sieciowe", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
+        "Flush DNS": "Wyczyść DNS", "Check DNS": "Sprawdź DNS", "Check port": "Sprawdź port",
         "Open ports": "Otwarte porty", "Filter by port": "Filtruj po porcie"
     };
 
