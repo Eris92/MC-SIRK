@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.26",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the native page-ready left-menu fix after real dev.25 smoke still showed one short flicker.",
+      "Gate creation of missing SIRK menu nodes on the current MeshCentral goPageEnd and invalidate that readiness on every goPageStart so a host redraw cannot remove an early node and cause one visible recreation.",
+      "Keep existing menu nodes refreshable, preserve permission-safe bootstrap and bounded parallel module startup, and cover host redraw plus startup with targeted regressions.",
+      "Add no polling, MutationObserver, readiness timer, placeholder menu, CSS masking, extra request, second renderer, tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.25",
     "date": "2026-08-08",
     "changes": [
