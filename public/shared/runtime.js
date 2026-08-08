@@ -16,10 +16,10 @@
     if (runtime.state.nativePageEnd == null) runtime.state.nativePageEnd = null;
 
     var definitions = {
-        approvalcenter: { file: "approvalcenter.js", viewMode: 105, menuOrder: 110, showInMenu: true },
-        moverequests: { file: "moverequests.js", viewMode: 106, showInMenu: false },
-        mycommands: { file: "mycommands.js", viewMode: 102, showInMenu: false },
-        myscripts: { file: "myscripts.js", viewMode: 101, menuOrder: 160, showInMenu: true }
+        approvalcenter: { file: "approvalcenter.js", title: "Approval Center", viewMode: 105, menuOrder: 110, showInMenu: true },
+        moverequests: { file: "moverequests.js", title: "Move Requests", viewMode: 106, showInMenu: false },
+        mycommands: { file: "mycommands.js", title: "My Commands", viewMode: 102, showInMenu: false },
+        myscripts: { file: "myscripts.js", title: "My Scripts", viewMode: 101, menuOrder: 160, showInMenu: true }
     };
     var order = ["approvalcenter", "moverequests", "mycommands", "myscripts"];
 
@@ -51,13 +51,12 @@
     }
 
     function canLoad(state) {
-        return !!(state && state.enabled && state.ready !== false);
+        return !!(state && state.enabled && state.ready !== false && state.access && state.access.allowed === true);
     }
 
     function canMountMenu(key, state) {
         var definition = definitions[key];
         if (!definition || definition.showInMenu === false || !canLoad(state)) return false;
-        if (!state.access || state.access.allowed !== true) return false;
         return !(state.config && state.config.showInMenu === false);
     }
 
@@ -120,7 +119,7 @@
         core.ensureMenu({
             mainId: "MainMenuSirkPlatform-" + key,
             leftId: "LeftMenuSirkPlatform-" + key,
-            title: config.menuTitle || config.name || key,
+            title: definition.title || config.menuTitle || config.name || key,
             order: definition.menuOrder || definition.viewMode || 200,
             viewMode: definition.viewMode,
             icon: config.leftMenuIconUrl || config.menuIcon || "",
@@ -135,6 +134,7 @@
     }
 
     runtime.refreshMenus = function () {
+        if (runtime.state.bootstrap) mountBootstrapMenus(runtime.state.bootstrap);
         notify("refreshMenu");
     };
 
