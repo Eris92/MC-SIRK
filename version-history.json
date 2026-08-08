@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.15",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the native Move Request modal-surface fix from current main.",
+      "Map Modern Move Request to host-native modal-content instead of card so host card hover transform and surface changes no longer apply.",
+      "Use the existing semantic primary action mapping so Submit request receives native primary button treatment.",
+      "Preserve Classic style10 and the existing guarded Move Request submit/status lifecycle.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.14",
     "date": "2026-08-08",
     "changes": [
