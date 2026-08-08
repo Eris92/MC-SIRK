@@ -1,0 +1,351 @@
+name: Validate neutral nav 120 147
+
+on:
+  push:
+    branches: [issues-120-147-neutral-nav]
+    paths:
+      - '.github/workflows/validate-neutral-nav-120-147.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: issues-120-147-neutral-nav
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply neutral navigation contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          css = 'public/shared/ui/toolbar.css'
+          replace_once(css,
+              '.sirk-command-icon-scripts{color:var(--bs-primary,currentColor)}.sirk-command-icon-network{color:var(--bs-info,currentColor)}.sirk-command-icon-system{color:var(--bs-warning,currentColor)}.sirk-command-icon-other{color:var(--bs-secondary,currentColor)}',
+              '',
+              'semantic command icon palette')
+          replace_once(css,
+              '.mc-shared-page .sirk-shared-list-item:is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)',
+              '.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)',
+              'shared selected fallback selector')
+
+          commands = 'public/modules/commands/index.js'
+          replace_once(commands,
+              '        scripts: \'<svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3V6Z"/><path d="M8 12h8M8 15h6"/></svg>\',',
+              '        scripts: \'<svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6V3Z"/><path d="m9 11 2 2-2 2M13 15h3"/></svg>\',',
+              'My Commands Scripts artwork')
+          replace_once(commands,
+              '        system: \'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m15.5 4.8.8 2.1 2.2.8 2-1 .9 1.6-1.8 1.4.3 2.3 2.3.8v2l-2.3.8-.3 2.3 1.8 1.4-.9 1.6-2-1-2.2.8-.8 2.1h-2l-.8-2.1-2.2-.8-2 1-.9-1.6 1.8-1.4-.3-2.3-2.3-.8v-2l2.3-.8.3-2.3-1.8-1.4.9-1.6 2 1 2.2-.8.8-2.1h2Z"/></svg>\',',
+              '        system: \'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>\',',
+              'My Commands System artwork')
+
+          quick = 'public/native/desktop-commands.js'
+          replace_once(quick,
+              "            folder: '<path d=\"M3 6h7l2 2h9v11H3V6Z\"/>',\n            network:",
+              "            folder: '<path d=\"M3 6h7l2 2h9v11H3V6Z\"/>',\n            scripts: '<path d=\"M6 3h9l3 3v15H6V3Z\"/><path d=\"m9 11 2 2-2 2M13 15h3\"/>',\n            network:",
+              'Quick Scripts artwork')
+          replace_once(quick,
+              "            system: '<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19 12h2M3 12h2M12 3v2M12 19v2M17 7l1.5-1.5M5.5 18.5 7 17M17 17l1.5 1.5M5.5 5.5 7 7\"/><path d=\"m15.5 4.8.8 2.1 2.2.8 2-1 .9 1.6-1.8 1.4.3 2.3 2.3.8v2l-2.3.8-.3 2.3 1.8 1.4-.9 1.6-2-1-2.2.8-.8 2.1h-2l-.8-2.1-2.2-.8-2 1-.9-1.6 1.8-1.4-.3-2.3-2.3-.8v-2l2.3-.8.3-2.3-1.8-1.4.9-1.6 2 1 2.2-.8.8-2.1h2Z\"/>',",
+              "            system: '<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1\"/>',",
+              'Quick System artwork')
+          replace_once(quick,
+              '            result.push({ key: "scripts", label: text("scripts"), groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });',
+              '            result.push({ key: "scripts", label: text("scripts"), iconKind: "scripts", groups: scriptGroups, items: flattenScripts(data.tree, []), tone: "scripts" });',
+              'Quick Scripts category icon kind')
+
+          approvals = 'public/modules/approvals/index.js'
+          replace_once(approvals,
+              '        button.classList.toggle("active", options.active === true);\n        button.title = options.title;',
+              '        button.classList.toggle("active", options.active === true);\n        button.setAttribute("aria-selected", options.active === true ? "true" : "false");\n        button.title = options.title;',
+              'Approval aria-selected')
+          replace_once(approvals,
+              '        host.appendChild(button);\n        return button;',
+              '        host.appendChild(button);\n        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") window.MeshThemeAdapter.nav(button);\n        return button;',
+              'Approval immediate native nav mapping')
+          replace_once(approvals,
+              '            icon: icons.overview,\n            iconClassName: "sirk-result-status sirk-result-status-all",\n            active:',
+              '            icon: icons.overview,\n            active:',
+              'Approval Overview semantic nav icon class')
+          replace_once(approvals,
+              '                className: "mc-approval-status",\n                iconClassName: "sirk-result-status sirk-result-status-" + key,\n                active:',
+              '                className: "mc-approval-status",\n                active:',
+              'Approval status semantic nav icon class')
+
+          catalog = 'public/shared/ui/catalog.js'
+          replace_once(catalog,
+              '''        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {\n            window.MeshThemeAdapter.status(icon);\n        }''',
+              '',
+              'Results semantic status theme mapping')
+          replace_once(catalog,
+              '        icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-all mc-portal-nav-icon sirk-shared-list-icon";',
+              '        icon.className = "mc-tree-fallback-icon sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon";',
+              'Results semantic icon classes')
+
+          status = 'public/shared/ui/status-nav.js'
+          replace_once(status,
+              '''        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {\n            window.MeshThemeAdapter.status(icon);\n        }''',
+              '',
+              'Status navigation semantic theme mapping')
+          replace_once(status,
+              '                icon.className = "sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-" + key + " mc-portal-nav-icon sirk-shared-list-icon";',
+              '                icon.className = "sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon";',
+              'Status navigation semantic icon classes')
+
+          shared_test = 'test/shared-list-quick-style.test.js'
+          replace_once(shared_test,
+              'assert.ok(css.indexOf(".mc-shared-page .sirk-shared-list-item:is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)") >= 0,',
+              'assert.ok(css.indexOf(".mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active),.sirk-desktop-commands-panel .sirk-quick-command-browser button:is(.active,.is-active)") >= 0,',
+              'shared selected fallback test')
+          PY
+          cat > test/quick-semantic-icon-tone.test.js <<'EOF'
+          "use strict";
+          var assert = require("assert");
+          var fs = require("fs");
+          var path = require("path");
+          var root = path.resolve(__dirname, "..");
+          var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+          var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8");
+          var css = fs.readFileSync(path.join(root, "public/shared/ui/toolbar.css"), "utf8");
+
+          ["scripts", "network", "system", "other"].forEach(function (tone) {
+              assert.strictEqual(css.indexOf(".sirk-command-icon-" + tone + "{color:"), -1,
+                  "Navigation/list icon tone class must not own a semantic color: " + tone);
+          });
+          assert.ok(quick.indexOf('function addIcon(host, iconData, kind, tone)') >= 0 && quick.indexOf('" sirk-command-icon-" + tone') >= 0,
+              "Existing icon identity classes may remain, but without palette ownership.");
+          assert.ok(quick.indexOf('image.className = "sirk-quick-command-icon"') >= 0,
+              "Custom iconData must remain an unrecolored image.");
+          assert.ok(commands.indexOf('function tonedIcon(markup, tone)') >= 0,
+              "My Commands may retain semantic identity classes without using them as colors.");
+          assert.ok(css.indexOf('.sirk-quick-command-details-toggle.has-output-attention .mc-shared-toolbar-icon{color:var(--bs-danger,currentColor)!important}') >= 0,
+              "Output attention must retain its separate semantic danger color.");
+          assert.ok(css.indexOf('.mc-tree-favorite-action .mc-tree-script-action-icon.is-favorite-active{color:var(--bs-warning,#ffc107)!important}') >= 0,
+              "Active Favorites must retain their separate warning color.");
+          console.log("Navigation and list icons inherit native color while semantic exception states remain: OK");
+          EOF
+          cat > test/neutral-navigation-icons.test.js <<'EOF'
+          "use strict";
+          var assert = require("assert");
+          var fs = require("fs");
+          var path = require("path");
+          var root = path.resolve(__dirname, "..");
+          function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
+          var commands = read("public/modules/commands/index.js");
+          var quick = read("public/native/desktop-commands.js");
+          var approvals = read("public/modules/approvals/index.js");
+          var catalog = read("public/shared/ui/catalog.js");
+          var status = read("public/shared/ui/status-nav.js");
+          var adapter = read("public/shared/ui/toolbar-config.js");
+
+          assert.strictEqual(approvals.indexOf('iconClassName: "sirk-result-status'), -1,
+              "Approval navigation icons must not carry semantic status color classes.");
+          assert.strictEqual(catalog.indexOf('sirk-result-status-all'), -1,
+              "Results navigation icon must be neutral rather than all-status colored.");
+          assert.strictEqual(status.indexOf('icon.className = "sirk-management-item-icon sirk-result-status'), -1,
+              "Shared status navigation icons must be neutral.");
+          assert.strictEqual(status.indexOf('window.MeshThemeAdapter.status(icon)'), -1,
+              "Shared status navigation must not recolor icons through the semantic status adapter.");
+          assert.strictEqual(catalog.indexOf('window.MeshThemeAdapter.status(icon)'), -1,
+              "Results navigation must not recolor its icon through the semantic status adapter.");
+          assert.ok(adapter.indexOf('[class*=\'mc-results-status-\']') >= 0 && adapter.indexOf('[class*=\'mc-approval-request-status-\']') >= 0,
+              "Semantic status styling must remain available for result/table/detail data outside navigation.");
+
+          var scriptsGlyph = 'M6 3h9l3 3v15H6V3Z';
+          var scriptsTerminal = 'm9 11 2 2-2 2M13 15h3';
+          assert.ok(commands.indexOf(scriptsGlyph) >= 0 && commands.indexOf(scriptsTerminal) >= 0,
+              "My Commands Scripts must use the distinct script/document terminal glyph.");
+          assert.ok(quick.indexOf('scripts: \'<path d="' + scriptsGlyph) >= 0 && quick.indexOf(scriptsTerminal) >= 0 && quick.indexOf('iconKind: "scripts"') >= 0,
+              "Quick Scripts must use the same distinct script/document terminal glyph.");
+          assert.ok(catalog.indexOf('M4 5h16v14H4z') >= 0 && catalog.indexOf(scriptsTerminal) < 0,
+              "Scripts and Results artwork must remain distinct without relying on color.");
+
+          var gear = 'M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1';
+          assert.ok(commands.indexOf(gear) >= 0 && quick.indexOf(gear) >= 0,
+              "My Commands and Quick must share the simple symmetric System gear geometry.");
+          assert.strictEqual(commands.indexOf('m15.5 4.8.8 2.1'), -1,
+              "My Commands must not retain the irregular System gear artwork.");
+          assert.strictEqual(quick.indexOf('m15.5 4.8.8 2.1'), -1,
+              "Quick must not retain the irregular System gear artwork.");
+          console.log("Neutral navigation icons and distinct Scripts/System artwork: OK");
+          EOF
+          cat > test/approval-selected-state.test.js <<'EOF'
+          "use strict";
+          var assert = require("assert");
+          var fs = require("fs");
+          var path = require("path");
+          var vm = require("vm");
+          var source = fs.readFileSync(path.join(__dirname, "..", "public/modules/approvals/index.js"), "utf8");
+          var toolbarCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/toolbar.css"), "utf8");
+
+          function ClassList() { this.values = []; }
+          ClassList.prototype.add = function (name) { if (this.values.indexOf(name) < 0) this.values.push(name); };
+          ClassList.prototype.contains = function (name) { return this.values.indexOf(name) >= 0; };
+          ClassList.prototype.toggle = function (name, enabled) {
+              var index = this.values.indexOf(name);
+              if (enabled && index < 0) this.values.push(name);
+              if (!enabled && index >= 0) this.values.splice(index, 1);
+          };
+          function Element(tag) {
+              this.tagName = String(tag || "div").toUpperCase();
+              this.children = [];
+              this.classList = new ClassList();
+              this.attributes = {};
+              this.textContent = "";
+              this.parentNode = null;
+              this.onclick = null;
+              this._innerHTML = "";
+          }
+          Object.defineProperty(Element.prototype, "className", {
+              get: function () { return this.classList.values.join(" "); },
+              set: function (value) { this.classList.values = String(value || "").split(/\s+/).filter(Boolean); }
+          });
+          Object.defineProperty(Element.prototype, "innerHTML", {
+              get: function () { return this._innerHTML; },
+              set: function (value) { this._innerHTML = String(value || ""); if (!value) this.children = []; }
+          });
+          Element.prototype.setAttribute = function (name, value) { this.attributes[name] = String(value); };
+          Element.prototype.getAttribute = function (name) { return this.attributes[name] || null; };
+          Element.prototype.appendChild = function (child) { child.parentNode = this; this.children.push(child); return child; };
+          Element.prototype.classActive = function () { return this.classList.contains("active") && this.classList.contains("is-active"); };
+
+          var moduleDefinition;
+          var document = {
+              createElement: function (tag) { return new Element(tag); },
+              createTextNode: function (value) { var node = new Element("#text"); node.textContent = String(value); return node; }
+          };
+          var context = {
+              console: console,
+              document: document,
+              window: {
+                  document: document,
+                  SirkPlatformModules: {},
+                  MeshThemeAdapter: { nav: function (button) { button.attributes["data-themed"] = "1"; return button; } },
+                  SharedStatusNav: { list: function () { return [
+                      { key: "", title: "All", icon: "<svg></svg>" },
+                      { key: "pending", title: "Pending", icon: "<svg></svg>" },
+                      { key: "completed", title: "Completed", icon: "<svg></svg>" }
+                  ]; } },
+                  SharedResultsView: { mountTable: function () {} },
+                  SirkPlatformModuleShell: { create: function (definition) { moduleDefinition = definition; return definition; } }
+              }
+          };
+          context.window.window = context.window;
+          vm.runInNewContext(source, context, { filename: "approvals/index.js" });
+          assert.ok(moduleDefinition && typeof moduleDefinition.render === "function", "Approval module render must be captured.");
+
+          var page = { root: new Element("div"), primary: new Element("div"), secondary: new Element("div"), details: new Element("div") };
+          var shell = {
+              state: { page: page, search: "" },
+              api: function (action) {
+                  if (action === "providers") return Promise.resolve({ providers: [
+                      { type: "moverequests", title: "Move Requests" },
+                      { type: "mycommands", title: "Commands" },
+                      { type: "myscripts", title: "Scripts" }
+                  ] });
+                  return Promise.resolve({ rows: [] });
+              },
+              element: function (tag, className, value) { var el = new Element(tag); el.className = className || ""; el.textContent = value || ""; return el; },
+              card: function (title) { var el = new Element("div"); el.textContent = title || ""; return el; },
+              post: function () { return Promise.resolve({}); },
+              error: function () {}
+          };
+          var lastRender = null;
+          shell.render = function () { lastRender = moduleDefinition.render(shell); return lastRender; };
+
+          function selected(host) { return host.children.filter(function (item) { return item.classActive(); }); }
+          function assertOne(host, title) {
+              var active = selected(host);
+              assert.strictEqual(active.length, 1, title + " must have exactly one active item.");
+              host.children.forEach(function (item) {
+                  assert.strictEqual(item.getAttribute("aria-selected"), item.classActive() ? "true" : "false",
+                      title + " aria-selected must match visible active state.");
+                  assert.strictEqual(item.getAttribute("data-themed"), "1", title + " rows must enter native nav mapping immediately.");
+              });
+              return active[0];
+          }
+
+          (async function () {
+              await shell.render();
+              assert.strictEqual(assertOne(page.primary, "Approval primary").title, undefined);
+              assertOne(page.secondary, "Approval overview filters");
+
+              page.primary.children[2].onclick();
+              await lastRender;
+              assertOne(page.primary, "Approval provider primary");
+              assertOne(page.secondary, "Approval provider statuses");
+              assert.ok(page.primary.children[2].classActive(), "Commands provider must be selected after click.");
+
+              page.secondary.children[1].onclick();
+              await lastRender;
+              assertOne(page.secondary, "Approval changed status");
+              assert.ok(page.secondary.children[1].classActive(), "Pending status must be selected after click.");
+
+              page.primary.children[0].onclick();
+              await lastRender;
+              assertOne(page.primary, "Approval returned Overview");
+              assertOne(page.secondary, "Approval returned overview filter");
+              assert.ok(page.primary.children[0].classActive(), "Overview must be the only selected primary item after return.");
+
+              assert.ok(toolbarCss.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,
+                  "Shared selected-state fallback must cover Approval nav items, including collapsed icon-only primary.");
+              console.log("Approval navigation keeps exactly one visible aria-selected item per active column: OK");
+          }()).catch(function (error) { console.error(error); process.exitCode = 1; });
+          EOF
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('test/semantic-visual-contract.test.js')
+          text = p.read_text()
+          old = '''assert.ok(statusNav.indexOf('icon.className = "sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-" + key') >= 0,\n    "Shared semantic status classes must be attached to icons, not row labels.");\nassert.ok(statusNav.indexOf("window.MeshThemeAdapter.status(icon)") >= 0,\n    "Shared status icons must delegate their semantic color to the native MeshCentral adapter.");'''
+          new = '''assert.ok(statusNav.indexOf('icon.className = "sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon"') >= 0,\n    "Shared status navigation icons must inherit neutral native currentColor.");\nassert.strictEqual(statusNav.indexOf("window.MeshThemeAdapter.status(icon)"), -1,\n    "Navigation status icons must not be recolored by the semantic status adapter.");'''
+          if text.count(old) != 1: raise SystemExit('semantic status-nav contract block not found')
+          text = text.replace(old, new, 1)
+          old = '''assert.ok(approvals.indexOf('className: "mc-approval-status"') >= 0 &&\n    approvals.indexOf('iconClassName: "sirk-result-status sirk-result-status-" + key') >= 0,\n    "Approval Center status rows must keep standard text while applying semantic state to their icons.");\nassert.strictEqual(approvals.indexOf('className: "mc-approval-status sirk-result-status'), -1,\n    "Approval Center status color must never be attached to the whole second-column row.");\nassert.ok(approvals.indexOf('title: "Overview"') >= 0 &&\n    approvals.indexOf('iconClassName: "sirk-result-status sirk-result-status-all"') >= 0,\n    "Approval Overview must use the same neutral/all semantic icon role as Results.");\nassert.ok(catalog.indexOf('button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item"') >= 0 &&\n    catalog.indexOf('sirk-result-status-icon sirk-result-status sirk-result-status-all') >= 0,\n    "Commands/My Scripts Results must keep native text and apply the all-state color only to the icon.");\nassert.ok(catalog.indexOf("window.MeshThemeAdapter.status(icon)") >= 0,\n    "Results icon color must come from the same native semantic adapter as Approval Overview.");'''
+          new = '''assert.ok(approvals.indexOf('className: "mc-approval-status"') >= 0 &&\n    approvals.indexOf('iconClassName: "sirk-result-status') < 0,\n    "Approval Center provider/status navigation icons must remain neutral.");\nassert.ok(approvals.indexOf('title: "Overview"') >= 0 &&\n    approvals.indexOf('icon: icons.overview') >= 0,\n    "Approval Overview must retain its artwork without semantic icon color classes.");\nassert.ok(catalog.indexOf('button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item"') >= 0 &&\n    catalog.indexOf('icon.className = "mc-tree-fallback-icon sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon"') >= 0,\n    "Commands/My Scripts Results must use neutral navigation artwork.");\nassert.strictEqual(catalog.indexOf("window.MeshThemeAdapter.status(icon)"), -1,\n    "Results navigation icon must not use semantic status coloring.");'''
+          if text.count(old) != 1: raise SystemExit('semantic approval/results contract block not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('console.log("Native semantic icon colors, approval actions and canonical collapsed layout: OK");',
+                              'console.log("Neutral navigation icons, semantic data states, approval actions and canonical collapsed layout: OK");')
+          p.write_text(text)
+          PY
+          rm .github/workflows/validate-neutral-nav-120-147.yml
+      - name: Targeted neutral navigation tests
+        run: |
+          node test/quick-semantic-icon-tone.test.js
+          node test/neutral-navigation-icons.test.js
+          node test/approval-selected-state.test.js
+          node test/shared-list-quick-style.test.js
+          node test/semantic-visual-contract.test.js
+          node test/shared-tree-connected-selection.test.js
+      - name: Run full test suite
+        run: npm test
+      - name: Check diff
+        run: |
+          git diff --check
+          git status --short
+      - name: Save verified changes
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "ux: neutralize shared navigation icons"
+          git push origin HEAD:issues-120-147-neutral-nav
