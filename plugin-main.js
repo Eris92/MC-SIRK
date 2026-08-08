@@ -10,7 +10,7 @@ function errorText(error) {
 function sendJson(res, status, value) {
     if (typeof res.status === "function") res.status(status); else res.statusCode = status;
     if (typeof res.set === "function") res.set("Content-Type", "application/json; charset=utf-8");
-    else if (typeof res.setHeader === "function") res.setHeader("Content-Type", "application/json; charset=UTF-8");
+    else if (typeof res.setHeader === "function") res.setHeader("Content-Type", "application/json; charset=utf-8");
     if (typeof res.json === "function") res.json(value);
     else if (typeof res.send === "function") res.send(JSON.stringify(value));
     else if (typeof res.end === "function") res.end(JSON.stringify(value));
