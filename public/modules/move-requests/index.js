@@ -231,6 +231,9 @@
                 if (event.target === overlay) closeDialog(overlay);
             };
 
+            if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.refresh === "function") {
+                window.MeshThemeAdapter.refresh(overlay);
+            }
             document.body.appendChild(overlay);
         }).catch(function (error) {
             window.alert(error.message || String(error));

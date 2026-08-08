@@ -4,13 +4,13 @@
     var MODERN_CLASSES = [
         "btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-warning", "btn-sm",
         "nav", "nav-tabs", "nav-link", "list-group", "list-group-item", "list-group-item-action",
-        "card", "modal-content", "form-control", "form-select", "form-check-input", "table", "table-sm",
+        "card", "modal", "modal-content", "form-control", "form-select", "form-check-input", "table", "table-sm",
         "table-hover", "text-body-secondary", "border", "border-end", "border-bottom",
         "alert", "alert-info", "alert-danger"
     ];
     var CLASSIC_CLASSES = ["style3x", "style3sel", "style10", "style10s", "bar", "sbar"];
     var OWNED_CLASSES = MODERN_CLASSES.concat(CLASSIC_CLASSES);
-    var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog";
+    var PLUGIN_ROOT_SELECTOR = ".mc-shared-page,#sirk-platform-admin,.sirk-desktop-commands-panel,.mc-results-viewer,.mc-move-dialog-overlay,.mc-move-dialog";
     var scheduled = false;
     var scheduledRoot = null;
 
@@ -154,6 +154,7 @@
             var value = modern ? "modern" : "classic";
             if (element.getAttribute("data-mesh-ui") !== value) element.setAttribute("data-mesh-ui", value);
         });
+        queryAll(root, ".mc-move-dialog-overlay", function (element) { syncOwnedClasses(element, modern ? ["modal"] : []); });
         queryAll(root, ".mc-shared-toolbar-button,.mc-tree-script-action,.mc-results-view-button,.mc-results-copy-button,.mc-definition-remove,.mc-command-run-button,.mc-admin-primary,.mc-admin-secondary,.mc-admin-toolbar button,.mc-admin-inline-actions button,.mc-admin-table-actions button,.mc-move-dialog-actions button,.sirk-quick-command-fallback-close,.sirk-quick-command-submit", function (element) { applyButton(element); });
         queryAll(root, ".mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button,.mc-admin-tabs>button,.mc-admin-settings-subnav button,.mc-admin-settings-nav button", applyNav);
         queryAll(root, ".mc-shared-tab", applyTab);
