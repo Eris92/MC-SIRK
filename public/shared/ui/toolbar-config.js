@@ -4,7 +4,7 @@
     var MODERN_CLASSES = [
         "btn", "btn-primary", "btn-secondary", "btn-success", "btn-danger", "btn-warning", "btn-sm",
         "nav", "nav-tabs", "nav-link", "list-group", "list-group-item", "list-group-item-action",
-        "card", "form-control", "form-select", "form-check-input", "table", "table-sm",
+        "card", "modal-content", "form-control", "form-select", "form-check-input", "table", "table-sm",
         "table-hover", "text-body-secondary", "border", "border-end", "border-bottom",
         "alert", "alert-info", "alert-danger"
     ];
@@ -87,7 +87,11 @@
 
     function applyCard(element) {
         if (!element) return element;
-        syncOwnedClasses(element, [isModern() ? "card" : "style10"]);
+        if (element.classList && element.classList.contains("mc-move-dialog")) {
+            syncOwnedClasses(element, [isModern() ? "modal-content" : "style10"]);
+        } else {
+            syncOwnedClasses(element, [isModern() ? "card" : "style10"]);
+        }
         return element;
     }
 
