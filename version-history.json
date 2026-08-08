@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.22",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the shared startup/readiness fix from PR #212.",
+      "Mount enabled and allowed SIRK native menu entries immediately after bootstrap instead of waiting for renderer initialization.",
+      "Load deferred shared UI assets concurrently and initialize allowed modules in a bounded parallel fan-out while replaying captured native page and device context.",
+      "Keep one canonical startup/menu owner without polling, MutationObserver, readiness timer staircases, tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.21",
     "date": "2026-08-08",
     "changes": [
