@@ -112,10 +112,10 @@
         for (var index = 0; index < buttons.length; index++) { var value = buttonText(buttons[index]); fallback = buttons[index]; if (value === "share" || value === "udostępnij" || value === "udostepnij") { anchor = buttons[index]; break; } if (!anchor && (value === "chat" || value === "czat")) anchor = buttons[index]; }
         anchor = anchor || fallback; if (!anchor || !anchor.parentNode) return false; var button = anchor.cloneNode(false); button.id = hostButtonId; button.type = "button"; if (String(button.tagName).toLowerCase() === "input") button.value = "Move Request"; else button.textContent = "Move Request"; button.title = "Submit a device move request"; button.disabled = false; button.setAttribute("data-meshcentral-plugin-pin", "SirkPlatform"); button.setAttribute("data-meshcentral-plugin-click", "Move Request host action"); button.removeAttribute("onclick"); button.removeAttribute("onmouseup"); button.onclick = handleHostButtonClick; anchor.parentNode.insertBefore(button, anchor.nextSibling); return true;
     }
-    function scheduleHostButton() { [0, 100, 400, 1000, 2000, 4000].forEach(function (delay) { window.setTimeout(installHostButton, delay); }); }
+    function syncHostButton() { return installHostButton(); }
 
     var module = window.SirkPlatformModuleShell.create({ key: "moverequests", title: "Move Requests", menuTitle: "Move Requests", showInMenu: false, order: 120, preset: "standard", buttons: { favorites: false, manage: false, settings: false }, tabs: [{ key: "requests", title: "Requests" }], defaultTab: "requests", render: function (shell) { shell.nav(shell.state.page.primary, [{ key: "moverequests", title: "Move Requests", icon: "⇄" }], "moverequests", function () {}); window.SharedStatusNav.mount(shell.state.page.secondary, { selected: selectedStatus, onSelect: function (value) { selectedStatus = value; shell.render(); } }); return renderRows(shell); } });
-    var baseDeviceRefresh = module.onDeviceRefreshEnd; module.onDeviceRefreshEnd = function (nodeId) { baseDeviceRefresh(nodeId); scheduleHostButton(); };
-    var basePageEnd = module.onNativePageEnd; module.onNativePageEnd = function (view) { basePageEnd(view); scheduleHostButton(); };
+    var baseDeviceRefresh = module.onDeviceRefreshEnd; module.onDeviceRefreshEnd = function (nodeId) { baseDeviceRefresh(nodeId); syncHostButton(); };
+    var basePageEnd = module.onNativePageEnd; module.onNativePageEnd = function (view) { basePageEnd(view); syncHostButton(); };
     window.SirkPlatformModules.moverequests = module;
 }());
