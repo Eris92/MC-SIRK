@@ -19,9 +19,7 @@
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
             window.MeshThemeAdapter.nav(button);
         }
-        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
-            window.MeshThemeAdapter.status(icon);
-        }
+
     }
 
     function createResultsButton(host, active, onClick) {
@@ -32,7 +30,7 @@
         button.setAttribute("aria-label", "Results");
 
         var icon = document.createElement("span");
-        icon.className = "mc-tree-fallback-icon sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-all mc-portal-nav-icon sirk-shared-list-icon";
+        icon.className = "mc-tree-fallback-icon sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon";
         icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
 
         var copy = document.createElement("span");

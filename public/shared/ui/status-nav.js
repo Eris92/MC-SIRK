@@ -19,9 +19,7 @@
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
             window.MeshThemeAdapter.nav(button);
         }
-        if (icon && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") {
-            window.MeshThemeAdapter.status(icon);
-        }
+
     }
 
     window.SharedStatusNav = {
@@ -45,7 +43,7 @@
                 button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-shared-list-item";
 
                 var icon = document.createElement("span");
-                icon.className = "sirk-management-item-icon sirk-result-status-icon sirk-result-status sirk-result-status-" + key + " mc-portal-nav-icon sirk-shared-list-icon";
+                icon.className = "sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon";
                 icon.innerHTML = item.icon;
 
                 var copy = document.createElement("span");

@@ -55,6 +55,7 @@
         button.className = "mc-shared-nav-item " + (options.className || "");
         button.classList.toggle("is-active", options.active === true);
         button.classList.toggle("active", options.active === true);
+        button.setAttribute("aria-selected", options.active === true ? "true" : "false");
         button.title = options.title;
 
         var icon = document.createElement("span");
@@ -70,6 +71,7 @@
         button.appendChild(label);
         button.onclick = options.onClick;
         host.appendChild(button);
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") window.MeshThemeAdapter.nav(button);
         return button;
     }
 
@@ -95,7 +97,6 @@
         nav(host, {
             title: "Overview",
             icon: icons.overview,
-            iconClassName: "sirk-result-status sirk-result-status-all",
             active: !selectedProvider,
             onClick: function () {
                 selectedProvider = "";
@@ -145,7 +146,6 @@
                 title: status.title,
                 icon: icons[key] || status.icon || icons.all,
                 className: "mc-approval-status",
-                iconClassName: "sirk-result-status sirk-result-status-" + key,
                 active: selectedStatus === status.key,
                 onClick: function () { selectedStatus = status.key; shell.render(); }
             }, shell);

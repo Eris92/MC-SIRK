@@ -33,8 +33,8 @@ assert.ok(editBlock.indexOf('disabled: !hasCredentials') >= 0,
     "Credentials must remain visible but disabled when the script has no secret variables.");
 assert.ok(tree.indexOf('action.disabled = definition.disabled === true') >= 0 && tree.indexOf('if (action.disabled) return;') >= 0,
     "Tree actions must render and enforce disabled actions.");
-assert.ok(css.indexOf('.mc-shared-page .sirk-shared-list-item:is(.active,.is-active)') >= 0,
-    "First and second shared columns must have a visible selected-state fallback.");
+assert.ok(css.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,
+    "All shared first/second-column navigation rows, including Approval, must use one visible selected-state fallback.");
 assert.ok(css.indexOf('.sirk-quick-command-browser button:is(.active,.is-active)') >= 0,
     "Quick selected rows must use the same visible host-token fallback.");
 assert.ok(css.indexOf('var(--bs-primary,currentColor)') >= 0,
