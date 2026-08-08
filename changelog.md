@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.1-dev.10 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest dev.9 runtime smoke follow-up from current `main`.
+- Keep first-column icon centers on one shared horizontal axis across expanded/collapsed states and apply the same 28 px / 44 px first-column geometry to Approval Center.
+- Give shared Results `View` a dedicated compact 72 px semantic track while preserving the wider `Actions` track required by Approve/Reject controls.
+- Preserve selected-state semantics, secondary-column compact geometry, permissions and runtime lifecycle without measurement, observers or per-module CSS.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.10.md`.
+
 ## 0.1.1-dev.9 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.

@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.10",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest runtime smoke follow-up from current main.",
+      "Keep first-column icon centers stable across expanded/collapsed states and reuse the same first-column geometry in Approval Center.",
+      "Use a dedicated compact 72 px View track while retaining the wider Actions track for decision controls.",
+      "Preserve selected-state semantics, secondary-column geometry, permissions and runtime lifecycle without measurement or per-module CSS.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.9",
     "date": "2026-08-08",
     "changes": [
