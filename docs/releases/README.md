@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.20`](0.1.1-dev.20.md) — bieżąca rewizja development z poprawnym routingiem Move Request do natywnego Modern `setModalContent`/`showModal` albo Classic `setDialogMode`;
+- [`0.1.1-dev.21`](0.1.1-dev.21.md) — bieżąca rewizja development z usuniętym Move Request host-button readiness retry staircase i synchronicznym reuse natywnych lifecycle callbacks;
+- [`0.1.1-dev.20`](0.1.1-dev.20.md) — poprzednia rewizja development z poprawnym routingiem Move Request do natywnego Modern `setModalContent`/`showModal` albo Classic `setDialogMode`;
 - [`0.1.1-dev.19`](0.1.1-dev.19.md) — poprzednia rewizja development z natywnym host dialog ownerem, zastąpiona po real dev.19 smoke ujawniającym błędny Modern `setDialogMode` contract;
 - [`0.1.1-dev.17`](0.1.1-dev.17.md) — poprzednia rewizja development z pełnym native `modal -> modal-dialog -> modal-content` chainem dla Move Request po real dev.16 re-smoke;
 - [`0.1.1-dev.16`](0.1.1-dev.16.md) — poprzednia rewizja development z pełnym native modal variable-owner chainem dla Move Request po real dev.15 re-smoke;
