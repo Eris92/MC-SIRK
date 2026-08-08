@@ -1,0 +1,151 @@
+name: Validate dev10 first-column and results follow-up
+
+on:
+  push:
+    branches: [dev10-followup-first-column-results]
+    paths:
+      - '.github/workflows/validate-dev10-followup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: dev10-followup-first-column-results
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Apply shared geometry and Results alignment fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              target = Path(path)
+              text = target.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'missing replacement anchor in {path}: {old[:120]}')
+              target.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace(
+              'public/shared/ui/shared-ui.css',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 6px;overflow:hidden}',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 9px;overflow:hidden}'
+          )
+          replace(
+              'public/shared/ui/shared-ui.css',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary .mc-shared-nav-item{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0}',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary .mc-shared-nav-item{display:flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0}'
+          )
+          replace(
+              'public/shared/ui/shared-ui.css',
+              '.mc-results-table .mc-results-col-actions{min-width:120px;white-space:nowrap}',
+              '.mc-results-table .mc-results-col-actions{min-width:120px;white-space:nowrap}.mc-results-table th.mc-results-col-view,.mc-results-table th.mc-results-col-actions{text-align:center}.mc-results-table td.mc-results-col-view,.mc-results-table td.mc-results-col-actions{vertical-align:middle;text-align:center}.mc-results-table td.mc-results-col-view .mc-results-view-button{margin:0}.mc-results-table td.mc-results-col-actions>div{justify-content:center;margin-top:0;margin-bottom:0}.mc-results-table td.mc-results-col-actions>button{margin-top:0;margin-bottom:0}'
+          )
+          replace(
+              'public/shared/ui/shared-ui.css',
+              '.mc-approval-provider-group{margin:0 0 6px}.mc-approval-provider{font-weight:700}.mc-approval-status-list{margin:2px 0 8px 12px;padding-left:8px}.mc-approval-status{padding:6px 8px;font-size:13px}',
+              '.mc-approval-provider-group{margin:0 0 6px}.mc-approval-status-list{margin:2px 0 8px 12px;padding-left:8px}'
+          )
+
+          replace(
+              'public/shared/ui/toolbar.css',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>button{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0}',
+              '.mc-shared-layout.is-collapsed .mc-shared-primary>.sirk-shared-list-item,.sirk-quick-command-browser.is-collapsed .mc-shared-primary>button{display:flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0}'
+          )
+
+          replace(
+              'public/native/desktop-commands.css',
+              '.sirk-quick-command-browser nav,.sirk-quick-command-browser section{min-width:0;min-height:0;padding:12px;overflow:auto;overscroll-behavior:contain;box-sizing:border-box}',
+              '.sirk-quick-command-browser nav,.sirk-quick-command-browser section{min-width:0;min-height:0;padding:12px;overflow:auto;overscroll-behavior:contain;box-sizing:border-box}.sirk-quick-command-browser .mc-shared-primary{padding-left:9px;padding-right:9px}'
+          )
+          replace(
+              'public/native/desktop-commands.css',
+              '.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories{padding:8px 6px;overflow:hidden}.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories button{display:flex;align-items:center;justify-content:center;width:48px;min-width:48px;height:42px;margin:0 auto 3px;padding:6px}',
+              '.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories{padding:12px 9px;overflow:hidden}.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories button{display:flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px}'
+          )
+
+          replace(
+              'public/modules/approvals/index.js',
+              'button.className = "mc-shared-nav-item " + (options.className || "");',
+              'button.className = "mc-shared-nav-item sirk-shared-list-item " + (options.className || "");'
+          )
+          replace(
+              'public/modules/approvals/index.js',
+              'icon.className = "mc-nav-icon" + (options.iconClassName ? " " + options.iconClassName : "");',
+              'icon.className = "mc-nav-icon sirk-shared-list-icon" + (options.iconClassName ? " " + options.iconClassName : "");'
+          )
+          replace(
+              'public/modules/approvals/index.js',
+              'label.className = "mc-approval-label";',
+              'label.className = "mc-approval-label sirk-shared-list-label";'
+          )
+
+          stable = Path('test/stable-first-column-icon-size.test.js')
+          text = stable.read_text(encoding='utf-8')
+          text = text.replace('var approvals = read("public/modules/approvals/index.js");', 'var approvals = read("public/modules/approvals/index.js");\nvar quick = read("public/native/desktop-commands.css");')
+          text = text.replace('width:48px;min-width:48px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0', 'width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px;font-size:0')
+          text = text.replace('.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 6px;overflow:hidden}', '.mc-shared-layout.is-collapsed .mc-shared-primary{padding:12px 9px;overflow:hidden}')
+          text = text.replace('width:48px;min-width:48px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0', 'width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;margin:0 auto 3px;font-size:0')
+          text = text.replace('button.className = "mc-shared-nav-item "', 'button.className = "mc-shared-nav-item sirk-shared-list-item "')
+          text = text.replace('icon.className = "mc-nav-icon"', 'icon.className = "mc-nav-icon sirk-shared-list-icon"')
+          marker = 'assert.ok(toolbar.indexOf(\'.sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:20px;min-width:20px;height:20px;max-width:20px;object-fit:contain}\') >= 0,'
+          insert = '''assert.ok(quick.indexOf('.sirk-quick-command-browser .mc-shared-primary{padding-left:9px;padding-right:9px}') >= 0 &&\n    quick.indexOf('.sirk-quick-command-browser.is-collapsed .sirk-quick-command-categories{padding:12px 9px;overflow:hidden}') >= 0,\n    "Quick expanded/collapsed primary must keep the same horizontal icon/indicator origin.");\nassert.ok(quick.indexOf('width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px') >= 0,\n    "Quick collapsed category row must reuse the 44 px shared first-column row geometry.");\n\n'''
+          if marker not in text:
+              raise SystemExit('missing stable-test insert anchor')
+          text = text.replace(marker, insert + marker, 1)
+          stable.write_text(text, encoding='utf-8')
+
+          approval_test = Path('test/approval-selected-state.test.js')
+          text = approval_test.read_text(encoding='utf-8')
+          text = text.replace('var toolbarCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/toolbar.css"), "utf8");', 'var toolbarCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/toolbar.css"), "utf8");\nvar sharedCss = fs.readFileSync(path.join(__dirname, "..", "public/shared/ui/shared-ui.css"), "utf8");')
+          anchor = 'assert.strictEqual(item.getAttribute("data-themed"), "1", title + " rows must enter native nav mapping immediately.");'
+          extra = '''assert.strictEqual(item.getAttribute("data-themed"), "1", title + " rows must enter native nav mapping immediately.);'''
+          if anchor not in text:
+              raise SystemExit('missing approval-test row anchor')
+          replacement = anchor + '''\n        assert.ok(item.classList.contains("sirk-shared-list-item"), title + " rows must reuse shared list geometry.");\n        assert.ok(item.children[0] && item.children[0].classList.contains("sirk-shared-list-icon"), title + " icons must reuse shared list geometry.");\n        assert.ok(item.children[1] && item.children[1].classList.contains("sirk-shared-list-label"), title + " labels must reuse shared list geometry.");'''
+          text = text.replace(anchor, replacement, 1)
+          final_anchor = 'assert.ok(toolbarCss.indexOf(\'.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)\') >= 0,'
+          style_checks = '''assert.strictEqual(sharedCss.indexOf('.mc-approval-provider{'), -1,\n        "Approval providers must not keep a separate typography owner outside shared list geometry.");\n    assert.strictEqual(sharedCss.indexOf('.mc-approval-status{'), -1,\n        "Approval statuses must not keep separate row padding/font geometry outside shared list geometry.");\n    '''
+          if final_anchor not in text:
+              raise SystemExit('missing approval-test style anchor')
+          text = text.replace(final_anchor, style_checks + final_anchor, 1)
+          approval_test.write_text(text, encoding='utf-8')
+
+          results_test = Path('test/results-table-readability.test.js')
+          text = results_test.read_text(encoding='utf-8')
+          anchor = '''assert.ok(css.indexOf('.mc-results-table .mc-results-col-actions{min-width:120px;white-space:nowrap}') >= 0,\n    "Actions must retain enough width for Approve/Reject controls.");'''
+          addition = anchor + '''\nassert.ok(css.indexOf('.mc-results-table th.mc-results-col-view,.mc-results-table th.mc-results-col-actions{text-align:center}') >= 0 &&\n    css.indexOf('.mc-results-table td.mc-results-col-view,.mc-results-table td.mc-results-col-actions{vertical-align:middle;text-align:center}') >= 0,\n    "View/Actions headers and body cells must share centered alignment.");\nassert.ok(css.indexOf('.mc-results-table td.mc-results-col-view .mc-results-view-button{margin:0}') >= 0 &&\n    css.indexOf('.mc-results-table td.mc-results-col-actions>div{justify-content:center;margin-top:0;margin-bottom:0}') >= 0,\n    "Table action controls must drop card spacing and center within their semantic cells.");'''
+          if anchor not in text:
+              raise SystemExit('missing results-test alignment anchor')
+          text = text.replace(anchor, addition, 1)
+          results_test.write_text(text, encoding='utf-8')
+          PY
+          rm .github/workflows/validate-dev10-followup.yml
+      - name: Targeted regression tests
+        run: |
+          node test/stable-first-column-icon-size.test.js
+          node test/shared-list-quick-style.test.js
+          node test/approval-selected-state.test.js
+          node test/results-table-readability.test.js
+      - name: Full test suite
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Save verified follow-up
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: unify first-column and result action geometry'
+          git push origin HEAD:dev10-followup-first-column-results
