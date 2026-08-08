@@ -34,6 +34,7 @@ function Element(tagName, className) {
     this.children = [];
     this.parentNode = null;
     this.style = {};
+    this.src = "";
 }
 Object.defineProperty(Element.prototype, "className", {
     get: function () { return this.classList.toString(); },
@@ -87,6 +88,7 @@ Element.prototype.replaceChild = function (replacement, current) {
 Element.prototype.cloneNode = function (deep) {
     var copy = new Element(this.tagName, this.className);
     copy.id = this.id;
+    copy.src = this.src;
     Object.keys(this.attributes).forEach(function (name) {
         copy.attributes[name] = this.attributes[name];
     }, this);
@@ -137,6 +139,7 @@ var document = {
     }
 };
 
+var expectedSource = "data:image/svg+xml;charset=utf-8,%3Csvg%20data-test%3D%22purple%22%3E%3C%2Fsvg%3E";
 var core = {
     ensureMenu: function (definition) {
         var item = document.getElementById(definition.leftId);
@@ -146,12 +149,16 @@ var core = {
             host.appendChild(item);
         }
         item.classList.remove("active", "lbbuttonsel", "lbbuttonsel2");
+        item.setAttribute("data-sirk-icon-family", "modern");
         var current = item.querySelector("svg, i, img");
         var image = new Element("img", "sirk-platform-menu-icon");
-        image.style.width = "40px";
-        image.style.height = "40px";
+        image.src = expectedSource;
+        image.setAttribute("data-sirk-icon-family", "modern");
+        image.style.width = "24px";
+        image.style.height = "24px";
         image.style.objectFit = "contain";
         if (current) current.parentNode.replaceChild(image, current);
+        else item.insertBefore(image, item.firstChild || null);
         return true;
     },
     setPluginMenuActive: function () {}
@@ -169,34 +176,21 @@ vm.runInNewContext(
     { filename: "page.js" }
 );
 
-var expected = {
-    approvalcenter: "clipboard-check",
-    myscripts: "file-code",
-    mycommands: "terminal",
-    moverequests: "right-left"
-};
-
-Object.keys(expected).forEach(function (key) {
+["approvalcenter", "myscripts", "mycommands", "moverequests"].forEach(function (key) {
     var definition = { leftId: "LeftMenuSirkPlatform-" + key };
     core.ensureMenu(definition);
     var item = document.getElementById(definition.leftId);
-    var icon = item.querySelector("i");
+    var icon = item.querySelector("img");
 
     assert.strictEqual(item.className, "nav-link text-center text-white",
         key + " must use the exact inactive native anchor classes.");
-    assert.strictEqual(item.querySelector("img"), null,
-        key + " must not retain the custom raster/image element.");
-    assert.ok(icon, key + " must use native Font Awesome source markup.");
-    assert.ok(icon.classList.contains("fa-solid") && icon.classList.contains("fa-" + expected[key]),
-        key + " must use its native Font Awesome glyph.");
-    assert.ok(icon.classList.contains("me-2"),
-        key + " must inherit the same icon spacing class as MeshCentral entries.");
-    assert.strictEqual(icon.style.width, undefined,
-        key + " must not set a custom icon width.");
-    assert.strictEqual(icon.style.height, undefined,
-        key + " must not set a custom icon height.");
-    assert.strictEqual(icon.style.objectFit, undefined,
-        key + " must not use image-specific sizing.");
+    assert.ok(icon, key + " must preserve the icon element selected by core.ensureMenu/SirkIconMode.");
+    assert.strictEqual(icon.src, expectedSource,
+        key + " must preserve the selected custom SVG source instead of replacing it with Font Awesome.");
+    assert.strictEqual(icon.getAttribute("data-sirk-icon-family"), "modern",
+        key + " must preserve the effective SirkIconMode family marker.");
+    assert.strictEqual(item.querySelector("i"), null,
+        key + " must not be normalized to a later white/currentColor Font Awesome icon.");
 
     core.setPluginMenuActive(null, item, true);
     assert.ok(item.classList.contains("active") && item.classList.contains("lbbuttonsel2"),
@@ -210,4 +204,10 @@ assert.strictEqual(native.className, "nav-link active text-center text-white lbb
 assert.strictEqual(native.querySelector("svg"), nativeIcon,
     "Normalizing plugin entries must not replace the native MeshCentral SVG.");
 
-console.log("Modern SIRK menu uses native Font Awesome structure and spacing: OK");
+var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
+assert.strictEqual(pageSource.indexOf("modernIconNames"), -1,
+    "SharedPage must not keep a second Modern icon-family map.");
+assert.strictEqual(pageSource.indexOf("normalizeModernIcon"), -1,
+    "SharedPage must not replace SirkIconMode-owned Modern icons after first paint.");
+
+console.log("Modern SIRK menu preserves the SirkIconMode-owned icon source and native classes: OK");
