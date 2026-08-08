@@ -141,6 +141,7 @@
     }
 
     function mountBootstrapMenus(bootstrap) {
+        if (runtime.state.nativePageEnd == null) return;
         order.forEach(function (key) {
             mountBootstrapMenu(key, bootstrap.modules && bootstrap.modules[key]);
         });
@@ -295,6 +296,8 @@
 
     runtime.onNativePageStart = function (view) {
         runtime.state.nativePageStart = view;
+        runtime.state.nativePageEnd = null;
+        window.__SIRK_LAST_NATIVE_PAGE_END__ = null;
         if (view != null && !isCustomView(view) && !(Number(view) === 1 && core.workspaceState)) {
             core.restoreWorkspace();
         }
