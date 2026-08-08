@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.7`](0.1.1-dev.7.md) — bieżąca rewizja development z krótszymi Commands labels, neutralnym shared navigation UI i czytelnymi tabelami Results do real MeshCentral smoke;
+- [`0.1.1-dev.8`](0.1.1-dev.8.md) — bieżąca rewizja development ze stałym rozmiarem ikon 1. kolumny przy Collapse/Expand do real MeshCentral smoke;
+- [`0.1.1-dev.7`](0.1.1-dev.7.md) — poprzednia rewizja development z krótszymi Commands labels, neutralnym shared navigation UI i czytelnymi tabelami Results do real MeshCentral smoke;
 - [`0.1.1-dev.6`](0.1.1-dev.6.md) — poprzednia rewizja development z poprawką collapsed-primary dla geometrii Edit/Multi do real MeshCentral re-smoke;
 - [`0.1.1-dev.5`](0.1.1-dev.5.md) — poprzednia rewizja development ze wspólną geometrią Edit/Multi;
 - [`0.1.1-dev.4`](0.1.1-dev.4.md) — poprzednia rewizja development z atomic Edit lifecycle fix;
