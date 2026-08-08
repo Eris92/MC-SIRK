@@ -24,8 +24,8 @@ async function main() {
         "Runtime must expose a bootstrap/menu preparation phase separate from renderer initialization.");
     assert.ok(runtimeSource.indexOf("mountBootstrapMenus(bootstrap)") >= 0,
         "Allowed menu entries must mount immediately after bootstrap.");
-    assert.ok(runtimeSource.indexOf("state.access.allowed !== true") >= 0,
-        "Early menu mounting must be permission-safe.");
+    assert.ok(runtimeSource.indexOf("state.access.allowed === true") >= 0,
+        "Early menu and module loading must be permission-safe.");
     assert.ok(runtimeSource.indexOf("Promise.all(order.map(function (key) { return ensureModule(key); }))") >= 0,
         "Module scripts must initialize from one bounded parallel fan-out, not a serial chain.");
     assert.strictEqual(runtimeSource.indexOf("chain = chain.then"), -1,
@@ -72,6 +72,8 @@ async function main() {
     await windowObject.SirkPlatformRuntime.prepare();
     assert.deepStrictEqual(menus.map(function (item) { return item.leftId; }), ["LeftMenuSirkPlatform-approvalcenter"],
         "Bootstrap pass must mount exactly the enabled+allowed menu entries and must not expose denied/hidden modules.");
+    assert.strictEqual(menus[0].title, "Approval Center",
+        "Early menu title must already match the final renderer definition to avoid a post-initialize text swap.");
     assert.strictEqual(loadCalls.length, 0,
         "Menu availability after bootstrap must not wait for or trigger renderer script loading.");
 
@@ -81,9 +83,8 @@ async function main() {
     assert.deepStrictEqual(loadCalls, [
         "sirk-platform-module-approvalcenter",
         "sirk-platform-module-moverequests",
-        "sirk-platform-module-mycommands",
-        "sirk-platform-module-myscripts"
-    ], "All enabled module fetches must be started in the same bounded initialization pass.");
+        "sirk-platform-module-mycommands"
+    ], "All enabled+allowed module fetches must start in the same bounded pass and denied modules must not load.");
 
     loadCalls.forEach(function (id) {
         var key = id.replace("sirk-platform-module-", "");
@@ -98,11 +99,13 @@ async function main() {
     });
     await initializePromise;
 
-    ["approvalcenter", "moverequests", "mycommands", "myscripts"].forEach(function (key) {
+    ["approvalcenter", "moverequests", "mycommands"].forEach(function (key) {
         assert.ok(lifecycle.indexOf(key + ":initialize") >= 0, key + " must initialize after its script is ready.");
         assert.ok(lifecycle.indexOf(key + ":node:node/test/1") >= 0, key + " must receive the device context captured before runtime startup.");
         assert.ok(lifecycle.indexOf(key + ":end:1") >= 0, key + " must receive the latest native page completion context.");
     });
+    assert.strictEqual(lifecycle.some(function (entry) { return entry.indexOf("myscripts:") === 0; }), false,
+        "A denied module must not initialize or receive native lifecycle callbacks.");
 
     console.log("Startup menu readiness and parallel module lifecycle: OK");
 }
