@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.9",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
+      "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
+      "Normalize persisted historical built-in command default labels while preserving genuine custom labels and stable command IDs/execution.",
+      "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.8",
     "date": "2026-08-08",
     "changes": [

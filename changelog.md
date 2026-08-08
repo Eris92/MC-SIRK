@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1-dev.9 — 2026-08-08
+
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
+- Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.
+- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell` and `CMD` while genuine custom labels remain valid.
+- Contain long unbroken Results text tokens inside their semantic cells and present Move Request source/target groups with visible human-readable names when available.
+- Keep stable execution IDs, authorization and the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.9.md`.
+
+
 ## 0.1.1-dev.8 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current `main`.
