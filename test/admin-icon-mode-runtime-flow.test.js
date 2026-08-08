@@ -7,6 +7,7 @@ var settings = fs.readFileSync(path.join(root, "public/shared/ui/settings.js"), 
 var runtime = fs.readFileSync(path.join(root, "public/shared/runtime.js"), "utf8");
 var shell = fs.readFileSync(path.join(root, "public/shared/module-shell.js"), "utf8");
 var core = fs.readFileSync(path.join(root, "public/shared/core.js"), "utf8");
+var page = fs.readFileSync(path.join(root, "public/shared/ui/page.js"), "utf8");
 var admin = fs.readFileSync(path.join(root, "web/admin/admin.js"), "utf8");
 
 assert.ok(settings.indexOf('set: function (value)') >= 0 && settings.indexOf('runtime.state.bootstrap.ui.iconMode = value') >= 0,
@@ -17,11 +18,14 @@ assert.ok(runtime.indexOf('runtime.refreshMenus = function ()') >= 0 && runtime.
     "Runtime must fan out exactly one menu refresh without polling or observers.");
 assert.ok(shell.indexOf('function refreshMenu()') >= 0 && shell.indexOf('refreshMenu: refreshMenu') >= 0,
     "Each module shell must expose its existing menu registration lifecycle for controlled refresh.");
-assert.ok(core.indexOf('document.getElementById(definition.leftId) || leftAnchor.cloneNode(true)') >= 0,
+assert.ok(core.indexOf('var existingLeft = document.getElementById(definition.leftId);') >= 0 &&
+    core.indexOf('var left = existingLeft || leftAnchor.cloneNode(true);') >= 0,
     "ensureMenu must reuse the existing menu node instead of recreating it on refresh.");
-assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", useModernIcons ? "modern" : "classic")') >= 0,
+assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", familyName)') >= 0,
     "Refreshed menu entries must expose their effective icon family.");
+assert.strictEqual(page.indexOf('installNativeLeftMenuContract'), -1,
+    "Deferred SharedPage must not install a second menu presentation owner after first paint.");
 assert.ok(admin.indexOf('previousIconMode !== nextIconMode') >= 0 && admin.indexOf('window.SirkIconMode.set(nextIconMode)') >= 0,
     "Admin Save must trigger the browser owner only when the persisted icon mode actually changed.");
 assert.strictEqual(runtime.indexOf('setInterval('), -1, "Icon mode synchronization must not poll.");
-console.log("Admin icon mode save -> owner -> existing menu refresh contract: OK");
+console.log("Admin icon mode save -> owner -> stable first-paint existing-menu refresh contract: OK");
