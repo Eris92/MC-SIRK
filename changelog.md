@@ -1,3 +1,12 @@
+## 0.1.1-dev.20 - 2026-08-08
+
+- Deliver the Move Request #173 correction after real dev.19 smoke exposed `Cannot set properties of null (setting 'innerHTML')` in Modern MeshCentral.
+- Route Modern to the host-native `setModalContent("xxAddAgent", ...)` + `showModal("xxAddAgentModal", ...)` lifecycle and retain `setDialogMode(2, ...)` only for Classic.
+- Keep guarded asynchronous Submit feedback visible by returning `false` from the Modern host callback; preserve Classic capture interception and backend semantics.
+- No parallel plugin modal tree, background workaround, observer, timer, polling loop, tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.20.md`.
+
 ## 0.1.1-dev.19 - 2026-08-08
 
 - Deliver the Move Request #173 follow-up that delegates dialog presentation and lifecycle to MeshCentral's native `setDialogMode(2, ...)` owner instead of constructing a parallel plugin modal tree.
