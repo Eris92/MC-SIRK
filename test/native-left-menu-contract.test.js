@@ -150,6 +150,7 @@ var windowObject = {
     document: documentObject,
     location: { href: "https://mesh.example/" },
     SirkIconMode: { useModern: function () { return false; } },
+    SirkPlatformRuntime: { state: { nativePageEnd: 1 } },
     __SIRK_PLATFORM_VERSION__: "test"
 };
 windowObject.window = windowObject;
@@ -202,10 +203,24 @@ assert.strictEqual(firstItem.querySelector(".lbtg"), firstIcon,
 assert.ok(firstItem.classList.contains("lbbuttonsel"),
     "Repeated menu reconciliation must preserve active selection instead of causing a visual jump.");
 
+windowObject.SirkPlatformRuntime.state.nativePageEnd = null;
+leftHost.removeChild(firstItem);
+windowObject.SirkPlatformCore.ensureMenu(definition);
+assert.strictEqual(documentObject.getElementById(definition.leftId), null,
+    "A host redraw during native page startup must not recreate the SIRK menu before the current page-end signal.");
+
+windowObject.SirkPlatformRuntime.state.nativePageEnd = 1;
+windowObject.SirkPlatformCore.ensureMenu(definition);
+var restoredItem = documentObject.getElementById(definition.leftId);
+assert.ok(restoredItem,
+    "The SIRK menu must be created once the current native page has completed.");
+assert.strictEqual(leftHost.children.filter(function (item) { return item.id === definition.leftId; }).length, 1,
+    "Native page completion must restore exactly one SIRK menu node after a host redraw.");
+
 var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
 assert.strictEqual(pageSource.indexOf("installNativeLeftMenuContract"), -1,
     "Deferred SharedPage must not install a second left-menu owner.");
 assert.strictEqual(pageSource.indexOf("originalEnsureMenu"), -1,
     "Deferred SharedPage must not wrap core.ensureMenu after first paint.");
 
-console.log("Classic left menu is final on first core mount with stable node, white artwork and native-sized geometry: OK");
+console.log("Classic left menu is final on native page completion with stable node, white artwork and native-sized geometry: OK");
