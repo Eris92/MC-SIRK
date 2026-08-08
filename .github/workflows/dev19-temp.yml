@@ -1,0 +1,34 @@
+name: Dev19 Temp
+on:
+  push:
+    branches: [chore/201-dev19]
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: chore/201-dev19
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Synchronize development metadata
+        run: node scripts/tmp-bump-dev19.js
+      - name: Remove temporary files
+        run: rm -f scripts/tmp-bump-dev19.js .github/workflows/dev19-temp.yml
+      - name: Validate repository/version metadata
+        run: node scripts/validate-repository-layout.js
+      - name: Full test suite
+        run: npm test
+      - name: Diff check
+        run: git diff --check
+      - name: Commit validated metadata bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(version): bump development revision to 0.1.1-dev.19"
+          git push origin HEAD:chore/201-dev19
