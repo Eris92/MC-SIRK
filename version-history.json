@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.11",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current main.",
+      "Keep first-column selected indicator distance, row origin and icon center stable across expanded/collapsed states, including Quick and Approval Center.",
+      "Make Approval Center reuse the shared list geometry contract instead of separate provider/status row styling.",
+      "Center View and Actions headers and controls while preserving the 72 px / 120 px Results width contract and horizontal scrolling.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.10",
     "date": "2026-08-08",
     "changes": [
