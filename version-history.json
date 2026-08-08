@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.18",
+    "date": "2026-08-08",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the native Move Request inner modal-section fix from current main.",
+      "Match the current MeshCentral modal content contract with modal-header, modal-body and modal-footer inside the existing modal-content.",
+      "Keep title/device in the native header, form/status in the native body and Cancel/Submit in the native footer while leaving Modern Bootstrap surface/geometry ownership to MeshCentral.",
+      "Preserve Classic style10 and the existing guarded Move Request submit/status lifecycle without new background workarounds, observers, timers, polling loops or modal frameworks.",
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.17",
     "date": "2026-08-08",
     "changes": [
