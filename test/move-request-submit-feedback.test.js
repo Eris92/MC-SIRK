@@ -16,14 +16,18 @@ assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")'
 assert.ok(source.indexOf('setDialogStatus(status, "failed", error.message || String(error))') >= 0,
     "Rejected submit must keep the native dialog open and expose the error in the same status node.");
 assert.ok(source.indexOf('var submitting = false; var submitted = false;') >= 0 &&
-    source.indexOf('if (submitting || submitted) return;') >= 0,
+    source.indexOf('if (submitting || submitted) return false;') >= 0,
     "Rapid repeated submit must remain guarded before issuing another POST.");
+assert.ok(source.indexOf('dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest)') >= 0 &&
+    source.indexOf('return false;', source.indexOf('function submitRequest()')) >= 0,
+    "Modern submit must use the native showModal callback and return false so async status remains visible.");
 assert.ok(source.indexOf('event.stopImmediatePropagation') >= 0 &&
-    source.indexOf('submit.addEventListener("click", onSubmit, true)') >= 0,
-    "Submit must intercept the native OK click before MeshCentral dialogclose so async status can remain visible.");
-assert.ok(source.indexOf('cancel.addEventListener("click", cleanup, true)') >= 0 &&
+    source.indexOf('submit.addEventListener("click", onClassicSubmit, true)') >= 0,
+    "Classic submit must intercept setDialogMode OK before dialogclose while Modern remains callback-owned.");
+assert.ok(source.indexOf('modernModal.addEventListener("hidden.bs.modal", cleanup)') >= 0 &&
+    source.indexOf('cancel.addEventListener("click", cleanup, true)') >= 0 &&
     source.indexOf('close.addEventListener("click", cleanup, true)') >= 0,
-    "Native Cancel/X must cleanly restore the shared host OK control before MeshCentral closes the dialog.");
+    "Modern hidden and Classic Cancel/X paths must restore the shared host OK control.");
 assert.ok(source.indexOf('var sourceMeshName = sourceMesh && sourceMesh.name || ""') >= 0 &&
     source.indexOf('sourceMeshName: sourceMeshName') >= 0,
     "Move Request submit must preserve human-readable source group metadata.");
@@ -33,3 +37,6 @@ assert.strictEqual(source.indexOf('closeDialog('), -1,
     "Successful submit must not use the removed plugin overlay close path.");
 
 console.log("Move Request keeps guarded async feedback while reusing the native host OK button: OK");
+
+assert.ok(source.indexOf('dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest)') >= 0, "Modern submit must use native showModal callback ownership.");
+assert.ok(source.indexOf('function submitRequest()') >= 0 && source.indexOf('return false;', source.indexOf('function submitRequest()')) >= 0, "Submit callback must keep the native Modern modal open.");

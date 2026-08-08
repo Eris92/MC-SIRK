@@ -24,8 +24,12 @@
     function currentMeshId(nodeId) { if (window.currentNode && window.currentNode.meshid) return String(window.currentNode.meshid); if (window.nodes && window.nodes[nodeId] && window.nodes[nodeId].meshid) return String(window.nodes[nodeId].meshid); return ""; }
     function setDialogStatus(status, state, message) { if (!status) return; status.className = "mc-move-dialog-status" + (state ? " mc-results-status mc-results-status-" + state : ""); status.textContent = String(message || ""); if (state && window.MeshThemeAdapter && typeof window.MeshThemeAdapter.status === "function") window.MeshThemeAdapter.status(status); }
     function hostDialogManager() {
-        if (typeof window.setDialogMode === "function") return window.setDialogMode;
-        if (typeof setDialogMode === "function") return setDialogMode;
+        var modern = typeof window.setModalContent === "function" && typeof window.showModal === "function" &&
+            document.getElementById("xxAddAgentModal") && document.getElementById("xxAddAgentModalConf") && document.getElementById("dialog2");
+        if (modern) return { mode: "modern", setContent: window.setModalContent, show: window.showModal };
+        var classicSetDialog = typeof window.setDialogMode === "function" ? window.setDialogMode : (typeof setDialogMode === "function" ? setDialogMode : null);
+        var classic = classicSetDialog && document.getElementById("dialog") && document.getElementById("id_dialogOptions");
+        if (classic) return { mode: "classic", show: classicSetDialog };
         return null;
     }
     function readButtonText(button) { return String(button && (button.value != null ? button.value : button.textContent) || ""); }
@@ -34,8 +38,8 @@
     function openMoveDialog(nodeId) {
         nodeId = String(nodeId || ""); if (!nodeId) { window.alert("No device is selected."); return; }
         module.api.api("meshes", { nodeId: nodeId }).then(function (result) {
-            var showDialog = hostDialogManager();
-            if (!showDialog) { window.alert("Native MeshCentral dialog is unavailable."); return; }
+            var dialogManager = hostDialogManager();
+            if (!dialogManager) { window.alert("Native MeshCentral dialog is unavailable."); return; }
 
             var content = document.createElement("div"); content.className = "mc-move-request-native-content";
             var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); content.appendChild(device);
@@ -47,7 +51,8 @@
             var note = document.createElement("textarea"); note.id = "SirkMoveRequestNote"; note.className = "mc-move-dialog-input"; note.rows = 4; content.appendChild(note);
             var status = document.createElement("div"); status.id = "SirkMoveRequestStatus"; status.className = "mc-move-dialog-status"; content.appendChild(status);
 
-            showDialog(2, "Move Request", 3, null, content.innerHTML);
+            if (dialogManager.mode === "modern") dialogManager.setContent("xxAddAgent", "Move Request", content.innerHTML);
+            else dialogManager.show(2, "Move Request", 3, null, content.innerHTML);
 
             target = document.getElementById("SirkMoveRequestTarget");
             note = document.getElementById("SirkMoveRequestNote");
@@ -55,33 +60,41 @@
             var submit = document.getElementById("idx_dlgOkButton");
             var cancel = document.getElementById("idx_dlgCancelButton");
             var close = document.getElementById("id_dialogclose");
-            if (!target || !note || !status || !submit) { showDialog(); window.alert("Native MeshCentral dialog controls are unavailable."); return; }
+            if (!target || !note || !status || !submit) { window.alert("Native MeshCentral dialog controls are unavailable."); return; }
 
-            if (window.MeshThemeAdapter) {
-                if (typeof window.MeshThemeAdapter.control === "function") { window.MeshThemeAdapter.control(target); window.MeshThemeAdapter.control(note); }
-            }
+            if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") { window.MeshThemeAdapter.control(target); window.MeshThemeAdapter.control(note); }
 
             var originalSubmitText = readButtonText(submit); var originalSubmitDisabled = !!submit.disabled;
             writeButtonText(submit, "Submit request"); submit.disabled = !target.options.length;
             if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group is available."); }
 
-            var submitting = false; var submitted = false; var cleaned = false;
+            var submitting = false; var submitted = false; var cleaned = false; var modernModal = document.getElementById("xxAddAgentModal");
             function cleanup() {
                 if (cleaned) return; cleaned = true;
-                submit.removeEventListener("click", onSubmit, true);
+                if (dialogManager.mode === "classic") submit.removeEventListener("click", onClassicSubmit, true);
                 if (cancel) cancel.removeEventListener("click", cleanup, true);
                 if (close) close.removeEventListener("click", cleanup, true);
+                if (modernModal) modernModal.removeEventListener("hidden.bs.modal", cleanup);
                 writeButtonText(submit, originalSubmitText); submit.disabled = originalSubmitDisabled;
             }
-            function onSubmit(event) {
-                if (event) { if (event.preventDefault) event.preventDefault(); if (event.stopImmediatePropagation) event.stopImmediatePropagation(); else if (event.stopPropagation) event.stopPropagation(); }
-                if (submitting || submitted) return; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return; }
+            function submitRequest() {
+                if (submitting || submitted) return false; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return false; }
                 submitting = true; submit.disabled = true; setDialogStatus(status, "pending", "Submitting...");
                 module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () { submitting = false; submitted = true; submit.disabled = true; setDialogStatus(status, "completed", "Request sent."); }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
+                return false;
             }
-            submit.addEventListener("click", onSubmit, true);
-            if (cancel) cancel.addEventListener("click", cleanup, true);
-            if (close) close.addEventListener("click", cleanup, true);
+            function onClassicSubmit(event) {
+                if (event) { if (event.preventDefault) event.preventDefault(); if (event.stopImmediatePropagation) event.stopImmediatePropagation(); else if (event.stopPropagation) event.stopPropagation(); }
+                submitRequest();
+            }
+            if (dialogManager.mode === "modern") {
+                dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest);
+                if (modernModal) modernModal.addEventListener("hidden.bs.modal", cleanup);
+            } else {
+                submit.addEventListener("click", onClassicSubmit, true);
+                if (cancel) cancel.addEventListener("click", cleanup, true);
+                if (close) close.addEventListener("click", cleanup, true);
+            }
         }).catch(function (error) { window.alert(error.message || String(error)); });
     }
 
