@@ -221,6 +221,9 @@ module.exports.createApprovalService = function (options) {
         var externalIdempotencyKey = idempotencyKey && apiClientId
             ? crypto.createHash("sha256").update(apiClientId + "\u0000" + type + "\u0000" + idempotencyKey).digest("hex")
             : "";
+        var pendingRequestKey = typeof provider.getPendingRequestKey === "function"
+            ? shared.cleanText(provider.getPendingRequestKey(payload), 500).trim()
+            : "";
         var request = {
             id: shared.randomId(12),
             type: type,
@@ -244,6 +247,17 @@ module.exports.createApprovalService = function (options) {
             if (externalIdempotencyKey) {
                 var existing = rows.find(function (item) { return item.externalIdempotencyKey === externalIdempotencyKey; });
                 if (existing) return { request: shared.copy(existing), existing: true };
+            }
+            if (pendingRequestKey) {
+                var supersededAt = Date.now();
+                rows.forEach(function (item) {
+                    if (!item || item.type !== type || item.status !== "pending") return;
+                    var itemKey = shared.cleanText(provider.getPendingRequestKey(item.payload || {}), 500).trim();
+                    if (!itemKey || itemKey !== pendingRequestKey) return;
+                    item.status = "superseded";
+                    item.updatedAt = supersededAt;
+                    item.supersededByRequestId = request.id;
+                });
             }
             rows.push(request);
             return { request: shared.copy(request), existing: false };
