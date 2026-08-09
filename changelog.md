@@ -1,3 +1,13 @@
+## 0.1.1-dev.34 - 2026-08-09
+
+- Follow up real `0.1.1-dev.33` smoke evidence: the row-level Results `View` button is now visibly native, while the opened Results viewer itself remained transparent; Network Settings still opened no adapter properties and flashed a helper window.
+- Move Results viewer presentation from the plugin-owned overlay to the native MeshCentral Modern `setModalContent`/`showModal` or Classic `setDialogMode` dialog surface while keeping the canonical live result/CSV renderer.
+- Replace the ineffective `shell:ConnectionsFolder` NameSpace input with the Network Connections CSIDL value `49`, and make the existing interactive launcher honor explicit `-WindowStyle Hidden` without changing visible PowerShell/CMD behavior.
+- Add negative regressions that reject the dev.33 namespace and transparent custom viewer path; keep Issues #128 and #237 open for real dev.34 re-smoke and #125 open for its remaining button-theme matrix.
+- Keep the revision below `1.0.0`; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.34.md`.
+
 ## 0.1.1-dev.33 - 2026-08-09
 
 - Follow up real `0.1.1-dev.32` smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.

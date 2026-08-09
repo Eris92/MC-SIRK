@@ -262,19 +262,46 @@
         return data;
     }
 
+    function escapeHtml(value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+        });
+    }
+
+    function hostDialogManager() {
+        var modern = typeof window.setModalContent === "function" &&
+            typeof window.showModal === "function" &&
+            document.getElementById("xxAddAgentModal") &&
+            document.getElementById("xxAddAgentModalConf") &&
+            document.getElementById("dialog2");
+        if (modern) return { mode: "modern", setContent: window.setModalContent, show: window.showModal };
+        var classic = typeof window.setDialogMode === "function" &&
+            document.getElementById("dialog") &&
+            document.getElementById("id_dialogOptions");
+        if (classic) return { mode: "classic", show: window.setDialogMode };
+        return null;
+    }
+
     function openViewer(row, options) {
         options = options || {};
         var raw = typeof options.resultValue === "function" ? options.resultValue(row) : rawResult(row);
-        var overlay = document.createElement("div"); overlay.className = "mc-results-viewer-overlay";
-        var dialog = document.createElement("section"); dialog.className = "mc-results-viewer"; dialog.setAttribute("role", "dialog"); dialog.setAttribute("aria-modal", "true"); overlay.appendChild(dialog);
-        var header = document.createElement("div"); header.className = "mc-results-viewer-header";
-        var title = document.createElement("h3"); title.textContent = options.dialogTitle || row.title || "Result"; header.appendChild(title);
-        var actions = document.createElement("div"); actions.className = "mc-results-viewer-actions";
-        var close = document.createElement("button"); close.type = "button"; close.className = "btn btn-secondary btn-sm"; close.textContent = "Close"; close.onclick = function () { overlay.remove(); };
-        actions.appendChild(close); header.appendChild(actions); dialog.appendChild(header);
-        appendResult(dialog, raw, options);
-        overlay.onclick = function (event) { if (event.target === overlay) overlay.remove(); };
-        document.body.appendChild(overlay); close.focus();
+        var manager = hostDialogManager();
+        if (!manager) throw new Error("Native MeshCentral dialog manager is unavailable.");
+        var hostId = "SirkResultsViewerNativeHost";
+        var contentHtml = '<div id="' + hostId + '" class="mc-results-viewer"></div>';
+        var title = escapeHtml(options.dialogTitle || row.title || "Result");
+        if (manager.mode === "modern") {
+            manager.setContent("xxAddAgent", title, contentHtml, "extra-large");
+            manager.show("xxAddAgentModal");
+        } else {
+            manager.show(2, title, 1, null, contentHtml);
+        }
+        var host = document.getElementById(hostId);
+        if (!host) throw new Error("Native MeshCentral result dialog content is unavailable.");
+        appendResult(host, raw, options);
+        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.refresh === "function") window.MeshThemeAdapter.refresh(host);
+        var close = document.getElementById("idx_dlgOkButton") || document.getElementById("idx_dlgCancelButton");
+        if (close && typeof close.focus === "function") close.focus();
     }
 
     function defaultColumns(kind) {
