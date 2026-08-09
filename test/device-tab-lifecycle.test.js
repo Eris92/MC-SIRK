@@ -206,7 +206,13 @@ function createEnvironment() {
         clearTimeout: function (id) { timers.forEach(function (timer) { if (timer.id === id) timer.cancelled = true; }); },
         getstore: function (key, fallback) { var value = localStorage.getItem(key); return value == null ? fallback : value; },
         putstore: function (key, value) { localStorage.setItem(key, value); },
-        go: function (view) { window.xxcurrentView = Number(view); }
+        go: function (view) {
+            window.xxcurrentView = Number(view);
+            if (Number(view) === 19) {
+                plugins.classList.remove("style3x");
+                plugins.classList.add("style3sel");
+            }
+        }
     };
 
     function flushTimers(limit) {
@@ -336,10 +342,14 @@ assert.ok(!nativePluginsTab.classList.contains("style3x"), "Native Plugins must 
 assert.ok(commandsTab.classList.contains("style3x"), "Commands must be unselected after opening native Plugins.");
 
 commandsTab.onmouseup({});
+assert.strictEqual(env.localStorage.getItem("_curPluginPage"), "sirk-platform-mycommands-device-page", "Commands must synchronously restore its nested page before yielding to timers.");
+assert.ok(commandsTab.classList.contains("style3sel"), "Commands must become selected in the same transition as go(19).");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "Commands must synchronously clear the native Plugins selection set by go(19).");
+assert.ok(!nativePluginsTab.classList.contains("style3sel"), "There must be no paint window with both Commands and Plugins selected.");
 env.flushTimers();
-assert.strictEqual(env.localStorage.getItem("_curPluginPage"), "sirk-platform-mycommands-device-page", "Returning to Commands must restore the Commands nested page.");
-assert.ok(commandsTab.classList.contains("style3sel"), "Returning to Commands must reselect the custom tab.");
-assert.ok(nativePluginsTab.classList.contains("style3x"), "Returning to Commands must deselect native Plugins again.");
+assert.strictEqual(env.localStorage.getItem("_curPluginPage"), "sirk-platform-mycommands-device-page", "Returning to Commands must preserve the Commands nested page after reconciliation.");
+assert.ok(commandsTab.classList.contains("style3sel"), "Returning to Commands must remain selected after reconciliation.");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "Returning to Commands must keep native Plugins deselected.");
 assert.ok(!nativePluginsTab.classList.contains("style3sel"), "The Commands round trip must end with exactly one selected header tab.");
 
-console.log("Commands device lifecycle keeps Commands and native Plugins selection mutually exclusive: OK");
+console.log("Commands device lifecycle keeps Commands and native Plugins selection mutually exclusive without a transient double-selected frame: OK");

@@ -346,7 +346,16 @@
                         if (stateClass) cell.className += " " + stateClass;
                         appendValue(cell, value);
                     });
-                    if (options.showView !== false) { var viewCell = tableRow.insertCell(), view = document.createElement("button"); viewCell.className = "mc-results-col-view"; view.type = "button"; view.className = "btn btn-primary btn-sm mc-results-view-button"; view.textContent = "View"; view.onclick = function () { openViewer(row, options); }; viewCell.appendChild(view); }
+                    if (options.showView !== false) {
+                        var viewCell = tableRow.insertCell(), view = document.createElement("button");
+                        viewCell.className = "mc-results-col-view";
+                        view.type = "button";
+                        view.className = "btn btn-secondary btn-sm mc-results-view-button";
+                        view.textContent = "View";
+                        if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") window.MeshThemeAdapter.button(view, "secondary");
+                        view.onclick = function () { openViewer(row, options); };
+                        viewCell.appendChild(view);
+                    }
                     if (typeof options.actions === "function") { var actionCell = tableRow.insertCell(); actionCell.className = "mc-results-col-actions"; options.actions(actionCell, row); }
                 });
             }
