@@ -40,8 +40,10 @@ assert.ok(properties.indexOf("([long]$_.RouteMetric)+([long]$_.InterfaceMetric)"
     "Default route selection must be deterministic by route + interface metric with InterfaceIndex tie-break.");
 assert.ok(properties.indexOf('Get-NetAdapter -InterfaceIndex $route.InterfaceIndex') >= 0,
     "Selected route must map to exactly its interface index.");
-assert.ok(properties.indexOf("$shell.Namespace('shell:ConnectionsFolder')") >= 0 && properties.indexOf("$item.InvokeVerb('properties')") >= 0,
-    "Adapter properties must enumerate the Windows Network Connections known folder and invoke properties on the resolved connection.");
+assert.ok(properties.indexOf('$shell.Namespace(49)') >= 0 && properties.indexOf("$item.InvokeVerb('properties')") >= 0,
+    "Adapter properties must enumerate CSIDL_CONNECTIONS (0x31 / 49) and invoke properties on the resolved connection.");
+assert.strictEqual(properties.indexOf("$shell.Namespace('shell:ConnectionsFolder')"), -1,
+    "The ineffective dev.33 shell:ConnectionsFolder NameSpace input must not return.");
 assert.strictEqual(properties.indexOf('$shell.Namespace(3)'), -1,
     "Adapter properties must never enumerate Shell special folder 3 because it is Control Panel, not Network Connections.");
 assert.ok(properties.indexOf("throw 'No active default route was found.'") >= 0,
@@ -50,6 +52,13 @@ assert.strictEqual(properties.indexOf('Start-Sleep'), -1,
     "Adapter properties must not depend on a fixed UI delay.");
 assert.strictEqual(properties.indexOf('control.exe ncpa.cpl'), -1,
     "Showing Network Connections alone must not count as adapter-properties success.");
+
+assert.ok(server.indexOf('windowStyle: /(?:^|\\s)-WindowStyle\\s+Hidden') >= 0,
+    "Interactive desktop launcher must preserve an explicitly hidden PowerShell helper instead of forcing a visible console window.");
+assert.ok(server.indexOf('shell.Run \\\"" + launchLine.replace(/"/g, \'""\') + "\\\", " + launch.windowStyle + ", False') >= 0,
+    "VBS must use the parsed window style rather than hardcoding a visible window.");
+assert.ok(server.indexOf('If " + launch.windowStyle + " = 0 Then') >= 0,
+    "A hidden helper must exit the VBS focus loop immediately instead of trying to activate its PowerShell window.");
 
 assert.ok(server.indexOf('locales: command.locales || {}') >= 0,
     "Public catalog must carry command locales so Quick and My Commands share labels.");
@@ -63,4 +72,4 @@ assert.ok(quick.indexOf('artwork["network-adapter-properties"] = artwork["networ
     "Quick must reuse the same existing Network artwork without duplicating SVG.");
 assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1,
     "Existing network-settings ID must remain unique so overrides/Favorites are preserved.");
-console.log("Network panel and active-adapter properties use the correct Windows ConnectionsFolder contract: OK");
+console.log("Network panel and active-adapter properties use the corrected Windows ConnectionsFolder contract: OK");
