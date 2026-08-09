@@ -1,3 +1,13 @@
+## 0.1.1-dev.34 - 2026-08-09
+
+- Follow up real `0.1.1-dev.33` smoke evidence: the row-level Results `View` button is now visibly native, while the opened Results viewer itself remained transparent; Network Settings still opened no adapter properties and flashed a helper window.
+- Move Results viewer presentation from the plugin-owned overlay to the native MeshCentral Modern `setModalContent`/`showModal` or Classic `setDialogMode` dialog surface while keeping the canonical live result/CSV renderer.
+- Replace the ineffective `shell:ConnectionsFolder` NameSpace input with the Network Connections CSIDL value `49`, and make the existing interactive launcher honor explicit `-WindowStyle Hidden` without changing visible PowerShell/CMD behavior.
+- Add negative regressions that reject the dev.33 namespace and transparent custom viewer path; keep Issues #128 and #237 open for real dev.34 re-smoke and #125 open for its remaining button-theme matrix.
+- Keep the revision below `1.0.0`; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.34.md`.
+
 ## 0.1.1-dev.33 - 2026-08-09
 
 - Follow up real `0.1.1-dev.32` smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.
@@ -187,7 +197,7 @@ Current development notes: `docs/releases/0.1.1-dev.14.md`.
 ## 0.1.1-dev.13 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current `main`.
-- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host card tokens cannot expose the device page.
+- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host tokens cannot expose the device page.
 - Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
