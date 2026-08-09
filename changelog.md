@@ -1,3 +1,12 @@
+## 0.1.1-dev.29 - 2026-08-09
+
+- Deliver the real `0.1.1-dev.28` smoke follow-up from PR #225 for Admin theme synchronization, native Devices control isolation and shared Output hover geometry.
+- Make Admin consume the explicit MeshCentral `data-bs-theme` signal and existing host/system surface tokens without adding a second observer, polling, request or rerender.
+- Scope generic `MeshThemeAdapter` form-control classes to SIRK roots and keep shared Output/detail cards invariant against host hover transform/scale/zoom while preserving host colors and shared column sizing.
+- Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.29.md`.
+
 ## 0.1.1-dev.28 - 2026-08-09
 
 - Deliver Issue #213 second-column shared navigation icon-size contract from PR #222 so MeshCentral update detection installs the larger shared/Quick list icons.
