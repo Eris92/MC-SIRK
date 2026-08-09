@@ -21,3 +21,44 @@ jobs:
           package-manager-cache: false
       - name: Run test suite
         run: npm test
+
+  windows-network-shell-diagnostic:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe Network Connections shell binding and properties verb
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+            Where-Object { $_.State -eq 'Alive' } |
+            Sort-Object @{ Expression = { ([long]$_.RouteMetric) + ([long]$_.InterfaceMetric) }; Ascending = $true }, InterfaceMetric, RouteMetric, InterfaceIndex |
+            Select-Object -First 1
+          if (-not $route) { throw 'No live IPv4 default route on runner.' }
+          $adapter = Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction Stop
+          Write-Host ('adapter=' + $adapter.Name + '; ifIndex=' + $adapter.InterfaceIndex + '; guid=' + $adapter.InterfaceGuid)
+
+          $shell = New-Object -ComObject Shell.Application
+          $folder49 = $shell.Namespace(49)
+          $folderClsid = $shell.Namespace('::{7007ACC7-3202-11D1-AAD2-00805FC1270E}')
+          Write-Host ('namespace49=' + [bool]$folder49 + '; namespaceClsid=' + [bool]$folderClsid)
+
+          $folder = if ($folderClsid) { $folderClsid } else { $folder49 }
+          if (-not $folder) { throw 'Network Connections shell folder could not be bound.' }
+          $items = @($folder.Items())
+          Write-Host ('networkItems=' + $items.Count)
+          foreach ($candidate in $items) { Write-Host ('item=' + $candidate.Name + '; path=' + $candidate.Path) }
+          $item = $items | Where-Object { $_.Name -eq $adapter.Name } | Select-Object -First 1
+          if (-not $item) { throw ('Runner adapter not found in Network Connections: ' + $adapter.Name) }
+
+          $psi = [Diagnostics.ProcessStartInfo]::new()
+          $psi.FileName = [string]$item.Path
+          $psi.Verb = 'properties'
+          $psi.UseShellExecute = $true
+          try {
+            $process = [Diagnostics.Process]::Start($psi)
+            Write-Host ('propertiesStart=success; path=' + $item.Path + '; process=' + $(if ($process) { $process.ProcessName } else { '<shell>' }))
+          } catch {
+            Write-Host ('propertiesStart=failed; path=' + $item.Path + '; error=' + $_.Exception.Message)
+            throw
+          }
