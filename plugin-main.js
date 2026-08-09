@@ -229,12 +229,43 @@ function createPlugin(parent, shortName) {
     obj.onWebUIStartupEnd = createSerializedStartupHook(VERSION, obj.shortName);
     obj.goPageStart = function (view) {
         if (typeof window === "undefined") return;
+        try {
+            var adminStateKey = "sirkPlatform.admin.active";
+            if (Number(view) === 43) {
+                var adminFrame = document.getElementById("p43iframe");
+                var frameSource = adminFrame && String(adminFrame.getAttribute("src") || "").trim();
+                if (frameSource) {
+                    var frameUrl = new URL(frameSource, window.location.href);
+                    var ownPin = String(window.__SIRK_PLATFORM_PIN__ || "SIRKPortal");
+                    if (/\/pluginadmin\.ashx$/i.test(frameUrl.pathname) && String(frameUrl.searchParams.get("pin") || "") === ownPin) {
+                        window.sessionStorage.setItem(adminStateKey, "1");
+                    } else {
+                        window.sessionStorage.removeItem(adminStateKey);
+                    }
+                }
+            } else {
+                window.sessionStorage.removeItem(adminStateKey);
+            }
+        } catch (error) {}
         window.__SIRK_LAST_NATIVE_PAGE_START__ = view;
         var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageStart === "function") runtime.onNativePageStart(view);
     };
     obj.goPageEnd = function (view) {
         if (typeof window === "undefined") return;
+        try {
+            if (Number(view) === 43 && window.sessionStorage.getItem("sirkPlatform.admin.active") === "1") {
+                var adminFrame = document.getElementById("p43iframe");
+                var frameSource = adminFrame && String(adminFrame.getAttribute("src") || "").trim();
+                if (adminFrame && !frameSource) {
+                    var adminUrl = new URL("pluginadmin.ashx", window.location.href);
+                    adminUrl.searchParams.set("pin", String(window.__SIRK_PLATFORM_PIN__ || "SIRKPortal"));
+                    adminFrame.src = adminUrl.href;
+                    var adminTitle = document.getElementById("p43title");
+                    if (adminTitle) adminTitle.textContent = "SIRK Management Platform";
+                }
+            }
+        } catch (error) {}
         window.__SIRK_LAST_NATIVE_PAGE_END__ = view;
         var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
