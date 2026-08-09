@@ -26,7 +26,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 5
     steps:
-      - name: Probe Network Connections namespace properties invocation
+      - name: Resolve Network Connections namespace parsing name
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -55,35 +55,17 @@ jobs:
           Add-Type -TypeDefinition @'
           using System;
           using System.Runtime.InteropServices;
-          public static class SirkShellProbe {
-              [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-              public struct SHELLEXECUTEINFO {
-                  public uint cbSize;
-                  public uint fMask;
-                  public IntPtr hwnd;
-                  [MarshalAs(UnmanagedType.LPWStr)] public string lpVerb;
-                  [MarshalAs(UnmanagedType.LPWStr)] public string lpFile;
-                  [MarshalAs(UnmanagedType.LPWStr)] public string lpParameters;
-                  [MarshalAs(UnmanagedType.LPWStr)] public string lpDirectory;
-                  public int nShow;
-                  public IntPtr hInstApp;
-                  public IntPtr lpIDList;
-                  [MarshalAs(UnmanagedType.LPWStr)] public string lpClass;
-                  public IntPtr hkeyClass;
-                  public uint dwHotKey;
-                  public IntPtr hIcon;
-                  public IntPtr hProcess;
-              }
-              [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-              static extern bool ShellExecuteEx(ref SHELLEXECUTEINFO info);
-              public static int ShowProperties(string path) {
-                  var info = new SHELLEXECUTEINFO();
-                  info.cbSize = (uint)Marshal.SizeOf(info);
-                  info.fMask = 0x0000000C;
-                  info.lpVerb = "properties";
-                  info.lpFile = path;
-                  info.nShow = 1;
-                  return ShellExecuteEx(ref info) ? 0 : Marshal.GetLastWin32Error();
+          public static class SirkShellParseProbe {
+              [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+              static extern int SHParseDisplayName(string name, IntPtr pbc, out IntPtr pidl, uint sfgaoIn, out uint psfgaoOut);
+              [DllImport("ole32.dll")]
+              static extern void CoTaskMemFree(IntPtr pv);
+              public static int Parse(string name) {
+                  IntPtr pidl;
+                  uint attributes;
+                  int hr = SHParseDisplayName(name, IntPtr.Zero, out pidl, 0, out attributes);
+                  if (pidl != IntPtr.Zero) CoTaskMemFree(pidl);
+                  return hr;
               }
           }
           '@
@@ -96,10 +78,11 @@ jobs:
             ('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}\::' + $leaf),
             ('::{7007ACC7-3202-11D1-AAD2-00805FC1270E}\' + $leaf)
           ) | Select-Object -Unique
-          $success = $false
+          $parsed = @()
           foreach ($candidate in $candidates) {
-            $errorCode = [SirkShellProbe]::ShowProperties($candidate)
-            Write-Host ('candidate=' + $candidate + '; shellExecuteError=' + $errorCode)
-            if ($errorCode -eq 0) { $success = $true; break }
+            $hr = [SirkShellParseProbe]::Parse($candidate)
+            Write-Host ('candidate=' + $candidate + '; hresult=0x' + ([uint32]$hr).ToString('X8'))
+            if ($hr -eq 0) { $parsed += $candidate }
           }
-          if (-not $success) { throw 'No fully qualified Network Connection parsing name accepted the properties verb.' }
+          if (-not $parsed.Count) { throw 'No fully qualified Network Connection parsing name was accepted.' }
+          Write-Host ('accepted=' + ($parsed -join ' | '))
