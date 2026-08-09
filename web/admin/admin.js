@@ -20,6 +20,12 @@
     }
 
     function hostIsDark() {
+        var htmlTheme = document.documentElement && document.documentElement.getAttribute("data-bs-theme");
+        if (htmlTheme === "dark") return true;
+        if (htmlTheme === "light") return false;
+        var bodyTheme = document.body && document.body.getAttribute("data-bs-theme");
+        if (bodyTheme === "dark") return true;
+        if (bodyTheme === "light") return false;
         if (typeof window.nightMode === "boolean") return window.nightMode;
         if (document.body && document.body.classList.contains("night")) return true;
         try {
