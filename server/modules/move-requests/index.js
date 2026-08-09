@@ -128,6 +128,9 @@ module.exports.createModule = function (context) {
                 " → " +
                 (payload.targetMeshName || payload.targetMeshId);
         },
+        getPendingRequestKey: function (payload) {
+            return shared.cleanText(payload && payload.nodeId, 300).trim();
+        },
         getApprovalLevels: function (payload) {
             return configuredLevels(String(payload && payload.targetMeshId || ""));
         },
