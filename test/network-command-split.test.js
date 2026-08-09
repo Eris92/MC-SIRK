@@ -40,8 +40,11 @@ assert.ok(properties.indexOf("([long]$_.RouteMetric)+([long]$_.InterfaceMetric)"
     "Default route selection must be deterministic by route + interface metric with InterfaceIndex tie-break.");
 assert.ok(properties.indexOf('Get-NetAdapter -InterfaceIndex $route.InterfaceIndex') >= 0,
     "Selected route must map to exactly its interface index.");
-assert.ok(properties.indexOf('$shell.Namespace(49)') >= 0 && properties.indexOf("$item.InvokeVerb('properties')") >= 0,
-    "Adapter properties must enumerate CSIDL_CONNECTIONS (0x31 / 49) and invoke properties on the resolved connection.");
+assert.ok(properties.indexOf('$shell.Namespace(49)') >= 0 &&
+    properties.indexOf("$item=$folder.Items()|Where-Object{$_.Name -eq $adapter.Name}|Select-Object -First 1") >= 0,
+    "Adapter properties must enumerate Network Connections and resolve the exact live adapter item selected by InterfaceIndex.");
+assert.strictEqual(properties.indexOf("$item.InvokeVerb('properties')"), -1,
+    "The dev.34 locale-sensitive FolderItem.InvokeVerb('properties') path must not return.");
 assert.strictEqual(properties.indexOf("$shell.Namespace('shell:ConnectionsFolder')"), -1,
     "The ineffective dev.33 shell:ConnectionsFolder NameSpace input must not return.");
 assert.strictEqual(properties.indexOf('$shell.Namespace(3)'), -1,
@@ -52,6 +55,25 @@ assert.strictEqual(properties.indexOf('Start-Sleep'), -1,
     "Adapter properties must not depend on a fixed UI delay.");
 assert.strictEqual(properties.indexOf('control.exe ncpa.cpl'), -1,
     "Showing Network Connections alone must not count as adapter-properties success.");
+
+var interopMatch = /FromBase64String\('([A-Za-z0-9+/=]+)'\)/.exec(properties);
+assert.ok(interopMatch,
+    "Network Settings must carry one bounded embedded Shell interop payload inside the existing command owner.");
+var interop = Buffer.from(interopMatch[1], "base64").toString("utf8");
+assert.ok(properties.indexOf('Add-Type -TypeDefinition $source -ErrorAction Stop') >= 0 &&
+    properties.indexOf('[SirkNetworkShell]::ShowProperties($item)') >= 0,
+    "The resolved Network Connection FolderItem must be passed directly to the bounded Shell interop implementation.");
+assert.ok(interop.indexOf('SHGetIDListFromObject') >= 0 &&
+    interop.indexOf('[MarshalAs(UnmanagedType.IUnknown)] object punk') >= 0,
+    "Shell interop must obtain the PIDL from the already-resolved Network Connection FolderItem; this contract was verified on Windows Server 2025.");
+assert.ok(interop.indexOf('ShellExecuteEx') >= 0 &&
+    interop.indexOf('info.fMask = 0x0000000C') >= 0 &&
+    interop.indexOf('info.lpVerb = "properties"') >= 0 &&
+    interop.indexOf('info.lpIDList = pidl') >= 0,
+    "Adapter properties must invoke the canonical Shell properties verb with SEE_MASK_INVOKEIDLIST on the resolved PIDL.");
+assert.ok(interop.indexOf('CoTaskMemFree(pidl)') >= 0 &&
+    interop.indexOf('Marshal.GetLastWin32Error()') >= 0,
+    "Shell interop must free the PIDL and surface a ShellExecuteEx failure instead of silently falling back.");
 
 assert.ok(server.indexOf('windowStyle: /(?:^|\\s)-WindowStyle\\s+Hidden') >= 0,
     "Interactive desktop launcher must preserve an explicitly hidden PowerShell helper instead of forcing a visible console window.");
@@ -72,4 +94,4 @@ assert.ok(quick.indexOf('artwork["network-adapter-properties"] = artwork["networ
     "Quick must reuse the same existing Network artwork without duplicating SVG.");
 assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1,
     "Existing network-settings ID must remain unique so overrides/Favorites are preserved.");
-console.log("Network panel and active-adapter properties use the corrected Windows ConnectionsFolder contract: OK");
+console.log("Network panel and active-adapter properties use the Windows-verified PIDL Shell properties contract: OK");
