@@ -13,5 +13,5 @@ description: Użyj do wykonania lub kontynuacji zadania reprezentowanego przez G
 6. Nie rozszerzaj scope o niezależne problemy — zaproponuj osobne Issue.
 7. Po implementacji wykonaj targeted tests; `npm test` tylko gdy wymaga tego wspólny runtime/contract lub AGENTS.md.
 8. Nie uznawaj zadania za rozwiązane, jeśli acceptance criteria nie są spełnione.
-9. Przed zmianą czatu lub zakończeniem zapisz w Issue: root cause/decision, changed files, tests, commit/PR, risks i next step.
+9. Po spełnieniu acceptance criteria i wymaganych testów automatycznie wykonaj commit i push zgodnie z projektowym workflow branch/PR, a następnie zapisz w Issue: root cause/decision, changed files, tests, commit/PR, risks i next step.
 10. Gdy użytkownik zgłasza „nie działa”, traktuj poprzednią próbę jako nieskuteczną, nie zamykaj Issue i kontynuuj diagnostykę od aktualnego kodu/stanu Issue.

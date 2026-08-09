@@ -22,7 +22,7 @@ assert.ok(core.indexOf('document.getElementById(definition.leftId)') >= 0 &&
     core.indexOf('var left = existingLeft || leftAnchor.cloneNode(true);') >= 0 &&
     core.indexOf('(existingLeft || canCreateMenu)') >= 0,
     "ensureMenu must reuse an existing menu node and create a missing node only after native page readiness.");
-assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", familyName)') >= 0,
+assert.ok(core.indexOf('setAttributeValue(left, "data-sirk-icon-family", familyName)') >= 0,
     "Refreshed menu entries must expose their effective icon family.");
 assert.strictEqual(page.indexOf('installNativeLeftMenuContract'), -1,
     "Deferred SharedPage must not install a second menu presentation owner after first paint.");

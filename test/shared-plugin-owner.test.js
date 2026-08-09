@@ -30,7 +30,7 @@ assert.strictEqual(runtime.indexOf("MeshPluginCore"), -1,
 assert.strictEqual(startup.indexOf("mesh-plugin-core"), -1,
     "Browser startup must not load the removed MeshPluginCore compatibility layer.");
 
-assert.ok(core.indexOf('item.setAttribute("data-meshcentral-plugin-menu", String(order))') >= 0 &&
+assert.ok(core.indexOf('setAttributeValue(item, "data-meshcentral-plugin-menu", order)') >= 0 &&
     core.indexOf('items = Array.prototype.slice.call(host.children).filter(function (child)') >= 0,
     "SIRK menu ordering must affect only entries explicitly registered by SIRK.");
 assert.ok(core.indexOf('return child.hasAttribute("data-meshcentral-plugin-menu")') >= 0,
@@ -51,16 +51,16 @@ assert.ok(core.indexOf('main.classList.add(isModernMenuItem(main) ? "active" : "
 assert.ok(core.indexOf('if (isModernMenuItem(left)) left.classList.add("active", "lbbuttonsel2")') >= 0 &&
     core.indexOf('else left.classList.add("lbbuttonsel")') >= 0,
     "Left-menu selection must use Modern active/lbbuttonsel2 and compact Classic lbbuttonsel without a deferred owner.");
-assert.ok(core.indexOf('main.setAttribute("aria-current", "page")') >= 0 &&
-    core.indexOf('left.setAttribute("aria-current", "page")') >= 0,
+assert.ok(core.indexOf('setAttributeValue(main, "aria-current", "page")') >= 0 &&
+    core.indexOf('setAttributeValue(left, "aria-current", "page")') >= 0,
     "Active Modern/Classic menu entries must expose accessible current-page state.");
 
 assert.ok(core.indexOf('image.className = "sirk-platform-menu-icon"') >= 0 &&
-    core.indexOf('image.style.width = "32px"') >= 0 &&
-    core.indexOf('image.style.height = "32px"') >= 0 &&
-    core.indexOf('image.style.objectFit = "contain"') >= 0,
+    core.indexOf('setStyleValue(image, "width", "32px")') >= 0 &&
+    core.indexOf('setStyleValue(image, "height", "32px")') >= 0 &&
+    core.indexOf('setStyleValue(image, "objectFit", "contain")') >= 0,
     "Modern SIRK menu icons must use the enlarged canonical image geometry on the first mount.");
-assert.ok(core.indexOf('icon.style.backgroundSize = "48px 48px"') >= 0,
+assert.ok(core.indexOf('setStyleValue(icon, "backgroundSize", "48px 48px")') >= 0,
     "Classic SIRK menu icons must use final native-sized drawing geometry on the first mount.");
 assert.strictEqual(page.indexOf("installNativeLeftMenuContract"), -1,
     "Deferred SharedPage must not become a second menu owner.");

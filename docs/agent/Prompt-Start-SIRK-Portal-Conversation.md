@@ -25,7 +25,7 @@ Zanim zaczniesz:
 5. Z indeksu wybierz entrypoint, loader, moduł lub test. Czytaj tylko wskazane pliki i ich bezpośrednie zależności.
 6. Nie skanuj całego repozytorium ani historii Git, jeżeli indeks wystarcza.
 7. Dla operacji deterministycznych sprawdź .agents/skills.
-8. Nie wykonuj pull, merge, rebase, commit, push, release, deployment ani restartu bez zakresu wynikającego z mojego polecenia.
+8. Nie wykonuj pull, merge, rebase, release, deployment ani restartu bez zakresu wynikającego z mojego polecenia. Zakończone i zweryfikowane zmiany w zakresie zadania commituj i wypychaj automatycznie zgodnie z projektowym workflow branch/PR.
 
 Stałe zasady:
 - Kanoniczna nazwa repozytorium to SIRK-Portal, a identyfikator pluginu to SIRKPortal.

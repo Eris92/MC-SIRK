@@ -14,7 +14,7 @@ var css = read("public/shared/ui/toolbar.css");
 
 assert.ok(core.indexOf('var iconSource = family[key] || definition.icon || modernMenuIcons[key] || "";') >= 0,
     "Admin icon family must win over a module/default icon override.");
-assert.ok(core.indexOf('left.setAttribute("data-sirk-icon-family", familyName)') >= 0,
+assert.ok(core.indexOf('setAttributeValue(left, "data-sirk-icon-family", familyName)') >= 0,
     "Rendered plugin menu entries must expose the selected icon family on the first core mount.");
 assert.ok(core.indexOf('if (legacyIcon && !leftModern)') >= 0 &&
     core.indexOf('var image = currentIcon && String(currentIcon.tagName || "").toLowerCase() === "img"') >= 0,

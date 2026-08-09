@@ -164,7 +164,7 @@ update-project-version
 Update-ProjectVersion.ps1
 ```
 
-Nie formatuj całych plików bez potrzeby i nie wykonuj automatycznie commit ani push.
+Nie formatuj całych plików bez potrzeby. Zakończone i zweryfikowane zmiany w zakresie zadania commituj i wypychaj automatycznie zgodnie z projektowym workflow branch/PR.
 
 ### Publikacja Git
 
@@ -183,7 +183,7 @@ Wymagania:
 - usunięcie lokalnych plików testowych sekretów dokładnie według `07-Agent-Konfiguracja-Sekrety.md`, jeżeli ten moduł jest używany w projekcie,
 - `git diff --check`,
 - jawna lista plików albo świadoma decyzja o zakresie,
-- push tylko przy jawnym parametrze,
+- automatyczny commit i push po pozytywnej walidacji zakresu,
 - brak force push,
 - sprawdzanie `$LASTEXITCODE`.
 
@@ -208,7 +208,7 @@ Po utworzeniu lub zmianie plików:
 4. Sprawdź, czy każdy Skill wskazuje istniejący skrypt.
 5. Sprawdź poprawność przykładów.
 6. Nie restartuj prawdziwych usług.
-7. Nie wykonuj `git push`.
+7. Nie wykonuj `git push` w jednorazowym dry-runie bootstrapu; po zakończeniu właściwego zadania zastosuj stałą regułę automatycznego commit i push.
 8. Nie zmieniaj produkcyjnej konfiguracji.
 9. Sprawdź `git diff`, aby potwierdzić zakres zmian.
 

@@ -101,6 +101,12 @@ Przy pracy z Issue:
 - niezależny problem odkryty podczas pracy nie powinien bez potrzeby rozszerzać scope — zaproponuj osobne Issue;
 - nowy czat ma móc kontynuować zadanie po samym numerze Issue.
 
+## Commit i push — stała reguła użytkownika
+
+- Zakończone i zweryfikowane zmiany należące do bieżącego zadania commituj i wypychaj automatycznie; nie czekaj na osobne polecenie `commit` ani `push`.
+- Przed publikacją potwierdź zakres diffu, wymagane testy, spójność wersji i docelową gałąź; stosuj zwykły projektowy workflow branch/PR.
+- Ta reguła nie zezwala automatycznie na force push, tag, GitHub Release, merge, bezpośrednie destrukcyjne wyrównanie gałęzi ani publikację sekretów — te operacje nadal wymagają jawnego polecenia.
+
 ## Wydajność i reuse
 
 MC-SIRK ma być szybki i mały.

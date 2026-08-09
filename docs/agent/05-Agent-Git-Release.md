@@ -31,12 +31,12 @@ Automatyczne usunięcie dotyczy wyłącznie literalnych ścieżek z projektowej 
 - Przed stagingiem sprawdź diff i `git diff --check`.
 - Nie używaj szerokiego `git add .`, jeżeli w repozytorium istnieją niepowiązane zmiany.
 - Nie commituj sekretów, logów, dumpów, artefaktów tymczasowych ani lokalnej konfiguracji.
-- Commit wykonuj tylko na polecenie użytkownika albo jako jawny element zaakceptowanego workflow.
+- Zakończone i zweryfikowane zmiany należące do bieżącego zadania commituj automatycznie; nie czekaj na osobne polecenie użytkownika.
 - Komunikat commita ma opisywać rzeczywistą zmianę.
 
 ## Push
 
-- Push wymaga jawnego polecenia.
+- Po udanym commicie wypchnij zmianę automatycznie zgodnie z projektowym workflow branch/PR; nie czekaj na osobne polecenie użytkownika.
 - Nie używaj force push ani `--no-verify` bez jednoznacznego polecenia i uzasadnienia.
 - Przed push sprawdź aktywną gałąź, remote, zakres commitów, wynik wymaganych testów oraz spójność wersji we wszystkich plikach metadanych objętych zmianą.
 - Dla pluginu MeshCentral zawierającego jednocześnie `package.json` i pluginowy `config.json` nie wypychaj zmiany wersji, jeżeli wartości pola `version` nie są identyczne w obu plikach.
