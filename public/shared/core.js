@@ -40,6 +40,22 @@
                 item.classList.contains("active")))));
     }
 
+    function setAttributeValue(element, name, value) {
+        var next = String(value);
+        if (element.getAttribute(name) !== next) element.setAttribute(name, next);
+    }
+
+    function setStyleValue(element, name, value) {
+        if (element.style && element.style[name] !== value) element.style[name] = value;
+    }
+
+    function menuClassName(anchor, active, modern, left) {
+        var value = baseMenuClassName(anchor);
+        if (!active) return value;
+        if (left) return value + (modern ? " active lbbuttonsel2" : " lbbuttonsel");
+        return value + (modern ? " active" : " fullselect");
+    }
+
     function nativeMenuCreateReady() {
         var runtime = window.SirkPlatformRuntime;
         return !(runtime && runtime.state) || runtime.state.nativePageEnd != null;
@@ -55,15 +71,15 @@
             else if (item.appendChild) item.appendChild(icon);
         }
         if (!icon) return null;
-        if (nativeIcon) icon.className = nativeIcon.className;
-        if (icon.removeAttribute) icon.removeAttribute("id");
+        if (nativeIcon && icon.className !== nativeIcon.className) icon.className = nativeIcon.className;
+        if (icon.removeAttribute && icon.hasAttribute("id")) icon.removeAttribute("id");
         if (icon.style) {
-            icon.style.backgroundImage = 'url("' + iconSource + '")';
-            icon.style.backgroundPosition = "center";
-            icon.style.backgroundRepeat = "no-repeat";
-            icon.style.backgroundSize = "48px 48px";
+            setStyleValue(icon, "backgroundImage", 'url("' + iconSource + '")');
+            setStyleValue(icon, "backgroundPosition", "center");
+            setStyleValue(icon, "backgroundRepeat", "no-repeat");
+            setStyleValue(icon, "backgroundSize", "48px 48px");
         }
-        if (icon.setAttribute) icon.setAttribute("data-sirk-icon-family", familyName);
+        if (icon.setAttribute) setAttributeValue(icon, "data-sirk-icon-family", familyName);
         return icon;
     }
 
@@ -222,7 +238,7 @@
         if (!item || !anchor || !anchor.parentNode) return false;
         core.preparePluginMenuItem(item);
         var host = anchor.parentNode;
-        item.setAttribute("data-meshcentral-plugin-menu", String(order));
+        setAttributeValue(item, "data-meshcentral-plugin-menu", order);
         if (item.parentNode !== host) host.insertBefore(item, anchor.nextSibling);
         var items = Array.prototype.slice.call(host.children).filter(function (child) {
             return child.hasAttribute("data-meshcentral-plugin-menu");
@@ -253,15 +269,17 @@
             var mainWasActive = !!existingMain && menuItemActive(existingMain);
             var main = existingMain || mainAnchor.cloneNode(false);
             var modern = isModernMenuItem(main);
-            main.id = definition.mainId;
-            main.textContent = definition.title;
-            main.title = definition.title;
-            main.tabIndex = 0;
-            main.classList.remove("fullselect", "semiselect", "active");
-            main.removeAttribute("aria-current");
+            if (main.id !== definition.mainId) main.id = definition.mainId;
+            if (main.textContent !== definition.title) main.textContent = definition.title;
+            if (main.title !== definition.title) main.title = definition.title;
+            if (main.tabIndex !== 0) main.tabIndex = 0;
+            var mainClassName = menuClassName(mainAnchor, mainWasActive, modern, false);
+            if (main.className !== mainClassName) main.className = mainClassName;
+            if (mainWasActive) setAttributeValue(main, "aria-current", "page");
+            else if (main.hasAttribute("aria-current")) main.removeAttribute("aria-current");
             main.onclick = main.onmouseup = main.onkeypress = null;
             if (modern) {
-                main.href = "#";
+                if (main.getAttribute("href") !== "#") main.href = "#";
                 main.onclick = open;
             } else {
                 main.onmouseup = open;
@@ -269,9 +287,8 @@
                     if (event && event.key === "Enter") return open(event);
                 };
             }
-            main.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
+            setAttributeValue(main, "data-sirk-platform-viewmode", definition.viewMode || "");
             core.placeMenuItem(main, mainAnchor, definition.order);
-            if (mainWasActive) core.setPluginMenuActive(main, null, true);
         }
 
         var existingLeft = leftAnchor && leftAnchor.parentNode ? document.getElementById(definition.leftId) : null;
@@ -279,16 +296,17 @@
             var leftWasActive = !!existingLeft && menuItemActive(existingLeft);
             var left = existingLeft || leftAnchor.cloneNode(true);
             var leftModern = isModernMenuItem(left);
-            left.id = definition.leftId;
-            left.className = baseMenuClassName(leftAnchor);
-            left.title = definition.title;
-            left.setAttribute("aria-label", definition.title);
-            left.tabIndex = 0;
-            left.classList.remove("lbbuttonsel", "lbbuttonsel2", "active");
-            left.removeAttribute("aria-current");
+            if (left.id !== definition.leftId) left.id = definition.leftId;
+            var leftClassName = menuClassName(leftAnchor, leftWasActive, leftModern, true);
+            if (left.className !== leftClassName) left.className = leftClassName;
+            if (left.title !== definition.title) left.title = definition.title;
+            setAttributeValue(left, "aria-label", definition.title);
+            if (left.tabIndex !== 0) left.tabIndex = 0;
+            if (leftWasActive) setAttributeValue(left, "aria-current", "page");
+            else if (left.hasAttribute("aria-current")) left.removeAttribute("aria-current");
             left.onclick = left.onmouseup = left.onkeypress = null;
             if (leftModern) {
-                left.href = "#";
+                if (left.getAttribute("href") !== "#") left.href = "#";
                 left.onclick = open;
             } else {
                 left.onmouseup = open;
@@ -296,8 +314,8 @@
                     if (event && event.key === "Enter") return open(event);
                 };
             }
-            left.setAttribute("data-sirk-platform-viewmode", String(definition.viewMode || ""));
-            left.setAttribute("data-sirk-icon-family", familyName);
+            setAttributeValue(left, "data-sirk-platform-viewmode", definition.viewMode || "");
+            setAttributeValue(left, "data-sirk-icon-family", familyName);
 
             if (iconSource) {
                 var legacyIcon = left.querySelector(".lbtg");
@@ -309,13 +327,13 @@
                         currentIcon.classList && currentIcon.classList.contains("sirk-platform-menu-icon")
                         ? currentIcon
                         : document.createElement("img");
-                    image.className = "sirk-platform-menu-icon";
-                    image.alt = "";
-                    image.src = iconSource;
-                    image.setAttribute("data-sirk-icon-family", familyName);
-                    image.style.width = "32px";
-                    image.style.height = "32px";
-                    image.style.objectFit = "contain";
+                    if (image.className !== "sirk-platform-menu-icon") image.className = "sirk-platform-menu-icon";
+                    if (image.alt !== "") image.alt = "";
+                    if (image.src !== iconSource) image.src = iconSource;
+                    setAttributeValue(image, "data-sirk-icon-family", familyName);
+                    setStyleValue(image, "width", "32px");
+                    setStyleValue(image, "height", "32px");
+                    setStyleValue(image, "objectFit", "contain");
                     if (image !== currentIcon) {
                         if (currentIcon && currentIcon.parentNode) currentIcon.parentNode.replaceChild(image, currentIcon);
                         else left.insertBefore(image, left.firstChild);
@@ -323,7 +341,6 @@
                 }
             }
             core.placeMenuItem(left, leftAnchor, definition.order);
-            if (leftWasActive) core.setPluginMenuActive(null, left, true);
         }
     };
 

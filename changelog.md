@@ -1,3 +1,12 @@
+## 0.1.1-dev.27 - 2026-08-09
+
+- Continue #177 after real `0.1.1-dev.26` smoke still showed a small left-menu flicker after Refresh.
+- Make repeated `core.ensureMenu()` reconciliation write visible menu/icon state only when class, active state, family, source or geometry actually changes.
+- Preserve the existing permission-safe bootstrap, native page-ready creation gate, menu/icon node identity, handlers and ordering without adding polling, observers, timers, CSS masking or a second owner.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.27.md`.
+
 ## 0.1.1-dev.26 - 2026-08-08
 
 - Continue #177 after real `0.1.1-dev.25` smoke reduced the left-menu shift to one remaining short blink after F5.

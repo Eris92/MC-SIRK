@@ -14,7 +14,7 @@ var runtime = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"),
 
 assert.ok(core.indexOf("core.preparePluginMenuItem = function (item)") >= 0,
     "Menu entries must use one canonical MeshCentral preparation flow.");
-assert.ok(core.indexOf('item.setAttribute("data-meshcentral-plugin-menu"') >= 0,
+assert.ok(core.indexOf('setAttributeValue(item, "data-meshcentral-plugin-menu", order)') >= 0,
     "Every SIRK menu item must be registered as an ordered MeshCentral plugin entry.");
 assert.ok(core.indexOf("items = Array.prototype.slice.call(host.children)") >= 0,
     "Plugin entries must be sorted only inside their native menu host.");
@@ -34,8 +34,9 @@ assert.ok(core.indexOf("core.installNativeRestoreGuard") < 0,
 assert.ok(core.indexOf("function baseMenuClassName(anchor)") >= 0 &&
     core.indexOf("function applyLegacyMenuIcon(anchor, item, iconSource, familyName)") >= 0,
     "Core must own the final native left-menu class and Classic icon geometry on the first permission-safe mount.");
-assert.ok(core.indexOf('left.className = baseMenuClassName(leftAnchor)') >= 0,
-    "First core mount must apply the final native left-menu base classes without a deferred repair pass.");
+assert.ok(core.indexOf('var leftClassName = menuClassName(leftAnchor, leftWasActive, leftModern, true)') >= 0 &&
+    core.indexOf('if (left.className !== leftClassName) left.className = leftClassName') >= 0,
+    "First core mount must apply final native classes while repeated reconciliation avoids visible class churn.");
 assert.ok(core.indexOf('if (isModernMenuItem(left)) left.classList.add("active", "lbbuttonsel2")') >= 0 &&
     core.indexOf('else left.classList.add("lbbuttonsel")') >= 0,
     "Core must own Modern and Classic activation shapes directly.");

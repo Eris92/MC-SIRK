@@ -191,6 +191,47 @@ assert.ok(pluginItem.classList.contains("active"));
 assert.ok(pluginItem.classList.contains("lbbuttonsel2"));
 assert.strictEqual(pluginItem.getAttribute("aria-current"), "page");
 
+var visibleWrites = 0;
+var itemSetAttribute = firstItem.setAttribute;
+var itemRemoveAttribute = firstItem.removeAttribute;
+firstItem.setAttribute = function (name, value) {
+    if (this.getAttribute(name) !== String(value)) visibleWrites += 1;
+    return itemSetAttribute.call(this, name, value);
+};
+firstItem.removeAttribute = function (name) {
+    if (this.hasAttribute(name)) visibleWrites += 1;
+    return itemRemoveAttribute.call(this, name);
+};
+Object.defineProperty(firstItem, "className", {
+    configurable: true,
+    get: function () { return this.classList.toString(); },
+    set: function (value) {
+        if (this.classList.toString() !== String(value)) visibleWrites += 1;
+        this.classList = new ClassList(value);
+    }
+});
+var iconSource = firstIcon.src;
+Object.defineProperty(firstIcon, "src", {
+    configurable: true,
+    get: function () { return iconSource; },
+    set: function (value) {
+        if (iconSource !== value) visibleWrites += 1;
+        iconSource = value;
+    }
+});
+var iconSetAttribute = firstIcon.setAttribute;
+firstIcon.setAttribute = function (name, value) {
+    if (this.getAttribute(name) !== String(value)) visibleWrites += 1;
+    return iconSetAttribute.call(this, name, value);
+};
+firstIcon.style = new Proxy(firstIcon.style, {
+    set: function (target, name, value) {
+        if (target[name] !== value) visibleWrites += 1;
+        target[name] = value;
+        return true;
+    }
+});
+
 windowObject.SirkPlatformCore.ensureMenu(definition);
 assert.strictEqual(documentObject.getElementById(definition.leftId), firstItem,
     "Repeated menu reconciliation must reuse the same Modern menu node.");
@@ -198,6 +239,8 @@ assert.strictEqual(firstItem.querySelector("img"), firstIcon,
     "Repeated menu reconciliation must reuse the same Modern icon node.");
 assert.ok(firstItem.classList.contains("active") && firstItem.classList.contains("lbbuttonsel2"),
     "Repeated menu reconciliation must preserve Modern active selection.");
+assert.strictEqual(visibleWrites, 0,
+    "Repeated Modern reconciliation must not rewrite visible class, icon source, family or geometry state.");
 
 var pageSource = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "page.js"), "utf8");
 assert.strictEqual(pageSource.indexOf("installNativeLeftMenuContract"), -1,
