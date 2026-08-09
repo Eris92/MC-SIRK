@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.33`
+Current version: `0.1.1-dev.34`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -57,7 +57,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/shared/ui/shared-ui.css` — współdzielona geometria workspace/kolumn;
 - `public/shared/ui/toolbar.js` + `toolbar-api.js` — toolbar i Edit/Multi;
 - `public/shared/ui/toolbar-config.js` — `MeshThemeAdapter` i integracja natywnych klas MeshCentral;
-- `public/shared/ui/results.js` — wyniki i CSV;
+- `public/shared/ui/results.js` — wyniki, CSV oraz live content Results montowany do natywnego dialog managera MeshCentral;
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
 - `admin.js` — mapa assetów i chroniony download CSV.
@@ -125,15 +125,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.33
-config.json  -> 0.1.1-dev.33
+package.json -> 0.1.1-dev.34
+config.json  -> 0.1.1-dev.34
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.33.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.34.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
