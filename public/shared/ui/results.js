@@ -292,7 +292,7 @@
         var title = escapeHtml(options.dialogTitle || row.title || "Result");
         if (manager.mode === "modern") {
             manager.setContent("xxAddAgent", title, contentHtml, "extra-large");
-            manager.show("xxAddAgentModal");
+            manager.show("xxAddAgentModal", "idx_dlgOkButton");
         } else {
             manager.show(2, title, 1, null, contentHtml);
         }

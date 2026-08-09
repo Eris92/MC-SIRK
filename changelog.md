@@ -1,3 +1,13 @@
+## 0.1.1-dev.35 - 2026-08-09
+
+- Follow up real `0.1.1-dev.34` smoke evidence: the Results native modal became opaque but stopped before mounting output, while Network Settings still did not open the selected adapter properties.
+- Complete the real MeshCentral Modern `showModal(modalId, okButtonId, ...)` contract with `idx_dlgOkButton` so the host setup returns and the existing canonical result renderer can mount Copy, structured output, CSV Download and Debug content.
+- Keep deterministic default-route/InterfaceIndex adapter selection, but replace the ineffective locale-sensitive `FolderItem.InvokeVerb('properties')` path with the Windows-verified `SHGetIDListFromObject` PIDL plus `ShellExecuteEx` canonical `properties` verb using `SEE_MASK_INVOKEIDLIST`.
+- Preserve the single logged-on-user desktop launcher, hidden Network Settings helper behavior and Network Control semantics; keep Issues #237 and #128 open for real dev.35 re-smoke.
+- Keep the revision below `1.0.0`; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.35.md`.
+
 ## 0.1.1-dev.34 - 2026-08-09
 
 - Follow up real `0.1.1-dev.33` smoke evidence: the row-level Results `View` button is now visibly native, while the opened Results viewer itself remained transparent; Network Settings still opened no adapter properties and flashed a helper window.

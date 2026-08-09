@@ -15,8 +15,10 @@ assert.ok(source.indexOf('typeof window.setModalContent === "function"') >= 0 &&
     source.indexOf('document.getElementById("dialog2")') >= 0,
     "Modern Results viewer must use the same bounded MeshCentral modal manager contract as Move Request.");
 assert.ok(source.indexOf('manager.setContent("xxAddAgent", title, contentHtml, "extra-large")') >= 0 &&
-    source.indexOf('manager.show("xxAddAgentModal")') >= 0,
-    "Modern Results viewer must delegate the outer opaque surface/lifecycle to MeshCentral.");
+    source.indexOf('manager.show("xxAddAgentModal", "idx_dlgOkButton")') >= 0,
+    "Modern Results viewer must provide MeshCentral's required OK-button id so showModal returns and live result mounting can continue.");
+assert.strictEqual(source.indexOf('manager.show("xxAddAgentModal");'), -1,
+    "The dev.34 incomplete showModal call that throws after showing an empty modal must not return.");
 assert.ok(source.indexOf('typeof window.setDialogMode === "function"') >= 0 &&
     source.indexOf('document.getElementById("dialog")') >= 0 &&
     source.indexOf('document.getElementById("id_dialogOptions")') >= 0 &&
@@ -33,4 +35,4 @@ assert.strictEqual(source.indexOf('mc-results-viewer-overlay'), -1,
 assert.strictEqual(source.indexOf('style.background'), -1,
     "Results viewer fix must not introduce a private hardcoded surface palette.");
 
-console.log("Results viewer routes through native Modern/Classic MeshCentral dialog surfaces: OK");
+console.log("Results viewer completes the native Modern/Classic MeshCentral dialog contract before mounting output: OK");
