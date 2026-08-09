@@ -1,3 +1,12 @@
+## 0.1.1-dev.31 - 2026-08-09
+
+- Deliver the Issue #123 F5 correction after real `0.1.1-dev.30` smoke confirmed light/dark now works but native page 43 still loses SIRK Admin after reload.
+- Move the actual empty page-43 restore from timing-sensitive `goPageEnd` into the existing serialized `onWebUIStartupEnd` owner, gated by the exact stored SIRK pin, `viewmode=43`, and an empty iframe.
+- Keep `goPageStart` as the single ownership recorder/clearer, store the exact plugin pin, and remove duplicate restore state from `goPageEnd`; no timer, observer, polling, backend request or repeated DOM repair.
+- Keep Issue #123 open for real MeshCentral F5 re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.31.md`.
+
 ## 0.1.1-dev.30 - 2026-08-09
 
 - Deliver the Issue #123 correction after real `0.1.1-dev.29` smoke proved the Admin iframe still stayed black on a light host and disappeared after F5.
@@ -253,7 +262,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from current `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
