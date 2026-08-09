@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.29",
+    "date": "2026-08-09",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the real dev.28 smoke follow-up from PR #225.",
+      "Make Admin consume the explicit MeshCentral data-bs-theme signal and existing host/system surface tokens without adding a second observer, polling, request or rerender.",
+      "Scope generic MeshThemeAdapter form-control classes to SIRK roots and keep shared Output/detail cards invariant against host hover transform, scale and zoom while preserving host colors and shared column sizing.",
+      "Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke and keep the change below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.28",
     "date": "2026-08-09",
     "changes": [
