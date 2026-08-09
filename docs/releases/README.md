@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.29`](0.1.1-dev.29.md) — bieżąca rewizja development z poprawkami po real dev.28 smoke: synchronizacja Admin light/dark, izolacja natywnej geometrii Devices od SIRK form classes oraz stabilna geometria Output na hover;
+- [`0.1.1-dev.30`](0.1.1-dev.30.md) — bieżąca rewizja development z korektą Admin po real dev.29 smoke: parent-owned light/dark oraz scoped recovery natywnego page-43 iframe po F5;
+- [`0.1.1-dev.29`](0.1.1-dev.29.md) — poprzednia rewizja development z poprawkami po real dev.28 smoke: synchronizacja Admin light/dark, izolacja natywnej geometrii Devices od SIRK form classes oraz stabilna geometria Output na hover;
 - [`0.1.1-dev.28`](0.1.1-dev.28.md) — poprzednia rewizja development z większym wspólnym kontraktem ikon 2. kolumny: 28 px slot / 24 px SVG dla My Scripts, My Commands, Approval Center i Quick;
 - [`0.1.1-dev.27`](0.1.1-dev.27.md) — poprzednia rewizja development z idempotentną rekonsyliacją widocznego stanu left menu bez ponownych zapisów klas, active state, source i geometrii ikon;
 - [`0.1.1-dev.26`](0.1.1-dev.26.md) — tworzenie brakujących SIRK left-menu nodes dopiero po bieżącym natywnym `goPageEnd`, bez host-redraw blink/recreate race;

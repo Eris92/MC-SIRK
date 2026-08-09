@@ -1,3 +1,12 @@
+## 0.1.1-dev.30 - 2026-08-09
+
+- Deliver the Issue #123 correction after real `0.1.1-dev.29` smoke proved the Admin iframe still stayed black on a light host and disappeared after F5.
+- Bind the existing Admin theme owner to the same-origin parent MeshCentral `nightMode`/`body.night` state and copy the parent computed surface without adding a second observer, polling, request or rerender.
+- Reuse existing `goPageStart`/`goPageEnd` plus scoped `sessionStorage` ownership to restore only the SIRK native page-43 iframe/title after F5 without hijacking another plugin.
+- Keep Issue #123 open for real MeshCentral re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.30.md`.
+
 ## 0.1.1-dev.29 - 2026-08-09
 
 - Deliver the real `0.1.1-dev.28` smoke follow-up from PR #225 for Admin theme synchronization, native Devices control isolation and shared Output hover geometry.
