@@ -288,6 +288,7 @@
         }
         function update(view) {
             var tab = document.getElementById(topTabId);
+            var plugins = document.getElementById("MainDevPlugins");
             var headers = document.getElementById("p19headers");
             if (view == null) view = currentView();
             var status = routeState(view, getStoredPage(), activePageId(), pageId);
@@ -296,6 +297,10 @@
             if (tab) {
                 tab.classList.remove("style3x", "style3sel");
                 tab.classList.add(active ? "style3sel" : "style3x");
+            }
+            if (plugins && status.pluginView) {
+                plugins.classList.remove("style3x", "style3sel");
+                plugins.classList.add(active ? "style3x" : "style3sel");
             }
             if (headers) {
                 if (active) headers.style.setProperty("display", "none", "important");
