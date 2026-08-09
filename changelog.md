@@ -39,7 +39,7 @@ Current development notes: `docs/releases/0.1.1-dev.31.md`.
 ## 0.1.1-dev.30 - 2026-08-09
 
 - Deliver the Issue #123 correction after real `0.1.1-dev.29` smoke proved the Admin iframe still stayed black on a light host and disappeared after F5.
-- Bind the existing Admin theme owner to the same-origin parent MeshCentral `nightMode`/`body.night` state and copy the effective parent surface instead of forcing an iframe Bootstrap background.
+- Bind the existing Admin theme owner to the same-origin parent MeshCentral `nightMode`/`body.night` state and copy the parent computed surface without adding a second observer, polling, request or rerender.
 - Reuse existing `goPageStart`/`goPageEnd` plus scoped `sessionStorage` ownership to restore only the SIRK native page-43 iframe/title after F5 without hijacking another plugin.
 - Keep Issue #123 open for real MeshCentral re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
 
@@ -293,7 +293,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
-- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.1`; this is not a product release and does not create a tag or GitHub Release.
 
 Development notes: `docs/releases/0.1.1-dev.3.md`.
 
