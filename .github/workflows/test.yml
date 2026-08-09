@@ -26,7 +26,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 5
     steps:
-      - name: Resolve Network Connections namespace parsing name
+      - name: Resolve Network Connection item PIDL
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -44,45 +44,29 @@ jobs:
           Write-Host ('namespace49=' + [bool]$folder49 + '; namespaceClsid=' + [bool]$folderClsid)
           $folder = if ($folderClsid) { $folderClsid } else { $folder49 }
           if (-not $folder) { throw 'Network Connections shell folder could not be bound.' }
-          Write-Host ('folderSelfPath=' + $folder.Self.Path)
 
-          $items = @($folder.Items())
-          $item = $items | Where-Object { $_.Name -eq $adapter.Name } | Select-Object -First 1
+          $item = @($folder.Items()) | Where-Object { $_.Name -eq $adapter.Name } | Select-Object -First 1
           if (-not $item) { throw ('Runner adapter not found in Network Connections: ' + $adapter.Name) }
           Write-Host ('item=' + $item.Name + '; itemPath=' + $item.Path)
-          foreach ($verb in @($item.Verbs())) { Write-Host ('verb=' + $verb.Name) }
 
           Add-Type -TypeDefinition @'
           using System;
           using System.Runtime.InteropServices;
-          public static class SirkShellParseProbe {
-              [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-              static extern int SHParseDisplayName(string name, IntPtr pbc, out IntPtr pidl, uint sfgaoIn, out uint psfgaoOut);
+          public static class SirkShellPidlProbe {
+              [DllImport("shell32.dll")]
+              static extern int SHGetIDListFromObject([MarshalAs(UnmanagedType.IUnknown)] object punk, out IntPtr ppidl);
               [DllImport("ole32.dll")]
               static extern void CoTaskMemFree(IntPtr pv);
-              public static int Parse(string name) {
+              public static int Probe(object item) {
                   IntPtr pidl;
-                  uint attributes;
-                  int hr = SHParseDisplayName(name, IntPtr.Zero, out pidl, 0, out attributes);
+                  int hr = SHGetIDListFromObject(item, out pidl);
+                  Console.WriteLine("pidl=" + (pidl != IntPtr.Zero));
                   if (pidl != IntPtr.Zero) CoTaskMemFree(pidl);
                   return hr;
               }
           }
           '@
 
-          $parent = [string]$folder.Self.Path
-          $leaf = [string]$item.Path
-          $candidates = @(
-            ($parent + '\' + $leaf),
-            ('::{7007ACC7-3202-11D1-AAD2-00805FC1270E}\::' + $leaf),
-            ('shell:::{7007ACC7-3202-11D1-AAD2-00805FC1270E}\::' + $leaf),
-            ('::{7007ACC7-3202-11D1-AAD2-00805FC1270E}\' + $leaf)
-          ) | Select-Object -Unique
-          $parsed = @()
-          foreach ($candidate in $candidates) {
-            $hr = [SirkShellParseProbe]::Parse($candidate)
-            Write-Host ('candidate=' + $candidate + '; hresult=0x' + ([uint32]$hr).ToString('X8'))
-            if ($hr -eq 0) { $parsed += $candidate }
-          }
-          if (-not $parsed.Count) { throw 'No fully qualified Network Connection parsing name was accepted.' }
-          Write-Host ('accepted=' + ($parsed -join ' | '))
+          $hr = [SirkShellPidlProbe]::Probe($item)
+          Write-Host ('SHGetIDListFromObject hresult=0x' + ([uint32]$hr).ToString('X8'))
+          if ($hr -ne 0) { throw ('SHGetIDListFromObject failed: 0x' + ([uint32]$hr).ToString('X8')) }
