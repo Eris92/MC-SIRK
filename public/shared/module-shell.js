@@ -347,13 +347,11 @@
             registerPage();
             putStoredPage(pageId);
             if (typeof window.go === "function") window.go(19, event);
-            window.setTimeout(function () {
-                selectPluginPage(pageId);
-                ensureTopTab();
-                update(19);
-                mountDevicePage(false);
-                scheduleReconcile();
-            }, 0);
+            selectPluginPage(pageId);
+            ensureTopTab();
+            update(19);
+            mountDevicePage(false);
+            scheduleReconcile();
             if (event && event.preventDefault) event.preventDefault();
             return false;
         }
