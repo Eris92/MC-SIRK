@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.34",
+    "date": "2026-08-09",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the real dev.33 Results viewer and Network Settings follow-up from PR #243.",
+      "Route the shared Results viewer through native MeshCentral Modern or Classic dialog ownership while preserving the canonical live result, Copy, CSV Download and Debug renderer without a private surface palette.",
+      "Replace the ineffective dev.33 shell:ConnectionsFolder NameSpace input with the Network Connections CSIDL value 49 and make the existing logged-on-user launcher honor explicit hidden PowerShell window style without changing visible PowerShell/CMD behavior.",
+      "Add negative regressions for the dev.33 viewer/namespace paths, keep Issues #128 and #237 open for real dev.34 re-smoke and #125 open for its remaining button-theme matrix, and keep the revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.33",
     "date": "2026-08-09",
     "changes": [
