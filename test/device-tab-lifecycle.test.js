@@ -228,6 +228,8 @@ function createEnvironment() {
         var replacementNativePage = add(new Element("native"));
         p19headers.appendChild(replacementNativeHeader);
         p19pages.appendChild(replacementNativePage);
+        plugins.classList.remove("style3x");
+        plugins.classList.add("style3sel");
     }
 
     return {
@@ -288,10 +290,12 @@ env.flushTimers();
 assert.notStrictEqual(env.localStorage.getItem("_curPluginPage"), "sirk-platform-mycommands-device-page", "Leaving view 19 must restore a native plugin page.");
 assert.ok(!env.document.getElementById("p19ph-sirk-platform-mycommands-device-page").classList.contains("on"), "The hidden Commands nested header must not stay active.");
 assert.ok(commandsTab.classList.contains("style3x"), "Commands must be unselected when another host tab is active.");
-assert.ok(nativePluginsTab.classList.contains("style3x"), "Normalizing Commands must not change the native Plugins tab style.");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "Normalizing Commands outside view 19 must not change the native Plugins tab style.");
 assert.ok(env.document.getElementById("MainDevDesktop").classList.contains("style3sel"), "Normalizing Commands must not clear the native selected host tab.");
 
 env.window.xxcurrentView = 19;
+nativePluginsTab.classList.remove("style3x");
+nativePluginsTab.classList.add("style3sel");
 env.localStorage.setItem("_curPluginPage", "sirk-platform-mycommands-device-page");
 module.onDeviceRefreshEnd("node/1");
 env.pluginHandler.callPluginPage(
@@ -301,8 +305,9 @@ env.pluginHandler.callPluginPage(
 env.flushTimers();
 
 assert.strictEqual(env.mountCount(), 1, "Commands must mount after native view 19 restoration.");
-assert.ok(commandsTab.classList.contains("style3sel"), "Commands must select only its own custom tab in view 19.");
-assert.ok(nativePluginsTab.classList.contains("style3x"), "Commands must not mutate the native Plugins tab while active.");
+assert.ok(commandsTab.classList.contains("style3sel"), "Commands must select its own custom tab in view 19.");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "Commands must clear a stale native Plugins selected state while active.");
+assert.ok(!nativePluginsTab.classList.contains("style3sel"), "Commands and Plugins must never remain visually selected together.");
 
 var firstHost = env.document.getElementById("sirk-platform-mycommands-device-page");
 env.rebuildP19();
@@ -318,12 +323,23 @@ var secondHost = env.document.getElementById("sirk-platform-mycommands-device-pa
 assert.notStrictEqual(secondHost, firstHost, "MeshCentral refresh must replace the nested page host.");
 assert.strictEqual(env.mountCount(), 2, "The replacement host created by F5 must be remounted exactly once.");
 assert.ok(secondHost.childNodes.length > 0, "The restored Commands page must contain mounted content.");
+assert.ok(commandsTab.classList.contains("style3sel"), "Commands must remain selected after F5 restoration.");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "F5 reconciliation must clear a native Plugins selection restored by MeshCentral.");
+assert.ok(!nativePluginsTab.classList.contains("style3sel"), "F5 must not leave a double-selected Commands/Plugins header.");
 
 env.document.getElementById("MainDevPlugins").dispatch("mousedown", {});
 env.flushTimers();
 assert.strictEqual(env.localStorage.getItem("_curPluginPage"), "native", "Clicking native Plugins must restore its native nested page.");
 assert.ok(env.document.getElementById("p19ph-native").classList.contains("on"), "Native Plugins content must become active even when go(19) would early-return.");
-assert.ok(nativePluginsTab.classList.contains("style3x"), "SIRK routing must leave native Plugins visual selection to MeshCentral.");
+assert.ok(nativePluginsTab.classList.contains("style3sel"), "Native Plugins must become visually selected after its click path wins view 19.");
+assert.ok(!nativePluginsTab.classList.contains("style3x"), "Native Plugins must not keep the unselected class while active.");
 assert.ok(commandsTab.classList.contains("style3x"), "Commands must be unselected after opening native Plugins.");
 
-console.log("Commands device lifecycle preserves native Plugins visual ownership: OK");
+commandsTab.onmouseup({});
+env.flushTimers();
+assert.strictEqual(env.localStorage.getItem("_curPluginPage"), "sirk-platform-mycommands-device-page", "Returning to Commands must restore the Commands nested page.");
+assert.ok(commandsTab.classList.contains("style3sel"), "Returning to Commands must reselect the custom tab.");
+assert.ok(nativePluginsTab.classList.contains("style3x"), "Returning to Commands must deselect native Plugins again.");
+assert.ok(!nativePluginsTab.classList.contains("style3sel"), "The Commands round trip must end with exactly one selected header tab.");
+
+console.log("Commands device lifecycle keeps Commands and native Plugins selection mutually exclusive: OK");
