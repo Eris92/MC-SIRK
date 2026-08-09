@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.1-dev.33",
+    "date": "2026-08-09",
+    "changes": [
+      "Follow up the real 0.1.1-dev.32 smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.",
+      "Reuse the existing native secondary button surface for Results View and apply it synchronously at creation while retaining MeshThemeAdapter refresh ownership without a hardcoded CSS palette.",
+      "Eliminate the go(19) to deferred Commands selection gap so Commands and Plugins are mutually exclusive in the same transition, with the existing bounded reconcile retained only as recovery.",
+      "Use the Windows shell:ConnectionsFolder target instead of Shell namespace 3 before invoking the properties verb for the adapter selected by the preferred active default route.",
+      "Keep Issues #125, #232 and #128 open for real dev.33 re-smoke and keep the revision below 1.0.0 with no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.32",
     "date": "2026-08-09",
     "changes": [
