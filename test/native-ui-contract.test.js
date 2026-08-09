@@ -85,8 +85,9 @@ assert.ok(serverRuntime.slice(saveAdminStart, saveAdminEnd).indexOf("integration
 assert.ok(adminJs.indexOf("AbortController") >= 0 && adminJs.indexOf("15000") >= 0,
     "Admin saves must have a bounded timeout.");
 assert.ok(adminJs.indexOf('var theme = hostIsDark() ? "dark" : "light"') >= 0 &&
-    adminJs.indexOf('typeof window.nightMode === "boolean"') >= 0,
-    "Administration must derive its live state from the MeshCentral host theme.");
+    adminJs.indexOf('typeof hostWindow.nightMode === "boolean"') >= 0 &&
+    adminJs.indexOf('hostWindow = window.parent') >= 0,
+    "Administration must derive its live state from the parent MeshCentral host theme.");
 assert.ok(adminCss.indexOf("background:transparent!important") >= 0,
     "Administration must expose the host surface instead of painting a private theme.");
 assert.strictEqual(adminCss.indexOf("--sirk-admin"), -1,
