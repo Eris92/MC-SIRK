@@ -1,3 +1,12 @@
+## 0.1.1-dev.32 - 2026-08-09
+
+- Deliver one integrated smoke revision after PR #233 and PR #234 so MeshCentral update detection installs the current single-pending Move Requests and Commands/Plugins selection fixes together.
+- Enforce at most one pending Move Request per stable `nodeId` inside the existing serialized approval transaction, preserving external idempotency, terminal/executing records, public payload isolation and one bounded persistence path while exposing terminal `Superseded` history through the shared status catalog.
+- Keep Commands and native Plugins `style3sel`/`style3x` mutually exclusive in native view 19 from the existing device integration owner, including F5 reconstruction and Commands -> Plugins -> Commands round trips, without a new handler, observer, polling loop or lifecycle owner.
+- Carry forward all dev.31 functionality; keep Issues requiring real MeshCentral evidence open and keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.32.md`.
+
 ## 0.1.1-dev.31 - 2026-08-09
 
 - Deliver the Issue #123 F5 correction after real `0.1.1-dev.30` smoke confirmed light/dark now works but native page 43 still loses SIRK Admin after reload.
