@@ -76,6 +76,25 @@ function createSerializedStartupHook(version, pin) {
         window.__SIRK_PLATFORM_PIN__ = browserPin;
         document.documentElement.classList.add("sirk-platform-native-ui");
 
+        function restoreOwnedAdminFrame() {
+            try {
+                var adminStateKey = "sirkPlatform.admin.active";
+                if (window.sessionStorage.getItem(adminStateKey) !== browserPin) return;
+                var currentUrl = new URL(window.location.href);
+                if (Number(currentUrl.searchParams.get("viewmode")) !== 43) return;
+                var adminFrame = document.getElementById("p43iframe");
+                var frameSource = adminFrame && String(adminFrame.getAttribute("src") || "").trim();
+                if (!adminFrame || frameSource) return;
+                var adminUrl = new URL("pluginadmin.ashx", window.location.href);
+                adminUrl.searchParams.set("pin", browserPin);
+                adminFrame.src = adminUrl.href;
+                var adminTitle = document.getElementById("p43title");
+                if (adminTitle) adminTitle.textContent = "SIRK Management Platform";
+            } catch (error) {}
+        }
+
+        restoreOwnedAdminFrame();
+
         function asset(name) {
             var url = new URL("pluginadmin.ashx", window.location.href);
             url.searchParams.set("pin", browserPin);
@@ -238,7 +257,7 @@ function createPlugin(parent, shortName) {
                     var frameUrl = new URL(frameSource, window.location.href);
                     var ownPin = String(window.__SIRK_PLATFORM_PIN__ || "SIRKPortal");
                     if (/\/pluginadmin\.ashx$/i.test(frameUrl.pathname) && String(frameUrl.searchParams.get("pin") || "") === ownPin) {
-                        window.sessionStorage.setItem(adminStateKey, "1");
+                        window.sessionStorage.setItem(adminStateKey, ownPin);
                     } else {
                         window.sessionStorage.removeItem(adminStateKey);
                     }
@@ -253,19 +272,6 @@ function createPlugin(parent, shortName) {
     };
     obj.goPageEnd = function (view) {
         if (typeof window === "undefined") return;
-        try {
-            if (Number(view) === 43 && window.sessionStorage.getItem("sirkPlatform.admin.active") === "1") {
-                var adminFrame = document.getElementById("p43iframe");
-                var frameSource = adminFrame && String(adminFrame.getAttribute("src") || "").trim();
-                if (adminFrame && !frameSource) {
-                    var adminUrl = new URL("pluginadmin.ashx", window.location.href);
-                    adminUrl.searchParams.set("pin", String(window.__SIRK_PLATFORM_PIN__ || "SIRKPortal"));
-                    adminFrame.src = adminUrl.href;
-                    var adminTitle = document.getElementById("p43title");
-                    if (adminTitle) adminTitle.textContent = "SIRK Management Platform";
-                }
-            }
-        } catch (error) {}
         window.__SIRK_LAST_NATIVE_PAGE_END__ = view;
         var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
