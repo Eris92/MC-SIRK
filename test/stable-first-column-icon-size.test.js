@@ -39,10 +39,10 @@ assert.ok(quick.indexOf('.sirk-quick-command-browser .mc-shared-primary{padding-
 assert.ok(quick.indexOf('width:44px;min-width:44px;height:44px;min-height:44px;margin:0 auto 3px;padding:8px') >= 0,
     "Quick collapsed category row must reuse the 44 px shared first-column row geometry.");
 
-assert.ok(toolbar.indexOf('.sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:20px;min-width:20px;height:20px;max-width:20px;object-fit:contain}') >= 0,
-    "Second-column/shared list icons must retain their existing compact 20 px geometry.");
-assert.ok(toolbar.indexOf('.sirk-shared-list-icon svg,.sirk-quick-command-icon svg{display:block;width:20px;height:20px}') >= 0,
-    "Non-primary SVG icons must retain the existing compact 20 px geometry.");
+assert.ok(toolbar.indexOf('.sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:28px;min-width:28px;height:28px;max-width:28px;object-fit:contain}') >= 0,
+    "Shared list icons in every column must reuse the stable 28 px slot without changing first-column Collapse geometry.");
+assert.ok(toolbar.indexOf('.sirk-shared-list-icon svg,.sirk-quick-command-icon svg{display:block;width:24px;height:24px}') >= 0,
+    "Shared SVG artwork in every column must reuse the stable 24 px artwork size.");
 
 assert.strictEqual(/is-collapsed[^}]*sirk-shared-list-icon[^}]*width:/.test(toolbar), false,
     "Collapse CSS must not resize shared first-column icons.");
@@ -63,4 +63,4 @@ assert.ok(shared.indexOf('--sirk-primary-collapsed-track:64px') >= 0,
 assert.ok(toolbar.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,
     "Stable larger first-column icons must preserve the shared selected-state indicator contract.");
 
-console.log("First-column icons keep one stable expanded/collapsed size without changing second-column geometry: OK");
+console.log("First-column icons keep one stable expanded/collapsed size while sharing the larger list icon contract: OK");
