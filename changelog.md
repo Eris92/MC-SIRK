@@ -186,6 +186,7 @@ Current development notes: `docs/releases/0.1.1-dev.10.md`.
 
 Current development notes: `docs/releases/0.1.1-dev.9.md`.
 
+
 ## 0.1.1-dev.8 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current `main`.
