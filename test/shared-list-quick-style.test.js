@@ -10,6 +10,7 @@ function read(relative) { return fs.readFileSync(path.join(root, relative), "utf
 var tree = read("public/shared/ui/tree.js");
 var status = read("public/shared/ui/status-nav.js");
 var catalog = read("public/shared/ui/catalog.js");
+var approvals = read("public/modules/approvals/index.js");
 var css = read("public/shared/ui/toolbar.css");
 var sharedUiCss = read("public/shared/ui/shared-ui.css");
 var quickCss = read("public/native/desktop-commands.css");
@@ -33,6 +34,9 @@ assert.ok(catalog.indexOf("mc-catalog-results") >= 0 &&
     catalog.indexOf("sirk-shared-list-item") >= 0 &&
     catalog.indexOf("sirk-shared-list-icon") >= 0,
     "Results must use the same shared list geometry contract as roots and status rows.");
+assert.ok(approvals.indexOf('button.className = "mc-shared-nav-item sirk-shared-list-item "') >= 0 &&
+    approvals.indexOf('icon.className = "mc-nav-icon sirk-shared-list-icon"') >= 0,
+    "Approval primary and secondary navigation must consume the same shared list/icon geometry.");
 
 [tree, status, catalog].forEach(function (source) {
     assert.strictEqual(source.indexOf("CONTRACT_VERSION"), -1,
@@ -45,10 +49,14 @@ assert.ok(catalog.indexOf("mc-catalog-results") >= 0 &&
         "Shared renderers must not rely on compatibility ownership markers.");
 });
 
-assert.ok(css.indexOf(".sirk-shared-list-item,.sirk-quick-command-categories>button,.sirk-quick-command-tree>button{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px") >= 0,
-    "Approval, Commands, My Scripts and both Quick columns must share one 24 px icon geometry.");
+assert.ok(css.indexOf(".sirk-shared-list-item,.sirk-quick-command-categories>button,.sirk-quick-command-tree>button{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px") >= 0,
+    "Approval, Commands, My Scripts and both Quick columns must share one 28 px icon slot geometry.");
 assert.ok(css.indexOf("min-height:36px;margin:0 0 3px;padding:8px") >= 0,
-    "All shared and Quick rows must use the same height, margin and padding.");
+    "All shared and Quick rows must use the same minimum height, margin and padding.");
+assert.ok(css.indexOf(".sirk-shared-list-icon,.sirk-quick-command-icon{display:grid;place-items:center;width:28px;min-width:28px;height:28px;max-width:28px;object-fit:contain}") >= 0,
+    "Shared and Quick item-identifying icons must use one stable 28x28 slot in every column.");
+assert.ok(css.indexOf(".sirk-shared-list-icon svg,.sirk-quick-command-icon svg{display:block;width:24px;height:24px}") >= 0,
+    "Shared and Quick monochrome artwork must use one stable 24x24 visual size.");
 assert.ok(css.indexOf(".sirk-shared-list-copy,.sirk-quick-command-copy{display:grid;grid-template-columns:minmax(0,1fr) auto") >= 0,
     "Shared and Quick copy tracks must reserve a compact first-line indicator column.");
 assert.ok(sharedUiCss.indexOf(".mc-tree-folder-body{margin:0 0 0 6px}") >= 0 &&
@@ -56,6 +64,12 @@ assert.ok(sharedUiCss.indexOf(".mc-tree-folder-body{margin:0 0 0 6px}") >= 0 &&
     "Nested shared trees and Quick must use the same cumulative 6 px indentation step from their canonical CSS owners.");
 assert.strictEqual(css.indexOf(".mc-tree-folder-body{"), -1,
     "Toolbar CSS must not duplicate shared tree indentation ownership.");
+
+assert.ok(tree.indexOf('icon.className = "mc-tree-script-action-icon"') >= 0 &&
+    tree.indexOf('icon.className = "mc-tree-script-action-icon sirk-shared-list-icon"') < 0,
+    "Per-row action rail icons must remain outside the larger item-identifying icon contract.");
+assert.ok(css.indexOf(".mc-tree-script-action{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;cursor:pointer}") >= 0,
+    "The larger navigation/list icon contract must not alter action rail button geometry.");
 
 assert.ok(adapter.indexOf('.mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button') >= 0,
     "Shared and Quick rows must enter the same native navigation styling path.");
@@ -87,4 +101,4 @@ var sharedStyle = startup.indexOf('style("sirk-platform-toolbar-style", "shared-
 assert.ok(desktopStyle >= 0 && sharedStyle > desktopStyle,
     "Shared row geometry CSS must load after Quick-specific panel geometry without becoming the interaction-theme owner.");
 
-console.log("Direct shared-list geometry with native MeshCentral interaction ownership: OK");
+console.log("Direct shared-list geometry with larger second-column icons and native MeshCentral interaction ownership: OK");
