@@ -23,14 +23,16 @@ assert.ok(shell.indexOf("putStoredPage(target)") >= 0 &&
     "Clicking Plugins may restore its native page before MeshCentral handles the tab, but the hook must be inert when Commands is disabled.");
 assert.strictEqual(shell.indexOf('plugins.style.display = ""'), -1,
     "Commands must not force the native Plugins tab display state.");
-assert.strictEqual(shell.indexOf("plugins.classList.remove"), -1,
-    "Commands must not remove native Plugins tab classes.");
-assert.strictEqual(shell.indexOf("plugins.classList.add"), -1,
-    "Commands must not add styling classes to the native Plugins tab.");
+assert.ok(shell.indexOf("if (plugins && status.pluginView)") >= 0 &&
+    shell.indexOf('plugins.classList.remove("style3x", "style3sel")') >= 0 &&
+    shell.indexOf('plugins.classList.add(active ? "style3x" : "style3sel")') >= 0,
+    "Commands and native Plugins must exchange only the native selected classes while view 19 owns the header.");
+assert.strictEqual(shell.indexOf("plugins.className ="), -1,
+    "Commands selection synchronization must not overwrite the native Plugins className.");
 assert.ok(shell.indexOf('tab.classList.add(active ? "style3sel" : "style3x")') >= 0 &&
     shell.indexOf('headers.style.setProperty("display", "none", "important")') >= 0 &&
     shell.indexOf('headers.style.removeProperty("display")') >= 0,
-    "Commands may style only its own top tab and its own nested plugin header visibility.");
+    "Commands must keep its custom tab and nested plugin header visibility synchronized with the same active state.");
 assert.ok(shell.indexOf('view === 19 && stored === pageId') >= 0 &&
     shell.indexOf('activePageId() !== pageId') >= 0 &&
     shell.indexOf('selectPluginPage(pageId)') >= 0,
@@ -38,4 +40,4 @@ assert.ok(shell.indexOf('view === 19 && stored === pageId') >= 0 &&
 assert.ok(shell.indexOf('commandsActive: view === 19 && activePage === pageId') >= 0,
     "Commands active state must depend on the actual active nested page, not view 19 alone.");
 
-console.log("Commands routing preserves native Plugins tab styling: OK");
+console.log("Commands routing synchronizes native Plugins selection without replacing native ownership: OK");
