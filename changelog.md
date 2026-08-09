@@ -1,3 +1,12 @@
+## 0.1.1-dev.28 - 2026-08-09
+
+- Deliver Issue #213 second-column shared navigation icon-size contract from PR #222 so MeshCentral update detection installs the larger shared/Quick list icons.
+- Use one shared 28 px item-identifying icon slot with 24 px SVG artwork across My Scripts, My Commands, Approval Center and Quick while preserving first-column Collapse geometry.
+- Keep action-rail icon/button geometry, neutral icon color, selected-state indicators, custom image aspect ratio and existing lifecycle/request behavior unchanged.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.28.md`.
+
 ## 0.1.1-dev.27 - 2026-08-09
 
 - Continue #177 after real `0.1.1-dev.26` smoke still showed a small left-menu flicker after Refresh.

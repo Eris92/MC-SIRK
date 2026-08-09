@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.27`](0.1.1-dev.27.md) — bieżąca rewizja development z idempotentną rekonsyliacją widocznego stanu left menu bez ponownych zapisów klas, active state, source i geometrii ikon;
+- [`0.1.1-dev.28`](0.1.1-dev.28.md) — bieżąca rewizja development z większym wspólnym kontraktem ikon 2. kolumny: 28 px slot / 24 px SVG dla My Scripts, My Commands, Approval Center i Quick;
+- [`0.1.1-dev.27`](0.1.1-dev.27.md) — poprzednia rewizja development z idempotentną rekonsyliacją widocznego stanu left menu bez ponownych zapisów klas, active state, source i geometrii ikon;
 - [`0.1.1-dev.26`](0.1.1-dev.26.md) — tworzenie brakujących SIRK left-menu nodes dopiero po bieżącym natywnym `goPageEnd`, bez host-redraw blink/recreate race;
 - [`0.1.1-dev.25`](0.1.1-dev.25.md) — poprzednia rewizja development z finalnym left-menu contractem już w pierwszym `core.ensureMenu()`, większym artworkiem i białą Classic family bez deferred reflow;
 - [`0.1.1-dev.24`](0.1.1-dev.24.md) — poprzednia rewizja development z jednym ownerem rodziny/source ikon menu i bez późnej podmiany Modern SVG na białe Font Awesome;
