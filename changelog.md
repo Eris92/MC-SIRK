@@ -1,3 +1,13 @@
+## 0.1.1-dev.33 - 2026-08-09
+
+- Follow up real `0.1.1-dev.32` smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.
+- Reuse the existing native secondary button surface for Results `View`, applied synchronously at creation and kept under `MeshThemeAdapter` refresh, without a hardcoded CSS palette.
+- Eliminate the `go(19) -> setTimeout(0)` selected-state gap so Commands/Plugins become mutually exclusive in the same transition; keep bounded reconcile only as recovery.
+- Target the Windows `shell:ConnectionsFolder` instead of Shell namespace `3` before invoking the active default-route adapter properties.
+- Keep Issues #125, #232 and #128 open for real dev.33 re-smoke; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.33.md`.
+
 ## 0.1.1-dev.32 - 2026-08-09
 
 - Deliver one integrated smoke revision after PR #233 and PR #234 so MeshCentral update detection installs the current single-pending Move Requests and Commands/Plugins selection fixes together.
