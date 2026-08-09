@@ -38,8 +38,9 @@ assert.ok(results.indexOf('SirkPlatformCore.assetUrl("", "download", { path: par
     "The download action must use the authenticated plugin download endpoint.");
 assert.ok(results.indexOf('COMMANDTABS)_PROGRESS__') >= 0,
     "The result renderer must remove progress protocol lines from visible output.");
-assert.ok(results.indexOf('appendResult(dialog, raw, options)') >= 0,
-    "History dialogs must use the same canonical result/download renderer instead of a MutationObserver enhancer.");
+assert.ok(results.indexOf('appendResult(host, raw, options)') >= 0 &&
+    results.indexOf('var host = document.getElementById(hostId)') >= 0,
+    "History dialogs must mount the same canonical result/download renderer into the native MeshCentral dialog body instead of a MutationObserver enhancer.");
 assert.strictEqual(results.indexOf("new MutationObserver"), -1,
     "Generated-download handling must not depend on DOM polling or MutationObserver compatibility logic.");
 
