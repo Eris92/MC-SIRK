@@ -33,8 +33,10 @@ assert.strictEqual(commands.indexOf('"Open CMD": "Otwórz CMD"'), -1, "Obsolete 
 
 assert.ok(networkControl.indexOf('label: "Network Control"') >= 0 && networkControl.indexOf('control.exe ncpa.cpl') >= 0,
     "network-settings must keep its stable ID/execution while becoming Network Control.");
-assert.ok(networkSettings.indexOf('label: "Network Settings"') >= 0 && networkSettings.indexOf('Get-NetRoute') >= 0 && networkSettings.indexOf("InvokeVerb('properties')") >= 0,
-    "network-adapter-properties must keep its adapter-properties execution while becoming Network Settings.");
+assert.ok(networkSettings.indexOf('label: "Network Settings"') >= 0 && networkSettings.indexOf('Get-NetRoute') >= 0 &&
+    networkSettings.indexOf('Get-NetAdapter -InterfaceIndex $route.InterfaceIndex') >= 0 &&
+    networkSettings.indexOf('[SirkNetworkShell]::ShowProperties($item)') >= 0,
+    "network-adapter-properties must keep its route-selected adapter-properties execution while becoming Network Settings.");
 assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1, "network-settings stable ID must remain unique.");
 assert.strictEqual((server.match(/id: "network-adapter-properties"/g) || []).length, 1, "network-adapter-properties stable ID must remain unique.");
 assert.ok(server.indexOf('locales: command.locales || {}') >= 0, "Public catalog must still carry locales to all consumers.");
