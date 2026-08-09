@@ -40,8 +40,10 @@ assert.ok(properties.indexOf("([long]$_.RouteMetric)+([long]$_.InterfaceMetric)"
     "Default route selection must be deterministic by route + interface metric with InterfaceIndex tie-break.");
 assert.ok(properties.indexOf('Get-NetAdapter -InterfaceIndex $route.InterfaceIndex') >= 0,
     "Selected route must map to exactly its interface index.");
-assert.ok(properties.indexOf('$shell.Namespace(3)') >= 0 && properties.indexOf("$item.InvokeVerb('properties')") >= 0,
-    "Adapter properties must invoke the properties verb directly for the resolved connection.");
+assert.ok(properties.indexOf("$shell.Namespace('shell:ConnectionsFolder')") >= 0 && properties.indexOf("$item.InvokeVerb('properties')") >= 0,
+    "Adapter properties must enumerate the Windows Network Connections known folder and invoke properties on the resolved connection.");
+assert.strictEqual(properties.indexOf('$shell.Namespace(3)'), -1,
+    "Adapter properties must never enumerate Shell special folder 3 because it is Control Panel, not Network Connections.");
 assert.ok(properties.indexOf("throw 'No active default route was found.'") >= 0,
     "No default route must be a controlled error, not a random adapter fallback.");
 assert.strictEqual(properties.indexOf('Start-Sleep'), -1,
@@ -61,4 +63,4 @@ assert.ok(quick.indexOf('artwork["network-adapter-properties"] = artwork["networ
     "Quick must reuse the same existing Network artwork without duplicating SVG.");
 assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1,
     "Existing network-settings ID must remain unique so overrides/Favorites are preserved.");
-console.log("Network panel and active-adapter properties are separate deterministic commands: OK");
+console.log("Network panel and active-adapter properties use the correct Windows ConnectionsFolder contract: OK");
