@@ -288,17 +288,19 @@
         });
     }
 
-
-    function submit(item, values, button, panel) {
+    function submit(item, values, button, panel, confirmedExecution) {
         if (!desktopConnected()) {
             setOutput(panel, text("disconnected"), true, false);
             return;
         }
-        if (item.confirmExecution && !window.confirm(text("confirm") + ' "' + item.label + '"?')) return;
+        if (item.confirmExecution && confirmedExecution !== true) {
+            setOutput(panel, "Native execution confirmation is required.", true, false);
+            return;
+        }
         var node = currentNode();
         var payload = {
             nodeId: nodeId(), nodeName: node.name || "", variableValues: values || {},
-            confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: ""
+            confirmedExecution: confirmedExecution === true, desktopDirect: true, note: ""
         };
         if (!payload.nodeId) {
             setOutput(panel, "Device is not ready.", true, false);
@@ -321,6 +323,32 @@
             setOutput(panel, text("failed") + " " + (error.message || String(error)), true, true);
         }).then(function () {
             if (button) button.disabled = false;
+        });
+    }
+
+    function confirmAndSubmit(item, values, trigger, panel) {
+        if (!item.confirmExecution) {
+            writeDetailsCollapsed(false);
+            submit(item, values, null, panel, false);
+            return Promise.resolve(true);
+        }
+        if (!window.SharedScriptTools || typeof window.SharedScriptTools.openConfirmationDialog !== "function") {
+            setOutput(panel, "Native MeshCentral confirmation dialog is unavailable.", true, false);
+            return Promise.resolve(false);
+        }
+        return window.SharedScriptTools.openConfirmationDialog({
+            title: text("confirm"),
+            message: text("confirm") + ' "' + item.label + '"?',
+            trigger: trigger,
+            primaryLabel: item.requiresApproval ? "Request" : text("run")
+        }).then(function (confirmed) {
+            if (confirmed !== true) return false;
+            writeDetailsCollapsed(false);
+            submit(item, values, null, panel, true);
+            return true;
+        }).catch(function (error) {
+            setOutput(panel, error.message || String(error), true, false);
+            return false;
         });
     }
 
@@ -349,8 +377,7 @@
             state.outputAttention = false;
             render(panel);
             if (!(value.variables || []).length) {
-                writeDetailsCollapsed(false);
-                submit(value, {}, null, panel);
+                confirmAndSubmit(value, {}, button, panel);
                 return;
             }
             if (!window.SharedScriptTools || typeof window.SharedScriptTools.openParameterDialog !== "function") {
@@ -362,8 +389,7 @@
                 primaryLabel: value.requiresApproval ? "Request" : text("run")
             }).then(function (values) {
                 if (values == null) return;
-                writeDetailsCollapsed(false);
-                submit(value, values, null, panel);
+                return confirmAndSubmit(value, values, button, panel);
             }).catch(function (error) {
                 setOutput(panel, error.message || String(error), true, false);
             });
