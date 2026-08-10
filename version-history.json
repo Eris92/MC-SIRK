@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.44",
+    "date": "2026-08-10",
+    "summary": "Windows #238: real Windows PowerShell Network Connections namespace smoke added to maintained CI while Linux npm test remains canonical.",
+    "notes": "docs/releases/0.1.1-dev.44.md"
+  },
+  {
     "version": "0.1.1-dev.43",
     "date": "2026-08-10",
     "summary": "Commands #247: multi-device selector with All hosts, visible groups/tags, local search, stable nodeId dedupe and maxMultiHostNodes UI guard.",
@@ -36,7 +42,7 @@
     "date": "2026-08-10",
     "changes": [
       "Bump the pre-1.0 development revision after real dev.38 Network Settings and Admin theme regressions while Results/View passes.",
-      "Execute Network Settings as direct type-2 PowerShell through the single canonical logged-on-user runner instead of detaching powershell.exe via CMD start; preserve the proven route/adapter and real Shell Properties verb body.",
+      "Execute Network Settings as direct type-2 PowerShell through the single canonical logged-on-user runner instead of detaching powershell.exe via CMD start; preserve route/adapter and real Shell Properties verb body.",
       "Prefer explicit parent data-bs-theme over stale legacy nightMode in the existing Admin host theme owner while retaining Classic fallbacks and copied host surface; add functional stale-signal regression.",
       "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke; no automatic tag or GitHub Release."
     ]
@@ -109,7 +115,7 @@
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the integrated current main after PR #233 and PR #234.",
       "Enforce at most one pending Move Request per stable nodeId inside the existing serialized approval transaction while preserving idempotency, other hosts/providers, non-pending states, stable execution IDs and public payload isolation.",
       "Keep Commands and native Plugins visual selection mutually exclusive in native view 19, including F5 reconstruction and Commands-to-Plugins round trips, without adding a second routing owner, observer, polling loop or timer.",
-      "Carry forward all dev.31 functionality, require real MeshCentral acceptance for open evidence-gated Issues, and keep the revision below 1.0.0 with no automatic tag or GitHub Release."
+      "Carry forward all dev.31 functionality, require real MeshCentral acceptance for open evidence-gated Issues, and keep the revision below 1.0.0 with no tag or GitHub Release."
     ]
   },
   {
@@ -139,7 +145,7 @@
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the real dev.28 smoke follow-up from PR #225.",
       "Make Admin consume the explicit MeshCentral data-bs-theme signal and existing host/system surface tokens without adding a second observer, polling, request or rerender.",
       "Scope generic MeshThemeAdapter form-control classes to SIRK roots and keep shared Output/detail cards invariant against host hover transform, scale and zoom while preserving host colors and shared column sizing.",
-      "Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke and keep the change below 1.0.0 with no automatic tag or GitHub Release."
+      "Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke and keep the revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
   },
   {
@@ -169,7 +175,7 @@
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the native page-ready left-menu fix after real dev.25 smoke still showed one short flicker.",
       "Gate creation of missing SIRK menu nodes on the current MeshCentral goPageEnd and invalidate that readiness on every goPageStart so a host redraw cannot remove an early node and cause one visible recreation.",
       "Keep existing menu nodes refreshable, preserve permission-safe bootstrap and bounded parallel module startup, and cover host redraw plus startup with targeted regressions.",
-      "Add no polling, MutationObserver, readiness timer, placeholder menu, CSS masking, extra request, second renderer, tag or GitHub Release."
+      "Add no polling, MutationObserver, readiness timer staircase, placeholder menu, CSS masking, extra request, second renderer, tag or GitHub Release."
     ]
   },
   {
@@ -346,7 +352,7 @@
     "date": "2026-08-08",
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
-      "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
+      "Keep first-column icon row position stable across expanded/collapsed states and reuse the same first-column geometry in Approval Center.",
       "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
@@ -407,7 +413,7 @@
     "version": "0.1.1-dev.3",
     "date": "2026-08-07",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from main.",
       "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the toolbar row height.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
