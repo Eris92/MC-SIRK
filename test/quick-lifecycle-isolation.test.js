@@ -19,18 +19,25 @@ assert.ok(source.indexOf('var browserVersion = "1.8.20-test"') >= 0 &&
 assert.ok(source.indexOf('style("sirk-platform-desktop-commands-style", "desktop-commands.css")') >= 0,
     "Quick must load its static Desktop stylesheet from the canonical startup hook.");
 assert.ok(source.indexOf('["sirk-platform-desktop-commands", "desktop-commands.js"]') >= 0,
-    "Quick must load its canonical Desktop renderer through the normal serialized asset list.");
+    "Quick must remain declared in the canonical deferred asset list.");
 assert.ok(source.indexOf('var coreReady = load("sirk-platform-core", asset("core.js"))') >= 0 &&
     source.indexOf("Promise.all(criticalScripts.map") >= 0 &&
-    source.indexOf("Promise.all(deferredScripts.map") >= 0,
-    "Browser startup may parallelize critical/deferred assets after core but must keep one canonical startup owner.");
+    source.indexOf("deferredScripts.filter(function (item)") >= 0 &&
+    source.indexOf("}).map(function (item)") >= 0,
+    "Browser startup must keep critical and independent deferred assets parallel under one canonical owner.");
+assert.ok(source.indexOf('var scriptToolsReady = load("sirk-platform-script-tools", asset("shared-ui/script-tools.js"))') >= 0 &&
+    source.indexOf("var parameterDialogReady = scriptToolsReady.then(function ()") >= 0 &&
+    source.indexOf('return load("sirk-platform-parameter-dialog", asset("shared-ui/parameter-dialog.js"))') >= 0 &&
+    source.indexOf("deferredReady.push(parameterDialogReady.then(function ()") >= 0 &&
+    source.indexOf('return load("sirk-platform-desktop-commands", asset("desktop-commands.js"))') >= 0,
+    "Only the real script-tools -> parameter-dialog -> Quick dependency must be serialized inside the shared startup owner.");
 assert.ok(source.indexOf('window.SirkPlatformCore.api("", "bootstrap")') >= 0 &&
     source.indexOf("window.SirkPlatformRuntime.prepare(bootstrapReady)") >= 0 &&
     source.indexOf("window.SirkPlatformRuntime.initialize(dependenciesReady)") >= 0 &&
     source.indexOf("window.SirkPlatformRuntime.onDeviceRefreshEnd(nodeId)") >= 0,
     "Quick lifecycle must remain owned by the shared browser runtime while reusing the single early bootstrap request.");
 assert.strictEqual(source.indexOf("loadQuick"), -1,
-    "Parallel startup must not introduce a secondary Quick-specific lifecycle loader.");
+    "Startup must not introduce a secondary Quick-specific lifecycle loader.");
 
 assert.strictEqual(source.indexOf("MutationObserver"), -1,
     "Startup must never replace or scope the browser's global MutationObserver.");
@@ -60,4 +67,4 @@ assert.ok(shellSource.indexOf("findDeviceTitleTextNode") >= 0 &&
 assert.strictEqual(startupSource.indexOf("__sirkScheduleCommandsTitle"), -1,
     "Startup must not carry a second Commands title synchronizer.");
 
-console.log("Quick lifecycle isolation without global observer or title monkey-patches: OK");
+console.log("Quick lifecycle isolation with shared parameter-dialog dependency and no global observer/title monkey-patches: OK");

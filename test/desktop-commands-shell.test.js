@@ -38,8 +38,9 @@ assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&
     script.indexOf('mc-shared-secondary') >= 0 &&
     script.indexOf('mc-shared-details') >= 0,
     "Quick commands must expose the same semantic three-column structure as Commands.");
-assert.ok(script.indexOf('mc-command-run-button sirk-quick-command-submit') >= 0,
-    "Quick commands Run must use the same action-button class as My Commands.");
+assert.ok(script.indexOf("window.SharedScriptTools.openParameterDialog") >= 0 &&
+    script.indexOf("sirk-quick-command-submit") < 0,
+    "Quick parameterized execution must use the shared native dialog instead of an inline Run action.");
 assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(240px,300px)!important") >= 0,
     "Quick commands must keep the My Commands first two columns and use a smaller details column.");
 assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(240px,300px)!important") >= 0,
@@ -61,4 +62,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick toolbar, Favorites, output collapse and non-attention refresh: OK");
+console.log("Quick toolbar, Favorites, native parameter dialog, output collapse and non-attention refresh: OK");

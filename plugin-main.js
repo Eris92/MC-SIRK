@@ -186,9 +186,19 @@ function createSerializedStartupHook(version, pin) {
                 }
 
                 var prepareReady = window.SirkPlatformRuntime.prepare(bootstrapReady);
-                var dependenciesReady = Promise.all(deferredScripts.map(function (item) {
+                var deferredReady = deferredScripts.filter(function (item) {
+                    return item[0] !== "sirk-platform-script-tools" && item[0] !== "sirk-platform-desktop-commands";
+                }).map(function (item) {
                     return load(item[0], asset(item[1]));
+                });
+                var scriptToolsReady = load("sirk-platform-script-tools", asset("shared-ui/script-tools.js"));
+                var parameterDialogReady = scriptToolsReady.then(function () {
+                    return load("sirk-platform-parameter-dialog", asset("shared-ui/parameter-dialog.js"));
+                });
+                deferredReady.push(parameterDialogReady.then(function () {
+                    return load("sirk-platform-desktop-commands", asset("desktop-commands.js"));
                 }));
+                var dependenciesReady = Promise.all(deferredReady);
                 var initializeReady = window.SirkPlatformRuntime.initialize(dependenciesReady);
 
                 return prepareReady.then(function () {

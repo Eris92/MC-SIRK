@@ -117,8 +117,9 @@ assert.ok(desktop.indexOf("function desktopConnected()") >= 0 && desktop.indexOf
 assert.ok(desktop.indexOf("function protectInput(control)") >= 0 && desktop.indexOf("event.stopPropagation()") >= 0,
     "Quick command inputs must not leak keyboard events into the remote Desktop handler.");
 assert.ok(desktop.indexOf("writeDetailsCollapsed(false);") >= 0 &&
-    desktop.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0,
-    "Variable-free Quick commands must reveal the details pane and execute immediately.");
+    desktop.indexOf("submit(value, {}, null, panel)") >= 0 &&
+    desktop.indexOf("submit(value, values, null, panel)") >= 0,
+    "Quick must reveal Output only when execution actually starts, for no-vars and valid parameter submits.");
 assert.ok(desktop.indexOf("waitForExecution(result.id") >= 0 && desktop.indexOf('"output"') >= 0,
     "Quick commands must wait for agent output instead of treating submission as success.");
 assert.ok(desktop.indexOf('value.requiresApproval ? text("request")') < 0,

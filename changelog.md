@@ -1,3 +1,12 @@
+## 0.1.1-dev.44 - 2026-08-10
+
+- Shared UI #253: move parameterized execution for Quick, My Commands and My Scripts to one native MeshCentral dialog while preserving existing Output/Results ownership and payload semantics.
+- Support text/select/switch/user/asset controls, shared required validation, one bounded option-provider hook, Multi values collected once, and the real `script-tools -> parameter-dialog -> Quick` loader dependency without serializing independent deferred assets.
+- Windows #238: carry forward the integrated read-only Windows PowerShell 5.1 `NameSpace(49)` smoke in the maintained workflow; no Shell verb or network mutation.
+- Pre-bump #253 Test #607 / Actions `31394561056` GREEN on Linux `npm test` and Windows smoke; #238 original run `31390869438` GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.44.md`.
+
 ## 0.1.1-dev.43 - 2026-08-10
 
 - Commands #247: expand Multi-device execution from selection-only input to the permission-filtered MeshCentral host catalog using stable `nodeId` identity.

@@ -18,8 +18,14 @@ async function main() {
         "Theme/settings/runtime critical scripts must load concurrently after core.");
     assert.ok(pluginSource.indexOf("window.SirkPlatformRuntime.prepare(bootstrapReady)") >= 0,
         "Runtime preparation must reuse the already-started bootstrap request instead of issuing a second request.");
-    assert.ok(pluginSource.indexOf("Promise.all(deferredScripts.map") >= 0,
-        "Deferred shared assets must fetch concurrently instead of one serial request chain.");
+    assert.ok(pluginSource.indexOf("deferredScripts.filter(function (item)") >= 0 &&
+        pluginSource.indexOf("}).map(function (item)") >= 0 &&
+        pluginSource.indexOf("var dependenciesReady = Promise.all(deferredReady)") >= 0,
+        "Independent deferred shared assets must still fetch concurrently instead of becoming one serial request chain.");
+    assert.ok(pluginSource.indexOf('var scriptToolsReady = load("sirk-platform-script-tools", asset("shared-ui/script-tools.js"))') >= 0 &&
+        pluginSource.indexOf("var parameterDialogReady = scriptToolsReady.then(function ()") >= 0 &&
+        pluginSource.indexOf("deferredReady.push(parameterDialogReady.then(function ()") >= 0,
+        "Only the real script-tools -> parameter-dialog -> Quick dependency may be serialized inside deferred startup.");
     assert.ok(pluginSource.indexOf("window.__SIRK_LAST_NATIVE_PAGE_START__ = view") >= 0 &&
         pluginSource.indexOf("window.__SIRK_LAST_NATIVE_PAGE_END__ = view") >= 0,
         "Native page context must survive hooks that fire before the browser runtime loads.");
@@ -142,7 +148,7 @@ async function main() {
     assert.deepStrictEqual(menus.map(function (item) { return item.leftId; }), ["LeftMenuSirkPlatform-approvalcenter"],
         "The current native page-end callback must restore the full allowed menu in one bounded pass.");
 
-    console.log("Startup bootstrap prefetch, native page-ready menu gate and parallel module lifecycle: OK");
+    console.log("Startup bootstrap prefetch, native page-ready menu gate, dialog dependency and parallel module lifecycle: OK");
 }
 
 main().catch(function (error) {

@@ -58,10 +58,10 @@ assert.ok(script.indexOf("if (!state.detailsCollapsed) state.outputAttention = f
     "Opening the output pane must clear unseen-output attention.");
 assert.ok(script.indexOf("state.detail = value") >= 0 &&
     script.indexOf("state.output = \"\"") >= 0 &&
-    script.indexOf('submit(value, function () { return { ok: true, values: {} }; }, null, panel)') >= 0,
-    "Selecting a variable-free Quick item must clear stale output and execute immediately.");
-assert.ok(script.indexOf("if ((value.variables || []).length) writeDetailsCollapsed(false)") >= 0,
-    "Variable-bearing commands must reveal the details pane so their inputs are usable.");
+    script.indexOf("writeDetailsCollapsed(false);\n                submit(value, {}, null, panel)") >= 0,
+    "Selecting a variable-free Quick item must clear stale output, reveal Output and execute immediately.");
+assert.ok(script.indexOf("if (values == null) return;\n                writeDetailsCollapsed(false);\n                submit(value, values, null, panel)") >= 0,
+    "Parameterized Quick execution must keep Output collapsed during input and reveal it only after valid dialog submit.");
 assert.strictEqual(script.indexOf("MutationObserver"), -1,
     "Quick state preservation must not depend on detached-node observers.");
 assert.strictEqual(script.indexOf("LEGACY_COLLAPSED_KEYS"), -1,
@@ -69,4 +69,4 @@ assert.strictEqual(script.indexOf("LEGACY_COLLAPSED_KEYS"), -1,
 assert.strictEqual(script.indexOf("installToolbarHook"), -1,
     "Quick persistence must live in the canonical renderer instead of monkey-patching the toolbar.");
 
-console.log("Canonical compact Quick Commands layout, persistence and hidden-output attention: OK");
+console.log("Canonical compact Quick Commands layout, persistence, native input dialog and hidden-output attention: OK");

@@ -288,61 +288,16 @@
         });
     }
 
-    function variableForm(host, item) {
-        var controls = [];
-        host.appendChild(element("h3", "", item.label));
-        if (item.description) host.appendChild(element("p", "sirk-quick-command-description", item.description));
-        host.appendChild(element("h4", "", text("variables")));
-        (item.variables || []).forEach(function (variable) {
-            var row = element("label", "sirk-quick-command-field");
-            var caption = element("span", "", localized(variable, "label") || variable.label || variable.name);
-            if (variable.required) caption.textContent += " *";
-            row.appendChild(caption);
-            var input;
-            if (variable.control === "select") {
-                input = protectInput(document.createElement("select"));
-                (variable.options || []).forEach(function (choice) {
-                    var option = document.createElement("option");
-                    option.value = String(choice.value == null ? choice : choice.value);
-                    option.textContent = localized(choice, "label") || choice.label || option.value;
-                    input.appendChild(option);
-                });
-            } else {
-                input = protectInput(document.createElement("input"));
-                input.type = variable.control === "switch" ? "checkbox" : "text";
-            }
-            if (input.type === "checkbox") input.checked = /^(1|true|yes|tak)$/i.test(String(variable.defaultValue || ""));
-            else input.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
-            row.appendChild(input);
-            host.appendChild(row);
-            controls.push({ variable: variable, input: input });
-        });
-        return function () {
-            var values = {}, valid = true;
-            controls.forEach(function (entry) {
-                var value = entry.input.type === "checkbox" ? entry.input.checked : entry.input.value;
-                values[entry.variable.name] = value;
-                if (entry.variable.required && entry.input.type !== "checkbox" && !String(value).trim()) valid = false;
-            });
-            return { ok: valid, values: values };
-        };
-    }
 
-    function submit(item, collect, button, panel) {
+    function submit(item, values, button, panel) {
         if (!desktopConnected()) {
             setOutput(panel, text("disconnected"), true, false);
-            return;
-        }
-        var values = collect();
-        if (values.cancelled) return;
-        if (!values.ok) {
-            setOutput(panel, text("required"), true, false);
             return;
         }
         if (item.confirmExecution && !window.confirm(text("confirm") + ' "' + item.label + '"?')) return;
         var node = currentNode();
         var payload = {
-            nodeId: nodeId(), nodeName: node.name || "", variableValues: values.values,
+            nodeId: nodeId(), nodeName: node.name || "", variableValues: values || {},
             confirmedExecution: item.confirmExecution === true, desktopDirect: true, note: ""
         };
         if (!payload.nodeId) {
@@ -388,15 +343,30 @@
     function selectItem(panel, item, button) {
         function use(value) {
             state.detail = value;
-            if ((value.variables || []).length) writeDetailsCollapsed(false);
             state.output = "";
             state.outputError = false;
             state.outputPending = false;
             state.outputAttention = false;
             render(panel);
             if (!(value.variables || []).length) {
-                submit(value, function () { return { ok: true, values: {} }; }, null, panel);
+                writeDetailsCollapsed(false);
+                submit(value, {}, null, panel);
+                return;
             }
+            if (!window.SharedScriptTools || typeof window.SharedScriptTools.openParameterDialog !== "function") {
+                setOutput(panel, "Native MeshCentral parameter dialog is unavailable.", true, false);
+                return;
+            }
+            window.SharedScriptTools.openParameterDialog({
+                item: value, trigger: button,
+                primaryLabel: value.requiresApproval ? "Request" : text("run")
+            }).then(function (values) {
+                if (values == null) return;
+                writeDetailsCollapsed(false);
+                submit(value, values, null, panel);
+            }).catch(function (error) {
+                setOutput(panel, error.message || String(error), true, false);
+            });
         }
         setOutput(panel, "", false, false);
         if (item.kind !== "script") {
@@ -649,13 +619,6 @@
         else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
         if (!tree.children.length) tree.appendChild(element("p", "sirk-quick-command-empty", text(state.favoritesOnly ? "emptyFavorites" : "empty")));
 
-        if (state.detail && (state.detail.variables || []).length) {
-            var collect = variableForm(details, state.detail);
-            var run = element("button", "btn btn-primary mc-command-run-button sirk-quick-command-submit", "▶ " + text("run"));
-            run.type = "button";
-            run.onclick = function () { submit(state.detail, collect, run, panel); };
-            details.appendChild(run);
-        }
         var status = element("div", "sirk-quick-command-status", state.output);
         status.classList.toggle("is-error", state.outputError);
         details.appendChild(status);
