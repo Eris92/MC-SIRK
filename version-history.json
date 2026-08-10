@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.47",
+    "date": "2026-08-10",
+    "summary": "Jira #252: secure integration setup plus native multi-step Asset Protocol wizard with cached Active/All user selection.",
+    "notes": "docs/releases/0.1.1-dev.47.md"
+  },
+  {
     "version": "0.1.1-dev.46",
     "date": "2026-08-10",
     "summary": "Move Requests #265: verified current MeshCentral device-group move with fail-closed persistence verification.",
