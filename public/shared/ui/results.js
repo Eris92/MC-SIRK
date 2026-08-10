@@ -291,7 +291,7 @@
         var hostId = "SirkResultsViewerNativeHost";
         var contentHtml = '<div id="' + hostId + '" class="mc-results-viewer"></div>';
         var title = escapeHtml(options.dialogTitle || row.title || "Result");
-        if (manager.mode === "modern") manager.setContent("xxAddAgent", title, contentHtml, "extra-large");
+        if (manager.mode === "modern") manager.setContent("xxAddAgent", title, contentHtml);
         else manager.show(2, title, 1, null, contentHtml);
         var host = document.getElementById(hostId);
         if (!host) throw new Error("Native MeshCentral result dialog content is unavailable.");

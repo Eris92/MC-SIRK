@@ -85,6 +85,7 @@ MC-SIRK nie ma jeszcze pierwszego product release.
 - aktualna linia development: `0.1.1-dev.X`;
 - odpowiada ona preferowanej konwencji użytkownika `0.1.1.X`;
 - `package.json` i `config.json` muszą mieć identyczną wersję;
+- każda zakończona i zweryfikowana zmiana techniczna przeznaczona do integracji/testu na `main` podnosi rewizję `dev.X` przed merge; kilka zmian w jednym jeszcze niezintegrowanym kandydacie może współdzielić jeden bump;
 - historyczne `1.8.x` są wewnętrznymi snapshotami developmentu i nie są źródłem kolejnego numeru;
 - nie twórz nowych `1.x`, `2.x`, `3.x` ani `1.0.0` bez jawnego otwarcia release gate przez użytkownika;
 - nie twórz automatycznie tagu/GitHub Release przy zwykłym bumpie development revision.
@@ -101,11 +102,14 @@ Przy pracy z Issue:
 - niezależny problem odkryty podczas pracy nie powinien bez potrzeby rozszerzać scope — zaproponuj osobne Issue;
 - nowy czat ma móc kontynuować zadanie po samym numerze Issue.
 
-## Commit i push — stała reguła użytkownika
+## Commit, push, bump i merge — stała reguła użytkownika
 
 - Zakończone i zweryfikowane zmiany należące do bieżącego zadania commituj i wypychaj automatycznie; nie czekaj na osobne polecenie `commit` ani `push`.
-- Przed publikacją potwierdź zakres diffu, wymagane testy, spójność wersji i docelową gałąź; stosuj zwykły projektowy workflow branch/PR.
-- Ta reguła nie zezwala automatycznie na force push, tag, GitHub Release, merge, bezpośrednie destrukcyjne wyrównanie gałęzi ani publikację sekretów — te operacje nadal wymagają jawnego polecenia.
+- Dla zmiany technicznej przeznaczonej do instalacji lub realnego smoke zawsze przygotuj kolejną rewizję `0.1.1-dev.X`, zsynchronizuj aktywne źródła wersji i development notes przed integracją. Nie twórz drugiego pustego bumpu tylko dlatego, że do tego samego jeszcze niezmergowanego kandydata doszła zmiana instrukcji/dokumentacji.
+- Przed integracją potwierdź zakres diffu, targeted tests, wymagany pełny `npm test`, spójność wersji i docelową gałąź; stosuj zwykły projektowy workflow branch/PR.
+- Gdy wymagane testy są zielone, diff jest oczekiwany, PR jest mergeable i nie ma blockerów bezpieczeństwa/struktury, scal PR automatycznie do kanonicznego `main` bez czekania na osobne polecenie `merge`. Dotyczy to także buildów przeznaczonych do realnego smoke; powiązane Issue może pozostać otwarte do potwierdzenia acceptance criteria.
+- Jeśli CI jest czerwone, diff zawiera nieoczekiwany zakres, PR nie jest mergeable albo acceptance wymaga najpierw dodatkowej weryfikacji przed integracją, nie scalaj; napraw problem i kontynuuj autonomicznie.
+- Automatyczna integracja nie zezwala na force push, tag, GitHub Release, publikację `1.0.0`, bezpośrednie destrukcyjne wyrównanie gałęzi ani publikację sekretów — te operacje nadal wymagają jawnego polecenia użytkownika.
 
 ## Wydajność i reuse
 
@@ -163,7 +167,7 @@ Po zmianie kodu:
 5. sprawdź diff i zakres zmienionych plików;
 6. nie deklaruj rozwiązania Issue bez spełnienia acceptance criteria.
 
-Zmiana wyłącznie dokumentacji nie wymaga bumpu wersji, chyba że użytkownik jawnie go zleci.
+Zmiana wyłącznie dokumentacji nie wymaga bumpu wersji, chyba że użytkownik jawnie go zleci albo dokumentacja wchodzi do już przygotowanego, jeszcze niezintegrowanego kandydata development.
 
 ## Prompty jednorazowe
 

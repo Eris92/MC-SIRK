@@ -141,6 +141,8 @@ assert.ok(viewerRule[1].indexOf('width:100%') >= 0,
 });
 assert.strictEqual(css.indexOf('.mc-results-viewer-overlay{'), -1,
     "Removed plugin-owned Results overlay CSS must not return once MeshCentral owns the modal.");
+assert.strictEqual(source.indexOf('"extra-large"'), -1,
+    "Results renderer must not resize the native MeshCentral dialog owner after real dev.37 showed child CSS was not the visible geometry owner.");
 var applyCardLine = themeSource.split('\n').filter(function (line) { return line.indexOf('applyCard);') >= 0 && line.indexOf('.mc-move-dialog') >= 0; })[0] || '';
 assert.strictEqual(applyCardLine.indexOf('.mc-results-viewer'), -1,
     "MeshThemeAdapter must not turn the Results content root into a second card/surface inside the native modal.");

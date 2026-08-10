@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.38`](0.1.1-dev.38.md) — follow-up po real `0.1.1-dev.37` smoke: Network Settings korzysta z jednego shared logged-on-user launch ownera zamiast modułowego interactive-SYSTEM pre-wrappera; Results nie wymusza już natywnego `modal-xl`;
 - [`0.1.1-dev.37`](0.1.1-dev.37.md) — follow-up po real `0.1.1-dev.36` smoke: Results bez podwójnej powierzchni/geometrii oraz Network Settings wybierający tylko adapter `Up` i wykonujący rzeczywisty Shell `Properties/Właściwości` verb;
 - [`0.1.1-dev.36`](0.1.1-dev.36.md) — follow-up po real `0.1.1-dev.35` smoke: finalny Results first paint z parsed/table + pełnym Debug oraz synchroniczne Shell properties activation dla Network Settings;
 - [`0.1.1-dev.35`](0.1.1-dev.35.md) — poprzedni follow-up po real `0.1.1-dev.34` smoke: kompletny Modern Results modal contract oraz pierwsza PIDL/ShellExecuteEx próba Network Settings, nadal nieskuteczna w real smoke;

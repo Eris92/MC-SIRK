@@ -21,6 +21,7 @@ var desktopCss = read("public/native/desktop-commands.css");
 var sharedCss = read("public/shared/ui/shared-ui.css");
 var approvalsServer = read("server/modules/approval-center/index.js");
 var commandsServer = read("server/modules/commands/index.js");
+var loggedOnUserPolicy = read("server/core/logged-on-user-command-policy.js");
 var serverRuntime = read("server/core/runtime.js");
 var adminRouter = read("admin.js");
 var adminJs = read("web/admin/admin.js");
@@ -134,14 +135,16 @@ assert.ok(adminRouter.indexOf('"desktop-commands.js": ["public/native/desktop-co
 assert.ok(commandsServer.indexOf("function executeDirect(user, value)") >= 0 &&
     commandsServer.indexOf("value.desktopDirect === true && value.scriptPath") >= 0,
     "Direct execution bypass must be limited to validated Desktop file-backed scripts.");
-assert.ok(commandsServer.indexOf("function interactiveDesktopCommand") >= 0 &&
-    commandsServer.indexOf("-LogonType Interactive") >= 0,
-    "GUI commands must launch in the logged-on user's interactive session.");
-assert.ok(commandsServer.indexOf("Get-Process explorer -IncludeUserName") >= 0 &&
-    commandsServer.indexOf("Get-CimInstance Win32_ComputerSystem") >= 0,
-    "Interactive launch must resolve the Explorer owner before the WMI fallback.");
-assert.ok(commandsServer.indexOf("function desktopLaunch") >= 0 && commandsServer.indexOf("wscript.exe") >= 0,
-    "Desktop tools must use the console-free interactive launcher.");
+assert.strictEqual(commandsServer.indexOf("function interactiveDesktopCommand"), -1,
+    "Commands must not duplicate the shared logged-on-user interactive launcher.");
+assert.strictEqual(commandsServer.indexOf("function desktopLaunch"), -1,
+    "Commands must not own a second desktop-launch parser/lifecycle.");
+assert.ok(loggedOnUserPolicy.indexOf("SirkActiveWtsSession") >= 0 &&
+    loggedOnUserPolicy.indexOf("Get-Process explorer -IncludeUserName") >= 0,
+    "Shared logged-on-user launch must resolve the active WTS/Explorer user session.");
+assert.ok(loggedOnUserPolicy.indexOf("New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited") >= 0 &&
+    loggedOnUserPolicy.indexOf("wscript.exe") >= 0,
+    "GUI runAsUser commands must use the canonical console-free interactive user-session owner.");
 assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0,
     "Built-in commands must persist separate Desktop and non-Desktop availability.");
 assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,

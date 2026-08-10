@@ -14,9 +14,11 @@ assert.ok(source.indexOf('typeof window.setModalContent === "function"') >= 0 &&
     source.indexOf('document.getElementById("xxAddAgentModalConf")') >= 0 &&
     source.indexOf('document.getElementById("dialog2")') >= 0,
     "Modern Results viewer must use the same bounded MeshCentral modal manager contract as Move Request.");
-assert.ok(source.indexOf('manager.setContent("xxAddAgent", title, contentHtml, "extra-large")') >= 0 &&
+assert.ok(source.indexOf('manager.setContent("xxAddAgent", title, contentHtml)') >= 0 &&
     source.indexOf('manager.show("xxAddAgentModal", "idx_dlgOkButton")') >= 0,
-    "Modern Results viewer must provide MeshCentral's required OK-button id so showModal returns and live result mounting can continue.");
+    "Modern Results viewer must reuse MeshCentral's default native dialog geometry and required OK-button contract.");
+assert.strictEqual(source.indexOf('"extra-large"'), -1,
+    "Results must not force modal-xl on MeshCentral's xxAddAgentModalConf geometry owner.");
 assert.strictEqual(source.indexOf('manager.show("xxAddAgentModal");'), -1,
     "The dev.34 incomplete showModal call that throws after showing an empty modal must not return.");
 assert.ok(source.indexOf('typeof window.setDialogMode === "function"') >= 0 &&

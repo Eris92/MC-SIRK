@@ -22,6 +22,12 @@ var userPowerShell = {
     runAsUser: 2,
     cmd: "whoami\nWrite-Output $env:APPDATA"
 };
+var networkSettingsCmd = {
+    label: "Network Settings",
+    type: 1,
+    runAsUser: 2,
+    cmd: 'start "" powershell.exe -NoProfile -WindowStyle Hidden -Command "$verb.DoIt()"'
+};
 var legacyUserCmd = {
     label: "Legacy user command",
     type: 1,
@@ -51,13 +57,16 @@ Promise.resolve()
         return device.sendRunCommands({ nodeId: "node/domain/user" }, userPowerShell, "user-ps", 7);
     })
     .then(function () {
+        return device.sendRunCommands({ nodeId: "node/domain/network" }, networkSettingsCmd, "network-settings", 7);
+    })
+    .then(function () {
         return device.sendRunCommands({ nodeId: "node/domain/user" }, legacyUserCmd, "user-cmd", 7);
     })
     .then(function () {
         return device.sendRunCommands({ nodeId: "node/domain/system" }, systemCommand, "system", 7);
     })
     .then(function () {
-        assert.strictEqual(captured.length, 3, "All commands must reach the MeshAgent transport.");
+        assert.strictEqual(captured.length, 4, "All commands must reach the MeshAgent transport.");
 
         var transformedPowerShell = captured[0].command;
         assert.strictEqual(transformedPowerShell.runAsUser, 0,
@@ -90,7 +99,18 @@ Promise.resolve()
             return value.indexOf("Write-Output $env:APPDATA") >= 0;
         }), "The original PowerShell body must be embedded without changing user-profile variables.");
 
-        var transformedCmd = captured[1].command;
+        var transformedNetwork = captured[1].command;
+        assert.strictEqual(transformedNetwork.runAsUser, 0,
+            "Network Settings transport wrapper must become LocalSystem only after the shared user-session policy owns the launch.");
+        assert.strictEqual(transformedNetwork.type, 2,
+            "Network Settings must use the shared PowerShell launcher wrapper.");
+        assert.strictEqual(transformedNetwork.cmd.indexOf("SIRK-Desktop-"), -1,
+            "Network Settings must not enter the legacy interactive-SYSTEM launcher path.");
+        assert.ok(decodedPayloads(transformedNetwork.cmd).some(function (value) {
+            return value.indexOf('start "" powershell.exe -NoProfile -WindowStyle Hidden') >= 0 && value.indexOf("$verb.DoIt()") >= 0;
+        }), "The shared logged-on-user owner must preserve the Network Settings CMD body exactly.");
+
+        var transformedCmd = captured[2].command;
         assert.strictEqual(transformedCmd.runAsUser, 0,
             "Legacy runAsUser 1 commands must use the reliable user-session launcher.");
         assert.strictEqual(transformedCmd.type, 2,
@@ -99,7 +119,7 @@ Promise.resolve()
             return value.indexOf("whoami && echo %APPDATA%") >= 0;
         }), "The original CMD body must be preserved.");
 
-        assert.strictEqual(captured[2].command, systemCommand,
+        assert.strictEqual(captured[3].command, systemCommand,
             "SYSTEM commands must remain unchanged.");
         assert.strictEqual(userPowerShell.runAsUser, 2,
             "The policy must not mutate the original command object.");

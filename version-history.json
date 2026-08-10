@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.38",
+    "date": "2026-08-10",
+    "changes": [
+      "Bump the pre-1.0 development revision for the real dev.37 Network invocation-owner and Results native-geometry follow-up.",
+      "Remove the Commands module's duplicate interactive Desktop launcher and preserve runAsUser 2 until the canonical logged-on-user-command-policy owns the active WTS/user-session launch.",
+      "Keep the proven Network Settings Status=Up and real FolderItem Properties/Właściwości verb body unchanged while removing the legacy interactive-SYSTEM SIRK-Desktop pre-wrapper from this execution path.",
+      "Stop forcing MeshCentral extra-large/modal-xl geometry for Results; retain native dialog lifecycle and table/Copy/CSV/Debug behavior. Test #528 is green; #128/#237 stay open for real dev.38 smoke; no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.37",
     "date": "2026-08-10",
     "changes": [
