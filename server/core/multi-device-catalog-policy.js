@@ -29,6 +29,30 @@ function database(parent) {
     return null;
 }
 
+function publicNode(node) {
+    var id = String(node && (node._id || node.nodeid || node.id) || "");
+    return {
+        _id: id,
+        name: shared.cleanText(node && (node.name || node.hostname || node.host || id) || id, 300),
+        rname: shared.cleanText(node && (node.rname || node.hostname || node.host || "") || "", 300),
+        meshid: String(node && (node.meshid || node.meshId || node.groupid) || ""),
+        tags: cleanTags(node && node.tags)
+    };
+}
+
+function authorizeNodes(device, user, rows) {
+    var nodes = (Array.isArray(rows) ? rows : []).map(publicNode).filter(function (node) { return !!node._id; });
+    if (!nodes.length) return Promise.resolve([]);
+    if (!device || typeof device.resolveNode !== "function") {
+        return Promise.reject(new Error("MeshCentral device authorization API is unavailable."));
+    }
+    return Promise.all(nodes.map(function (node) {
+        return Promise.resolve(device.resolveNode(user, node._id)).then(function () { return node; }, function () { return null; });
+    })).then(function (values) {
+        return values.filter(Boolean);
+    });
+}
+
 function catalog(runtime, user) {
     var context = runtime && runtime.context;
     var device = context && context.device;
@@ -66,17 +90,10 @@ function catalog(runtime, user) {
         try {
             db.GetAllTypeNoTypeFieldMeshFiltered(meshIds, null, domainId, "node", null, 0, 0, function (error, rows) {
                 if (error) { reject(error instanceof Error ? error : new Error(String(error))); return; }
-                result.nodes = (Array.isArray(rows) ? rows : []).map(function (node) {
-                    var id = String(node && (node._id || node.nodeid || node.id) || "");
-                    return {
-                        _id: id,
-                        name: shared.cleanText(node && (node.name || node.hostname || node.host || id) || id, 300),
-                        rname: shared.cleanText(node && (node.rname || node.hostname || node.host || "") || "", 300),
-                        meshid: String(node && (node.meshid || node.meshId || node.groupid) || ""),
-                        tags: cleanTags(node && node.tags)
-                    };
-                }).filter(function (node) { return !!node._id; });
-                resolve(result);
+                authorizeNodes(device, user, rows).then(function (nodes) {
+                    result.nodes = nodes;
+                    resolve(result);
+                }, reject);
             });
         } catch (error) { reject(error); }
     });
@@ -99,5 +116,6 @@ function apply(plugin) {
 }
 
 module.exports.apply = apply;
+module.exports.authorizeNodes = authorizeNodes;
 module.exports.catalog = catalog;
 module.exports.cleanTags = cleanTags;
