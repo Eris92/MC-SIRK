@@ -88,7 +88,9 @@ var context = {
     console: console,
     document: { documentElement: { lang: "en" } },
     window: {
-        SharedScriptTools: {},
+        SharedScriptTools: {
+            create: function () { return { marker: true }; }
+        },
         localStorage: { getItem: function () { return "en"; } }
     }
 };
@@ -99,6 +101,11 @@ assert.ok(contract, "The shared parameter dialog must expose a targeted pure con
 assert.strictEqual(contract.controlKind({ control: "USER" }), "user");
 assert.strictEqual(contract.controlKind({ control: "asset" }), "asset");
 assert.strictEqual(contract.controlKind({ control: "unknown" }), "text");
+
+var instance = context.window.SharedScriptTools.create({ storageKey: "test" });
+assert.strictEqual(instance.marker, true, "The parameter dialog bridge must preserve the original SharedScriptTools factory result.");
+assert.strictEqual(typeof instance.openParameterDialog, "function",
+    "SharedScriptTools.create() instances used by Commands/My Scripts must expose the shared parameter dialog.");
 
 var required = fakeControl("");
 var flag = fakeControl("");
@@ -117,4 +124,4 @@ var values = contract.validate(records, status);
 assert.strictEqual(values.RequiredText, "value");
 assert.strictEqual(values.Flag, false, "Switch values must preserve boolean mapping.");
 
-console.log("Shared native execution parameter dialog, consumers, loader order and validation: OK");
+console.log("Shared native execution parameter dialog, consumers, loader order, factory instances and validation: OK");
