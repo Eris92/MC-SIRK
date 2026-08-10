@@ -44,11 +44,17 @@
         );
     }
 
-    function confirmExecution(script) {
-        if (!script || script.confirmExecution !== true) return true;
-        return window.confirm(
-            "Run \"" + (script.label || script.name || script.path || "this script") + "\" now?"
-        );
+    function confirmExecution(script, trigger) {
+        if (!script || script.confirmExecution !== true) return Promise.resolve(true);
+        if (!tools || typeof tools.openConfirmationDialog !== "function") {
+            return Promise.reject(new Error("Native MeshCentral confirmation dialog is unavailable."));
+        }
+        return tools.openConfirmationDialog({
+            title: script.label || script.name || "Confirm execution",
+            message: "Run \"" + (script.label || script.name || script.path || "this script") + "\" now?",
+            trigger: trigger,
+            primaryLabel: script.requiresApproval ? "Request" : "Run"
+        });
     }
 
     function requestOutput(request) {
@@ -199,40 +205,43 @@
     }
 
     function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
-        if (!confirmExecution(script)) {
-            if (errorHost) showValidationError(shell, errorHost, new Error("Execution cancelled."));
-            else switchToResult(detailsHost, resultHost, "Execution cancelled.");
-            return;
-        }
+        return confirmExecution(script, button || document.activeElement).then(function (confirmed) {
+            if (!confirmed) return;
+            if (button) button.disabled = true;
+            switchToResult(detailsHost, resultHost, "Executing script...");
 
-        if (button) button.disabled = true;
-        switchToResult(detailsHost, resultHost, "Executing script...");
-
-        var sequence = ++progressSequence;
-        var protocolPending = false;
-        shell.post("request", {
-            scriptPath: script.path,
-            variableValues: values || {},
-            confirmedExecution: script.confirmExecution === true,
-            note: ""
-        }).then(function (response) {
-            var request = response.request || {};
-            outputs[script.path] = request;
-            if (response.protocol === true && request.id) {
-                protocolPending = true;
-                pollProtocol(shell, script, request, resultHost, sequence, 0, button);
-            } else renderResult(resultHost, request);
+            var sequence = ++progressSequence;
+            var protocolPending = false;
+            return shell.post("request", {
+                scriptPath: script.path,
+                variableValues: values || {},
+                confirmedExecution: script.confirmExecution === true,
+                note: ""
+            }).then(function (response) {
+                var request = response.request || {};
+                outputs[script.path] = request;
+                if (response.protocol === true && request.id) {
+                    protocolPending = true;
+                    pollProtocol(shell, script, request, resultHost, sequence, 0, button);
+                } else renderResult(resultHost, request);
+            }).catch(function (error) {
+                var request = {
+                    status: "failed",
+                    title: script.label || script.name,
+                    result: { message: error.message || String(error) }
+                };
+                outputs[script.path] = request;
+                renderResult(resultHost, request);
+            }).then(function () {
+                if (button && !protocolPending) button.disabled = false;
+                sync(shell);
+            });
         }).catch(function (error) {
-            var request = {
-                status: "failed",
-                title: script.label || script.name,
-                result: { message: error.message || String(error) }
-            };
-            outputs[script.path] = request;
-            renderResult(resultHost, request);
-        }).then(function () {
-            if (button && !protocolPending) button.disabled = false;
-            sync(shell);
+            if (errorHost) showValidationError(shell, errorHost, error);
+            else {
+                switchToResult(detailsHost, resultHost, error.message || String(error));
+                resultHost.classList.add("mc-shared-error");
+            }
         });
     }
 
@@ -259,6 +268,27 @@
                 detailsHost.appendChild(resultHost);
                 sync(shell);
                 submit(shell, script, null, {}, detailsHost, resultHost, null);
+                return;
+            }
+
+            if (executeOnSelect === true && hasVariables) {
+                sync(shell);
+                if (!tools || typeof tools.openParameterDialog !== "function") {
+                    switchToResult(detailsHost, resultHost, "Native MeshCentral parameter dialog is unavailable.");
+                    resultHost.classList.add("mc-shared-error");
+                    return;
+                }
+                tools.openParameterDialog({
+                    item: script,
+                    trigger: document.activeElement,
+                    primaryLabel: script.requiresApproval ? "Request" : "Run"
+                }).then(function (values) {
+                    if (values == null) return;
+                    submit(shell, script, null, values, detailsHost, resultHost, null);
+                }).catch(function (error) {
+                    switchToResult(detailsHost, resultHost, error.message || String(error));
+                    resultHost.classList.add("mc-shared-error");
+                });
                 return;
             }
 
@@ -289,7 +319,8 @@
                     return;
                 }
                 tools.openParameterDialog({
-                    item: script, trigger: button,
+                    item: script,
+                    trigger: button,
                     primaryLabel: script.requiresApproval ? "Request" : "Run"
                 }).then(function (values) {
                     if (values == null) return;
@@ -300,7 +331,6 @@
                 });
             };
             sync(shell);
-            if (executeOnSelect === true && hasVariables) button.click();
         }).catch(function (error) {
             shell.error(shell.state.page.details, error);
         });
