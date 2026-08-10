@@ -1,3 +1,12 @@
+## 0.1.1-dev.43 - 2026-08-10
+
+- Commands #247: expand Multi-device execution from selection-only input to the permission-filtered MeshCentral host catalog using stable `nodeId` identity.
+- Add All hosts, visible device groups, visible tags, case-insensitive local name/hostname search, one deduplicated selection `Set`, selected count and bootstrap `maxMultiHostNodes` UI guard without silent truncation.
+- Preserve native `checkedNodeids`/current host as initial selection only, existing Commands consumer/payload/approval/confirmation semantics and backend oversized-payload authorization guard.
+- Add targeted selector regression coverage; pre-bump full PR Test run `31388059310` GREEN. Final exact-version CI and real MeshCentral smoke are required before closing #247. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.43.md`.
+
 ## 0.1.1-dev.42 - 2026-08-10
 
 - Admin #249: remove top-level Permissions and reuse the existing collapsible permission renderer inside My Commands/My Scripts with partial module-only save payloads.

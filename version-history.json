@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.43",
+    "date": "2026-08-10",
+    "summary": "Commands #247: multi-device selector with All hosts, visible groups/tags, local search, stable nodeId dedupe and maxMultiHostNodes UI guard.",
+    "notes": "docs/releases/0.1.1-dev.43.md"
+  },
+  {
     "version": "0.1.1-dev.42",
     "date": "2026-08-10",
     "summary": "Admin backlog: module-local Permissions, Move Request approval levels per target group and live theme owner rebinding; Network deferred.",

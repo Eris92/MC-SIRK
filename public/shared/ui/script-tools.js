@@ -63,59 +63,146 @@
     }
 
     function nodeName(id) {
-        var stores = [window.nodes, window.meshes, window.devices];
-        for (var i = 0; i < stores.length; i++) {
-            var item = stores[i] && stores[i][id];
-            if (item && (item.name || item.rname || item.host)) return item.name || item.rname || item.host;
+        var list = Array.isArray(window.nodes) ? window.nodes : [];
+        for (var index = 0; index < list.length; index++) {
+            var node = list[index];
+            if (node && text(node._id) === text(id)) return node.name || node.rname || id;
         }
         return id;
     }
 
     function selectedDevices(currentNodeId) {
         var result = [], seen = Object.create(null);
-        function add(id, name) {
+        function add(id) {
             id = text(id).trim();
-            if (!id || seen[id]) return;
-            if (id.indexOf("node/") < 0 && id.indexOf("node//") < 0) return;
+            if (!id || seen[id] || id.indexOf("node/") !== 0) return;
             seen[id] = true;
-            result.push({ id: id, name: text(name || nodeName(id)) });
+            result.push({ id: id, name: text(nodeName(id)) });
         }
-        function scan(value) {
-            if (!value) return;
-            if (typeof value === "string") { add(value); return; }
-            if (Array.isArray(value)) { value.forEach(scan); return; }
-            if (typeof value !== "object") return;
-            var id = value.nodeId || value.nodeid || value._id || value.id;
-            if (id) add(id, value.name || value.rname || value.host);
-            Object.keys(value).forEach(function (key) {
-                if (key.indexOf("node/") >= 0) add(key, value[key] && value[key].name);
-            });
-        }
-        [
-            "selectedNodes", "selectedNodeIds", "selectedDevices",
-            "multiSelectedNodes", "checkedNodes", "deviceSelection",
-            "selectedDeviceIds", "multiSelectedDevices"
-        ].forEach(function (name) { try { scan(window[name]); } catch (error) {} });
-
-        var selector = [
-            'input[type="checkbox"]:checked[data-nodeid]',
-            'input[type="checkbox"]:checked[data-node-id]',
-            'input[type="checkbox"]:checked[value*="node/"]',
-            '[aria-selected="true"][data-nodeid]',
-            '[aria-selected="true"][data-node-id]',
-            '.selected[data-nodeid]', '.selected[data-node-id]'
-        ].join(",");
-        Array.prototype.forEach.call(document.querySelectorAll(selector), function (element) {
-            var row = element.closest && element.closest("[data-nodeid],[data-node-id]");
-            var id = element.getAttribute("data-nodeid") || element.getAttribute("data-node-id") ||
-                (row && (row.getAttribute("data-nodeid") || row.getAttribute("data-node-id"))) ||
-                element.value;
-            var name = element.getAttribute("data-nodename") || element.getAttribute("data-node-name") ||
-                (row && (row.getAttribute("data-nodename") || row.getAttribute("data-node-name")));
-            add(id, name);
+        var checked = window.checkedNodeids && typeof window.checkedNodeids === "object"
+            ? window.checkedNodeids : {};
+        Object.keys(checked).forEach(function (id) {
+            if (checked[id]) add(id);
         });
         if (!result.length && currentNodeId) add(currentNodeId);
         return result;
+    }
+
+    function maxMultiHostNodes(value) {
+        value = Number(value);
+        if (!isFinite(value) || value <= 0) value = 200;
+        return Math.max(1, Math.min(1000, Math.floor(value)));
+    }
+
+    function buildMultiDeviceCatalog(currentNodeId) {
+        var devices = [], byId = Object.create(null);
+        var groupsById = Object.create(null), tagsByName = Object.create(null);
+        var meshes = window.meshes && typeof window.meshes === "object" ? window.meshes : {};
+
+        function addNode(node) {
+            node = node || {};
+            var id = text(node._id).trim();
+            if (!id || byId[id]) return;
+            var name = text(node.name || node.rname || id).trim() || id;
+            var hostname = text(node.rname || "").trim();
+            var meshId = text(node.meshid || "").trim();
+            var mesh = meshId && meshes[meshId];
+            var groupName = text(mesh && mesh.name || meshId).trim();
+            var tags = uniqueStrings(Array.isArray(node.tags) ? node.tags.map(function (tag) { return text(tag).trim(); }).filter(Boolean) : []);
+            var device = {
+                id: id,
+                name: name,
+                hostname: hostname,
+                meshId: meshId,
+                groupName: groupName,
+                tags: tags,
+                search: [name, hostname, id].join(" ").toLowerCase()
+            };
+            byId[id] = device;
+            devices.push(device);
+
+            if (meshId) {
+                if (!groupsById[meshId]) groupsById[meshId] = { id: meshId, name: groupName || meshId, ids: [] };
+                groupsById[meshId].ids.push(id);
+            }
+            tags.forEach(function (tag) {
+                if (!tagsByName[tag]) tagsByName[tag] = { id: tag, name: tag, ids: [] };
+                tagsByName[tag].ids.push(id);
+            });
+        }
+
+        (Array.isArray(window.nodes) ? window.nodes : []).forEach(addNode);
+        if (!devices.length) {
+            selectedDevices(currentNodeId).forEach(function (device) {
+                addNode({ _id: device.id, name: device.name });
+            });
+        }
+
+        devices.sort(function (a, b) {
+            var byName = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+            return byName || a.id.localeCompare(b.id);
+        });
+        var groups = Object.keys(groupsById).map(function (id) { return groupsById[id]; }).sort(function (a, b) {
+            return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.id.localeCompare(b.id);
+        });
+        var tags = Object.keys(tagsByName).map(function (name) { return tagsByName[name]; }).sort(function (a, b) {
+            return a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.id.localeCompare(b.id);
+        });
+
+        var initialIds = [], initialSeen = Object.create(null);
+        function addInitial(id) {
+            id = text(id).trim();
+            if (!id || !byId[id] || initialSeen[id]) return;
+            initialSeen[id] = true;
+            initialIds.push(id);
+        }
+        selectedDevices(currentNodeId).forEach(function (device) { addInitial(device.id); });
+
+        return { devices: devices, groups: groups, tags: tags, initialIds: initialIds };
+    }
+
+    function createMultiDeviceSelection(catalog, limit) {
+        catalog = catalog || { devices: [], initialIds: [] };
+        limit = maxMultiHostNodes(limit);
+        var byId = Object.create(null), selected = new Set();
+        (catalog.devices || []).forEach(function (device) { if (device && device.id) byId[device.id] = device; });
+        (catalog.initialIds || []).forEach(function (id) { if (byId[id]) selected.add(id); });
+
+        function setIds(ids, checked) {
+            (ids || []).forEach(function (id) {
+                if (!byId[id]) return;
+                if (checked) selected.add(id); else selected.delete(id);
+            });
+        }
+        function selectedIds() {
+            return (catalog.devices || []).filter(function (device) { return selected.has(device.id); }).map(function (device) { return device.id; });
+        }
+        function scopeState(ids) {
+            var count = 0, valid = 0;
+            (ids || []).forEach(function (id) {
+                if (!byId[id]) return;
+                valid += 1;
+                if (selected.has(id)) count += 1;
+            });
+            return { checked: valid > 0 && count === valid, indeterminate: count > 0 && count < valid };
+        }
+        return {
+            max: limit,
+            has: function (id) { return selected.has(id); },
+            count: function () { return selected.size; },
+            selectedIds: selectedIds,
+            setHost: function (id, checked) { setIds([id], checked); },
+            setAll: function (checked) { setIds((catalog.devices || []).map(function (device) { return device.id; }), checked); },
+            setScope: setIds,
+            scopeState: scopeState,
+            filter: function (query) {
+                query = text(query).trim().toLowerCase();
+                if (!query) return (catalog.devices || []).slice();
+                return (catalog.devices || []).filter(function (device) { return device.search.indexOf(query) >= 0; });
+            },
+            overLimit: function () { return selected.size > limit; },
+            canRun: function () { return selected.size > 0 && selected.size <= limit; }
+        };
     }
 
     function element(tag, className, value) {
@@ -538,6 +625,8 @@
     window.SharedScriptTools = {
         copyText: copyText,
         selectedDevices: selectedDevices,
+        buildMultiDeviceCatalog: buildMultiDeviceCatalog,
+        createMultiDeviceSelection: createMultiDeviceSelection,
         create: function (options) {
             options = options || {};
             var storageKey = options.storageKey || "sirkPlatform.scripts.preferences";
@@ -667,28 +756,121 @@
             }
 
             function openMultiExecution(shell, script, currentNodeId, submit) {
-                var devices = selectedDevices(currentNodeId), host = shell.state.page.details;
+                var config = shell.state && shell.state.bootstrap && shell.state.bootstrap.config || {};
+                var catalog = buildMultiDeviceCatalog(currentNodeId);
+                var selection = createMultiDeviceSelection(catalog, config.maxMultiHostNodes);
+                var host = shell.state.page.details;
                 host.innerHTML = "";
                 var card = shell.card("Multi-device execution", script.label || script.name);
                 card.classList.add("mc-multi-editor-card");
-                if (!devices.length) {
-                    card.appendChild(document.createTextNode("Select devices in MeshCentral before using this action.")); host.appendChild(card); return;
+                if (!catalog.devices.length) {
+                    card.appendChild(document.createTextNode("No accessible MeshCentral devices are available for multi-device execution."));
+                    host.appendChild(card);
+                    return;
                 }
-                var list = document.createElement("div"); list.className = "mc-multi-device-list";
-                devices.forEach(function (device) {
-                    var row = document.createElement("label"), box = document.createElement("input"); box.type = "checkbox"; box.checked = true; box.value = device.id;
-                    row.appendChild(box); row.appendChild(document.createTextNode(" " + device.name)); row.title = device.id; list.appendChild(row);
+
+                var search = element("input", "mc-definition-input mc-multi-search");
+                search.type = "search";
+                search.placeholder = "Search device name or hostname";
+                search.autocomplete = "off";
+                card.appendChild(search);
+
+                var scopeGrid = element("div", "mc-multi-scope-grid");
+                var scopeRecords = [];
+                var allIds = catalog.devices.map(function (device) { return device.id; });
+                var allLabel = element("label", "mc-multi-scope-option mc-multi-all");
+                var allBox = element("input");
+                allBox.type = "checkbox";
+                allLabel.appendChild(allBox);
+                allLabel.appendChild(element("span", "", "All hosts (" + catalog.devices.length + ")"));
+                scopeGrid.appendChild(allLabel);
+                scopeRecords.push({ box: allBox, ids: allIds });
+
+                function appendScopes(title, scopes) {
+                    if (!scopes.length) return;
+                    var section = element("div", "mc-multi-scope-section");
+                    section.appendChild(element("strong", "", title));
+                    var choices = element("div", "mc-multi-scope-choices");
+                    scopes.forEach(function (scope) {
+                        var label = element("label", "mc-multi-scope-option");
+                        var box = element("input");
+                        box.type = "checkbox";
+                        label.appendChild(box);
+                        label.appendChild(element("span", "", scope.name + " (" + scope.ids.length + ")"));
+                        choices.appendChild(label);
+                        scopeRecords.push({ box: box, ids: scope.ids });
+                    });
+                    section.appendChild(choices);
+                    scopeGrid.appendChild(section);
+                }
+                appendScopes("Groups", catalog.groups);
+                appendScopes("Tags", catalog.tags);
+                card.appendChild(scopeGrid);
+
+                var list = element("div", "mc-multi-device-list");
+                var hostRecords = [];
+                catalog.devices.forEach(function (device) {
+                    var row = element("label", "mc-multi-device-row");
+                    var box = element("input");
+                    box.type = "checkbox";
+                    box.value = device.id;
+                    var label = element("span", "mc-multi-device-name", device.name);
+                    row.appendChild(box);
+                    row.appendChild(label);
+                    if (device.hostname && device.hostname.toLowerCase() !== device.name.toLowerCase()) {
+                        row.appendChild(element("span", "mc-multi-device-meta", device.hostname));
+                    }
+                    row.title = device.id;
+                    list.appendChild(row);
+                    hostRecords.push({ device: device, row: row, box: box });
                 });
                 card.appendChild(list);
-                var run = shell.element("button", "btn btn-primary btn-sm", "Run on selected devices"); run.type = "button";
+
+                var status = element("div", "mc-multi-selection-status");
+                var run = shell.element("button", "btn btn-primary btn-sm", "Run on selected devices");
+                run.type = "button";
+                card.appendChild(status);
+                card.appendChild(run);
+
+                function refreshSelection() {
+                    hostRecords.forEach(function (record) { record.box.checked = selection.has(record.device.id); });
+                    scopeRecords.forEach(function (record) {
+                        var scopeState = selection.scopeState(record.ids);
+                        record.box.checked = scopeState.checked;
+                        record.box.indeterminate = scopeState.indeterminate;
+                    });
+                    var count = selection.count();
+                    status.className = selection.overLimit() ? "mc-multi-selection-status mc-shared-error" : "mc-multi-selection-status";
+                    status.textContent = "Selected: " + count + " / max " + selection.max + (selection.overLimit() ? " — reduce the selection before running." : "");
+                    run.disabled = !selection.canRun();
+                }
+
+                allBox.onchange = function () { selection.setAll(allBox.checked); refreshSelection(); };
+                scopeRecords.slice(1).forEach(function (record) {
+                    record.box.onchange = function () { selection.setScope(record.ids, record.box.checked); refreshSelection(); };
+                });
+                hostRecords.forEach(function (record) {
+                    record.box.onchange = function () { selection.setHost(record.device.id, record.box.checked); refreshSelection(); };
+                });
+                search.oninput = function () {
+                    var visible = Object.create(null);
+                    selection.filter(search.value).forEach(function (device) { visible[device.id] = true; });
+                    hostRecords.forEach(function (record) { record.row.hidden = !visible[record.device.id]; });
+                };
                 run.onclick = function () {
-                    var ids = Array.prototype.map.call(list.querySelectorAll('input:checked'), function (box) { return box.value; });
-                    if (!ids.length) return;
+                    var ids = selection.selectedIds();
+                    if (!selection.canRun() || !ids.length || ids.length > selection.max) { refreshSelection(); return; }
                     if (!window.confirm("Run '" + (script.label || script.name) + "' on " + ids.length + " selected device(s)?")) return;
                     run.disabled = true;
-                    Promise.resolve(submit(ids)).catch(function (error) { run.disabled = false; shell.error(host, error); });
+                    Promise.resolve(submit(ids)).catch(function (error) {
+                        refreshSelection();
+                        shell.error(host, error);
+                    });
                 };
-                card.appendChild(run); host.appendChild(card);
+
+                refreshSelection();
+                host.appendChild(card);
+                search.focus();
             }
 
             var tool = {
