@@ -3,7 +3,7 @@ from pathlib import Path
 helper_path = Path("scripts/issue-252-apply.py")
 helper = helper_path.read_text(encoding="utf-8")
 
-# Apply the one fragile insertion directly in the temporary checkout. Nothing is
+# Apply the fragile low-level edits directly in the temporary checkout. Nothing is
 # committed until every subsequent guarded transformation succeeds.
 service_path = Path("server/core/jira-assets-service.js")
 service = service_path.read_text(encoding="utf-8")
@@ -20,22 +20,46 @@ function writeJsonAtomicSync(fs, path, target, value) {
 }'''
 service_path.write_text(service.replace(marker, atomic + marker, 1), encoding="utf-8")
 
-# Remove the now-unnecessary first guarded replace_once() block from the main
-# transformer. Locate it structurally between the section comment and the next
-# exact replacement call.
+# Remove the now-unnecessary first guarded service insertion block.
 section = helper.index("# jira-assets-service: synchronous atomic writes")
 first = helper.index("replace_once(", section)
 second = helper.index("replace_once(", first + len("replace_once("))
 helper = helper[:first] + helper[second:]
 
-# Align generated executor source/target strings with the exact current owner.
-if helper.count("MYSCRIPTS_REQUEST_ID: request.id") != 2:
-    raise SystemExit("executor request-id generator token count is unexpected")
-helper = helper.replace("MYSCRIPTS_REQUEST_ID: request.id", 'MYSCRIPTS_REQUEST_ID: request && request.id || ""')
-if helper.count("return run(script, normalized, request") != 2:
-    raise SystemExit("executor run generator token count is unexpected")
-helper = helper.replace("return run(script, normalized, request);", "return run(script, payload, request || {});")
-helper = helper.replace("return run(script, normalized, request, executionOptions);", "return run(script, payload, request || {}, executionOptions);")
+# The executor has one simple extension point: optional non-secret environment
+# supplied by the provider. Patch the exact current owner directly, then remove
+# its generator section to avoid formatting-sensitive double transforms.
+executor_path = Path("server/core/server-script-executor.js")
+executor = executor_path.read_text(encoding="utf-8")
+changes = [
+    (
+        "    function run(script, payload, request) {",
+        "    function run(script, payload, request, executionOptions) {"
+    ),
+    (
+        '''        var environment = Object.assign({}, process.env, systemEnvironment(script.path), {
+            MYSCRIPTS_REQUEST_ID: request && request.id || "",''',
+        '''        executionOptions = executionOptions || {};
+        var environment = Object.assign({}, process.env, systemEnvironment(script.path), executionOptions.environment || {}, {
+            MYSCRIPTS_REQUEST_ID: request && request.id || "",'''
+    ),
+    (
+        "    function execute(payload, request) {",
+        "    function execute(payload, request, executionOptions) {"
+    ),
+    (
+        "            return run(script, payload, request || {});",
+        "            return run(script, payload, request || {}, executionOptions);"
+    )
+]
+for old, new in changes:
+    if executor.count(old) != 1:
+        raise SystemExit("executor direct patch state is unexpected: " + old[:80])
+    executor = executor.replace(old, new, 1)
+executor_path.write_text(executor, encoding="utf-8")
+start = helper.index("# Server script executor: allow caller-owned non-secret environment enrichment only.")
+end = helper.index("# My Scripts backend: Jira provider, progress, artifact and deferred protocol execution.")
+helper = helper[:start] + helper[end:]
 
 # The shared module has no parseJsonObject helper; keep query JSON parsing local
 # and bounded to a plain object.
