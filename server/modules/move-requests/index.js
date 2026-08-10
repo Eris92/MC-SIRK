@@ -77,32 +77,19 @@ module.exports.createModule = function (context) {
     }
 
     function moveNode(payload, request) {
-        var web = context.device.getWebServer();
-        if (!web || typeof web.MoveNodeToMesh !== "function") {
-            return Promise.resolve({
-                message: "Move approved. MeshCentral MoveNodeToMesh API is unavailable in this build.",
-                nodeId: payload.nodeId,
-                targetMeshId: payload.targetMeshId
-            });
+        if (!context.device || typeof context.device.moveNodeToMesh !== "function") {
+            return Promise.reject(new Error("MeshCentral device move API is unavailable."));
         }
-        return new Promise(function (resolve, reject) {
-            try {
-                web.MoveNodeToMesh(
-                    payload.nodeId,
-                    payload.targetMeshId,
-                    request.requester && request.requester.id,
-                    function (error) {
-                        if (error) reject(new Error(String(error.message || error)));
-                        else resolve({
-                            message: "Device moved.",
-                            nodeId: payload.nodeId,
-                            targetMeshId: payload.targetMeshId
-                        });
-                    }
-                );
-            } catch (error) {
-                reject(error);
-            }
+        var requesterId = String(request && request.requester && request.requester.id || "");
+        if (!requesterId) return Promise.reject(new Error("Move request user is unavailable."));
+        return context.device.moveNodeToMesh(requesterId, payload.nodeId, payload.targetMeshId).then(function (result) {
+            result = result && typeof result === "object" ? result : {};
+            return {
+                message: result.message || "Device moved.",
+                nodeId: String(result.nodeId || payload.nodeId || ""),
+                targetMeshId: String(result.targetMeshId || payload.targetMeshId || ""),
+                alreadyCurrent: result.alreadyCurrent === true
+            };
         });
     }
 
