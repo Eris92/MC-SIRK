@@ -1,3 +1,13 @@
+## 0.1.1-dev.38 - 2026-08-10
+
+- Follow up real `0.1.1-dev.37` smoke evidence: Network Settings still failed although the same `FolderItemVerb.DoIt()` operation worked manually, and Results View remained visually unchanged.
+- Fix the Network invocation root cause: built-in `runAsUser: 2` commands no longer get pre-wrapped by the Commands module into the legacy `SIRK-Desktop-*` interactive-SYSTEM launcher; the existing `server/core/logged-on-user-command-policy.js` is now the single owner of logged-on-user execution.
+- Remove the obsolete module-local `desktopLaunch()` / `interactiveDesktopCommand()` implementation instead of layering another launcher, while preserving the Network command body, stable IDs, route/adapter selection and real `Properties/Właściwości` verb.
+- Fix the Results geometry owner identified in the native MeshCentral contract: stop passing `extra-large` to `setModalContent()`, so MC-SIRK no longer forces `modal-xl` on `#xxAddAgentModalConf`; result rendering, Copy, CSV, Debug and native close lifecycle remain unchanged.
+- Full runtime/shared regression Test #528 is green before the version bump. Keep #128 and #237 open for real `0.1.1-dev.38` re-smoke; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.38.md`.
+
 ## 0.1.1-dev.37 - 2026-08-10
 
 - Follow up real `0.1.1-dev.36` smoke evidence: Results content is present but the plugin root still owns a second card/viewport geometry inside the native MeshCentral modal, while Network Settings still does not open properties from the plugin.
