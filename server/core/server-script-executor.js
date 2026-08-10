@@ -114,6 +114,16 @@ module.exports.createServerScriptExecutor = function (options) {
         return environment;
     }
 
+    function callerEnvironment(value) {
+        value = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+        var result = {};
+        Object.keys(value).slice(0, 64).forEach(function (name) {
+            if (!/^[A-Z][A-Z0-9_]{0,127}$/.test(name)) return;
+            result[name] = text(value[name], 131072);
+        });
+        return result;
+    }
+
     function powershellPath() {
         var configured = String(process.env.SIRK_PLATFORM_POWERSHELL || "").trim();
         if (configured) return configured;
@@ -200,7 +210,7 @@ module.exports.createServerScriptExecutor = function (options) {
         return null;
     }
 
-    function run(script, payload, request) {
+    function run(script, payload, request, executionOptions) {
         if (payload.scriptHash && String(payload.scriptHash) !== String(script.hash)) {
             return Promise.reject(new Error("The script changed after submission and was not executed."));
         }
@@ -213,13 +223,20 @@ module.exports.createServerScriptExecutor = function (options) {
         try { plan = buildPlan(script, values); }
         catch (error) { return Promise.reject(error); }
 
-        var environment = Object.assign({}, process.env, systemEnvironment(script.path), {
-            MYSCRIPTS_REQUEST_ID: request && request.id || "",
-            MYSCRIPTS_REQUESTER: request && request.requester && request.requester.name || "",
-            MYSCRIPTS_PLUGIN_ROOT: context.pluginRoot,
-            MYSCRIPTS_SCRIPTS_ROOT: context.nativePath.join(context.pluginRoot, "seed", "MyScripts"),
-            DIRECTORYTOOLS_PLUGIN_ROOT: context.pluginRoot
-        });
+        executionOptions = executionOptions && typeof executionOptions === "object" ? executionOptions : {};
+        var environment = Object.assign(
+            {},
+            process.env,
+            executionOptions.skipSystemEnvironment === true ? {} : systemEnvironment(script.path),
+            callerEnvironment(executionOptions.environment),
+            {
+                MYSCRIPTS_REQUEST_ID: request && request.id || "",
+                MYSCRIPTS_REQUESTER: request && request.requester && request.requester.name || "",
+                MYSCRIPTS_PLUGIN_ROOT: context.pluginRoot,
+                MYSCRIPTS_SCRIPTS_ROOT: context.nativePath.join(context.pluginRoot, "seed", "MyScripts"),
+                DIRECTORYTOOLS_PLUGIN_ROOT: context.pluginRoot
+            }
+        );
 
         return new Promise(function (resolve, reject) {
             childProcess.execFile(plan.file, plan.args, {
@@ -251,12 +268,12 @@ module.exports.createServerScriptExecutor = function (options) {
         });
     }
 
-    function execute(payload, request) {
+    function execute(payload, request, executionOptions) {
         payload = payload && typeof payload === "object" ? payload : {};
         var task = function () {
             var script = library.getScript(String(payload.scriptPath || ""), true);
             if (!script) throw new Error("Script not found.");
-            return run(script, payload, request || {});
+            return run(script, payload, request || {}, executionOptions);
         };
         var operation = queue.catch(function () {}).then(task);
         queue = operation.catch(function () {});
