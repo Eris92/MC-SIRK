@@ -4,7 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.35`](0.1.1-dev.35.md) — follow-up po real `0.1.1-dev.34` smoke: kompletny Modern Results modal contract oraz Windows-verified PIDL/ShellExecuteEx dla Network Settings;
+- [`0.1.1-dev.36`](0.1.1-dev.36.md) — follow-up po real `0.1.1-dev.35` smoke: finalny Results first paint z parsed/table + pełnym Debug oraz synchroniczne Shell properties activation dla Network Settings;
+- [`0.1.1-dev.35`](0.1.1-dev.35.md) — poprzedni follow-up po real `0.1.1-dev.34` smoke: kompletny Modern Results modal contract oraz pierwsza PIDL/ShellExecuteEx próba Network Settings, nadal nieskuteczna w real smoke;
 - [`0.1.1-dev.34`](0.1.1-dev.34.md) — poprzedni follow-up po real `0.1.1-dev.33` smoke: Results viewer na natywnym dialog managerze MeshCentral oraz nieskuteczna próba `InvokeVerb('properties')` dla Windows Network Settings;
 - [`0.1.1-dev.33`](0.1.1-dev.33.md) — poprzedni follow-up po real `0.1.1-dev.32` smoke: Results View na standardowym native secondary surface, natychmiastowa wzajemna wyłączność Commands/Plugins oraz pierwsza nieskuteczna próba Windows ConnectionsFolder dla Network Settings;
 - [`0.1.1-dev.32`](0.1.1-dev.32.md) — poprzednia zintegrowana rewizja smoke po PR #233/#234: single-pending Move Requests per stable host oraz wzajemnie wykluczające się zaznaczenie Commands/Plugins;
