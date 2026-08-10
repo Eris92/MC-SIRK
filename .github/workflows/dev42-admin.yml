@@ -19,6 +19,7 @@ jobs:
         run: |
           python3 .tmp/dev42-admin-patch.py
           python3 .tmp/dev42-admin-testfix.py
+          python3 .tmp/dev42-admin-placementfix.py
       - name: Targeted tests
         run: |
           node test/admin-permissions-ui.test.js
@@ -31,7 +32,7 @@ jobs:
           node test/admin-settings-save.test.js
       - name: Full suite without temporary workflow
         run: |
-          rm -f .github/workflows/dev42-admin.yml .tmp/dev42-admin-patch.py .tmp/dev42-admin-testfix.py
+          rm -f .github/workflows/dev42-admin.yml .tmp/dev42-admin-patch.py .tmp/dev42-admin-testfix.py .tmp/dev42-admin-placementfix.py
           npm test
           git diff --check
       - name: Commit clean runtime changes
