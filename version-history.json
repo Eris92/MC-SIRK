@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.39",
+    "date": "2026-08-10",
+    "changes": [
+      "Bump the pre-1.0 development revision after real dev.38 Network Settings and Admin theme regressions while Results/View passes.",
+      "Execute Network Settings as direct type-2 PowerShell through the single canonical logged-on-user runner instead of detaching powershell.exe via CMD start; preserve the proven route/adapter and real Shell Properties verb body.",
+      "Prefer explicit parent data-bs-theme over stale legacy nightMode in the existing Admin host theme owner while retaining Classic fallbacks and copied host surface; add functional stale-signal regression.",
+      "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke; no automatic tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.38",
     "date": "2026-08-10",
     "changes": [

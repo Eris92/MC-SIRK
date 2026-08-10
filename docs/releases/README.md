@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.39`](0.1.1-dev.39.md) — follow-up po real `0.1.1-dev.38` smoke: Network Settings wykonuje sprawdzony PowerShell bezpośrednio przez shared logged-on-user runner; Admin preferuje jawny parent `data-bs-theme` przed legacy `nightMode` przy zachowaniu Classic fallback;
 - [`0.1.1-dev.38`](0.1.1-dev.38.md) — follow-up po real `0.1.1-dev.37` smoke: Network Settings korzysta z jednego shared logged-on-user launch ownera zamiast modułowego interactive-SYSTEM pre-wrappera; Results nie wymusza już natywnego `modal-xl`;
 - [`0.1.1-dev.37`](0.1.1-dev.37.md) — follow-up po real `0.1.1-dev.36` smoke: Results bez podwójnej powierzchni/geometrii oraz Network Settings wybierający tylko adapter `Up` i wykonujący rzeczywisty Shell `Properties/Właściwości` verb;
 - [`0.1.1-dev.36`](0.1.1-dev.36.md) — follow-up po real `0.1.1-dev.35` smoke: finalny Results first paint z parsed/table + pełnym Debug oraz synchroniczne Shell properties activation dla Network Settings;
