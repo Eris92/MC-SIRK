@@ -21,3 +21,78 @@ jobs:
           package-manager-cache: false
       - name: Run test suite
         run: npm test
+
+  windows-network-settings-diagnostic:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Extract exact Network Settings payload
+        shell: pwsh
+        run: |
+          @'
+          const fs = require('fs');
+          const vm = require('vm');
+          const source = fs.readFileSync('server/modules/commands/index.js', 'utf8');
+          const marker = '{ id: "network-adapter-properties"';
+          const start = source.indexOf(marker);
+          if (start < 0) throw new Error('Network Settings catalog entry not found.');
+          let end = source.indexOf('\n                { id:', start + marker.length);
+          if (end < 0) end = source.indexOf('\n            ]', start + marker.length);
+          const entry = source.slice(start, end);
+          const cmdMarker = 'cmd: ';
+          const cmdStart = entry.indexOf(cmdMarker);
+          if (cmdStart < 0) throw new Error('Network Settings cmd literal not found.');
+          let index = cmdStart + cmdMarker.length;
+          while (/\s/.test(entry[index])) index++;
+          const quote = entry[index];
+          if (quote !== '"' && quote !== "'") throw new Error('Unexpected command literal.');
+          let escaped = false, finish = -1;
+          for (let i = index + 1; i < entry.length; i++) {
+            const ch = entry[i];
+            if (escaped) { escaped = false; continue; }
+            if (ch === '\\') { escaped = true; continue; }
+            if (ch === quote) { finish = i + 1; break; }
+          }
+          if (finish < 0) throw new Error('Unterminated command literal.');
+          const command = vm.runInNewContext(entry.slice(index, finish));
+          const match = /^start\s+""\s+powershell\.exe\s+-NoProfile\s+-WindowStyle\s+Hidden\s+-Command\s+"([\s\S]*)"$/i.exec(command.trim());
+          if (!match) throw new Error('Production command no longer matches the interactive hidden PowerShell contract.');
+          fs.writeFileSync('network-settings-command.txt', command, 'utf8');
+          fs.writeFileSync('network-settings-payload.ps1', match[1], 'utf8');
+          console.log('productionCommandLength=' + command.length);
+          console.log('payloadLength=' + match[1].length);
+          '@ | Set-Content -LiteralPath extract-network-settings.js -Encoding UTF8
+          node .\extract-network-settings.js
+      - name: Trace exact payload under Windows PowerShell 5.1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Get-Content -LiteralPath .\network-settings-payload.ps1 -Raw
+          $payload = "$ErrorActionPreference='Stop';Write-Output ('CHECKPOINT:runtime ps='+`$PSVersionTable.PSVersion+' apartment='+[Threading.Thread]::CurrentThread.ApartmentState+' user='+[Security.Principal.WindowsIdentity]::GetCurrent().Name+' session='+[Diagnostics.Process]::GetCurrentProcess().SessionId);" + $payload
+          $payload = $payload.Replace('$adapter=Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction Stop;', '$adapter=Get-NetAdapter -InterfaceIndex $route.InterfaceIndex -ErrorAction Stop;Write-Output (''CHECKPOINT:adapter name=''+$adapter.Name+'' ifIndex=''+$adapter.InterfaceIndex);')
+          $payload = $payload.Replace('$folder=$shell.Namespace(49);', '$folder=$shell.Namespace(49);Write-Output (''CHECKPOINT:namespace49=''+[bool]$folder);')
+          $payload = $payload.Replace('$item=$folder.Items()|Where-Object{$_.Name -eq $adapter.Name}|Select-Object -First 1;', '$item=$folder.Items()|Where-Object{$_.Name -eq $adapter.Name}|Select-Object -First 1;Write-Output (''CHECKPOINT:item=''+$item.Name+'' path=''+$item.Path);')
+          $payload = $payload.Replace('Add-Type -TypeDefinition $source -ErrorAction Stop;', 'Write-Output ''CHECKPOINT:before-add-type'';Add-Type -TypeDefinition $source -ErrorAction Stop;Write-Output ''CHECKPOINT:after-add-type'';')
+          $payload = $payload.Replace('[SirkNetworkShell]::ShowProperties($item)', 'Write-Output ''CHECKPOINT:before-properties'';[SirkNetworkShell]::ShowProperties($item);Write-Output ''CHECKPOINT:after-properties''')
+          $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
+          $stdout = Join-Path $env:RUNNER_TEMP 'network-settings.stdout.txt'
+          $stderr = Join-Path $env:RUNNER_TEMP 'network-settings.stderr.txt'
+          $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+          $process = Start-Process -FilePath $exe -ArgumentList @('-NoProfile','-STA','-EncodedCommand',$encoded) -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+          $finished = $process.WaitForExit(15000)
+          if (-not $finished) {
+            Write-Host 'processTimeout=true'
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            $process.WaitForExit()
+          }
+          Write-Host ('processExitCode=' + $process.ExitCode)
+          Write-Host '--- stdout ---'
+          if (Test-Path $stdout) { Get-Content -LiteralPath $stdout }
+          Write-Host '--- stderr ---'
+          if (Test-Path $stderr) { Get-Content -LiteralPath $stderr }
+          if (Test-Path $stderr) {
+            $errorText = (Get-Content -LiteralPath $stderr -Raw).Trim()
+            if ($errorText) { throw 'Windows PowerShell 5.1 exact payload emitted stderr; see diagnostic log.' }
+          }
