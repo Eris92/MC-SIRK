@@ -1,0 +1,17 @@
+"use strict";
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var browser = fs.readFileSync(path.join(root, "web", "admin", "admin.js"), "utf8");
+var runtime = fs.readFileSync(path.join(root, "server", "core", "runtime.js"), "utf8");
+var moduleSource = fs.readFileSync(path.join(root, "server", "modules", "move-requests", "index.js"), "utf8");
+assert.ok(browser.indexOf("Approval levels by target device group") >= 0);
+assert.ok(browser.indexOf("targetMeshApprovalLevels: moveApprovalLevels()") >= 0);
+assert.ok(browser.indexOf("var levels = explicit && Array.isArray(configured[meshId]) ? configured[meshId].map(Number) : [1]") >= 0, "Missing mesh policy must display effective Level 1 default.");
+assert.ok(runtime.indexOf("moveRequestAdmin:") >= 0, "Admin snapshot must include Move Request settings and meshes in one load.");
+assert.ok(runtime.indexOf("modules.moverequests.normalizeAdminSettings") >= 0, "Central save must reuse Move Requests normalization owner.");
+assert.ok(moduleSource.indexOf("function normalizeAdminSettings(value, user)") >= 0);
+assert.ok(moduleSource.indexOf("normalizeMeshApprovalLevels(value.targetMeshApprovalLevels, allowedMeshes)") >= 0);
+assert.ok(moduleSource.indexOf("getAdminSettings: getAdminSettings") >= 0);
+console.log("Admin Move Request per-target approval policy contract: OK");

@@ -9,8 +9,8 @@ assert.ok(browser.indexOf('function disclosure(host, className, title, expanded)
     "Admin must reuse one native details/summary disclosure helper.");
 assert.ok(browser.indexOf('disclosure(host, "mc-admin-provider-card", title, false)') >= 0,
     "Approval providers must be independently collapsible.");
-assert.ok(browser.indexOf('disclosure(host, "mc-admin-provider-card mc-admin-permission-module", title, false)') >= 0,
-    "My Commands and My Scripts permission modules must be collapsible.");
+assert.ok(browser.indexOf('disclosure(host, "mc-admin-provider-card mc-admin-permission-module", sectionTitle || title, false)') >= 0,
+    "Module-local Permissions must reuse the same collapsible permission renderer.");
 assert.ok(browser.indexOf('disclosure(host, "mc-admin-permission-folder", label, false)') >= 0,
     "Folder/category permission blocks must be collapsible.");
 assert.strictEqual(browser.indexOf('.ontoggle'), -1, "Native disclosure must not rerender on toggle.");

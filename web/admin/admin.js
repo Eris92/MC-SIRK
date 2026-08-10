@@ -96,18 +96,40 @@
     function observeHostTheme() {
         syncHostTheme();
         if (typeof hostWindow.MutationObserver === "function") {
-            var observer = new hostWindow.MutationObserver(syncHostTheme);
+            var observedStylesheet = null;
+            var observedSurface = null;
+            var observer;
+            function bindLiveThemeOwners() {
+                var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
+                if (themeStylesheet !== observedStylesheet) {
+                    if (observedStylesheet && typeof observedStylesheet.removeEventListener === "function") observedStylesheet.removeEventListener("load", syncHostTheme);
+                    observedStylesheet = themeStylesheet;
+                    if (observedStylesheet) {
+                        observer.observe(observedStylesheet, { attributes: true, attributeFilter: ["href"] });
+                        if (typeof observedStylesheet.addEventListener === "function") observedStylesheet.addEventListener("load", syncHostTheme);
+                    }
+                }
+                var surface = hostSurfaceStyle();
+                var surfaceElement = surface && surface.element;
+                if (surfaceElement && surfaceElement !== hostDocument.body && surfaceElement !== hostDocument.documentElement && surfaceElement !== observedSurface) {
+                    observedSurface = surfaceElement;
+                    observer.observe(observedSurface, { attributes: true, attributeFilter: ["class", "style"] });
+                }
+            }
+            observer = new hostWindow.MutationObserver(function () {
+                bindLiveThemeOwners();
+                syncHostTheme();
+            });
             if (hostDocument && hostDocument.documentElement) {
                 observer.observe(hostDocument.documentElement, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
             }
             if (hostDocument && hostDocument.body && hostDocument.body !== hostDocument.documentElement) {
                 observer.observe(hostDocument.body, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
             }
-            var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
-            if (themeStylesheet) {
-                observer.observe(themeStylesheet, { attributes: true, attributeFilter: ["href"] });
-                if (typeof themeStylesheet.addEventListener === "function") themeStylesheet.addEventListener("load", syncHostTheme);
+            if (hostDocument && hostDocument.head) {
+                observer.observe(hostDocument.head, { childList: true });
             }
+            bindLiveThemeOwners();
         }
         if (hostWindow.matchMedia) {
             var systemTheme = hostWindow.matchMedia("(prefers-color-scheme: dark)");
@@ -251,7 +273,7 @@
         };
     }
 
-    function modulePermissions(host, title, source, folders) {
+    function modulePermissions(host, title, source, folders, sectionTitle) {
         source = source || {};
         folders = Array.isArray(folders) ? folders : [];
         var configuredRules = source.folderPermissions && typeof source.folderPermissions === "object" && !Array.isArray(source.folderPermissions)
@@ -263,7 +285,7 @@
             return item;
         });
 
-        var card = disclosure(host, "mc-admin-provider-card mc-admin-permission-module", title, false);
+        var card = disclosure(host, "mc-admin-provider-card mc-admin-permission-module", sectionTitle || title, false);
         card.appendChild(element("p", "mc-admin-card-description", "Module access is evaluated first. Device permissions configured in MeshCentral are always required as well."));
         var selectedGroups = Array.isArray(source.accessGroupIds) ? source.accessGroupIds : [];
         var restrict = checked(card, "Restrict module access to selected MeshCentral user groups", selectedGroups.length > 0);
@@ -293,6 +315,49 @@
                 if (entry.key) folderPermissions[entry.key] = entry.read();
             });
             return { accessGroupIds: selectedAccessGroups, folderPermissions: folderPermissions };
+        };
+    }
+
+    function moveRequestApprovalLevels(host, snapshot) {
+        snapshot = snapshot || {};
+        var meshes = Array.isArray(snapshot.meshes) ? snapshot.meshes : [];
+        var settingsValue = snapshot.settings || {};
+        var configured = settingsValue.targetMeshApprovalLevels && typeof settingsValue.targetMeshApprovalLevels === "object"
+            ? settingsValue.targetMeshApprovalLevels
+            : {};
+        var section = disclosure(host, "mc-admin-provider-card mc-admin-move-policy", "Approval levels by target device group", false);
+        section.appendChild(element("p", "mc-admin-card-description", "Select the approval levels required when moving a device into each target group. No selected levels means immediate execution without approval."));
+        var readers = [];
+        meshes.forEach(function (mesh) {
+            var meshId = String(mesh && mesh.id || "");
+            if (!meshId) return;
+            var explicit = Object.prototype.hasOwnProperty.call(configured, meshId);
+            var levels = explicit && Array.isArray(configured[meshId]) ? configured[meshId].map(Number) : [1];
+            var row = element("fieldset", "mc-admin-move-policy-row");
+            row.appendChild(element("legend", "mc-admin-field-label", String(mesh.name || meshId)));
+            var inputs = [1, 2, 3].map(function (level) {
+                var label = element("label", "mc-admin-check");
+                var input = document.createElement("input");
+                input.type = "checkbox";
+                input.checked = levels.indexOf(level) >= 0;
+                label.appendChild(input);
+                label.appendChild(document.createTextNode("Level " + level));
+                row.appendChild(label);
+                return { level: level, input: input };
+            });
+            section.appendChild(row);
+            readers.push({
+                id: meshId,
+                read: function () {
+                    return inputs.filter(function (entry) { return entry.input.checked; }).map(function (entry) { return entry.level; });
+                }
+            });
+        });
+        if (!readers.length) section.appendChild(element("div", "mc-admin-notice", "No MeshCentral device groups are available."));
+        return function () {
+            var result = {};
+            readers.forEach(function (entry) { result[entry.id] = entry.read(); });
+            return result;
         };
     }
 
@@ -421,37 +486,42 @@
             card.appendChild(element("h3", "", "Move Request"));
             var enabled = checked(card, "Enable Move Requests", moduleEnabled("moverequests"));
             var hostButton = checked(card, "Show the Move Request button on device pages", !(current.moverequests && current.moverequests.hostButtonEnabled === false));
+            var moveApprovalLevels = moveRequestApprovalLevels(card, data.moveRequestAdmin);
             actions(card, function () {
-                return { modules: { moverequests: enabled.checked }, moduleOptions: { moverequests: { hostButtonEnabled: hostButton.checked } } };
+                return {
+                    modules: { moverequests: enabled.checked },
+                    moduleOptions: { moverequests: {
+                        hostButtonEnabled: hostButton.checked,
+                        targetMeshApprovalLevels: moveApprovalLevels()
+                    } }
+                };
             });
         } else if (tab === "mycommands") {
             card.appendChild(element("h3", "", "My Commands"));
             var commandEnabled = checked(card, "Enable My Commands", moduleEnabled("mycommands"));
             var desktop = checked(card, "Show Commands in Desktop", !(current.mycommands && current.mycommands.showOnDevice === false));
-            actions(card, function () {
-                return { modules: { mycommands: commandEnabled.checked }, moduleOptions: { mycommands: { showOnDevice: desktop.checked } } };
-            });
-        } else if (tab === "permissions") {
-            card.appendChild(element("h3", "", "Permissions"));
-            card.appendChild(element("p", "mc-admin-card-description", "Grant script and command execution through MeshCentral user groups. Add a user to one of the selected groups to give access."));
             var folderData = data.folderPermissions || {};
-            var commandPermissions = modulePermissions(card, "My Commands", current.mycommands, folderData.mycommands);
-            var scriptPermissions = modulePermissions(card, "My Scripts", current.myscripts, folderData.myscripts);
+            var commandPermissions = modulePermissions(card, "My Commands", current.mycommands, folderData.mycommands, "Permissions");
             actions(card, function () {
                 return {
-                    modules: {},
+                    modules: { mycommands: commandEnabled.checked },
                     moduleOptions: {
-                        permissions: {
-                            mycommands: commandPermissions(),
-                            myscripts: scriptPermissions()
-                        }
+                        mycommands: { showOnDevice: desktop.checked },
+                        permissions: { mycommands: commandPermissions() }
                     }
                 };
             });
         } else {
             card.appendChild(element("h3", "", "My Scripts"));
             var scriptEnabled = checked(card, "Enable My Scripts", moduleEnabled("myscripts"));
-            actions(card, function () { return { modules: { myscripts: scriptEnabled.checked }, moduleOptions: {} }; });
+            var scriptFolderData = data.folderPermissions || {};
+            var scriptPermissions = modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions");
+            actions(card, function () {
+                return {
+                    modules: { myscripts: scriptEnabled.checked },
+                    moduleOptions: { permissions: { myscripts: scriptPermissions() } }
+                };
+            });
         }
     }
 
