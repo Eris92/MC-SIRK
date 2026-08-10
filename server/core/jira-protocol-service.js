@@ -186,10 +186,6 @@ module.exports.createJiraProtocolService = function (options) {
                 throw new Error("Protocol renderer returned an invalid result.");
             }
             var protocolText = text(rendered.text, 500000);
-            var unsupported = pdfRenderer.unsupportedCharacters(protocolText);
-            if (unsupported.length) {
-                throw new Error("Protocol contains unsupported PDF characters: " + unsupported.slice(0, 8).join(" "));
-            }
             var pdf = pdfRenderer.renderTextPdf(protocolText);
             if (!Buffer.isBuffer(pdf) || pdf.length < 100 || pdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) {
                 throw new Error("PDF renderer returned an invalid artifact.");
