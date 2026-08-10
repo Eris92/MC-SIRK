@@ -5,64 +5,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-network-settings:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-      - name: Apply verified Shell NOASYNC correction
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const serverPath = 'server/modules/commands/index.js';
-          const testPath = 'test/network-command-split.test.js';
-          let server = fs.readFileSync(serverPath, 'utf8');
-          const match = /FromBase64String\('([A-Za-z0-9+/=]+)'\)/.exec(server);
-          if (!match) throw new Error('Network Settings interop payload not found.');
-          let interop = Buffer.from(match[1], 'base64').toString('utf8');
-          if (interop.includes('info.fMask = 0x0000010C;')) {
-            console.log('Network Settings NOASYNC patch already present.');
-            process.exit(0);
-          }
-          const oldMask = 'info.fMask = 0x0000000C;';
-          if (!interop.includes(oldMask)) throw new Error('Expected dev.35 Shell mask not found.');
-          interop = interop.replace(oldMask, 'info.fMask = 0x0000010C;');
-          const encoded = Buffer.from(interop, 'utf8').toString('base64');
-          server = server.replace(match[1], encoded);
-          fs.writeFileSync(serverPath, server, 'utf8');
-
-          let test = fs.readFileSync(testPath, 'utf8');
-          const oldAssertion = "interop.indexOf('info.fMask = 0x0000000C') >= 0";
-          if (!test.includes(oldAssertion)) throw new Error('Expected dev.35 fMask assertion not found.');
-          test = test.replace(oldAssertion, "interop.indexOf('info.fMask = 0x0000010C') >= 0");
-          test = test.replace(
-            '"Adapter properties must invoke the canonical Shell properties verb with SEE_MASK_INVOKEIDLIST on the resolved PIDL.");',
-            '"Adapter properties must invoke the canonical Shell properties verb with SEE_MASK_INVOKEIDLIST | SEE_MASK_NOASYNC so the short-lived hidden helper cannot terminate before Shell activation completes.");\nassert.strictEqual(interop.indexOf(\'info.fMask = 0x0000000C\'), -1,\n    "The dev.35 async-prone ShellExecuteEx mask must not return.");'
-          );
-          test = test.replace(
-            'console.log("Network panel and active-adapter properties use the Windows-verified PIDL Shell properties contract: OK");',
-            'console.log("Network panel and active-adapter properties use the synchronous Windows Shell PIDL properties contract: OK");'
-          );
-          fs.writeFileSync(testPath, test, 'utf8');
-          NODE
-          git diff --check
-          if git diff --quiet; then
-            echo 'No patch required.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server/modules/commands/index.js test/network-command-split.test.js
-          git commit -m 'fix: complete Network Settings Shell activation'
-          git push origin HEAD:${{ github.head_ref }}
-
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
