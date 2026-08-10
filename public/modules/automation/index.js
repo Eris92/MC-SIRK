@@ -6,6 +6,8 @@
     var status = "";
     var treeState = { selectedRoot: "", selectedScript: "", expanded: {} };
     var outputs = Object.create(null);
+    var progressSequence = 0;
+    var openedArtifacts = new Set();
     var tools = window.SharedScriptTools.create({
         storageKey: "sirkPlatform.myscripts.preferences",
         deepLinkParameter: "myscript"
@@ -67,21 +69,58 @@
         return resultHost;
     }
 
+    function pdfArtifacts(request) {
+        var artifacts = request && request.result && Array.isArray(request.result.artifacts) ? request.result.artifacts : [];
+        return artifacts.filter(function (artifact) { return artifact && artifact.type === "pdf" && artifact.id && artifact.requestId; });
+    }
+
+    function artifactUrl(artifact, modeValue) {
+        return window.SirkPlatformCore.assetUrl("", "download", {
+            requestId: artifact.requestId,
+            artifactId: artifact.id,
+            mode: modeValue || "download"
+        });
+    }
+
+    function appendArtifactActions(host, request) {
+        var artifacts = pdfArtifacts(request);
+        if (!artifacts.length) return;
+        var actions = document.createElement("div");
+        actions.className = "mc-results-viewer-actions mc-results-inline-actions";
+        artifacts.forEach(function (artifact) {
+            var open = document.createElement("button");
+            open.type = "button";
+            open.className = "btn btn-secondary btn-sm";
+            open.textContent = artifact.label || "Open PDF";
+            open.onclick = function () { window.open(artifactUrl(artifact, "open"), "_blank", "noopener"); };
+            actions.appendChild(open);
+
+            var download = document.createElement("button");
+            download.type = "button";
+            download.className = "btn btn-secondary btn-sm mc-results-download-button";
+            download.textContent = "Download PDF";
+            download.onclick = function () { window.location.href = artifactUrl(artifact, "download"); };
+            actions.appendChild(download);
+        });
+        host.appendChild(actions);
+    }
+
     function renderResult(host, request) {
         request = request || {};
         host.innerHTML = "";
-        if (request.status === "pending" || request.status === "executing") {
+        if (request.status === "pending" || request.status === "approved" || request.status === "executing") {
             var waiting = document.createElement("pre");
             waiting.className = "mc-shared-output";
             waiting.textContent = requestOutput(request);
             host.appendChild(waiting);
             return;
         }
-        if (request.status === "failed") host.classList.add("mc-shared-error");
+        if (request.status === "failed" || request.status === "rejected") host.classList.add("mc-shared-error");
         else host.classList.remove("mc-shared-error");
         window.SharedResultsView.mountResult(host, requestOutput(request), {
             title: request.title || "Result"
         });
+        appendArtifactActions(host, request);
     }
 
     function showValidationError(shell, errorHost, error) {
@@ -102,6 +141,63 @@
         resultHost.firstChild.textContent = message;
     }
 
+    function openArtifactOnce(request) {
+        var artifact = pdfArtifacts(request).filter(function (item) { return item.autoOpen === true; })[0];
+        if (!artifact) return;
+        var key = String(artifact.requestId) + ":" + String(artifact.id);
+        if (openedArtifacts.has(key)) return;
+        openedArtifacts.add(key);
+        window.open(artifactUrl(artifact, "open"), "_blank", "noopener");
+    }
+
+    function renderProtocolProgress(resultHost, request, progress) {
+        resultHost.innerHTML = "";
+        resultHost.classList.remove("mc-shared-error");
+        var bar = document.createElement("progress");
+        bar.className = "mc-script-protocol-progress";
+        bar.max = 100;
+        bar.value = Math.max(0, Math.min(100, Number(progress && progress.percent) || 0));
+        var label = document.createElement("div");
+        label.className = "mc-shared-muted";
+        if (request.status === "pending" || request.status === "approved") label.textContent = "Waiting for approval.";
+        else label.textContent = (progress && progress.stage || "Executing...") + " — " + bar.value + "%";
+        resultHost.appendChild(bar);
+        resultHost.appendChild(label);
+    }
+
+    function pollProtocol(shell, script, request, resultHost, sequence, attempt, button) {
+        if (sequence !== progressSequence) return;
+        attempt = Number(attempt) || 0;
+        if (attempt >= 900) {
+            switchToResult(shell.state.page.details, resultHost, "Protocol progress timed out.");
+            if (button) button.disabled = false;
+            return;
+        }
+        shell.api("progress", { id: request.id }).then(function (response) {
+            if (sequence !== progressSequence) return;
+            var current = response.request || request;
+            var currentProgress = response.progress || {};
+            outputs[script.path] = current;
+            if (["completed", "failed", "rejected", "superseded"].indexOf(String(current.status || "")) >= 0) {
+                renderResult(resultHost, current);
+                if (current.status === "completed") openArtifactOnce(current);
+                if (button) button.disabled = false;
+                sync(shell);
+                return;
+            }
+            renderProtocolProgress(resultHost, current, currentProgress);
+            window.setTimeout(function () {
+                pollProtocol(shell, script, current, resultHost, sequence, attempt + 1, button);
+            }, 1000);
+        }).catch(function (error) {
+            if (sequence !== progressSequence) return;
+            resultHost.innerHTML = "";
+            resultHost.classList.add("mc-shared-error");
+            resultHost.textContent = error.message || String(error);
+            if (button) button.disabled = false;
+        });
+    }
+
     function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
         if (!confirmExecution(script)) {
             if (errorHost) showValidationError(shell, errorHost, new Error("Execution cancelled."));
@@ -112,6 +208,8 @@
         if (button) button.disabled = true;
         switchToResult(detailsHost, resultHost, "Executing script...");
 
+        var sequence = ++progressSequence;
+        var protocolPending = false;
         shell.post("request", {
             scriptPath: script.path,
             variableValues: values || {},
@@ -120,7 +218,10 @@
         }).then(function (response) {
             var request = response.request || {};
             outputs[script.path] = request;
-            renderResult(resultHost, request);
+            if (response.protocol === true && request.id) {
+                protocolPending = true;
+                pollProtocol(shell, script, request, resultHost, sequence, 0, button);
+            } else renderResult(resultHost, request);
         }).catch(function (error) {
             var request = {
                 status: "failed",
@@ -130,12 +231,13 @@
             outputs[script.path] = request;
             renderResult(resultHost, request);
         }).then(function () {
-            if (button) button.disabled = false;
+            if (button && !protocolPending) button.disabled = false;
             sync(shell);
         });
     }
 
     function show(shell, item, executeOnSelect) {
+        progressSequence++;
         shell.api("script", { path: item.path }).then(function (response) {
             var script = response.script;
             var detailsHost = shell.state.page.details;
@@ -244,11 +346,13 @@
             filterScript: tools.filterScript,
             scriptActions: function (script) { return actions(shell, script); },
             onResults: function () {
+                progressSequence++;
                 mode = "results";
                 treeState.selectedScript = "";
                 shell.render();
             },
             onRootSelect: function () {
+                progressSequence++;
                 mode = "scripts";
                 treeState.selectedScript = "";
                 tools.saveTreeState(treeState);
@@ -261,7 +365,28 @@
         });
     }
 
+    function resultActions(cell, row) {
+        var artifacts = pdfArtifacts(row);
+        if (!artifacts.length) return;
+        artifacts.forEach(function (artifact) {
+            var open = document.createElement("button");
+            open.type = "button";
+            open.className = "btn btn-secondary btn-sm";
+            open.textContent = "Open PDF";
+            open.onclick = function () { window.open(artifactUrl(artifact, "open"), "_blank", "noopener"); };
+            cell.appendChild(open);
+
+            var download = document.createElement("button");
+            download.type = "button";
+            download.className = "btn btn-secondary btn-sm";
+            download.textContent = "Download PDF";
+            download.onclick = function () { window.location.href = artifactUrl(artifact, "download"); };
+            cell.appendChild(download);
+        });
+    }
+
     function results(shell) {
+        progressSequence++;
         primary(shell, document.createElement("div"));
         window.SharedResultsView.mountStatus(shell.state.page.secondary, {
             selected: status,
@@ -281,6 +406,7 @@
                 title: "Script results",
                 kind: "scripts",
                 rows: response.rows || [],
+                actions: resultActions,
                 emptyText: "No script results match the selected status."
             });
             sync(shell);
