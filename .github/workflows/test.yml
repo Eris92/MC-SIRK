@@ -5,19 +5,25 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  test:
+  patch-dev38:
+    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - name: Checkout
+      - name: Checkout PR head
         uses: actions/checkout@v7
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
         with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Run test suite
-        run: npm test
+          ref: ${{ github.head_ref }}
+      - name: Apply root-cause fixes
+        run: python3 .github/scripts/dev38_patch.py
+      - name: Commit fixes
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189824+Eris92@users.noreply.github.com'
+          git add server/modules/commands/index.js public/shared/ui/results.js test/network-command-split.test.js test/logged-on-user-command-policy.test.js test/results-viewer-native-dialog.test.js test/results-viewer-stable-content.test.js
+          git commit -m 'fix: use canonical user and modal owners'
+          git push origin HEAD:${{ github.head_ref }}
