@@ -13,6 +13,13 @@
         if (text != null) value.textContent = String(text);
         return value;
     }
+    function disclosure(host, title) {
+        var details = element("details", "mc-admin-disclosure");
+        details.open = false;
+        details.appendChild(element("summary", "mc-admin-disclosure-summary", title));
+        host.appendChild(details);
+        return details;
+    }
     function field(host, labelText, value, options) {
         options = options || {};
         var label = element("label", "mc-admin-field");
@@ -24,7 +31,7 @@
         if (options.placeholder) input.placeholder = options.placeholder;
         if (options.min != null) input.min = String(options.min);
         if (options.max != null) input.max = String(options.max);
-        if (options.multiline) input.rows = options.rows || 4;
+        if (options.multiline) input.rows = options.rows || 3;
         label.appendChild(input);
         host.appendChild(label);
         return input;
@@ -59,35 +66,60 @@
         content.innerHTML = "";
         var card = element("section", "mc-admin-card");
         card.appendChild(element("h3", "", "Integrations"));
-        card.appendChild(element("p", "mc-admin-card-description", "Jira credentials stay in the server-side encrypted secret store and are never returned to the browser."));
+        card.appendChild(element(
+            "p",
+            "mc-admin-card-description",
+            "Global system credentials used by Script credentials assignments. Secrets are write-only and remain encrypted server-side."
+        ));
         content.appendChild(card);
 
         var snapshot = data().integrations || {};
         var values = snapshot.values || {};
-        var jira = values.jira || {};
         var configured = snapshot.configured || {};
+        var jira = values.jira || {};
+        var ad = values.ad || {};
+        var entra = values.entra || {};
 
-        var url = field(card, "Jira URL", jira.url || "", { placeholder: "https://tenant.atlassian.net" });
-        var email = field(card, "Jira account email", jira.email || "");
-        var token = field(card, "Jira API token", "", {
+        var jiraBox = disclosure(card, "Jira");
+        var jiraUrl = field(jiraBox, "Jira URL", jira.url || "", { placeholder: "https://tenant.atlassian.net" });
+        var jiraEmail = field(jiraBox, "Jira account email", jira.email || "");
+        var jiraToken = field(jiraBox, "Jira API token", "", {
             type: "password",
             placeholder: configured.jiraToken ? "Configured - leave blank to keep" : "Required"
         });
-        token.autocomplete = "new-password";
-        var projectKey = field(card, "Project key", jira.projectKey || "");
-        var workspaceId = field(card, "Assets workspace ID", jira.workspaceId || "");
-        var cloudId = field(card, "Cloud ID", jira.cloudId || "");
-        var hostnameAttribute = field(card, "Hostname attribute", jira.hostnameAttribute || "Hostname");
-        var assetFieldId = field(card, "Asset field ID", jira.assetFieldId || "");
-        var aql = field(card, "Assets AQL scope", jira.aql || "objectType = Computer", { multiline: true, rows: 3 });
-        var maxResults = field(card, "Max asset results", jira.maxResults || 100, { type: "number", min: 10, max: 500 });
-        var verifyTls = checkbox(card, "Verify Jira TLS certificate", jira.verifyTls !== false);
-        var cmdbEnabled = checkbox(card, "Enable Jira Assets/CMDB", jira.cmdbEnabled !== false);
+        jiraToken.autocomplete = "new-password";
+        var projectKey = field(jiraBox, "Project key", jira.projectKey || "");
+        var workspaceId = field(jiraBox, "Assets workspace ID", jira.workspaceId || "");
+        var cloudId = field(jiraBox, "Cloud ID", jira.cloudId || "");
+        var hostnameAttribute = field(jiraBox, "Hostname attribute", jira.hostnameAttribute || "Hostname");
+        var assetFieldId = field(jiraBox, "Asset field ID", jira.assetFieldId || "");
+        var aql = field(jiraBox, "Assets AQL scope", jira.aql || "objectType = Computer", { multiline: true, rows: 3 });
+        var maxResults = field(jiraBox, "Max asset results", jira.maxResults || 100, { type: "number", min: 10, max: 500 });
+        var verifyTls = checkbox(jiraBox, "Verify Jira TLS certificate", jira.verifyTls !== false);
+        var cmdbEnabled = checkbox(jiraBox, "Enable Jira Assets/CMDB", jira.cmdbEnabled !== false);
+
+        var adBox = disclosure(card, "Active Directory");
+        var adDomain = field(adBox, "AD domain", ad.domain || "");
+        var adLogin = field(adBox, "AD login", ad.login || "");
+        var adPassword = field(adBox, "AD password", "", {
+            type: "password",
+            placeholder: configured.adPassword ? "Configured - leave blank to keep" : "Required"
+        });
+        adPassword.autocomplete = "new-password";
+
+        var entraBox = disclosure(card, "AAD / Entra ID");
+        var tenantId = field(entraBox, "Tenant ID", entra.tenantId || "");
+        var clientId = field(entraBox, "Client ID", entra.clientId || "");
+        var clientSecret = field(entraBox, "Client secret", "", {
+            type: "password",
+            placeholder: configured.entraClientSecret ? "Configured - leave blank to keep" : "Required"
+        });
+        clientSecret.autocomplete = "new-password";
 
         var actions = element("div", "mc-admin-actions");
-        var save = element("button", "mc-admin-primary", "Save Jira integration");
+        var save = element("button", "mc-admin-primary", "Save integrations");
         save.type = "button";
-        var status = element("span", "mc-admin-save-status", configured.jira ? "Jira configured" : "Jira not configured");
+        var status = element("span", "mc-admin-save-status", "");
         actions.appendChild(save);
         actions.appendChild(status);
         card.appendChild(actions);
@@ -95,11 +127,12 @@
         save.onclick = function () {
             save.disabled = true;
             status.className = "mc-admin-save-status";
-            status.textContent = "Saving Jira integration...";
+            status.textContent = "Saving...";
+
             var integrations = clone(values);
-            integrations.jira = {
-                url: url.value,
-                email: email.value,
+            integrations.jira = Object.assign({}, jira, {
+                url: jiraUrl.value,
+                email: jiraEmail.value,
                 projectKey: projectKey.value,
                 assetFieldId: assetFieldId.value,
                 hostnameAttribute: hostnameAttribute.value,
@@ -108,17 +141,27 @@
                 aql: aql.value,
                 maxResults: Number(maxResults.value) || 100,
                 verifyTls: verifyTls.checked,
-                cmdbEnabled: cmdbEnabled.checked,
-                approvalTransitionId: jira.approvalTransitionId || "",
-                closeTransitionId: jira.closeTransitionId || "",
-                health: jira.health || {}
-            };
+                cmdbEnabled: cmdbEnabled.checked
+            });
+            integrations.ad = Object.assign({}, ad, {
+                domain: adDomain.value,
+                login: adLogin.value
+            });
+            integrations.entra = Object.assign({}, entra, {
+                tenantId: tenantId.value,
+                clientId: clientId.value
+            });
+
             var secrets = {};
-            if (token.value) secrets.jiraToken = token.value;
+            if (jiraToken.value) secrets.jiraToken = jiraToken.value;
+            if (adPassword.value) secrets.adPassword = adPassword.value;
+            if (clientSecret.value) secrets.entraClientSecret = clientSecret.value;
+
             var body = new URLSearchParams();
             body.set("action", "save-integrations");
             body.set("integrations", JSON.stringify(integrations));
             body.set("secrets", JSON.stringify(secrets));
+
             fetch(pluginUrl("save-integrations"), {
                 method: "POST",
                 credentials: "same-origin",
@@ -137,14 +180,11 @@
                 });
             }).then(function (result) {
                 window.SirkPlatformAdminData.integrations = result.integrations;
-                token.value = "";
-                token.placeholder = result.integrations && result.integrations.configured && result.integrations.configured.jiraToken
-                    ? "Configured - leave blank to keep"
-                    : "Required";
+                jiraToken.value = "";
+                adPassword.value = "";
+                clientSecret.value = "";
                 status.className = "mc-admin-save-status";
-                status.textContent = result.integrations && result.integrations.configured && result.integrations.configured.jira
-                    ? "Jira configured"
-                    : "Saved - Jira configuration incomplete";
+                status.textContent = "Saved";
             }).catch(function (error) {
                 status.className = "mc-admin-save-status mc-admin-error";
                 status.textContent = error && error.message || String(error);

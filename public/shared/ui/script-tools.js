@@ -274,7 +274,7 @@
         var wrapper = element("div", "mc-definition-table-wrap");
         var table = element("table", "style1 mc-definition-table");
         var head = table.createTHead().insertRow();
-        ["Type", "Variable name", "PL — label | description | options", "EN — label | description | options", ""].forEach(function (name) {
+        ["Type", "Variable name", "PL - label | description | options", "EN - label | description | options", ""].forEach(function (name) {
             head.appendChild(element("th", "", name));
         });
         var body = table.createTBody();
@@ -299,7 +299,7 @@
             en.type = "text";
             en.value = value.en || "";
             en.placeholder = "English name | English description";
-            var remove = element("button", "btn btn-secondary btn-sm mc-definition-remove", "×");
+            var remove = element("button", "btn btn-secondary btn-sm mc-definition-remove", "x");
             remove.type = "button";
             tr.insertCell().appendChild(type);
             tr.insertCell().appendChild(name);
@@ -553,7 +553,7 @@
                     var hint = element("div", "mc-definition-secret-state");
                     hint.appendChild(element("strong", "", "Credential status: "));
                     hint.appendChild(document.createTextNode(secretState.variables.map(function (item) {
-                        return item.name + " — " + (item.configured ? "configured" : item.required ? "required" : "not configured");
+                        return item.name + " - " + (item.configured ? "configured" : item.required ? "required" : "not configured");
                     }).join(" | ")));
                     card.appendChild(hint);
                 }
@@ -620,7 +620,6 @@
             });
         };
     }
-
 
     window.SharedScriptTools = {
         copyText: copyText,
@@ -726,33 +725,80 @@
             }
 
             function openCredentialsEditor(shell, script, onSaved) {
-                shell.api("script-secrets", { path: script.path }).then(function (response) {
-                    var value = response.secrets || {}, host = shell.state.page.details;
+                Promise.all([
+                    shell.api("script-secrets", { path: script.path }),
+                    shell.api("system-credentials", { path: script.path })
+                ]).then(function (responses) {
+                    var value = responses[0].secrets || {};
+                    var systemValue = responses[1].systemCredentials || { profiles: [] };
+                    var host = shell.state.page.details;
                     host.innerHTML = "";
                     var card = shell.card("Script credentials", script.label || script.name);
                     card.classList.add("mc-script-credentials-card");
+
+                    var system = createSystemCredentialsSection(systemValue);
+                    card.appendChild(system.element);
+
+                    var local = element("section", "mc-definition-section");
+                    local.appendChild(element("h4", "", "Script-local secrets"));
                     var controls = [];
                     (value.variables || []).forEach(function (variable) {
-                        var group = document.createElement("div"); group.className = "mc-script-secret-row";
-                        var input = document.createElement("input"); input.type = "password"; input.autocomplete = "new-password";
-                        input.placeholder = variable.configured ? "Configured — leave empty to keep" : "Enter secret";
-                        var clear = document.createElement("input"); clear.type = "checkbox";
-                        var clearLabel = document.createElement("label"); clearLabel.appendChild(clear); clearLabel.appendChild(document.createTextNode(" Clear saved value"));
-                        var status = document.createElement("span"); status.className = variable.configured ? "mc-secret-configured" : "mc-secret-missing";
+                        var group = document.createElement("div");
+                        group.className = "mc-script-secret-row";
+                        var input = document.createElement("input");
+                        input.type = "password";
+                        input.autocomplete = "new-password";
+                        input.placeholder = variable.configured ? "Configured - leave empty to keep" : "Enter secret";
+                        var clear = document.createElement("input");
+                        clear.type = "checkbox";
+                        var clearLabel = document.createElement("label");
+                        clearLabel.appendChild(clear);
+                        clearLabel.appendChild(document.createTextNode(" Clear saved value"));
+                        var status = document.createElement("span");
+                        status.className = variable.configured ? "mc-secret-configured" : "mc-secret-missing";
                         status.textContent = variable.configured ? "Configured" : (variable.required ? "Required" : "Not configured");
-                        group.appendChild(formRow(variable.label + (variable.required ? " *" : ""), input)); group.appendChild(status); group.appendChild(clearLabel);
-                        card.appendChild(group); controls.push({ variable: variable, input: input, clear: clear });
+                        group.appendChild(formRow(variable.label + (variable.required ? " *" : ""), input));
+                        group.appendChild(status);
+                        group.appendChild(clearLabel);
+                        local.appendChild(group);
+                        controls.push({ variable: variable, input: input, clear: clear });
                     });
-                    if (!controls.length) card.appendChild(document.createTextNode("This script has no SaveSecret directives."));
-                    var save = shell.element("button", "btn btn-primary btn-sm", "Save credentials"); save.type = "button";
+                    if (!controls.length) {
+                        local.appendChild(element("div", "mc-shared-muted", "This script has no script-local SaveSecret directives."));
+                    }
+                    card.appendChild(local);
+
+                    var save = shell.element("button", "btn btn-primary btn-sm", "Save credentials");
+                    save.type = "button";
                     save.onclick = function () {
                         var values = {}, clearNames = [];
-                        controls.forEach(function (item) { if (item.input.value) values[item.variable.name] = item.input.value; if (item.clear.checked) clearNames.push(item.variable.name); });
+                        controls.forEach(function (item) {
+                            if (item.input.value) values[item.variable.name] = item.input.value;
+                            if (item.clear.checked) clearNames.push(item.variable.name);
+                        });
                         save.disabled = true;
-                        shell.post("script-secrets", { path: script.path, values: values, clearNames: clearNames }).then(function (result) { if (typeof onSaved === "function") onSaved(result); }).catch(function (error) { save.disabled = false; shell.error(host, error); });
+                        Promise.all([
+                            shell.post("script-secrets", {
+                                path: script.path,
+                                values: values,
+                                clearNames: clearNames
+                            }),
+                            shell.post("system-credentials", {
+                                path: script.path,
+                                selected: system.selected()
+                            })
+                        ]).then(function (results) {
+                            if (typeof onSaved === "function") onSaved(results[0]);
+                        }).catch(function (error) {
+                            save.disabled = false;
+                            shell.error(host, error);
+                        });
                     };
-                    card.appendChild(save); host.appendChild(card);
-                }).catch(function (error) { shell.error(shell.state.page.details, error); });
+                    card.appendChild(save);
+                    host.appendChild(card);
+                }).catch(function (error) {
+                    shell.error(shell.state.page.details, error);
+                });
             }
 
             function openMultiExecution(shell, script, currentNodeId, submit) {
@@ -841,7 +887,7 @@
                     });
                     var count = selection.count();
                     status.className = selection.overLimit() ? "mc-multi-selection-status mc-shared-error" : "mc-multi-selection-status";
-                    status.textContent = "Selected: " + count + " / max " + selection.max + (selection.overLimit() ? " — reduce the selection before running." : "");
+                    status.textContent = "Selected: " + count + " / max " + selection.max + (selection.overLimit() ? " - reduce the selection before running." : "");
                     run.disabled = !selection.canRun();
                 }
 
@@ -885,7 +931,7 @@
                         var path = new URL(window.location.href).searchParams.get(deepLinkParameter);
                         if (!path || !window.SharedDirectoryTree.find(tree, path)) return;
                         var location = findRootAndParents(tree, path); treeState.selectedScript = path;
-                        if (location.root) treeState.selectedRoot = location.root;
+                        if (location.root) treeState.selectedRoot = text(location.root);
                         (location.parents || []).forEach(function (folder) { treeState.expanded[folder] = true; });
                     } catch (error) {}
                 },
@@ -929,15 +975,14 @@
                 openMultiExecution: openMultiExecution,
                 scriptActions: function (script, config) {
                     config = config || {}; var actions = [];
-                    if (state.linkPickMode) actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
+                    if (state.linkPickMode) actions.push({ key: "link", icon: "link", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
                     if (state.editMode) {
-                        var hasCredentials = !!(script.secretVariables && script.secretVariables.length);
-                        if (config.canEdit === true) actions.push({ key: "credentials", icon: "🔑", disabled: !hasCredentials, className: "mc-tree-credential-action", title: hasCredentials ? "Configure script credentials" : "No script credentials configured", onClick: function () { if (hasCredentials && config.onCredentials) config.onCredentials(script); } });
-                        actions.push({ key: "favorite", icon: "★", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
-                        actions.push({ key: "link", icon: "🔗", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
-                        if (config.canEdit === true) actions.push({ key: "edit", icon: "✎", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
+                        if (config.canEdit === true) actions.push({ key: "credentials", icon: "key", disabled: false, className: "mc-tree-credential-action", title: "Configure script and system credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
+                        actions.push({ key: "favorite", icon: "star", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
+                        actions.push({ key: "link", icon: "link", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
+                        if (config.canEdit === true) actions.push({ key: "edit", icon: "edit", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });
                     }
-                    if (state.multiPickMode && config.enableMulti === true) actions.push({ key: "multi", icon: "⟳", title: "Run this script on selected devices", onClick: function () { if (config.onMulti) config.onMulti(script); } });
+                    if (state.multiPickMode && config.enableMulti === true) actions.push({ key: "multi", icon: "multi", title: "Run this script on selected devices", onClick: function () { if (config.onMulti) config.onMulti(script); } });
                     return actions;
                 }
             };

@@ -72,7 +72,16 @@
     function sync(shell) { tools.syncToolbar(shell.state.page && shell.state.page.toolbar, mode, treeState.selectedScript, { canEdit: isAdmin(shell), enableMulti: true }); }
     function note(shell, title, message, error) { var host = shell.state.page.details; host.innerHTML = ""; var card = shell.card(title, message); if (error) card.classList.add("mc-shared-error"); host.appendChild(card); sync(shell); }
     function empty(shell) { note(shell, msg("Wynik", "Output"), tools.state.favoritesOnly && !tools.state.favorites.length ? msg("Brak ulubionych poleceń.", "No favorite commands.") : msg("Wybierz polecenie lub skrypt, aby je uruchomić.", "Select a command or script to run it.")); }
-    function confirmExecution(item) { if (!item || item.confirmExecution !== true) return true; return window.confirm(msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?"); }
+    function confirmExecution(item, trigger) {
+        if (!item || item.confirmExecution !== true) return Promise.resolve(true);
+        if (!tools || typeof tools.openConfirmationDialog !== "function") return Promise.reject(new Error("Native MeshCentral confirmation dialog is unavailable."));
+        return tools.openConfirmationDialog({
+            title: item.label || item.name || msg("Potwierdź wykonanie", "Confirm execution"),
+            message: msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?",
+            trigger: trigger,
+            primaryLabel: item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")
+        });
+    }
     function parameterValues(item, trigger) {
         if (!Array.isArray(item && item.variables) || !item.variables.length) return Promise.resolve({});
         if (!tools || typeof tools.openParameterDialog !== "function") return Promise.reject(new Error("Native MeshCentral parameter dialog is unavailable."));
@@ -107,7 +116,6 @@
         return { type: "directory", name: msg("Polecenia", "Commands"), path: "", children: children };
     }
 
-
     function renderOutput(host, value) { host.innerHTML = ""; if (window.SharedResultsView && typeof window.SharedResultsView.mountResult === "function") { window.SharedResultsView.mountResult(host, value || msg("Brak wyniku.", "No output.")); return; } var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = stringValue(value) || msg("Brak wyniku.", "No output."); host.appendChild(pre); }
     function renderWaiting(host, value) { host.innerHTML = ""; var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = value; host.appendChild(pre); }
     function pollOutput(shell, item, responseId, outputHost, sequence, attempt) {
@@ -122,17 +130,27 @@
     }
 
     function execute(shell, item, button, values, outputHost) {
-        if (!confirmExecution(item)) { renderWaiting(outputHost, msg("Anulowano wykonanie.", "Execution cancelled.")); return; }
-        if (button) button.disabled = true;
-        outputHost.classList.remove("mc-shared-error"); renderWaiting(outputHost, msg("Wysyłanie polecenia…", "Submitting command…"));
-        var payload = { nodeId: node(shell), nodeName: window.currentNode && window.currentNode.name || "", variableValues: values || {}, confirmedExecution: item.confirmExecution === true, note: "" };
-        if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
-        shell.post("execute", payload).then(function (response) {
-            var request = response.request || {}, result = request.result || {};
-            if (request.status === "pending") { outputs[item.path] = msg("Oczekiwanie na akceptację.", "Waiting for approval."); renderWaiting(outputHost, outputs[item.path]); return; }
-            if (result.id) { var immediate = result.output || result.message || msg("Oczekiwanie na wynik agenta…", "Waiting for agent output…"); outputs[item.path] = immediate; renderWaiting(outputHost, immediate); pollSequence++; pollOutput(shell, item, result.id, outputHost, pollSequence, 0); return; }
-            var value = result.output || result.message || request.status || msg("Polecenie wysłane.", "Command submitted."); outputs[item.path] = stringValue(value); renderOutput(outputHost, outputs[item.path]);
-        }).catch(function (error) { outputs[item.path] = error.message || String(error); renderWaiting(outputHost, outputs[item.path]); outputHost.classList.add("mc-shared-error"); }).then(function () { if (button) button.disabled = false; });
+        return confirmExecution(item, button || document.activeElement).then(function (confirmed) {
+            if (!confirmed) return;
+            if (button) button.disabled = true;
+            outputHost.classList.remove("mc-shared-error"); renderWaiting(outputHost, msg("Wysyłanie polecenia…", "Submitting command…"));
+            var payload = { nodeId: node(shell), nodeName: window.currentNode && window.currentNode.name || "", variableValues: values || {}, confirmedExecution: item.confirmExecution === true, note: "" };
+            if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
+            return shell.post("execute", payload).then(function (response) {
+                var request = response.request || {}, result = request.result || {};
+                if (request.status === "pending") { outputs[item.path] = msg("Oczekiwanie na akceptację.", "Waiting for approval."); renderWaiting(outputHost, outputs[item.path]); return; }
+                if (result.id) { var immediate = result.output || result.message || msg("Oczekiwanie na wynik agenta…", "Waiting for agent output…"); outputs[item.path] = immediate; renderWaiting(outputHost, immediate); pollSequence++; pollOutput(shell, item, result.id, outputHost, pollSequence, 0); return; }
+                var value = result.output || result.message || request.status || msg("Polecenie wysłane.", "Command submitted."); outputs[item.path] = stringValue(value); renderOutput(outputHost, outputs[item.path]);
+            }).catch(function (error) {
+                outputs[item.path] = error.message || String(error);
+                renderWaiting(outputHost, outputs[item.path]);
+                outputHost.classList.add("mc-shared-error");
+            }).then(function () { if (button) button.disabled = false; });
+        }).catch(function (error) {
+            outputs[item.path] = error.message || String(error);
+            renderWaiting(outputHost, outputs[item.path]);
+            outputHost.classList.add("mc-shared-error");
+        });
     }
 
     function showDefinition(shell, item, autoExecute) {
@@ -145,7 +163,7 @@
         button.onclick = function () {
             parameterValues(item, button).then(function (values) {
                 if (values == null) return;
-                execute(shell, item, button, values, outputHost);
+                return execute(shell, item, button, values, outputHost);
             }).catch(function (error) {
                 outputs[item.path] = error.message || String(error);
                 renderWaiting(outputHost, outputs[item.path]);
@@ -166,8 +184,11 @@
     }
 
     function multi(shell, item) {
-        if (!confirmExecution(item)) return;
-        parameterValues(item, document.activeElement).then(function (values) {
+        var trigger = document.activeElement;
+        confirmExecution(item, trigger).then(function (confirmed) {
+            if (!confirmed) return null;
+            return parameterValues(item, trigger);
+        }).then(function (values) {
             if (values == null) return;
             treeState.selectedScript = item.path;
             tools.openMultiExecution(shell, item, node(shell), function (ids) {

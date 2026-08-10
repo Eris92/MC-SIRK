@@ -255,7 +255,7 @@
         var settled = false;
         var cleaned = false;
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
             function restoreFocus() {
                 if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
             }
@@ -388,10 +388,91 @@
         });
     }
 
+    function openConfirmationDialog(options) {
+        options = options || {};
+        var manager = hostDialogManager();
+        if (!manager) return Promise.reject(new Error("Native MeshCentral dialog manager is unavailable."));
+
+        var content = document.createElement("div");
+        content.className = "mc-parameter-dialog-content";
+        var message = document.createElement("p");
+        message.className = "mc-shared-muted";
+        message.textContent = text(options.message || "Confirm execution.");
+        content.appendChild(message);
+
+        var title = text(options.title || "Confirm execution");
+        if (manager.mode === "modern") manager.setContent("xxAddAgent", title, content.innerHTML);
+        else manager.show(2, title, 3, null, content.innerHTML);
+
+        var submit = document.getElementById("idx_dlgOkButton");
+        var cancel = document.getElementById("idx_dlgCancelButton");
+        var close = document.getElementById("id_dialogclose");
+        if (!submit) return Promise.reject(new Error("Native MeshCentral confirmation controls are unavailable."));
+
+        var trigger = options.trigger || document.activeElement;
+        var primaryLabel = text(options.primaryLabel || "Run");
+        var originalSubmitText = readButtonText(submit);
+        var originalSubmitDisabled = !!submit.disabled;
+        var modernModal = document.getElementById("xxAddAgentModal");
+        var settled = false;
+        var cleaned = false;
+
+        return new Promise(function (resolve) {
+            function restoreFocus() {
+                if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
+            }
+            function cleanup() {
+                if (cleaned) return;
+                cleaned = true;
+                if (manager.mode === "classic") submit.removeEventListener("click", onAccept, true);
+                if (cancel) cancel.removeEventListener("click", onCancel, true);
+                if (close) close.removeEventListener("click", onCancel, true);
+                if (modernModal) modernModal.removeEventListener("hidden.bs.modal", onHidden);
+                writeButtonText(submit, originalSubmitText);
+                submit.disabled = originalSubmitDisabled;
+                restoreFocus();
+            }
+            function finish(value) {
+                if (settled) return;
+                settled = true;
+                resolve(value);
+            }
+            function onAccept(event) {
+                if (event && manager.mode === "classic") {
+                    if (event.preventDefault) event.preventDefault();
+                    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+                    else if (event.stopPropagation) event.stopPropagation();
+                }
+                finish(true);
+                if (manager.mode === "classic") cleanup();
+                return true;
+            }
+            function onCancel() {
+                finish(false);
+                cleanup();
+            }
+            function onHidden() {
+                if (!settled) finish(false);
+                cleanup();
+            }
+
+            writeButtonText(submit, primaryLabel);
+            submit.disabled = false;
+            if (cancel) cancel.addEventListener("click", onCancel, true);
+            if (close) close.addEventListener("click", onCancel, true);
+
+            if (manager.mode === "modern") {
+                if (modernModal) modernModal.addEventListener("hidden.bs.modal", onHidden);
+                manager.show("xxAddAgentModal", "idx_dlgOkButton", onAccept);
+            } else submit.addEventListener("click", onAccept, true);
+        });
+    }
+
     tools.setParameterOptionProvider = function (provider) {
         sharedOptionProvider = typeof provider === "function" ? provider : null;
     };
     tools.openParameterDialog = openParameterDialog;
+    tools.openConfirmationDialog = openConfirmationDialog;
     tools.parameterDialogContract = {
         allowCustom: allowCustom,
         assetDependsOnUser: assetDependsOnUser,
@@ -408,6 +489,9 @@
             if (instance && typeof instance === "object") {
                 instance.openParameterDialog = function (dialogOptions) {
                     return tools.openParameterDialog(dialogOptions);
+                };
+                instance.openConfirmationDialog = function (dialogOptions) {
+                    return tools.openConfirmationDialog(dialogOptions);
                 };
             }
             return instance;
