@@ -20,6 +20,15 @@
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
         return ["select", "switch", "user", "asset"].indexOf(kind) >= 0 ? kind : "text";
     }
+    function allowCustom(item, variable) {
+        var name = text(variable && variable.name).trim().toLowerCase();
+        if (!name) return false;
+        return (item && Array.isArray(item.extraHeaders) ? item.extraHeaders : []).some(function (header) {
+            var match = /^SirkAllowCustom\s*:\s*(.+)$/i.exec(text(header).trim());
+            if (!match) return false;
+            return match[1].split(",").map(function (value) { return value.trim().toLowerCase(); }).indexOf(name) >= 0;
+        });
+    }
     function defaultValue(variable) {
         return text(variable && variable.defaultValue != null ? variable.defaultValue : "");
     }
@@ -70,6 +79,16 @@
         var preferred = defaultValue(variable);
         if (preferred) select.value = preferred;
         if (!select.value && select.options.length && !placeholder) select.selectedIndex = 0;
+    }
+    function setDatalistOptions(list, options) {
+        while (list && list.firstChild) list.removeChild(list.firstChild);
+        (Array.isArray(options) ? options : []).forEach(function (option) {
+            if (!list) return;
+            var node = document.createElement("option");
+            node.value = optionValue(option);
+            node.label = optionLabel(option) || node.value;
+            list.appendChild(node);
+        });
     }
     function currentValues(records) {
         var values = {};
@@ -136,27 +155,41 @@
         var definitions = [];
         (item.variables || []).forEach(function (variable, index) {
             var kind = controlKind(variable);
+            var customUser = kind === "user" && allowCustom(item, variable);
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
             var caption = document.createElement("span");
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
             row.appendChild(caption);
-            var control = document.createElement(kind === "select" || kind === "user" || kind === "asset" ? "select" : "input");
+            var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
+            var control = document.createElement(useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
+            var listId = "";
             if (kind === "switch") {
                 control.type = "checkbox";
                 control.checked = checkedDefault(variable);
-            } else if (kind === "text") {
+                row.appendChild(control);
+            } else if (kind === "text" || customUser) {
                 control.type = "text";
                 control.value = defaultValue(variable);
                 control.autocomplete = "off";
+                if (customUser) {
+                    listId = prefix + "Options" + index;
+                    control.setAttribute("list", listId);
+                }
+                row.appendChild(control);
+                if (customUser) {
+                    var list = document.createElement("datalist");
+                    list.id = listId;
+                    row.appendChild(list);
+                }
             } else {
                 setOptions(control, variable.options || [], variable, kind === "user" || kind === "asset" ? "Loading…" : "");
+                row.appendChild(control);
             }
-            row.appendChild(control);
             var help = localized(variable, "description") || text(variable.description || "");
             if (help) {
                 var hint = document.createElement("span");
@@ -165,7 +198,7 @@
                 row.appendChild(hint);
             }
             content.appendChild(row);
-            definitions.push({ variable: variable, kind: kind, id: control.id });
+            definitions.push({ variable: variable, kind: kind, customUser: customUser, id: control.id, listId: listId });
         });
         var status = document.createElement("div");
         status.id = prefix + "Status";
@@ -193,7 +226,9 @@
             return {
                 variable: definition.variable,
                 kind: definition.kind,
+                customUser: definition.customUser,
                 control: document.getElementById(definition.id),
+                list: definition.listId ? document.getElementById(definition.listId) : null,
                 loading: false,
                 loadFailed: false,
                 loadSequence: 0
@@ -203,7 +238,7 @@
         var submit = document.getElementById("idx_dlgOkButton");
         var cancel = document.getElementById("idx_dlgCancelButton");
         var close = document.getElementById("id_dialogclose");
-        if (records.some(function (record) { return !record.control; }) || !status || !submit) {
+        if (records.some(function (record) { return !record.control || (record.customUser && !record.list); }) || !status || !submit) {
             return Promise.reject(new Error("Native MeshCentral parameter dialog controls are unavailable."));
         }
         records.forEach(function (record) {
@@ -226,7 +261,7 @@
             }
             function refreshSubmitState() {
                 submit.disabled = submitting || records.some(function (record) {
-                    return record.loading || (record.loadFailed && record.variable.required);
+                    return !record.customUser && (record.loading || (record.loadFailed && record.variable.required));
                 });
             }
             function cleanup() {
@@ -258,12 +293,23 @@
             }
             function loadDynamic(record) {
                 if ((record.kind !== "user" && record.kind !== "asset") || typeof provider !== "function") {
-                    if (record.kind === "user" || record.kind === "asset") {
+                    if (record.customUser) setDatalistOptions(record.list, record.variable.options || []);
+                    else if (record.kind === "user" || record.kind === "asset") {
                         setOptions(record.control, record.variable.options || [], record.variable, record.variable.required ? "Select…" : "None");
                     }
                     return Promise.resolve();
                 }
                 var requestSequence = ++record.loadSequence;
+                if (record.customUser) {
+                    return Promise.resolve(provider(record.variable, currentValues(records), item)).then(function (optionsValue) {
+                        if (cleaned || requestSequence !== record.loadSequence) return;
+                        setDatalistOptions(record.list, optionsValue);
+                    }).catch(function (error) {
+                        if (cleaned || requestSequence !== record.loadSequence) return;
+                        setDatalistOptions(record.list, []);
+                        setStatus(status, error && error.message || String(error), false);
+                    });
+                }
                 record.loading = true;
                 record.loadFailed = false;
                 record.control.disabled = true;
@@ -347,6 +393,7 @@
     };
     tools.openParameterDialog = openParameterDialog;
     tools.parameterDialogContract = {
+        allowCustom: allowCustom,
         assetDependsOnUser: assetDependsOnUser,
         assetUserDependency: assetUserDependency,
         controlKind: controlKind,
