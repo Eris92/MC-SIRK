@@ -67,10 +67,12 @@ assert.ok(interop.indexOf('SHGetIDListFromObject') >= 0 &&
     interop.indexOf('[MarshalAs(UnmanagedType.IUnknown)] object punk') >= 0,
     "Shell interop must obtain the PIDL from the already-resolved Network Connection FolderItem; this contract was verified on Windows Server 2025.");
 assert.ok(interop.indexOf('ShellExecuteEx') >= 0 &&
-    interop.indexOf('info.fMask = 0x0000000C') >= 0 &&
+    interop.indexOf('info.fMask = 0x0000010C') >= 0 &&
     interop.indexOf('info.lpVerb = "properties"') >= 0 &&
     interop.indexOf('info.lpIDList = pidl') >= 0,
-    "Adapter properties must invoke the canonical Shell properties verb with SEE_MASK_INVOKEIDLIST on the resolved PIDL.");
+    "Adapter properties must invoke the canonical Shell properties verb with SEE_MASK_INVOKEIDLIST | SEE_MASK_NOASYNC so the short-lived hidden helper cannot terminate before Shell activation completes.");
+assert.strictEqual(interop.indexOf('info.fMask = 0x0000000C'), -1,
+    "The dev.35 async-prone ShellExecuteEx mask must not return.");
 assert.ok(interop.indexOf('CoTaskMemFree(pidl)') >= 0 &&
     interop.indexOf('Marshal.GetLastWin32Error()') >= 0,
     "Shell interop must free the PIDL and surface a ShellExecuteEx failure instead of silently falling back.");
@@ -94,4 +96,4 @@ assert.ok(quick.indexOf('artwork["network-adapter-properties"] = artwork["networ
     "Quick must reuse the same existing Network artwork without duplicating SVG.");
 assert.strictEqual((server.match(/id: "network-settings"/g) || []).length, 1,
     "Existing network-settings ID must remain unique so overrides/Favorites are preserved.");
-console.log("Network panel and active-adapter properties use the Windows-verified PIDL Shell properties contract: OK");
+console.log("Network panel and active-adapter properties use the synchronous Windows Shell PIDL properties contract: OK");
