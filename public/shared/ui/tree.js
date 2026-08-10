@@ -155,6 +155,7 @@
         var actions = document.createElement("span");
         actions.className = "mc-tree-script-actions";
         var renderedKeys = Object.create(null);
+        var namedIcons = { link: "🔗", key: "🔑", star: "★", edit: "✎", multi: "⟳" };
         visible.forEach(function (definition, index) {
             var key = text(definition.key).trim();
             var identity = key || "__anonymous_" + index;
@@ -178,7 +179,7 @@
             var icon = document.createElement("span");
             icon.className = "mc-tree-script-action-icon";
             icon.classList.toggle("is-favorite-active", identity === "favorite" && active);
-            icon.textContent = definition.icon || "•";
+            icon.textContent = namedIcons[definition.icon] || definition.icon || "•";
             action.appendChild(icon);
 
             action.onclick = function (event) {
