@@ -5,25 +5,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-real-smoke-fixes:
-    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
-      - name: Checkout PR head
+      - name: Checkout
         uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
-          ref: ${{ github.head_ref }}
-      - name: Apply patch
-        run: python3 .github/scripts/dev37_patch2.py
-      - name: Commit patch
-        run: |
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '4189824+github-actions[bot]@users.noreply.github.com'
-          git add server/modules/commands/index.js test/network-command-split.test.js public/shared/ui/shared-ui.css public/shared/ui/toolbar-config.js test/results-viewer-stable-content.test.js
-          git commit -m 'fix: follow confirmed network and results smoke evidence'
-          git push origin HEAD:${{ github.head_ref }}
+          node-version: '24'
+          package-manager-cache: false
+      - name: Run test suite
+        run: npm test
