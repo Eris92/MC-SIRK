@@ -33,17 +33,18 @@
         return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath };
     }
 
-    function rawResult(row) {
+    function rawResultSource(row) {
         var result = row && row.result || {};
         var value = result.output || result.rawOutput || result.message || row.output || row.rawOutput;
-        if (value != null && value !== "") {
-            value = typeof value === "string" ? value : JSON.stringify(value, null, 2);
-            return parseDownloadResult(value).visible;
-        }
+        if (value != null && value !== "") return typeof value === "string" ? value : JSON.stringify(value, null, 2);
         if (row.status === "pending") return "Waiting for approval.";
         if (row.status === "executing") return "Executing...";
         if (row.summary) return String(row.summary);
         try { return JSON.stringify(row, null, 2); } catch (error) { return String(row.status || "—"); }
+    }
+
+    function rawResult(row) {
+        return parseDownloadResult(rawResultSource(row)).visible;
     }
 
     function parseLine(line, delimiter) {
@@ -284,22 +285,19 @@
 
     function openViewer(row, options) {
         options = options || {};
-        var raw = typeof options.resultValue === "function" ? options.resultValue(row) : rawResult(row);
+        var raw = typeof options.resultValue === "function" ? options.resultValue(row) : rawResultSource(row);
         var manager = hostDialogManager();
         if (!manager) throw new Error("Native MeshCentral dialog manager is unavailable.");
         var hostId = "SirkResultsViewerNativeHost";
         var contentHtml = '<div id="' + hostId + '" class="mc-results-viewer"></div>';
         var title = escapeHtml(options.dialogTitle || row.title || "Result");
-        if (manager.mode === "modern") {
-            manager.setContent("xxAddAgent", title, contentHtml, "extra-large");
-            manager.show("xxAddAgentModal", "idx_dlgOkButton");
-        } else {
-            manager.show(2, title, 1, null, contentHtml);
-        }
+        if (manager.mode === "modern") manager.setContent("xxAddAgent", title, contentHtml, "extra-large");
+        else manager.show(2, title, 1, null, contentHtml);
         var host = document.getElementById(hostId);
         if (!host) throw new Error("Native MeshCentral result dialog content is unavailable.");
         appendResult(host, raw, options);
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.refresh === "function") window.MeshThemeAdapter.refresh(host);
+        if (manager.mode === "modern") manager.show("xxAddAgentModal", "idx_dlgOkButton");
         var close = document.getElementById("idx_dlgOkButton") || document.getElementById("idx_dlgCancelButton");
         if (close && typeof close.focus === "function") close.focus();
     }
