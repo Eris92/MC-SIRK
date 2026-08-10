@@ -148,6 +148,10 @@ function transformCommand(command, options) {
     var runAsUser = Number(command.runAsUser);
     var type = Number(command.type);
     if ((runAsUser !== 1 && runAsUser !== 2) || (type !== 1 && type !== 2)) return command;
+    // Trusted built-in native Shell UI commands must use MeshAgent UserOnly directly.
+    // The scheduled-task wrapper exists for profile/env/output semantics and changes
+    // the COM/UI launch chain that Network Settings requires.
+    if (command.nativeUserSession === true && runAsUser === 2) return command;
     if (String(command.cmd || "").indexOf(MARKER) >= 0) return command;
 
     return Object.assign({}, command, {

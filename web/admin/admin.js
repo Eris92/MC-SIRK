@@ -40,6 +40,10 @@
         if (bodyTheme === "dark") return true;
         if (bodyTheme === "light") return false;
         if (hostBody && hostBody.classList.contains("night")) return true;
+        var bodyStyle = hostBody && hostWindow.getComputedStyle ? hostWindow.getComputedStyle(hostBody) : null;
+        var background = bodyStyle && colorParts(bodyStyle.backgroundColor);
+        var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
+        if (themeStylesheet && background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
         if (typeof hostWindow.nightMode === "boolean") return hostWindow.nightMode;
         try {
             var storedMode = hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode");
@@ -50,8 +54,6 @@
             }
         } catch (error) {}
 
-        var bodyStyle = hostBody && hostWindow.getComputedStyle ? hostWindow.getComputedStyle(hostBody) : null;
-        var background = bodyStyle && colorParts(bodyStyle.backgroundColor);
         if (background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
         var foreground = bodyStyle && colorParts(bodyStyle.color);
         return foreground ? ((foreground[0] * 299 + foreground[1] * 587 + foreground[2] * 114) / 1000) > 160 : false;
@@ -83,6 +85,11 @@
             }
             if (hostDocument && hostDocument.body && hostDocument.body !== hostDocument.documentElement) {
                 observer.observe(hostDocument.body, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+            }
+            var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
+            if (themeStylesheet) {
+                observer.observe(themeStylesheet, { attributes: true, attributeFilter: ["href"] });
+                if (typeof themeStylesheet.addEventListener === "function") themeStylesheet.addEventListener("load", syncHostTheme);
             }
         }
         if (hostWindow.matchMedia) {
