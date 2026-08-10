@@ -11,6 +11,7 @@ module.exports.admin = function (plugin) {
     var assets = {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
+        "integrations-admin.js": ["web/admin/integrations.js", "text/javascript; charset=utf-8"],
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],
@@ -35,6 +36,7 @@ module.exports.admin = function (plugin) {
         "shared-ui/results.js": ["public/shared/ui/results.js", "text/javascript; charset=utf-8"],
         "shared-ui/script-tools.js": ["public/shared/ui/script-tools.js", "text/javascript; charset=utf-8"],
         "shared-ui/parameter-dialog.js": ["public/shared/ui/parameter-dialog.js", "text/javascript; charset=utf-8"],
+        "myscripts/jira-protocol-wizard.js": ["public/modules/automation/jira-protocol-wizard.js", "text/javascript; charset=utf-8"],
         "shared-ui/page.js": ["public/shared/ui/page.js", "text/javascript; charset=utf-8"],
         "shared-ui/shared-ui.css": ["public/shared/ui/shared-ui.css", "text/css; charset=utf-8"],
         "shared-ui/toolbar.css": ["public/shared/ui/toolbar.css", "text/css; charset=utf-8"]
@@ -227,6 +229,26 @@ module.exports.admin = function (plugin) {
                 return;
             }
             plugin.runtime.request("POST", moduleName, asset, req, res, user);
+            return;
+        }
+
+        if (action === "save-integrations") {
+            if (!shared.isSiteAdmin(user)) {
+                shared.sendJson(res, 403, { ok: false, error: "Permission denied." });
+                return;
+            }
+            var integrations = plugin.runtime && plugin.runtime.integrations;
+            if (!integrations || typeof integrations.save !== "function") {
+                shared.sendJson(res, 503, { ok: false, error: "Integration settings are unavailable." });
+                return;
+            }
+            var integrationPayload = {
+                integrations: shared.parseJsonObject(req && req.body && req.body.integrations, {}),
+                secrets: shared.parseJsonObject(req && req.body && req.body.secrets, {})
+            };
+            Promise.resolve(integrations.save(user, integrationPayload))
+                .then(function (value) { shared.sendJson(res, 200, { ok: true, integrations: value }); })
+                .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
             return;
         }
 

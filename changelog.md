@@ -1,3 +1,12 @@
+## 0.1.1-dev.47 - 2026-08-10
+
+- Jira #252: restore SiteAdmin-only Jira integration configuration through the existing integration/secret owner, keeping the token write-only and out of browser responses.
+- Add the native multi-step Jira Asset Protocol wizard on top of the shared parameter dialog: Active/All Jira user scope -> user -> assigned asset -> transfer/return + IT person -> existing Run/Request lifecycle.
+- Preserve 24h Jira user cache, bounded pagination/stale fallback, backend Jira assignment/authorization and existing progress/PDF artifact flow; no browser prompt, custom modal framework or second secret store.
+- Pre-bump PR #279 Test #667 / Actions `31416961396` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral wizard smoke remains required before closing #252. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.47.md`.
+
 ## 0.1.1-dev.46 - 2026-08-10
 
 - Move Requests #265: replace the assumed `MoveNodeToMesh` false-success path with the current MeshCentral `changeDeviceMesh` persistence/session/event semantics in the shared device owner.
@@ -403,7 +412,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
