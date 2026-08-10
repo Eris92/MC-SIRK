@@ -400,4 +400,17 @@
         currentValues: currentValues,
         validate: validate
     };
+
+    var createTools = tools.create;
+    if (typeof createTools === "function") {
+        tools.create = function (options) {
+            var instance = createTools(options);
+            if (instance && typeof instance === "object") {
+                instance.openParameterDialog = function (dialogOptions) {
+                    return tools.openParameterDialog(dialogOptions);
+                };
+            }
+            return instance;
+        };
+    }
 }());
