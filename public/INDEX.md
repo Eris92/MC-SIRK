@@ -36,6 +36,7 @@ public/shared/ui/toolbar-api.js
 public/shared/ui/layout.js
 public/shared/ui/results.js
 public/shared/ui/script-tools.js
+public/shared/ui/parameter-dialog.js
 public/shared/ui/tree.js
 ```
 
@@ -50,7 +51,8 @@ Najważniejszy podział odpowiedzialności:
 - `toolbar.js` — jeden mount path toolbaru;
 - `toolbar-api.js` — stan toolbaru i geometria Edit/Multi;
 - `results.js` — render wyników i CSV;
-- `script-tools.js` — Edit/Multi/credentials dla skryptów.
+- `script-tools.js` — Edit/Multi/credentials oraz publiczny shared interaction contract dla skryptów;
+- `parameter-dialog.js` — natywny MeshCentral execution-input lifecycle i wspólne controls text/select/switch/user/asset, rozszerzające `SharedScriptTools`.
 
 Nie twórz ponownie `public/shared-ui/`, płaskich plików aplikacyjnych w `public/` ani warstw naprawczych DOM po renderze.
 

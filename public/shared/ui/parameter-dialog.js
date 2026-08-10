@@ -21,7 +21,7 @@
         return ["select", "switch", "user", "asset"].indexOf(kind) >= 0 ? kind : "text";
     }
     function defaultValue(variable) {
-        return text(variable && variable.defaultValue == null ? "" : variable.defaultValue);
+        return text(variable && variable.defaultValue != null ? variable.defaultValue : "");
     }
     function checkedDefault(variable) {
         return /^(1|true|yes|tak|on)$/i.test(defaultValue(variable));

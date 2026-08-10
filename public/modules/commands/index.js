@@ -73,6 +73,14 @@
     function note(shell, title, message, error) { var host = shell.state.page.details; host.innerHTML = ""; var card = shell.card(title, message); if (error) card.classList.add("mc-shared-error"); host.appendChild(card); sync(shell); }
     function empty(shell) { note(shell, msg("Wynik", "Output"), tools.state.favoritesOnly && !tools.state.favorites.length ? msg("Brak ulubionych poleceń.", "No favorite commands.") : msg("Wybierz polecenie lub skrypt, aby je uruchomić.", "Select a command or script to run it.")); }
     function confirmExecution(item) { if (!item || item.confirmExecution !== true) return true; return window.confirm(msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?"); }
+    function parameterValues(item, trigger) {
+        if (!Array.isArray(item && item.variables) || !item.variables.length) return Promise.resolve({});
+        if (!tools || typeof tools.openParameterDialog !== "function") return Promise.reject(new Error("Native MeshCentral parameter dialog is unavailable."));
+        return tools.openParameterDialog({
+            item: item, trigger: trigger,
+            primaryLabel: item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")
+        });
+    }
     function commandPath(category, command) { return "@command/" + category.key + "/" + command.id; }
     function tonedIcon(markup, tone) { return String(markup || "").replace("<svg ", "<svg class=\"sirk-command-icon sirk-command-icon-" + String(tone || "other") + "\" "); }
 
@@ -99,23 +107,6 @@
         return { type: "directory", name: msg("Polecenia", "Commands"), path: "", children: children };
     }
 
-    function valueControls(item, card) {
-        var variables = Array.isArray(item.variables) ? item.variables : [], controls = [];
-        if (!variables.length) return function () { return {}; };
-        var section = document.createElement("div"); section.className = "mc-script-runtime-variables";
-        var heading = document.createElement("h3"); heading.textContent = msg("Zmienne", "Variables"); section.appendChild(heading);
-        variables.forEach(function (variable) {
-            var row = document.createElement("label"); row.className = "mc-script-form-row";
-            var label = document.createElement("span"); label.className = "mc-script-form-label"; label.textContent = tr(variable.label || variable.name) + (variable.required ? " *" : ""); row.appendChild(label);
-            var input;
-            if (variable.control === "switch") { input = document.createElement("input"); input.type = "checkbox"; input.checked = /^(1|true|yes|tak|on)$/i.test(String(variable.defaultValue || "")); }
-            else if (variable.control === "select") { input = document.createElement("select"); (variable.options || []).forEach(function (entry) { var option = document.createElement("option"); option.value = String(entry.value == null ? entry : entry.value); option.textContent = tr(String(entry.label || entry.value || entry)); input.appendChild(option); }); input.value = String(variable.defaultValue || ""); }
-            else { input = document.createElement("input"); input.type = "text"; input.value = String(variable.defaultValue || ""); }
-            input.name = variable.name; row.appendChild(input); section.appendChild(row); controls.push({ variable: variable, input: input });
-        });
-        card.appendChild(section);
-        return function () { var values = {}; controls.forEach(function (entry) { values[entry.variable.name] = entry.variable.control === "switch" ? entry.input.checked : entry.input.value; }); return values; };
-    }
 
     function renderOutput(host, value) { host.innerHTML = ""; if (window.SharedResultsView && typeof window.SharedResultsView.mountResult === "function") { window.SharedResultsView.mountResult(host, value || msg("Brak wyniku.", "No output.")); return; } var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = stringValue(value) || msg("Brak wyniku.", "No output."); host.appendChild(pre); }
     function renderWaiting(host, value) { host.innerHTML = ""; var pre = document.createElement("pre"); pre.className = "mc-shared-output"; pre.textContent = value; host.appendChild(pre); }
@@ -146,30 +137,49 @@
 
     function showDefinition(shell, item, autoExecute) {
         var host = shell.state.page.details; host.innerHTML = "";
-        var card = shell.card(item.label || item.name, item.description || item.path); var collectValues = valueControls(item, card);
+        var card = shell.card(item.label || item.name, item.description || item.path);
         var button = shell.element("button", "btn btn-primary mc-command-run-button", item.requiresApproval ? msg("Poproś o akceptację", "Request") : "▶ " + msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
         var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
-        card.appendChild(outputHost); button.onclick = function () { execute(shell, item, button, collectValues(), outputHost); }; host.appendChild(card); sync(shell);
-        if (autoExecute === true && (!Array.isArray(item.variables) || item.variables.length === 0)) window.setTimeout(function () { button.click(); }, 0);
+        card.appendChild(outputHost);
+        button.onclick = function () {
+            parameterValues(item, button).then(function (values) {
+                if (values == null) return;
+                execute(shell, item, button, values, outputHost);
+            }).catch(function (error) {
+                outputs[item.path] = error.message || String(error);
+                renderWaiting(outputHost, outputs[item.path]);
+                outputHost.classList.add("mc-shared-error");
+            });
+        };
+        host.appendChild(card); sync(shell);
+        if (autoExecute === true) window.setTimeout(function () { button.click(); }, 0);
     }
 
     function show(shell, item, executeOnSelect) {
         pollSequence++;
         if (item.kind === "command") { showDefinition(shell, item, executeOnSelect === true); return; }
-        shell.api("script", { path: item.path }).then(function (response) { var script = response.script; showDefinition(shell, script, executeOnSelect === true && (!Array.isArray(script.variables) || script.variables.length === 0)); }).catch(function (error) { shell.error(shell.state.page.details, error); });
+        shell.api("script", { path: item.path }).then(function (response) {
+            var script = response.script;
+            showDefinition(shell, script, executeOnSelect === true);
+        }).catch(function (error) { shell.error(shell.state.page.details, error); });
     }
 
     function multi(shell, item) {
         if (!confirmExecution(item)) return;
-        treeState.selectedScript = item.path;
-        tools.openMultiExecution(shell, item, node(shell), function (ids) {
-            var payload = { nodeIds: ids, label: item.label || item.name, variableValues: {}, confirmedExecution: item.confirmExecution === true, note: "" };
-            if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
-            return shell.post("multi-execute", payload).then(function (response) {
-                note(shell, msg("Wynik Multi", "Multi-device result"), JSON.stringify({ total: response.total, submitted: response.submitted, pending: response.pending, failed: response.failed }, null, 2), response.failed > 0);
-                return response;
+        parameterValues(item, document.activeElement).then(function (values) {
+            if (values == null) return;
+            treeState.selectedScript = item.path;
+            tools.openMultiExecution(shell, item, node(shell), function (ids) {
+                var payload = { nodeIds: ids, label: item.label || item.name, variableValues: values || {}, confirmedExecution: item.confirmExecution === true, note: "" };
+                if (item.kind === "command") payload.commandId = item.commandId; else payload.scriptPath = item.path;
+                return shell.post("multi-execute", payload).then(function (response) {
+                    note(shell, msg("Wynik Multi", "Multi-device result"), JSON.stringify({ total: response.total, submitted: response.submitted, pending: response.pending, failed: response.failed }, null, 2), response.failed > 0);
+                    return response;
+                });
             });
+        }).catch(function (error) {
+            note(shell, msg("Multi-device execution", "Multi-device execution"), error.message || String(error), true);
         });
     }
 

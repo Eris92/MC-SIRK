@@ -84,70 +84,6 @@
         });
     }
 
-    function variableEditor(script) {
-        var wrapper = document.createElement("div");
-        wrapper.className = "mc-script-run-variables";
-        var controls = [];
-
-        (script.variables || []).forEach(function (variable) {
-            var row = document.createElement("label");
-            row.className = "mc-script-form-row";
-            var label = document.createElement("span");
-            label.className = "mc-script-form-label";
-            label.textContent = (variable.label || variable.name) + (variable.required ? " *" : "");
-            row.appendChild(label);
-
-            var control;
-            if (variable.control === "select") {
-                control = document.createElement("select");
-                (variable.options || []).forEach(function (choice) {
-                    var option = document.createElement("option");
-                    option.value = String(choice.value == null ? "" : choice.value);
-                    option.textContent = choice.label || option.value;
-                    control.appendChild(option);
-                });
-                control.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
-            } else if (variable.control === "switch") {
-                control = document.createElement("input");
-                control.type = "checkbox";
-                control.checked = /^(1|true|yes|tak)$/i.test(String(variable.defaultValue || ""));
-            } else {
-                control = document.createElement("input");
-                control.type = "text";
-                control.value = String(variable.defaultValue == null ? "" : variable.defaultValue);
-                control.placeholder = variable.label || variable.name;
-            }
-            control.classList.add("mc-definition-input");
-            row.appendChild(control);
-            wrapper.appendChild(row);
-            controls.push({ variable: variable, control: control });
-        });
-
-        return {
-            element: wrapper,
-            values: function () {
-                var result = {};
-                controls.forEach(function (item) {
-                    result[item.variable.name] = item.variable.control === "switch"
-                        ? item.control.checked
-                        : item.control.value;
-                });
-                return result;
-            },
-            validate: function () {
-                for (var index = 0; index < controls.length; index++) {
-                    var item = controls[index];
-                    var value = item.variable.control === "switch"
-                        ? item.control.checked
-                        : item.control.value;
-                    if (item.variable.required && !String(value == null ? "" : value).trim()) {
-                        item.control.focus();
-                        throw new Error((item.variable.label || item.variable.name) + " is required.");
-                    }
-                }
-            }
-        };
-    }
 
     function showValidationError(shell, errorHost, error) {
         errorHost.innerHTML = "";
@@ -167,14 +103,7 @@
         resultHost.firstChild.textContent = message;
     }
 
-    function submit(shell, script, button, variables, detailsHost, resultHost, errorHost) {
-        try {
-            variables.validate();
-        } catch (error) {
-            showValidationError(shell, errorHost || resultHost, error);
-            return;
-        }
-
+    function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
         if (!confirmExecution(script)) {
             if (errorHost) showValidationError(shell, errorHost, new Error("Execution cancelled."));
             else switchToResult(detailsHost, resultHost, "Execution cancelled.");
@@ -186,7 +115,7 @@
 
         shell.post("request", {
             scriptPath: script.path,
-            variableValues: variables.values(),
+            variableValues: values || {},
             confirmedExecution: script.confirmExecution === true,
             note: ""
         }).then(function (response) {
@@ -222,20 +151,18 @@
                 return;
             }
 
-            var variables = variableEditor(script);
             var hasVariables = Array.isArray(script.variables) && script.variables.length > 0;
             var resultHost = createResultHost();
 
             if (executeOnSelect === true && !hasVariables) {
                 detailsHost.appendChild(resultHost);
                 sync(shell);
-                submit(shell, script, null, variables, detailsHost, resultHost, null);
+                submit(shell, script, null, {}, detailsHost, resultHost, null);
                 return;
             }
 
             var card = shell.card(script.label || script.name, script.description || script.path);
             card.classList.add("mc-script-run-card");
-            if (hasVariables) card.appendChild(variables.element);
 
             var button = shell.element(
                 "button",
@@ -251,9 +178,28 @@
             detailsHost.appendChild(card);
 
             button.onclick = function () {
-                submit(shell, script, button, variables, detailsHost, resultHost, errorHost);
+                if (!hasVariables) {
+                    submit(shell, script, button, {}, detailsHost, resultHost, errorHost);
+                    return;
+                }
+                if (!tools || typeof tools.openParameterDialog !== "function") {
+                    switchToResult(detailsHost, resultHost, "Native MeshCentral parameter dialog is unavailable.");
+                    resultHost.classList.add("mc-shared-error");
+                    return;
+                }
+                tools.openParameterDialog({
+                    item: script, trigger: button,
+                    primaryLabel: script.requiresApproval ? "Request" : "Run"
+                }).then(function (values) {
+                    if (values == null) return;
+                    submit(shell, script, button, values, detailsHost, resultHost, errorHost);
+                }).catch(function (error) {
+                    switchToResult(detailsHost, resultHost, error.message || String(error));
+                    resultHost.classList.add("mc-shared-error");
+                });
             };
             sync(shell);
+            if (executeOnSelect === true && hasVariables) button.click();
         }).catch(function (error) {
             shell.error(shell.state.page.details, error);
         });
