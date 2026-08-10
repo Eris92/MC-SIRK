@@ -1,0 +1,38 @@
+name: Issue 123 Apply
+
+on:
+  push:
+    branches:
+      - issue-123-admin-theme-owner
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: issue-123-admin-theme-owner
+      - name: Apply canonical host theme surface patch
+        run: python scripts/issue-123-theme-owner.py
+      - name: Remove branch-only apply assets
+        run: git rm -f scripts/issue-123-theme-owner.py .github/workflows/issue-123-apply.yml
+      - name: Validate targeted theme contracts
+        run: |
+          node test/admin-host-theme-runtime.test.js
+          node test/admin-host-theme-signal.test.js
+          git diff --check
+      - name: Commit clean result
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(admin): follow canonical MeshCentral body theme state"
+          git push origin HEAD:issue-123-admin-theme-owner
