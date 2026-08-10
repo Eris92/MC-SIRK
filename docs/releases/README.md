@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
 - [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;

@@ -5,6 +5,7 @@ var libraryFactory = require("../../core/script-confirmation-library.js");
 var adminFactory = require("../../core/script-admin-service.js");
 var executorFactory = require("../../core/server-script-executor.js");
 var jiraAssetFactory = require("../../core/jira-asset-service.js");
+var jiraProtocolFactory = require("../../core/jira-protocol-service.js");
 var rootResolver = require("../../core/automation-root.js");
 var folderAccess = require("../../core/folder-access.js");
 
@@ -19,6 +20,8 @@ module.exports.createModule = function (context) {
         dataRoot: context.dataRoot,
         integrations: context.integrations
     });
+    var jiraProtocol = jiraProtocolFactory.createJiraProtocolService({ context: context, jiraAssets: jiraAssets, executor: executor });
+    var protocolStartSignals = Object.create(null);
     var unregister = null;
 
     function allowed(user) {
@@ -57,6 +60,16 @@ module.exports.createModule = function (context) {
             return String(variable.name || "") === name && (variable.control === "user" || variable.control === "asset");
         })[0] || null;
     }
+    function signalProtocolStart(payload, request) {
+        var nonce = String(payload && payload.protocolRunNonce || "");
+        var signal = protocolStartSignals[nonce];
+        if (signal) signal(String(request && request.id || ""));
+    }
+    function publicProtocolRequest(user, id) {
+        var request = context.approval.getRequest(user, id);
+        requireScriptAccess(user, request.scriptPath);
+        return request;
+    }
 
     var provider = {
         type: "myscripts",
@@ -76,6 +89,10 @@ module.exports.createModule = function (context) {
         getSummary: function (payload) { return payload.description || payload.scriptPath || "My Scripts request"; },
         getApprovalLevels: function (payload) { return normalizeApprovalLevels(payload && payload.approvalLevels); },
         canSubmit: allowed,
+        presentRequest: function (user, request) {
+            if (request && request.payload && request.payload.scriptPath) request.scriptPath = String(request.payload.scriptPath);
+            return request;
+        },
         getResources: function (user, query) {
             var script = query && query.scriptPath ? library.getScript(query.scriptPath, true) : null;
             return { tree: visibleTree(user), script: script && (requireScriptAccess(user, script.path), script) || null };
@@ -83,6 +100,13 @@ module.exports.createModule = function (context) {
         execute: function (payload, request) {
             var requester = shared.findUser(context.parent, request && request.requester && request.requester.id) || { _id: request && request.requester && request.requester.id };
             requireScriptAccess(requester, payload && payload.scriptPath);
+            var script = library.getScript(payload && payload.scriptPath, true);
+            if (!script) throw new Error("Script not found.");
+            if (jiraProtocol.isProtocolScript(script)) {
+                if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
+                signalProtocolStart(payload, request);
+                return jiraProtocol.execute(script, payload, request);
+            }
             return executor.execute(payload, request);
         }
     };
@@ -127,6 +151,10 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user, q.path); return { ok: true, definition: admin.getDefinition(user, q.path) }; }
             if (asset === "script-secrets") { requireScriptAccess(user, q.path); return { ok: true, secrets: admin.getSecretState(user, q.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user, q.path); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, q.path) }; }
+            if (asset === "progress") {
+                var progressRequest = publicProtocolRequest(user, q.id);
+                return { ok: true, request: progressRequest, progress: jiraProtocol.progress(progressRequest.id, progressRequest.status) };
+            }
             if (asset === "results") {
                 return context.approval.list(user, {
                     type: "myscripts",
@@ -183,6 +211,10 @@ module.exports.createModule = function (context) {
                 if (!levels.length && !allowNoApproval()) levels = [1];
                 var language = String(value.language || "en").toLowerCase() === "pl" ? "pl" : "en";
                 var locale = requestedScript.locales && requestedScript.locales[language] || {};
+                var protocol = jiraProtocol.isProtocolScript(requestedScript);
+                if (protocol && !admin.hasSystemCredential(requestedScript.path, "jira")) {
+                    throw new Error("Assign the configured Jira integration to this script first.");
+                }
                 var payload = {
                     scriptPath: requestedScript.path,
                     scriptHash: requestedScript.hash,
@@ -192,7 +224,24 @@ module.exports.createModule = function (context) {
                     confirmedExecution: requestedScript.confirmExecution === true,
                     variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? shared.copy(value.variableValues) : {}
                 };
-                return context.approval.submit("myscripts", user, payload, value.note).then(function (request) { return { ok: true, request: request }; });
+                if (!protocol) {
+                    return context.approval.submit("myscripts", user, payload, value.note).then(function (request) { return { ok: true, request: request }; });
+                }
+
+                var nonce = shared.randomId(12);
+                payload.protocolRunNonce = nonce;
+                var startPromise = new Promise(function (resolve) { protocolStartSignals[nonce] = resolve; });
+                var submission = context.approval.submit("myscripts", user, payload, value.note).then(function (request) {
+                    return String(request && request.id || "");
+                });
+                return Promise.race([startPromise, submission]).then(function (requestId) {
+                    delete protocolStartSignals[nonce];
+                    if (!requestId) throw new Error("Protocol request ID is unavailable.");
+                    return { ok: true, request: publicProtocolRequest(user, requestId), protocol: true };
+                }, function (error) {
+                    delete protocolStartSignals[nonce];
+                    throw error;
+                });
             }
             if (asset === "settings") {
                 requireAdmin(user);
