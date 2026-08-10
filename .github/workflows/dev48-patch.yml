@@ -6,7 +6,7 @@ on:
 jobs:
   patch:
     if: github.actor != 'github-actions[bot]'
-    runs-on: macos-14
+    runs-on: ubuntu-slim
     permissions:
       contents: write
     steps:
