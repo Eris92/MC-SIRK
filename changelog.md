@@ -1,3 +1,13 @@
+## 0.1.1-dev.36 - 2026-08-10
+
+- Follow up real `0.1.1-dev.35` smoke evidence: Results content still flashed instead of presenting one stable final view, and Network Settings still reported launcher start without opening the adapter properties sheet.
+- Build and theme the complete canonical Results parsed/table/Copy/CSV/Debug tree before Modern `showModal()` first paint, while preserving the untouched full payload only inside expandable Debug and keeping cleaned output in ordinary Results cells.
+- Keep the verified default-route/PIDL Network Settings chain but add `SEE_MASK_NOASYNC` to `ShellExecuteEx` (`0x0000010C`) so the short-lived hidden helper cannot terminate before Shell properties activation completes.
+- Verify the exact production Network Settings payload under Windows PowerShell 5.1 and the exact existing scheduled-task/VBS interactive launcher on Windows Server 2025; restore the canonical read-only workflow afterwards.
+- Keep Issues #237 and #128 open for real dev.36 re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.36.md`.
+
 ## 0.1.1-dev.35 - 2026-08-09
 
 - Follow up real `0.1.1-dev.34` smoke evidence: the Results native modal became opaque but stopped before mounting output, while Network Settings still did not open the selected adapter properties.
@@ -207,7 +217,7 @@ Current development notes: `docs/releases/0.1.1-dev.14.md`.
 ## 0.1.1-dev.13 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current `main`.
-- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host card tokens cannot expose the device page.
+- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host tokens cannot expose the device page.
 - Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
