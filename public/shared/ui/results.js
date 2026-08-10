@@ -17,6 +17,7 @@
     function parseDownloadResult(value) {
         var raw = String(value == null ? "" : value);
         var downloadPath = "";
+        var artifact = null;
         var lines = raw.split(/\r?\n/);
         var visible = [];
         lines.forEach(function (line) {
@@ -26,11 +27,19 @@
                 if (!downloadPath) downloadPath = String(match[1] || "").trim();
                 return;
             }
+            var artifactMatch = /^SIRK_ARTIFACT:(\{.+\})$/i.exec(trimmed);
+            if (artifactMatch) {
+                try {
+                    var parsedArtifact = JSON.parse(artifactMatch[1]);
+                    if (parsedArtifact && /^[A-Za-z0-9_-]{6,80}$/.test(String(parsedArtifact.id || "")) && /^(pdf|json|txt|html)$/.test(String(parsedArtifact.type || ""))) artifact = parsedArtifact;
+                } catch (error) {}
+                return;
+            }
             if (/^__(?:MYCOMMANDS|COMMANDTABS)_PROGRESS__/i.test(trimmed)) return;
             if (/^Run as:/i.test(trimmed)) return;
             visible.push(line);
         });
-        return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath };
+        return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath, artifact: artifact };
     }
 
     function rawResultSource(row) {
@@ -235,6 +244,14 @@
             copyResult(data, copy).catch(function () { copy.textContent = "Copy failed"; });
         };
         actions.appendChild(copy);
+        if (parsedOutput.artifact) {
+            var openArtifact = document.createElement("button"); openArtifact.type = "button"; openArtifact.className = "btn btn-secondary btn-sm"; openArtifact.textContent = parsedOutput.artifact.type === "pdf" ? "Open PDF" : "Open artifact";
+            openArtifact.onclick = function () { window.open(window.SirkPlatformCore.assetUrl("myscripts", "artifact", { id: parsedOutput.artifact.id, type: parsedOutput.artifact.type }), "_blank", "noopener"); };
+            actions.appendChild(openArtifact);
+            var downloadArtifact = document.createElement("button"); downloadArtifact.type = "button"; downloadArtifact.className = "btn btn-secondary btn-sm"; downloadArtifact.textContent = "Download";
+            downloadArtifact.onclick = function () { window.location.href = window.SirkPlatformCore.assetUrl("myscripts", "artifact", { id: parsedOutput.artifact.id, type: parsedOutput.artifact.type, download: 1 }); };
+            actions.appendChild(downloadArtifact);
+        }
         if (parsedOutput.downloadPath) {
             var download = document.createElement("button");
             download.type = "button";

@@ -51,6 +51,13 @@ function html(value) {
         .replace(/'/g, "&#39;");
 }
 
+function writeJsonAtomicSync(fs, path, target, value) {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    var temporary = target + "." + process.pid + "." + shared.randomId(5) + ".tmp";
+    fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + "\n", "utf8");
+    fs.renameSync(temporary, target);
+}
+
 function allStrings(value, result, depth) {
     result = result || [];
     depth = Number(depth) || 0;
@@ -181,6 +188,8 @@ var FONT = {
 
 function glyph(character) {
     var upper = String(character || "?").toUpperCase();
+    var transliteration = { "Ą":"A", "Ć":"C", "Ę":"E", "Ł":"L", "Ń":"N", "Ó":"O", "Ś":"S", "Ź":"Z", "Ż":"Z" };
+    upper = transliteration[upper] || upper;
     return FONT[upper] || FONT["?"];
 }
 
@@ -305,7 +314,7 @@ module.exports.createJiraAssetsService = function (options) {
 
     function writeUserCache(users) {
         fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-        shared.writeJsonAtomic(fs, path, cachePath, { updatedAt: Date.now(), users: users });
+        writeJsonAtomicSync(fs, path, cachePath, { updatedAt: Date.now(), users: users });
     }
 
     function normalizeUser(user) {
@@ -526,7 +535,7 @@ module.exports.createJiraAssetsService = function (options) {
         fs.writeFileSync(path.join(directory, "protocol.txt"), txt, "utf8");
         fs.writeFileSync(path.join(directory, "protocol.html"), page, "utf8");
         fs.writeFileSync(path.join(directory, "protocol.pdf"), rasterPdf(lines));
-        shared.writeJsonAtomic(fs, path, path.join(directory, "meta.json"), {
+        writeJsonAtomicSync(fs, path, path.join(directory, "meta.json"), {
             requestId: id,
             requesterId: clean(request.requester && request.requester.id, 300),
             scriptPath: clean(request.payload && request.payload.scriptPath, 1000),

@@ -20,6 +20,14 @@
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
         return ["select", "switch", "user", "asset"].indexOf(kind) >= 0 ? kind : "text";
     }
+    function allowCustom(item, variable) {
+        var name = text(variable && variable.name).trim().toLowerCase();
+        return (item && Array.isArray(item.extraHeaders) ? item.extraHeaders : []).some(function (header) {
+            var match = /^SirkAllowCustom\s*:\s*(.+)$/i.exec(text(header).trim());
+            if (!match) return false;
+            return match[1].split(",").map(function (value) { return value.trim().toLowerCase(); }).indexOf(name) >= 0;
+        });
+    }
     function defaultValue(variable) {
         return text(variable && variable.defaultValue != null ? variable.defaultValue : "");
     }
@@ -125,21 +133,30 @@
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
             row.appendChild(caption);
-            var control = document.createElement(kind === "select" || kind === "user" || kind === "asset" ? "select" : "input");
+            var customUser = kind === "user" && allowCustom(item, variable);
+            var control = document.createElement(kind === "select" || kind === "asset" || (kind === "user" && !customUser) ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
             if (kind === "switch") {
                 control.type = "checkbox";
                 control.checked = checkedDefault(variable);
-            } else if (kind === "text") {
+            } else if (kind === "text" || customUser) {
                 control.type = "text";
                 control.value = defaultValue(variable);
                 control.autocomplete = "off";
+                if (customUser) {
+                    var list = document.createElement("datalist");
+                    list.id = control.id + "Options";
+                    control.setAttribute("list", list.id);
+                    row.appendChild(control);
+                    row.appendChild(list);
+                } else row.appendChild(control);
             } else {
                 setOptions(control, variable.options || [], variable, kind === "user" || kind === "asset" ? "Loading…" : "");
+                row.appendChild(control);
             }
-            row.appendChild(control);
+            if (!control.parentNode) row.appendChild(control);
             var help = localized(variable, "description") || text(variable.description || "");
             if (help) {
                 var hint = document.createElement("span");
@@ -240,6 +257,26 @@
                 cleanup();
             }
             function loadDynamic(record) {
+                if (record.kind === "user" && allowCustom(item, record.variable)) {
+                    if (typeof provider !== "function") return Promise.resolve();
+                    var list = document.getElementById(record.control.getAttribute("list"));
+                    if (!list) return Promise.resolve();
+                    var requestSequence = ++record.loadSequence;
+                    record.loading = true; refreshSubmitState();
+                    return Promise.resolve(provider(record.variable, currentValues(records), item)).then(function (optionsValue) {
+                        if (cleaned || requestSequence !== record.loadSequence) return;
+                        while (list.firstChild) list.removeChild(list.firstChild);
+                        (Array.isArray(optionsValue) ? optionsValue : []).forEach(function (option) {
+                            var node = document.createElement("option"); node.value = optionValue(option);
+                            var label = optionLabel(option); if (label) node.label = label; list.appendChild(node);
+                        });
+                        record.loading = false; record.loadFailed = false; refreshSubmitState();
+                    }).catch(function (error) {
+                        if (cleaned || requestSequence !== record.loadSequence) return;
+                        record.loading = false; record.loadFailed = false;
+                        setStatus(status, error && error.message || String(error), false); refreshSubmitState();
+                    });
+                }
                 if ((record.kind !== "user" && record.kind !== "asset") || typeof provider !== "function") {
                     if (record.kind === "user" || record.kind === "asset") {
                         setOptions(record.control, record.variable.options || [], record.variable, record.variable.required ? "Select…" : "None");

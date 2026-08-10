@@ -4,6 +4,7 @@ var shared = require("../../core/shared.js");
 var libraryFactory = require("../../core/script-confirmation-library.js");
 var adminFactory = require("../../core/script-admin-service.js");
 var executorFactory = require("../../core/server-script-executor.js");
+var jiraAssetsFactory = require("../../core/jira-assets-service.js");
 var rootResolver = require("../../core/automation-root.js");
 var folderAccess = require("../../core/folder-access.js");
 
@@ -12,6 +13,7 @@ module.exports.createModule = function (context) {
     var library = libraryFactory.createScriptLibrary({ fs: context.fs, path: context.nativePath || context.path, root: root, readOnly: true, allowWrite: true });
     var admin = adminFactory.createScriptAdminService({ context: context, library: library, namespace: "script-secrets.myscripts" });
     var executor = executorFactory.createServerScriptExecutor({ context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials" });
+    var jiraAssets = jiraAssetsFactory.createJiraAssetsService({ context: context });
     var unregister = null;
 
     function allowed(user) {
@@ -70,6 +72,12 @@ module.exports.createModule = function (context) {
         execute: function (payload, request) {
             var requester = shared.findUser(context.parent, request && request.requester && request.requester.id) || { _id: request && request.requester && request.requester.id };
             requireScriptAccess(requester, payload && payload.scriptPath);
+            var script = library.getScript(payload && payload.scriptPath, true);
+            if (script && jiraAssets.isProtocolScript(script)) {
+                return jiraAssets.executeProtocol(payload, request, function (environment) {
+                    return executor.execute(payload, request, { environment: environment });
+                });
+            }
             return executor.execute(payload, request);
         }
     };
@@ -94,6 +102,39 @@ module.exports.createModule = function (context) {
             return Promise.resolve();
         },
         serveIcon: function (req, res) { shared.send(res, 404, "text/plain; charset=utf-8", "Icons are included in the script tree."); },
+        serveArtifact: function (req, res, user) {
+            if (!allowed(user)) { shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden"); return; }
+            try {
+                var q = req && req.query || {};
+                var request = context.approval.getRequest(user, q.id);
+                var artifact = jiraAssets.resolveArtifact(q.id, q.type || "pdf");
+                requireScriptAccess(user, artifact.meta && artifact.meta.scriptPath);
+                if (String(request.id) !== String(artifact.meta.requestId)) throw new Error("Artifact request mismatch.");
+                var contentTypes = { pdf: "application/pdf", json: "application/json; charset=utf-8", txt: "text/plain; charset=utf-8", html: "text/html; charset=utf-8" };
+                var stat = context.fs.statSync(artifact.path);
+                var disposition = String(q.download || "") === "1" ? "attachment" : "inline";
+                var name = String(artifact.name || "artifact").replace(/[\r\n\"]/g, "_");
+                if (typeof res.setHeader === "function") {
+                    res.setHeader("Content-Type", contentTypes[artifact.type] || "application/octet-stream");
+                    res.setHeader("Content-Disposition", disposition + '; filename="' + name + '"');
+                    res.setHeader("Content-Length", String(stat.size));
+                    res.setHeader("Cache-Control", "no-store");
+                    res.setHeader("X-Content-Type-Options", "nosniff");
+                } else if (typeof res.set === "function") {
+                    res.set("Content-Type", contentTypes[artifact.type] || "application/octet-stream");
+                    res.set("Content-Disposition", disposition + '; filename="' + name + '"');
+                    res.set("Content-Length", String(stat.size));
+                    res.set("Cache-Control", "no-store");
+                    res.set("X-Content-Type-Options", "nosniff");
+                }
+                res.statusCode = 200;
+                var stream = context.fs.createReadStream(artifact.path);
+                stream.on("error", function () { if (typeof res.destroy === "function") res.destroy(); });
+                stream.pipe(res);
+            } catch (error) {
+                shared.send(res, 403, "text/plain; charset=utf-8", "Artifact unavailable");
+            }
+        },
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var q = req && req.query || {};
@@ -114,6 +155,22 @@ module.exports.createModule = function (context) {
             if (asset === "definition") { requireScriptAccess(user, q.path); return { ok: true, definition: admin.getDefinition(user, q.path) }; }
             if (asset === "script-secrets") { requireScriptAccess(user, q.path); return { ok: true, secrets: admin.getSecretState(user, q.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user, q.path); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, q.path) }; }
+            if (asset === "variable-options") {
+                requireScriptAccess(user, q.path);
+                var optionScript = library.getScript(q.path, true);
+                if (!optionScript) throw new Error("Script not found.");
+                var optionVariable = (optionScript.variables || []).find(function (item) { return item.name === String(q.variable || ""); });
+                if (!optionVariable) throw new Error("Variable not found.");
+                var currentValues = {};
+                try { currentValues = q.values ? JSON.parse(String(q.values)) : {}; } catch (error) { currentValues = {}; }
+                if (!currentValues || typeof currentValues !== "object" || Array.isArray(currentValues)) currentValues = {};
+                return jiraAssets.variableOptions(optionScript, optionVariable, currentValues).then(function (options) { return { ok: true, options: options }; });
+            }
+            if (asset === "progress") {
+                var progressRequest = context.approval.getRequest(user, q.id);
+                requireScriptAccess(user, progressRequest.payload && progressRequest.payload.scriptPath);
+                return { ok: true, progress: jiraAssets.progress(q.id), request: progressRequest };
+            }
             if (asset === "results") {
                 return context.approval.list(user, {
                     type: "myscripts",
@@ -161,7 +218,13 @@ module.exports.createModule = function (context) {
                     confirmedExecution: requestedScript.confirmExecution === true,
                     variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? shared.copy(value.variableValues) : {}
                 };
-                return context.approval.submit("myscripts", user, payload, value.note).then(function (request) { return { ok: true, request: request }; });
+                var protocol = jiraAssets.isProtocolScript(requestedScript);
+                return context.approval.submit("myscripts", user, payload, value.note, { deferExecution: protocol && !levels.length }).then(function (request) {
+                    if (protocol && !levels.length && request && request.status === "approved") {
+                        context.approval.execute(request.id).catch(function () {});
+                    }
+                    return { ok: true, request: request, protocol: protocol };
+                });
             }
             if (asset === "settings") {
                 requireAdmin(user);

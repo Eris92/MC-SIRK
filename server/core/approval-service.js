@@ -262,7 +262,7 @@ module.exports.createApprovalService = function (options) {
             rows.push(request);
             return { request: shared.copy(request), existing: false };
         }).then(function (result) {
-            if (result.existing || levels.length) return result.request;
+            if (result.existing || levels.length || (submitOptions && submitOptions.deferExecution === true)) return result.request;
             return execute(result.request.id);
         });
     }
@@ -524,6 +524,7 @@ module.exports.createApprovalService = function (options) {
         createApiToken: createApiToken,
         decide: decide,
         decideExternal: decideExternal,
+        execute: execute,
         getProviderResources: getProviderResources,
         getRequest: getRequest,
         getSettings: getSettings,

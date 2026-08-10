@@ -11,6 +11,20 @@
         deepLinkParameter: "myscript"
     });
     tools.restoreTreeState(treeState);
+    var progressSequence = 0;
+    var openedArtifacts = new Set();
+
+    function protocolScript(item) {
+        return !!(item && Array.isArray(item.extraHeaders) && item.extraHeaders.some(function (header) {
+            return /^SirkWorkflow\s*:\s*JiraAssetProtocol$/i.test(String(header || "").trim());
+        }));
+    }
+    window.SharedScriptTools.setParameterOptionProvider(function (variable, values, item) {
+        if (!protocolScript(item) || (variable.control !== "user" && variable.control !== "asset")) return Promise.resolve(variable.options || []);
+        return window.SirkPlatformCore.api("myscripts", "variable-options", null, {
+            path: item.path, variable: variable.name, values: JSON.stringify(values || {})
+        }).then(function (response) { return response.options || []; });
+    });
 
     function admin(shell) {
         return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.siteAdmin);
@@ -103,6 +117,41 @@
         resultHost.firstChild.textContent = message;
     }
 
+    function openArtifactOnce(request) {
+        var artifact = request && request.result && request.result.artifact;
+        if (!artifact || !artifact.id || openedArtifacts.has(artifact.id)) return;
+        openedArtifacts.add(artifact.id);
+        window.open(window.SirkPlatformCore.assetUrl("myscripts", "artifact", { id: artifact.id, type: artifact.type || "pdf" }), "_blank", "noopener");
+    }
+
+    function pollProtocol(shell, script, request, resultHost, sequence, attempt) {
+        if (sequence !== progressSequence) return;
+        attempt = Number(attempt) || 0;
+        if (attempt >= 900) { switchToResult(shell.state.page.details, resultHost, "Protocol progress timed out."); return; }
+        shell.api("progress", { id: request.id }).then(function (response) {
+            if (sequence !== progressSequence) return;
+            var progress = response.progress || {};
+            var current = response.request || request;
+            outputs[script.path] = current;
+            if (current.status === "completed" || current.status === "failed" || current.status === "rejected") {
+                renderResult(resultHost, current);
+                openArtifactOnce(current);
+                sync(shell);
+                return;
+            }
+            resultHost.innerHTML = "";
+            var bar = document.createElement("progress"); bar.className = "mc-script-protocol-progress"; bar.max = 100; bar.value = Number(progress.percent) || 0;
+            var label = document.createElement("div"); label.className = "mc-shared-muted";
+            label.textContent = current.status === "pending" ? "Waiting for approval." : (progress.stage || current.status || "Executing...") + " — " + bar.value + "%";
+            resultHost.appendChild(bar); resultHost.appendChild(label);
+            window.setTimeout(function () { pollProtocol(shell, script, current, resultHost, sequence, attempt + 1); }, 1000);
+        }).catch(function (error) {
+            if (sequence !== progressSequence) return;
+            resultHost.innerHTML = ""; resultHost.classList.add("mc-shared-error");
+            resultHost.textContent = error.message || String(error);
+        });
+    }
+
     function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
         if (!confirmExecution(script)) {
             if (errorHost) showValidationError(shell, errorHost, new Error("Execution cancelled."));
@@ -113,6 +162,7 @@
         if (button) button.disabled = true;
         switchToResult(detailsHost, resultHost, "Executing script...");
 
+        var sequence = ++progressSequence;
         shell.post("request", {
             scriptPath: script.path,
             variableValues: values || {},
@@ -121,7 +171,8 @@
         }).then(function (response) {
             var request = response.request || {};
             outputs[script.path] = request;
-            renderResult(resultHost, request);
+            if (response.protocol === true && request.id) pollProtocol(shell, script, request, resultHost, sequence, 0);
+            else renderResult(resultHost, request);
         }).catch(function (error) {
             var request = {
                 status: "failed",
@@ -137,6 +188,7 @@
     }
 
     function show(shell, item, executeOnSelect) {
+        progressSequence++;
         shell.api("script", { path: item.path }).then(function (response) {
             var script = response.script;
             var detailsHost = shell.state.page.details;

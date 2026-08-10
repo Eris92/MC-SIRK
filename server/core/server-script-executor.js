@@ -200,7 +200,7 @@ module.exports.createServerScriptExecutor = function (options) {
         return null;
     }
 
-    function run(script, payload, request) {
+    function run(script, payload, request, executionOptions) {
         if (payload.scriptHash && String(payload.scriptHash) !== String(script.hash)) {
             return Promise.reject(new Error("The script changed after submission and was not executed."));
         }
@@ -213,7 +213,8 @@ module.exports.createServerScriptExecutor = function (options) {
         try { plan = buildPlan(script, values); }
         catch (error) { return Promise.reject(error); }
 
-        var environment = Object.assign({}, process.env, systemEnvironment(script.path), {
+        executionOptions = executionOptions || {};
+        var environment = Object.assign({}, process.env, systemEnvironment(script.path), executionOptions.environment || {}, {
             MYSCRIPTS_REQUEST_ID: request && request.id || "",
             MYSCRIPTS_REQUESTER: request && request.requester && request.requester.name || "",
             MYSCRIPTS_PLUGIN_ROOT: context.pluginRoot,
@@ -251,12 +252,12 @@ module.exports.createServerScriptExecutor = function (options) {
         });
     }
 
-    function execute(payload, request) {
+    function execute(payload, request, executionOptions) {
         payload = payload && typeof payload === "object" ? payload : {};
         var task = function () {
             var script = library.getScript(String(payload.scriptPath || ""), true);
             if (!script) throw new Error("Script not found.");
-            return run(script, payload, request || {});
+            return run(script, payload, request || {}, executionOptions);
         };
         var operation = queue.catch(function () {}).then(task);
         queue = operation.catch(function () {});

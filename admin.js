@@ -130,10 +130,11 @@ module.exports.admin = function (plugin) {
             plugin.runtime.request("GET", "_runtime", "bootstrap", req, res, user);
             return;
         }
-        if (moduleName === "myscripts" && asset === "folder-icon") {
+        if (moduleName === "myscripts" && (asset === "folder-icon" || asset === "artifact")) {
             var automation = plugin.runtime.modules && plugin.runtime.modules.myscripts;
-            if (automation && typeof automation.serveIcon === "function") automation.serveIcon(req, res, user);
-            else shared.send(res, 404, "text/plain; charset=utf-8", "Folder icon unavailable");
+            if (asset === "artifact" && automation && typeof automation.serveArtifact === "function") automation.serveArtifact(req, res, user);
+            else if (asset === "folder-icon" && automation && typeof automation.serveIcon === "function") automation.serveIcon(req, res, user);
+            else shared.send(res, 404, "text/plain; charset=utf-8", "My Scripts asset unavailable");
             return;
         }
         if (moduleName) {

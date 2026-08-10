@@ -7,6 +7,7 @@
 # VariableAssetRequired: PcName,Komputer | Wybierz komputer przypisany do użytkownika Jira
 # VariableSwitch: IsTransferProtocol,Protokół przekazania | Włącz dla przekazania, wyłącz dla zwrotu
 # VariableUserRequired: ItPerson,Osoba IT | Wybierz osobę IT z Jira albo wpisz własną nazwę
+# SirkAllowCustom: ItPerson
 # ConfirmExecution: true
 # ShowOnDesktop: false
 # ShowWithoutDesktop: true
