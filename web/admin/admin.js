@@ -32,15 +32,15 @@
     }
 
     function hostIsDark() {
-        if (typeof hostWindow.nightMode === "boolean") return hostWindow.nightMode;
         var hostBody = hostDocument && hostDocument.body;
-        if (hostBody && hostBody.classList.contains("night")) return true;
         var htmlTheme = hostDocument && hostDocument.documentElement && hostDocument.documentElement.getAttribute("data-bs-theme");
         if (htmlTheme === "dark") return true;
         if (htmlTheme === "light") return false;
         var bodyTheme = hostBody && hostBody.getAttribute("data-bs-theme");
         if (bodyTheme === "dark") return true;
         if (bodyTheme === "light") return false;
+        if (hostBody && hostBody.classList.contains("night")) return true;
+        if (typeof hostWindow.nightMode === "boolean") return hostWindow.nightMode;
         try {
             var storedMode = hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode");
             if (storedMode === "1") return true;

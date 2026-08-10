@@ -16,8 +16,26 @@ assert.ok(admin.indexOf("var hostWindow = window;") >= 0 &&
 
 var nightModeCheck = admin.indexOf('typeof hostWindow.nightMode === "boolean"');
 var htmlThemeCheck = admin.indexOf('hostDocument.documentElement.getAttribute("data-bs-theme")');
-assert.ok(nightModeCheck >= 0 && htmlThemeCheck > nightModeCheck,
-    "MeshCentral parent nightMode must be the primary host theme state; data-bs-theme is fallback only.");
+assert.ok(htmlThemeCheck >= 0 && nightModeCheck > htmlThemeCheck,
+    "Explicit parent data-bs-theme must win over a stale legacy nightMode value when Modern MeshCentral exposes it.");
+
+var hostThemeStart = admin.indexOf("function hostIsDark()");
+var hostThemeEnd = admin.indexOf("function syncHostTheme()", hostThemeStart);
+var hostThemeSource = admin.slice(hostThemeStart, hostThemeEnd);
+var evaluateHostTheme = new Function("hostWindow", "hostDocument", "colorParts", hostThemeSource + "\nreturn hostIsDark();");
+function fakeDocument(theme) {
+    return {
+        documentElement: { getAttribute: function (name) { return name === "data-bs-theme" ? theme : null; } },
+        body: {
+            getAttribute: function () { return null; },
+            classList: { contains: function () { return false; } }
+        }
+    };
+}
+assert.strictEqual(evaluateHostTheme({ nightMode: false }, fakeDocument("dark"), function () { return null; }), true,
+    "Modern parent dark data-bs-theme must override stale nightMode=false.");
+assert.strictEqual(evaluateHostTheme({ nightMode: true }, fakeDocument("light"), function () { return null; }), false,
+    "Modern parent light data-bs-theme must override stale nightMode=true.");
 assert.ok(admin.indexOf('hostBody && hostBody.classList.contains("night")') >= 0,
     "Admin theme detection must honor the parent MeshCentral body.night state.");
 assert.ok(admin.indexOf('hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode")') >= 0 &&

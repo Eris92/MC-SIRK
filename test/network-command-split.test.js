@@ -33,6 +33,12 @@ assert.ok(properties.indexOf('label: "Network Settings"') >= 0 &&
     "Adapter-properties command must expose the exact Network Settings label in both locales.");
 assert.ok(properties.indexOf('runAsUser: 2') >= 0,
     "Adapter properties must run in the interactive user context.");
+assert.ok(properties.indexOf('type: 2') >= 0,
+    "Network Settings must execute as direct PowerShell so the shared logged-on-user runner owns the full UI operation lifetime.");
+assert.strictEqual(properties.indexOf('powershell.exe'), -1,
+    "Network Settings must not detach a nested powershell.exe process from the canonical logged-on-user runner.");
+assert.strictEqual(properties.indexOf('start \"\"'), -1,
+    "Network Settings must not use CMD start for adapter properties because it returns before the UI operation completes.");
 assert.ok(properties.indexOf('$pickRoute={param($prefix);') >= 0 &&
     properties.indexOf("$selected=&$pickRoute '0.0.0.0/0'") >= 0 &&
     properties.indexOf("$selected=&$pickRoute '::/0'") >= 0,
