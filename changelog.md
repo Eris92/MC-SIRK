@@ -1,12 +1,3 @@
-## 0.1.1-dev.44 - 2026-08-10
-
-- Windows #238: add a real `windows-latest` Windows PowerShell 5.1 smoke to the existing maintained `test.yml` while keeping Linux `npm test` as the canonical broad suite.
-- Validate `Shell.Application.NameSpace(49)` on a real Windows runner and reject the historical dev.33 `shell:ConnectionsFolder` input before COM invocation.
-- Keep the smoke read-only: no `Properties`/Shell verb invocation, no network mutation, polling or readiness loop.
-- Pre-bump Actions run `31390869438`: Linux `npm test` GREEN and Windows interactive Shell smoke GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
-
-Current development notes: `docs/releases/0.1.1-dev.44.md`.
-
 ## 0.1.1-dev.43 - 2026-08-10
 
 - Commands #247: expand Multi-device execution from selection-only input to the permission-filtered MeshCentral host catalog using stable `nodeId` identity.
@@ -31,7 +22,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
 - Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag/GitHub Release.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
@@ -40,7 +31,7 @@ Current development notes: `docs/releases/0.1.1-dev.41.md`.
 - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
 - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
 - Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
-- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
+- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.40.md`.
 
@@ -49,7 +40,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
 - Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
-- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.39.md`.
 
@@ -207,7 +198,7 @@ Current development notes: `docs/releases/0.1.1-dev.23.md`.
 
 - Deliver the shared startup/readiness fix from PR #212 for Issues #177 and #178.
 - Mount enabled+allowed SIRK native menu entries immediately after bootstrap instead of waiting for renderer/module initialization.
-- Fetch deferred shared UI assets concurrently and initialize allowed modules in one bounded parallel fan-out, while retaining and replaying pre-runtime native node/page context.
+- Fetch deferred shared UI assets concurrently and initialize allowed modules in one bounded parallel fan-out, while retaining and replaying pre-runtime native page/device context.
 - Keep one canonical startup/menu owner with no polling, MutationObserver, readiness timer staircase, tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.22.md`.
@@ -216,7 +207,7 @@ Current development notes: `docs/releases/0.1.1-dev.22.md`.
 
 - Deliver the Move Request #178 host-button readiness fix from PR #209 so MeshCentral update detection installs the synchronous native lifecycle behavior.
 - Remove the historical `0/100/400/1000/2000/4000 ms` readiness retry staircase and reuse the existing idempotent `installHostButton()` owner from `onDeviceRefreshEnd` and `onNativePageEnd`.
-- Preserve `hostButtonEnabled`, single-node reuse, node resolution, native clone presentation and dialog flow without adding a `MutationObserver`, polling loop or request.
+- Preserve `hostButtonEnabled`, single-node reuse, node resolution, native cloned presentation and dialog flow without adding a `MutationObserver`, polling loop or request.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.21.md`.
@@ -252,157 +243,157 @@ Current development notes: `docs/releases/0.1.1-dev.18.md`.
 ## 0.1.1-dev.17 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal DOM fix from current `main`.
-- Match the current MeshCentral ModernModal structure with modal -> modal-dialog modal-dialog-centered -> modal-content instead of attaching modal-content directly below the overlay.
+- Match the current MeshCentral ModernModal structure with `modal -> modal-dialog modal-dialog-centered -> modal-content` instead of attaching `modal-content` directly below the overlay.
 - Keep the existing Move Request overlay/lifecycle and `MeshThemeAdapter` ownership; do not add a new modal framework, background workaround, observer, timer, polling loop or DOM repair layer.
-- Preserve Classic style10, native primary Submit request, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Preserve Classic `style10`, native primary `Submit request`, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.17.md.
+Current development notes: `docs/releases/0.1.1-dev.17.md`.
 
 ## 0.1.1-dev.16 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal variable-owner fix from current main.
-- Keep mc-move-dialog modal-content in Modern while assigning the existing overlay the native modal class that owns Bootstrap modal surface variables.
-- Reuse the existing MeshThemeAdapter root/refresh lifecycle and apply it to the detached overlay before first paint; do not add another modal framework or background workaround.
-- Preserve Classic style10, native primary Submit request, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal variable-owner fix from current `main`.
+- Keep `mc-move-dialog modal-content` in Modern while assigning the existing overlay the native `modal` class that owns Bootstrap modal surface variables.
+- Reuse the existing `MeshThemeAdapter` root/refresh lifecycle and apply it to the detached overlay before first paint; do not add another modal framework or background workaround.
+- Preserve Classic `style10`, native primary `Submit request`, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.16.md.
+Current development notes: `docs/releases/0.1.1-dev.16.md`.
 
 ## 0.1.1-dev.15 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the native Move Request modal-surface fix from current main.
-- Map Modern Move Request to the host-native modal-content surface instead of card, eliminating inherited card hover transform/surface behavior without a plugin hover workaround.
-- Use the existing sirk-primary-action semantic class so Submit request receives native primary/blue button treatment from MeshThemeAdapter.
-- Preserve Classic style10, Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the native Move Request modal-surface fix from current `main`.
+- Map Modern Move Request to the host-native `modal-content` surface instead of `card`, eliminating inherited card hover transform/surface behavior without a plugin hover workaround.
+- Use the existing `sirk-primary-action` semantic class so `Submit request` receives native primary/blue button treatment from `MeshThemeAdapter`.
+- Preserve Classic `style10`, Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.15.md.
+Current development notes: `docs/releases/0.1.1-dev.15.md`.
 
 ## 0.1.1-dev.14 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the .mc-move-dialog.card cascade fix from current main.
-- Keep native MeshThemeAdapter.card() ownership while giving the real Modern class combination a higher-specificity opaque Canvas base and an optional Bootstrap card/body token layer.
-- Avoid a single background: shorthand failure point; Classic .mc-move-dialog.style10 keeps an explicit opaque system surface.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the `.mc-move-dialog.card` cascade fix from current `main`.
+- Keep native `MeshThemeAdapter.card()` ownership while giving the real Modern class combination a higher-specificity opaque `Canvas` base and an optional Bootstrap card/body token layer.
+- Avoid a single `background:` shorthand failure point; Classic `.mc-move-dialog.style10` keeps an explicit opaque system surface.
 - Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.14.md.
+Current development notes: `docs/releases/0.1.1-dev.14.md`.
 
 ## 0.1.1-dev.13 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current main.
-- Preserve native MeshThemeAdapter.card() ownership while compositing the host card/body token layer over an always-opaque Canvas base, so transparent or alpha host card tokens cannot expose the device page.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current `main`.
+- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host card tokens cannot expose the device page.
 - Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.13.md.
+Current development notes: `docs/releases/0.1.1-dev.13.md`.
 
 ## 0.1.1-dev.12 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request dialog surface fix from current main.
-- Keep the existing native MeshThemeAdapter.card() ownership while guaranteeing an opaque dialog background through Bootstrap card/body tokens with a Classic/system Canvas fallback.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the Move Request dialog surface fix from current `main`.
+- Keep the existing native `MeshThemeAdapter.card()` ownership while guaranteeing an opaque dialog background through Bootstrap card/body tokens with a Classic/system `Canvas` fallback.
 - Preserve Move Request submit/backend semantics and the existing #127 pending/success/error lifecycle.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.12.md.
+Current development notes: `docs/releases/0.1.1-dev.12.md`.
 
 ## 0.1.1-dev.11 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current `main`.
 - Keep selected first-column indicator distance and icon position stable across Collapse/Expand by using one 9 px primary inset and 44 px collapsed row geometry, including Quick and Approval Center.
 - Make Approval Center consume the same shared list row/icon/label geometry as My Scripts/My Commands instead of separate provider/status spacing rules.
-- Center shared Results View and Actions headers and controls while preserving their compact 72 px / 120 px width contract and local horizontal scrolling.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Center shared Results `View` and `Actions` headers and controls while preserving their compact 72 px / 120 px width contract and local horizontal scrolling.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.11.md.
+Current development notes: `docs/releases/0.1.1-dev.11.md`.
 
 ## 0.1.1-dev.10 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest dev.9 runtime smoke follow-up from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest dev.9 runtime smoke follow-up from current `main`.
 - Keep first-column icon centers on one shared horizontal axis across expanded/collapsed states and apply the same 28 px / 44 px first-column geometry to Approval Center.
-- Give shared Results View a dedicated compact 72 px semantic track while preserving the wider Actions track required by Approve/Reject controls.
+- Give shared Results `View` a dedicated compact 72 px semantic track while preserving the wider `Actions` track required by Approve/Reject controls.
 - Preserve selected-state semantics, secondary-column compact geometry, permissions and runtime lifecycle without measurement, observers or per-module CSS.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.10.md.
+Current development notes: `docs/releases/0.1.1-dev.10.md`.
 
 ## 0.1.1-dev.9 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
 - Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.
-- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on Network Control, Network Settings, PowerShell and CMD while genuine custom labels remain valid.
+- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell` and `CMD` while genuine custom labels remain valid.
 - Contain long unbroken Results text tokens inside their semantic cells and present Move Request source/target groups with visible human-readable names when available.
-- Keep stable execution IDs, authorization and the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep stable execution IDs, authorization and the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.9.md.
+Current development notes: `docs/releases/0.1.1-dev.9.md`.
 
 
 ## 0.1.1-dev.8 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the stable first-column icon geometry fix from current `main`.
 - Keep direct first-column shared/Quick icons at one 28 px box / 24 px SVG size in both expanded and collapsed states instead of scaling artwork during Collapse/Expand.
 - Preserve compact second-column icon geometry, the 64 px collapsed track, neutral icon colors and shared selected-state indicators without runtime measurement or extra lifecycle work.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Current development notes: docs/releases/0.1.1-dev.8.md.
+Current development notes: `docs/releases/0.1.1-dev.8.md`.
 
 ## 0.1.1-dev.7 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the current shared UI and Results batch from main.
-- Use canonical short built-in command labels (Network Control, Network Settings, PowerShell, CMD) without changing stable command IDs or execution semantics.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the current shared UI and Results batch from `main`.
+- Use canonical short built-in command labels (`Network Control`, `Network Settings`, `PowerShell`, `CMD`) without changing stable command IDs or execution semantics.
 - Keep ordinary first/second-column navigation icons neutral/native, reuse the shared visible selected-state contract in Approval Center, and preserve semantic colors only for meaningful states such as active Favorites and Quick Output attention.
 - Keep shared Results tables readable with semantic column roles and horizontal scrolling instead of fixed-layout compression.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: docs/releases/0.1.1-dev.7.md.
+Development notes: `docs/releases/0.1.1-dev.7.md`.
 
 ## 0.1.1-dev.6 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current main.
-- Remove the base collapsed-grid !important that suppressed the measured Edit/Multi secondary-track override when the first shared column was collapsed.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the collapsed-primary Edit/Multi geometry fix from current `main`.
+- Remove the base collapsed-grid `!important` that suppressed the measured Edit/Multi secondary-track override when the first shared column was collapsed.
 - Preserve the 64 px collapsed primary track while keeping the normal second-column text width and wrapping unchanged and placing the measured action rail outside it.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: docs/releases/0.1.1-dev.6.md.
+Development notes: `docs/releases/0.1.1-dev.6.md`.
 
 ## 0.1.1-dev.5 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the shared Edit/Multi geometry fix from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the shared Edit/Multi geometry fix from current `main`.
 - Keep the normal second-column text track and label wrapping stable while Edit or Multi actions appear by reserving the measured action rail outside the captured text width.
 - Use the same post-atomic-commit lifecycle for Edit and Multi so action-mode switches do not transiently move or squeeze text.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: docs/releases/0.1.1-dev.5.md.
+Development notes: `docs/releases/0.1.1-dev.5.md`.
 
 ## 0.1.1-dev.4 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current main.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the atomic Edit lifecycle fix from current `main`.
 - Keep Edit action DOM and live secondary-track geometry synchronized with atomic render commit so action buttons do not briefly hide behind script labels during Edit on/off.
 - Preserve measured Edit expansion, native Favorites surface and shared selected-state behavior without new observers, polling or per-module CSS.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: docs/releases/0.1.1-dev.4.md.
+Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from main.
-- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native form-control styling cannot change the Quick toolbar row height on Search on/off.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the latest Quick Search height fix from `main`.
+- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: docs/releases/0.1.1-dev.3.md.
+Development notes: `docs/releases/0.1.1-dev.3.md`.
 
 ## 0.1.1-dev.2 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection can install the current main runtime instead of treating it as the already installed 0.1.1-dev.1 build.
+- Bump the pre-1.0 development revision so MeshCentral update detection can install the current `main` runtime instead of treating it as the already installed `0.1.1-dev.1` build.
 - Include the current runtime-smoke follow-up fixes for Quick collapse chevron semantics, stable shared toolbar Search geometry and connected-DOM script selection in My Commands/My Scripts.
-- Keep the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release.
+- Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
 ## 0.1.1-dev.1 — 2026-08-07
 
 - Reset active versioning to the pre-1.0 development line because MC-SIRK has not reached its first complete product release.
-- Use SemVer-compatible 0.1.1-dev.X as the repository/plugin representation of the preferred 0.1.1.X development convention.
-- Preserve the latest tested main functionality: native MeshCentral integration, shared UI ownership, atomic rendering, Quick lifecycle, Edit/Multi behavior, native theme integration and security contracts.
-- Previous 1.8.x numbers are historical internal development snapshots only. They do not represent product releases and must not be used to continue version numbering.
+- Use SemVer-compatible `0.1.1-dev.X` as the repository/plugin representation of the preferred `0.1.1.X` development convention.
+- Preserve the latest tested `main` functionality: native MeshCentral integration, shared UI ownership, atomic rendering, Quick lifecycle, Edit/Multi behavior, native theme integration and security contracts.
+- Previous `1.8.x` numbers are historical internal development snapshots only. They do not represent product releases and must not be used to continue version numbering.
 
-The first product release is reserved for 1.0.0 and requires an explicit release decision after full functionality, acceptance, security, update/rollback and real MeshCentral smoke validation are complete.
+The first product release is reserved for `1.0.0` and requires an explicit release decision after full functionality, acceptance, security, update/rollback and real MeshCentral smoke validation are complete.
