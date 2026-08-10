@@ -17,14 +17,17 @@ jobs:
         with:
           node-version: 24
       - name: Apply patch
-        run: python3 .tmp/dev41_patch.py
+        run: |
+          python3 .tmp/dev41_patch.py
+          python3 .tmp/dev41_patch2.py
       - name: Remove temporary infrastructure before tests
-        run: rm -f .tmp/dev41_patch.py .github/workflows/dev41-patch.yml
+        run: rm -f .tmp/dev41_patch.py .tmp/dev41_patch2.py .github/workflows/dev41-patch.yml
       - name: Targeted tests
         run: |
           node test/network-command-split.test.js
           node test/logged-on-user-command-policy.test.js
           node test/admin-host-theme-signal.test.js
+          node test/native-ui-contract.test.js
       - name: Full test
         run: npm test
       - name: Diff check
