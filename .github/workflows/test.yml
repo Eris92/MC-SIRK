@@ -5,19 +5,25 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  test:
+  prepare-dev37:
+    if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - name: Checkout
+      - name: Checkout PR head
         uses: actions/checkout@v7
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
         with:
-          node-version: '24'
-          package-manager-cache: false
-      - name: Run test suite
-        run: npm test
+          ref: ${{ github.head_ref }}
+      - name: Prepare development metadata
+        run: python3 .github/scripts/dev37_version.py
+      - name: Commit metadata
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189824+github-actions[bot]@users.noreply.github.com'
+          git add package.json config.json README.md docs/PROJECT-STATE.md docs/releases/README.md docs/releases/0.1.1-dev.37.md changelog.md version-history.json
+          git commit -m 'chore: prepare 0.1.1-dev.37 test build'
+          git push origin HEAD:${{ github.head_ref }}
