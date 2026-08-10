@@ -84,7 +84,6 @@
         });
     }
 
-
     function showValidationError(shell, errorHost, error) {
         errorHost.innerHTML = "";
         errorHost.appendChild(shell.element(
@@ -229,7 +228,7 @@
                 }
                 shell.render();
             },
-            onLinkCopied: function () {}
+            onLinkCopied: function (item) {}
         });
     }
 
@@ -367,6 +366,20 @@
             });
         }
     });
+
+    if (tools && typeof tools.setParameterOptionProvider === "function") {
+        tools.setParameterOptionProvider(function (variable, values, item) {
+            var control = String(variable && variable.control || "").toLowerCase();
+            if (!item || !item.path || (control !== "user" && control !== "asset")) return [];
+            return module.api.post("variable-options", {
+                scriptPath: item.path,
+                variableName: variable.name,
+                values: values || {}
+            }).then(function (response) {
+                return response && Array.isArray(response.items) ? response.items : [];
+            });
+        });
+    }
 
     window.SirkPlatformModules.myscripts = module;
 }());

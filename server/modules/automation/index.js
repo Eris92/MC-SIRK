@@ -4,6 +4,7 @@ var shared = require("../../core/shared.js");
 var libraryFactory = require("../../core/script-confirmation-library.js");
 var adminFactory = require("../../core/script-admin-service.js");
 var executorFactory = require("../../core/server-script-executor.js");
+var jiraAssetFactory = require("../../core/jira-asset-service.js");
 var rootResolver = require("../../core/automation-root.js");
 var folderAccess = require("../../core/folder-access.js");
 
@@ -12,6 +13,12 @@ module.exports.createModule = function (context) {
     var library = libraryFactory.createScriptLibrary({ fs: context.fs, path: context.nativePath || context.path, root: root, readOnly: true, allowWrite: true });
     var admin = adminFactory.createScriptAdminService({ context: context, library: library, namespace: "script-secrets.myscripts" });
     var executor = executorFactory.createServerScriptExecutor({ context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials" });
+    var jiraAssets = jiraAssetFactory.createJiraAssetService({
+        fs: context.fs,
+        path: context.nativePath || context.path,
+        dataRoot: context.dataRoot,
+        integrations: context.integrations
+    });
     var unregister = null;
 
     function allowed(user) {
@@ -43,6 +50,12 @@ module.exports.createModule = function (context) {
         var current = context.settings.read();
         var provider = current.modules && current.modules.approvals && current.modules.approvals.providers && current.modules.approvals.providers.myscripts || {};
         return provider.allowNoApproval === true;
+    }
+    function dynamicVariable(script, name) {
+        name = String(name || "");
+        return (script && script.variables || []).filter(function (variable) {
+            return String(variable.name || "") === name && (variable.control === "user" || variable.control === "asset");
+        })[0] || null;
     }
 
     var provider = {
@@ -143,6 +156,24 @@ module.exports.createModule = function (context) {
             }
             if (asset === "script-secrets") { requireScriptAccess(user, value.path); return { ok: true, secrets: admin.saveSecrets(user, value.path, value.values, value.clearNames) }; }
             if (asset === "system-credentials") { requireScriptAccess(user, value.path); return { ok: true, systemCredentials: admin.saveSystemCredentials(user, value.path, value.selected) }; }
+            if (asset === "variable-options") {
+                requireScriptAccess(user, value.scriptPath);
+                var optionScript = library.getScript(value.scriptPath, false);
+                if (!optionScript) throw new Error("Script not found.");
+                var variable = dynamicVariable(optionScript, value.variableName);
+                if (!variable) throw new Error("Dynamic script variable not found.");
+                if (!admin.hasSystemCredential(optionScript.path, "jira")) {
+                    throw new Error("Assign the configured Jira integration to this script first.");
+                }
+                return jiraAssets.optionsFor(variable, value.values, value.force === true).then(function (result) {
+                    return {
+                        ok: true,
+                        items: result.items || [],
+                        stale: result.stale === true,
+                        warning: result.warning || ""
+                    };
+                });
+            }
             if (asset === "request") {
                 requireScriptAccess(user, value.scriptPath);
                 var requestedScript = library.getScript(value.scriptPath, false);
