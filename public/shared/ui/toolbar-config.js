@@ -55,7 +55,7 @@
 
     function applyButton(element, variant) {
         if (!element) return element;
-        var selected = active(element);
+        var selected = active(element) && element.getAttribute("data-sirk-icon-active-only") !== "true";
         if (isModern()) syncOwnedClasses(element, ["btn", "btn-" + (variant || buttonVariant(element)), "btn-sm"]);
         else syncOwnedClasses(element, [selected ? "style10s" : "style10"]);
         return element;
