@@ -18,8 +18,13 @@ var nightModeCheck = admin.indexOf('typeof hostWindow.nightMode === "boolean"');
 var htmlThemeCheck = admin.indexOf('hostDocument.documentElement.getAttribute("data-bs-theme")');
 assert.ok(htmlThemeCheck >= 0 && nightModeCheck > htmlThemeCheck,
     "Explicit parent data-bs-theme must win over a stale legacy nightMode value when Modern MeshCentral exposes it.");
+assert.ok(admin.indexOf('hostBody && hostBody.classList.contains("night")') >= 0,
+    "Classic MeshCentral body.night must remain an authoritative host state.");
+assert.ok(admin.indexOf('hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode")') >= 0 &&
+    admin.indexOf('hostWindow.matchMedia("(prefers-color-scheme: dark)")') >= 0,
+    "Stored/system fallbacks must use the host window, not the iframe window.");
 
-var hostThemeStart = admin.indexOf("function hostSurfaceStyle()");
+var hostThemeStart = admin.indexOf("function hostBodyStyle()");
 var hostThemeEnd = admin.indexOf("function syncHostTheme()", hostThemeStart);
 var hostThemeSource = admin.slice(hostThemeStart, hostThemeEnd);
 var evaluateHostTheme = new Function("hostWindow", "hostDocument", "colorParts", hostThemeSource + "\nreturn hostIsDark();");
@@ -36,40 +41,40 @@ assert.strictEqual(evaluateHostTheme({ nightMode: false }, fakeDocument("dark"),
     "Modern parent dark data-bs-theme must override stale nightMode=false.");
 assert.strictEqual(evaluateHostTheme({ nightMode: true }, fakeDocument("light"), function () { return null; }), false,
     "Modern parent light data-bs-theme must override stale nightMode=true.");
-assert.ok(admin.indexOf('hostBody && hostBody.classList.contains("night")') >= 0,
-    "Admin theme detection must honor the parent MeshCentral body.night state.");
-assert.ok(admin.indexOf('themeStylesheet && background') >= 0 && admin.indexOf('hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode")') >= 0 &&
-    admin.indexOf('hostWindow.matchMedia("(prefers-color-scheme: dark)")') >= 0,
-    "Stored/system theme fallbacks must use the host window, not the iframe window.");
+
+assert.ok(admin.indexOf("function hostBodyStyle()") >= 0 &&
+    admin.indexOf("hostWindow.getComputedStyle(hostBody)") >= 0,
+    "Admin must copy the canonical MeshCentral body paint that current Classic/Modern setNightMode updates.");
+assert.strictEqual(admin.indexOf('hostDocument.getElementById("p43iframe")'), -1,
+    "Admin must not infer theme from an arbitrary opaque page-43 ancestor that can remain stale during live switching.");
+assert.strictEqual(admin.indexOf("theme-stylesheet"), -1,
+    "Admin light/dark synchronization must not depend on Bootswatch stylesheet replacement heuristics.");
 
 var observerConstructors = admin.match(/new hostWindow\.MutationObserver/g) || [];
 assert.strictEqual(observerConstructors.length, 1,
-    "Host theme changes must reuse exactly one observer in the parent window realm.");
-assert.ok(admin.indexOf('new hostWindow.MutationObserver(function ()') >= 0,
-    "The single parent observer must rebind live host theme owners before synchronization.");
-assert.ok(admin.indexOf('observer.observe(hostDocument.documentElement') >= 0 &&
-    admin.indexOf('observer.observe(hostDocument.body') >= 0 &&
-    admin.indexOf('attributeFilter: ["class", "data-bs-theme"]') >= 0,
-    "The single observer must watch the actual parent host theme attributes/classes.");
-assert.ok(admin.indexOf('hostDocument.getElementById("theme-stylesheet")') >= 0 &&
-    admin.indexOf('observer.observe(observedStylesheet, { attributes: true, attributeFilter: ["href"] })') >= 0 &&
-    admin.indexOf('observedStylesheet.addEventListener("load", syncHostTheme)') >= 0 &&
-    admin.indexOf('observedStylesheet.removeEventListener("load", syncHostTheme)') >= 0,
-    "The same observer must follow and rebind replaced Modern MeshCentral Bootswatch stylesheets without leaking load handlers.");
-assert.ok(admin.indexOf('hostDocument.getElementById("p43iframe")') >= 0 &&
-    admin.indexOf('candidate = candidate && candidate.parentElement ? candidate.parentElement : null;') >= 0 &&
-    admin.indexOf('colorParts(candidateStyle.backgroundColor)') >= 0,
-    "Admin must resolve the actual opaque page-43 surface surrounding the plugin iframe instead of assuming parent.body is the painted surface.");
-assert.ok(admin.indexOf('var surface = hostSurfaceStyle();') >= 0 &&
-    admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
+    "Host theme changes must reuse one bounded parent observer.");
+assert.ok(admin.indexOf("new hostWindow.MutationObserver(syncHostTheme)") >= 0,
+    "The single observer must call only the existing theme synchronizer; no second lifecycle owner is allowed.");
+assert.ok(admin.indexOf('observer.observe(hostDocument.documentElement, { attributes: true, attributeFilter: ["class", "data-bs-theme"] })') >= 0,
+    "Modern html data-bs-theme/class changes must be observed directly.");
+assert.ok(admin.indexOf('observer.observe(hostDocument.body, { attributes: true, attributeFilter: ["class", "style", "data-bs-theme"] })') >= 0,
+    "Classic/Modern body class + inline background mutations from setNightMode must be observed directly.");
+assert.strictEqual(admin.indexOf("observer.observe(hostDocument.head"), -1,
+    "Theme owner must not observe the whole host head.");
+assert.strictEqual(admin.indexOf("observedStylesheet"), -1,
+    "Theme owner must not maintain stylesheet replacement state.");
+assert.strictEqual(admin.indexOf("observedSurface"), -1,
+    "Theme owner must not maintain speculative page-43 surface state.");
+
+assert.ok(admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
     admin.indexOf('root.parentElement.style.color = hostStyle.color || "";') >= 0,
-    "The iframe Admin body must copy effective page-43 surface colors instead of owning a private palette.");
+    "The iframe body must copy effective host body colors instead of owning a private palette.");
 assert.ok(admin.indexOf('root.setAttribute("data-host-theme", theme)') >= 0 &&
     admin.indexOf('root.parentElement.setAttribute("data-sirk-host-theme", theme)') >= 0,
-    "Theme synchronization must keep the existing semantic theme attributes current.");
+    "Theme synchronization must keep semantic theme attributes current.");
 
 assert.strictEqual(adminCss.indexOf('.sirk-admin-host{background-color:'), -1,
-    "Admin CSS must not force a Bootstrap/system background that can diverge from the host iframe parent.");
+    "Admin CSS must not force a separate background palette.");
 assert.ok(adminCss.indexOf('[data-sirk-host-theme="dark"]') >= 0 &&
     adminCss.indexOf('color-scheme:dark') >= 0 &&
     adminCss.indexOf('color-scheme:light') >= 0,
@@ -85,11 +90,4 @@ assert.strictEqual(observerBody.indexOf('render('), -1,
 assert.strictEqual(observerBody.indexOf('fetch('), -1,
     "Theme changes must not issue backend requests.");
 
-console.log("Admin follows the parent MeshCentral theme owner without polling/rerender: OK");
-
-assert.ok(admin.indexOf('observer.observe(hostDocument.head, { childList: true })') >= 0,
-    "Admin theme owner must notice replacement of the Modern theme stylesheet without polling.");
-assert.ok(admin.indexOf('observer.observe(observedSurface, { attributes: true, attributeFilter: ["class", "style"] })') >= 0,
-    "Admin theme owner must follow live mutations on the effective page-43 surface.");
-assert.ok(admin.indexOf('bindLiveThemeOwners();') >= 0,
-    "The existing single observer must rebind current host theme owners before synchronization.");
+console.log("Admin follows canonical MeshCentral html/body theme owner signals without speculative surface tracking: OK");
