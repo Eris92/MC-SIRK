@@ -502,7 +502,7 @@ module.exports.createApprovalService = function (options) {
     }
 
     function externalContext(tokenText, scope, type) {
-        var token = authenticateApiToken(tokenText, "requests:write", type);
+        var token = authenticateApiToken(tokenText, scope, type);
         var user = shared.findUser(parent, token.createdBy);
         if (!user) throw new Error("API token owner no longer exists.");
         return { token: token, user: user };
