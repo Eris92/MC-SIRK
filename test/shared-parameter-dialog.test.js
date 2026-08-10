@@ -45,6 +45,16 @@ assert.strictEqual(commands.indexOf("mc-script-runtime-variables"), -1,
     assert.ok(consumer.indexOf("openParameterDialog") >= 0,
         "Execution consumer " + index + " must use the shared parameter dialog.");
 });
+assert.ok(quick.indexOf("openConfirmationDialog") >= 0,
+    "Quick ConfirmExecution must use the shared native confirmation dialog.");
+assert.strictEqual(quick.indexOf("window.confirm("), -1,
+    "Quick must not use browser-native confirmation.");
+assert.ok(quick.indexOf("confirmedExecution: confirmedExecution === true") >= 0,
+    "Quick must set confirmedExecution only after explicit native confirmation.");
+assert.ok(quick.indexOf("return confirmAndSubmit(value, values, button, panel)") >= 0,
+    "Parameterized Quick execution must preserve collected values through confirmation without a second parameter load.");
+assert.ok(quick.indexOf("Native MeshCentral confirmation dialog is unavailable.") >= 0,
+    "Missing native confirmation owner must fail visibly in Quick Output.");
 assert.ok(commands.indexOf("mc-command-inline-result") >= 0,
     "Commands output must remain in the existing inline result host.");
 assert.ok(scripts.indexOf('mc-script-live-result mc-script-result-only') >= 0,
@@ -67,6 +77,8 @@ assert.ok(dialog.indexOf("provider(record.variable, currentValues(records), item
     "Dynamic controls must share one bounded provider hook.");
 assert.ok(dialog.indexOf('record.kind === "asset"') >= 0 && dialog.indexOf("onUserChanged") >= 0,
     "Asset controls must be refreshable after a real parent user change.");
+assert.ok(dialog.indexOf("if (settled) return;") >= 0,
+    "Shared confirmation dialog must settle once even on repeated confirm/cancel events.");
 
 var focused = false;
 var invalid = false;
@@ -106,6 +118,8 @@ var instance = context.window.SharedScriptTools.create({ storageKey: "test" });
 assert.strictEqual(instance.marker, true, "The parameter dialog bridge must preserve the original SharedScriptTools factory result.");
 assert.strictEqual(typeof instance.openParameterDialog, "function",
     "SharedScriptTools.create() instances used by Commands/My Scripts must expose the shared parameter dialog.");
+assert.strictEqual(typeof instance.openConfirmationDialog, "function",
+    "SharedScriptTools.create() instances must expose the shared confirmation dialog.");
 
 var required = fakeControl("");
 var flag = fakeControl("");
@@ -124,4 +138,4 @@ var values = contract.validate(records, status);
 assert.strictEqual(values.RequiredText, "value");
 assert.strictEqual(values.Flag, false, "Switch values must preserve boolean mapping.");
 
-console.log("Shared native execution parameter dialog, consumers, loader order, factory instances and validation: OK");
+console.log("Shared native execution parameter/confirmation dialog, consumers, loader order and validation: OK");
