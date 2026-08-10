@@ -6,6 +6,8 @@ var path = require("path");
 var vm = require("vm");
 var root = path.resolve(__dirname, "..");
 var source = fs.readFileSync(path.join(root, "public/shared/ui/results.js"), "utf8");
+var css = fs.readFileSync(path.join(root, "public/shared/ui/shared-ui.css"), "utf8");
+var themeSource = fs.readFileSync(path.join(root, "public/shared/ui/toolbar-config.js"), "utf8");
 
 function Element(tagName) {
     this.tagName = String(tagName || "div").toUpperCase();
@@ -129,4 +131,20 @@ window.SharedResultsView.openViewer(row, { dialogTitle: "Local asset report" });
 assert.deepStrictEqual(sequence, ["setContent", "refresh", "show"],
     "Modern Results must build and theme one final content tree before the native modal first paint.");
 
-console.log("Results viewer first paint is final, structured output is tabular and Debug preserves full raw output: OK");
+var viewerRule = /\.mc-results-viewer\{([^}]*)\}/.exec(css);
+assert.ok(viewerRule, "Results viewer content root geometry rule must exist.");
+assert.ok(viewerRule[1].indexOf('width:100%') >= 0,
+    "Native modal content root must fill the host body instead of owning a second viewport-sized surface.");
+['96vw', '92vh', 'max-height:92vh', 'display:flex', 'flex-direction:column'].forEach(function (fragment) {
+    assert.strictEqual(viewerRule[1].indexOf(fragment), -1,
+        "Native Results modal content root must not retain standalone viewer geometry: " + fragment);
+});
+assert.strictEqual(css.indexOf('.mc-results-viewer-overlay{'), -1,
+    "Removed plugin-owned Results overlay CSS must not return once MeshCentral owns the modal.");
+var applyCardLine = themeSource.split('\n').filter(function (line) { return line.indexOf('applyCard);') >= 0 && line.indexOf('.mc-move-dialog') >= 0; })[0] || '';
+assert.strictEqual(applyCardLine.indexOf('.mc-results-viewer'), -1,
+    "MeshThemeAdapter must not turn the Results content root into a second card/surface inside the native modal.");
+assert.ok(themeSource.indexOf('PLUGIN_ROOT_SELECTOR') >= 0 && themeSource.indexOf('.mc-results-viewer') >= 0,
+    "Results must remain a plugin root so native controls/tables inside it still receive shared theme ownership.");
+
+console.log("Results viewer first paint is final, structured output is tabular, Debug preserves full raw output and native modal owns outer geometry: OK");
