@@ -5,37 +5,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  restore-changelog-history:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-      - name: Restore historical dev.13 line exactly
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const file = 'changelog.md';
-          let text = fs.readFileSync(file, 'utf8');
-          const changed = '- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host tokens cannot expose the device page.';
-          const original = '- Preserve native `MeshThemeAdapter.card()` ownership while compositing the host card/body token layer over an always-opaque `Canvas` base, so transparent or alpha host card tokens cannot expose the device page.';
-          if (!text.includes(changed)) throw new Error('Unexpected changelog state; refusing broad rewrite.');
-          text = text.replace(changed, original);
-          fs.writeFileSync(file, text, 'utf8');
-          NODE
-          git diff --check
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add changelog.md
-          git commit -m 'docs: preserve historical changelog text'
-          git push origin HEAD:${{ github.head_ref }}
-
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
