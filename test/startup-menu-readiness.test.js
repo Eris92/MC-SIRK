@@ -21,7 +21,7 @@ async function main() {
     assert.ok(pluginSource.indexOf("deferredScripts.filter(function (item)") >= 0 &&
         pluginSource.indexOf("}).map(function (item)") >= 0 &&
         pluginSource.indexOf("var dependenciesReady = Promise.all(deferredReady)") >= 0,
-        "Independent deferred shared assets must still fetch concurrently under one final readiness fan-in.");
+        "Independent deferred shared assets must still fetch concurrently instead of becoming one serial request chain.");
     assert.ok(pluginSource.indexOf('var scriptToolsReady = load("sirk-platform-script-tools", asset("shared-ui/script-tools.js"))') >= 0 &&
         pluginSource.indexOf("var parameterDialogReady = scriptToolsReady.then(function ()") >= 0 &&
         pluginSource.indexOf("deferredReady.push(parameterDialogReady.then(function ()") >= 0,
@@ -74,70 +74,84 @@ async function main() {
         api: function () { apiCalls += 1; return Promise.resolve(bootstrap); },
         ensureMenu: function (definition) { menus.push(definition); },
         assetUrl: function (_moduleName, file) { return file; },
-        request: function () { return Promise.resolve({ ok: true }); }
-    };
-    var context = {
-        console: console,
-        Promise: Promise,
-        setTimeout: setTimeout,
-        clearTimeout: clearTimeout,
-        AbortController: AbortController,
-        window: {
-            SirkPlatformCore: core,
-            SirkIconSettings: { read: function () { return { mode: "modern" }; } },
-            SirkPlatformModules: {},
-            localStorage: { getItem: function () { return null; }, setItem: function () {} }
+        loadScript: function (id) {
+            loadCalls.push(id);
+            return new Promise(function (resolve) { loadResolvers[id] = resolve; });
         },
-        document: {
-            getElementById: function () { return null; },
-            createElement: function () { return { setAttribute: function () {}, appendChild: function () {} }; },
-            head: { appendChild: function () {} },
-            body: { appendChild: function () {} }
-        }
+        restoreWorkspace: function () {},
+        activateMenu: function () {}
     };
-    context.window.window = context.window;
-    vm.runInNewContext(runtimeSource, context, { filename: "runtime.js" });
-    var runtime = context.window.SirkPlatformRuntime;
-    assert.ok(runtime, "Runtime must initialize in the test context.");
-    runtime.loadModule = function (key) {
-        loadCalls.push(key);
-        return new Promise(function (resolve) { loadResolvers[key] = resolve; });
+    var documentObject = {
+        getElementById: function () { return null; }
     };
-    runtime.onNativePageStart = function (view) { lifecycle.push("start:" + view); };
-    runtime.onNativePageEnd = function (view) { lifecycle.push("end:" + view); };
+    var windowObject = {
+        SirkPlatformCore: core,
+        SirkPlatformRuntime: {},
+        SirkPlatformModules: {},
+        __SIRK_CURRENT_NODE_ID__: "node/test/1",
+        __SIRK_LAST_NATIVE_PAGE_START__: 1,
+        __SIRK_LAST_NATIVE_PAGE_END__: 1,
+        document: documentObject,
+        console: console
+    };
+    windowObject.window = windowObject;
+    var context = { window: windowObject, document: documentObject, console: console, Promise: Promise };
+    vm.runInNewContext(runtimeSource, context);
 
-    var prepared = runtime.prepare(Promise.resolve(bootstrap));
-    await Promise.resolve();
-    await Promise.resolve();
+    await windowObject.SirkPlatformRuntime.prepare(Promise.resolve(bootstrap));
     assert.strictEqual(apiCalls, 0,
-        "prepare(prefetched) must not issue a second bootstrap request.");
-    await prepared;
+        "A prefetched bootstrap promise must be reused without issuing a duplicate bootstrap request.");
+    assert.deepStrictEqual(menus.map(function (item) { return item.leftId; }), ["LeftMenuSirkPlatform-approvalcenter"],
+        "Bootstrap pass must mount exactly the enabled+allowed menu entries and must not expose denied/hidden modules.");
+    assert.strictEqual(menus[0].title, "Approval Center",
+        "Early menu title must already match the final renderer definition to avoid a post-initialize text swap.");
+    assert.strictEqual(loadCalls.length, 0,
+        "Native surface availability after bootstrap must not wait for or trigger renderer script loading.");
 
-    runtime.state.nativePageEnd = 19;
-    runtime.reconcileBootstrapSurfaces();
-    assert.ok(menus.some(function (entry) { return entry && entry.key === "approvalcenter"; }),
-        "Allowed bootstrap menu entries must reconcile once native page readiness is known.");
-    assert.strictEqual(menus.some(function (entry) { return entry && entry.key === "myscripts"; }), false,
-        "Denied bootstrap menu entries must not be created early.");
-
-    var initializing = runtime.initialize(Promise.resolve());
+    var initializePromise = windowObject.SirkPlatformRuntime.initialize(Promise.resolve());
     await Promise.resolve();
-    assert.ok(loadCalls.indexOf("approvalcenter") >= 0 && loadCalls.indexOf("moverequests") >= 0 && loadCalls.indexOf("mycommands") >= 0,
-        "Allowed modules must start from the same bounded parallel fan-out.");
-    assert.strictEqual(loadCalls.indexOf("myscripts"), -1,
-        "Denied modules must not start during early initialization.");
-    Object.keys(loadResolvers).forEach(function (key) { loadResolvers[key](); });
-    await initializing;
+    await Promise.resolve();
+    assert.deepStrictEqual(loadCalls, [
+        "sirk-platform-module-approvalcenter",
+        "sirk-platform-module-moverequests",
+        "sirk-platform-module-mycommands"
+    ], "All enabled+allowed module fetches must start in the same bounded pass and denied modules must not load.");
 
-    runtime.onNativePageStart(19);
-    runtime.onNativePageEnd(19);
-    assert.deepStrictEqual(Array.from(lifecycle), ["start:19", "end:19"],
-        "Native lifecycle callbacks must remain serialized by the one shared runtime owner.");
+    loadCalls.forEach(function (id) {
+        var key = id.replace("sirk-platform-module-", "");
+        windowObject.SirkPlatformModules[key] = {
+            api: { definition: {} },
+            initialize: function () { lifecycle.push(key + ":initialize"); return Promise.resolve(); },
+            onNativePageStart: function (view) { lifecycle.push(key + ":start:" + view); },
+            onDeviceRefreshEnd: function (nodeId) { lifecycle.push(key + ":node:" + nodeId); },
+            onNativePageEnd: function (view) { lifecycle.push(key + ":end:" + view); }
+        };
+        loadResolvers[id]();
+    });
+    await initializePromise;
 
-    console.log("Startup bootstrap, bounded module fan-out, parameter-dialog dependency and permission-safe menu readiness: OK");
+    ["approvalcenter", "moverequests", "mycommands"].forEach(function (key) {
+        assert.ok(lifecycle.indexOf(key + ":initialize") >= 0, key + " must initialize after its script is ready.");
+        assert.ok(lifecycle.indexOf(key + ":node:node/test/1") >= 0, key + " must receive the device context captured before runtime startup.");
+        assert.ok(lifecycle.indexOf(key + ":end:1") >= 0, key + " must receive the latest native page completion context.");
+    });
+    assert.strictEqual(lifecycle.some(function (entry) { return entry.indexOf("myscripts:") === 0; }), false,
+        "A denied module must not initialize or receive native lifecycle callbacks.");
+
+    menus.length = 0;
+    windowObject.SirkPlatformRuntime.onNativePageStart(2);
+    windowObject.SirkPlatformRuntime.refreshMenus();
+    assert.strictEqual(menus.length, 0,
+        "A new native page start must not recreate bootstrap menu entries while MeshCentral is still redrawing its page.");
+
+    windowObject.SirkPlatformRuntime.onNativePageEnd(2);
+    assert.deepStrictEqual(menus.map(function (item) { return item.leftId; }), ["LeftMenuSirkPlatform-approvalcenter"],
+        "The current native page-end callback must restore the full allowed menu in one bounded pass.");
+
+    console.log("Startup bootstrap prefetch, native page-ready menu gate, dialog dependency and parallel module lifecycle: OK");
 }
 
 main().catch(function (error) {
     console.error(error && error.stack || error);
-    process.exit(1);
+    process.exitCode = 1;
 });
