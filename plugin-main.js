@@ -195,6 +195,10 @@ function createSerializedStartupHook(version, pin) {
                 var parameterDialogReady = scriptToolsReady.then(function () {
                     return load("sirk-platform-parameter-dialog", asset("shared-ui/parameter-dialog.js"));
                 });
+                var jiraProtocolWizardReady = parameterDialogReady.then(function () {
+                    return load("sirk-platform-jira-protocol-wizard", asset("myscripts/jira-protocol-wizard.js"));
+                });
+                deferredReady.push(jiraProtocolWizardReady);
                 deferredReady.push(parameterDialogReady.then(function () {
                     return load("sirk-platform-desktop-commands", asset("desktop-commands.js"));
                 }));
