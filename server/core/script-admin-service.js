@@ -44,6 +44,17 @@ module.exports.createScriptAdminService = function (options) {
         return value && typeof value === "object" ? value : {};
     }
 
+    function selectedProfiles(relativePath) {
+        var value = script(relativePath);
+        var assignments = readAssignments();
+        var selected = assignments[keyFor(value.path)];
+        return Array.isArray(selected) ? selected.map(String) : [];
+    }
+
+    function hasSystemCredential(relativePath, profileName) {
+        return selectedProfiles(relativePath).indexOf(String(profileName || "")) >= 0;
+    }
+
     function configuredProfiles() {
         var configured = context.integrations.configured();
         var values = context.integrations.readSettings();
@@ -67,10 +78,7 @@ module.exports.createScriptAdminService = function (options) {
     function getSystemCredentialState(user, relativePath) {
         requireAdmin(user);
         var value = script(relativePath);
-        var assignments = readAssignments();
-        var selected = Array.isArray(assignments[keyFor(value.path)])
-            ? assignments[keyFor(value.path)].map(String)
-            : [];
+        var selected = selectedProfiles(value.path);
         return {
             path: value.path,
             profiles: configuredProfiles().map(function (profile) {
@@ -210,6 +218,7 @@ module.exports.createScriptAdminService = function (options) {
         saveSecrets: saveSecrets,
         secretValues: secretValues,
         getSystemCredentialState: getSystemCredentialState,
-        saveSystemCredentials: saveSystemCredentials
+        saveSystemCredentials: saveSystemCredentials,
+        hasSystemCredential: hasSystemCredential
     };
 };
