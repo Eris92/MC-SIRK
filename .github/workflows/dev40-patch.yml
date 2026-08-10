@@ -10,14 +10,13 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message, '[dev40 clean]') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: dev-40-network-admin-root-cause
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
+          node-version: '24'
+          package-manager-cache: false
       - run: node test/network-command-split.test.js
       - run: node test/logged-on-user-command-policy.test.js
       - run: node test/admin-host-theme-signal.test.js
