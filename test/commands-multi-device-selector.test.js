@@ -29,7 +29,7 @@ var context = {
     navigator: { clipboard: null },
     document: {
         title: "Commands",
-        querySelectorAll: function () { return []; }
+        querySelectorAll: function () { throw new Error("Multi-device selection must not scan DOM state."); }
     },
     window: {
         nodes: [
@@ -47,7 +47,7 @@ var context = {
             "node/domain/hidden": { _id: hiddenNode, name: "Hidden host" }
         },
         checkedNodeids: {},
-        selectedNodeIds: [hiddenNode],
+        selectedNodeIds: [nodeC],
         location: { href: "https://mesh.example/?viewmode=19" },
         history: { state: null, replaceState: function () {} },
         localStorage: { getItem: function () { return null; }, setItem: function () {} },
@@ -129,7 +129,21 @@ assert.deepStrictEqual(Array.from(reopened.selectedIds()), [nodeB],
 context.window.checkedNodeids = {};
 var currentFallback = shared.buildMultiDeviceCatalog(nodeA);
 assert.deepStrictEqual(Array.from(currentFallback.initialIds), [nodeA],
-    "When native selection is empty, the current visible node must seed initial state even if a legacy alias references a hidden host.");
+    "When native selection is empty, the current visible node must seed initial state and legacy selection aliases must be ignored.");
+
+var selectedStart = source.indexOf("function selectedDevices");
+var selectedEnd = source.indexOf("\n\n    function maxMultiHostNodes", selectedStart);
+var selectedSource = source.slice(selectedStart, selectedEnd);
+assert.ok(selectedStart >= 0 && selectedEnd > selectedStart, "The canonical native selection adapter must exist.");
+assert.ok(selectedSource.indexOf("window.checkedNodeids") >= 0, "Native checkedNodeids must be the only MeshCentral multi-selection owner.");
+assert.strictEqual(selectedSource.indexOf("document.querySelectorAll"), -1, "Native selection must not be reconstructed by scanning the DOM.");
+[
+    "selectedNodes", "selectedNodeIds", "multiSelectedNodes", "checkedNodes",
+    "deviceSelection", "selectedDeviceIds", "multiSelectedDevices"
+].forEach(function (alias) {
+    assert.strictEqual(selectedSource.indexOf('"' + alias + '"'), -1,
+        "Historical selection alias must not remain in the canonical adapter: " + alias);
+});
 
 var multiStart = source.indexOf("function openMultiExecution");
 var multiEnd = source.indexOf("\n\n            var tool =", multiStart);
@@ -145,4 +159,4 @@ assert.ok(multiSource.indexOf("ids.length + \" selected device(s)?\"") >= 0,
 assert.ok(backend.indexOf('if (ids.length > maxMultiHostNodes) throw new Error("A maximum of " + maxMultiHostNodes + " devices can be selected.");') >= 0,
     "Backend multi-execute must keep the oversized payload guard as the authoritative limit.");
 
-console.log("Commands multi-device catalog, scopes, search, dedupe, limit, security and reopen behavior: OK");
+console.log("Commands multi-device catalog, scopes, search, canonical selection, dedupe, limit, security and reopen behavior: OK");
