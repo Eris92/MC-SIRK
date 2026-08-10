@@ -42,16 +42,20 @@ assert.ok(admin.indexOf('themeStylesheet && background') >= 0 && admin.indexOf('
     admin.indexOf('hostWindow.matchMedia("(prefers-color-scheme: dark)")') >= 0,
     "Stored/system theme fallbacks must use the host window, not the iframe window.");
 
-assert.ok(admin.indexOf('new hostWindow.MutationObserver(syncHostTheme)') >= 0,
-    "Host theme changes must reuse one direct observer in the parent window realm.");
+var observerConstructors = admin.match(/new hostWindow\.MutationObserver/g) || [];
+assert.strictEqual(observerConstructors.length, 1,
+    "Host theme changes must reuse exactly one observer in the parent window realm.");
+assert.ok(admin.indexOf('new hostWindow.MutationObserver(function ()') >= 0,
+    "The single parent observer must rebind live host theme owners before synchronization.");
 assert.ok(admin.indexOf('observer.observe(hostDocument.documentElement') >= 0 &&
     admin.indexOf('observer.observe(hostDocument.body') >= 0 &&
     admin.indexOf('attributeFilter: ["class", "data-bs-theme"]') >= 0,
     "The single observer must watch the actual parent host theme attributes/classes.");
 assert.ok(admin.indexOf('hostDocument.getElementById("theme-stylesheet")') >= 0 &&
-    admin.indexOf('observer.observe(themeStylesheet, { attributes: true, attributeFilter: ["href"] })') >= 0 &&
-    admin.indexOf('themeStylesheet.addEventListener("load", syncHostTheme)') >= 0,
-    "The same observer must follow Modern MeshCentral Bootswatch href changes and resync after the stylesheet loads.");
+    admin.indexOf('observer.observe(observedStylesheet, { attributes: true, attributeFilter: ["href"] })') >= 0 &&
+    admin.indexOf('observedStylesheet.addEventListener("load", syncHostTheme)') >= 0 &&
+    admin.indexOf('observedStylesheet.removeEventListener("load", syncHostTheme)') >= 0,
+    "The same observer must follow and rebind replaced Modern MeshCentral Bootswatch stylesheets without leaking load handlers.");
 assert.ok(admin.indexOf('hostDocument.getElementById("p43iframe")') >= 0 &&
     admin.indexOf('candidate = candidate && candidate.parentElement ? candidate.parentElement : null;') >= 0 &&
     admin.indexOf('colorParts(candidateStyle.backgroundColor)') >= 0,
@@ -82,3 +86,10 @@ assert.strictEqual(observerBody.indexOf('fetch('), -1,
     "Theme changes must not issue backend requests.");
 
 console.log("Admin follows the parent MeshCentral theme owner without polling/rerender: OK");
+
+assert.ok(admin.indexOf('observer.observe(hostDocument.head, { childList: true })') >= 0,
+    "Admin theme owner must notice replacement of the Modern theme stylesheet without polling.");
+assert.ok(admin.indexOf('observer.observe(observedSurface, { attributes: true, attributeFilter: ["class", "style"] })') >= 0,
+    "Admin theme owner must follow live mutations on the effective page-43 surface.");
+assert.ok(admin.indexOf('bindLiveThemeOwners();') >= 0,
+    "The existing single observer must rebind current host theme owners before synchronization.");

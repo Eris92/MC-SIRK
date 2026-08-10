@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.42",
+    "date": "2026-08-10",
+    "summary": "Admin backlog: module-local Permissions, Move Request approval levels per target group and live theme owner rebinding; Network deferred.",
+    "notes": "docs/releases/0.1.1-dev.42.md"
+  },
+  {
     "version": "0.1.1-dev.41",
     "date": "2026-08-10",
     "changes": [

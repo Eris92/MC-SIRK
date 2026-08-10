@@ -51,6 +51,24 @@ module.exports.createModule = function (context) {
         return result;
     }
 
+    function normalizeAdminSettings(value, user) {
+        value = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+        var allowedMeshes = meshRows(user).map(function (mesh) { return mesh.id; });
+        var result = { hostButtonEnabled: value.hostButtonEnabled !== false };
+        if (Object.prototype.hasOwnProperty.call(value, "targetMeshApprovalLevels")) {
+            result.targetMeshApprovalLevels = normalizeMeshApprovalLevels(value.targetMeshApprovalLevels, allowedMeshes);
+        }
+        return result;
+    }
+
+    function getAdminSettings(user) {
+        if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
+        return {
+            settings: shared.copy(context.settings.read().modules.moverequests || {}),
+            meshes: meshRows(user)
+        };
+    }
+
     function configuredLevels(targetMeshId) {
         var config = context.settings.read().modules.moverequests || {};
         var levels = config.targetMeshApprovalLevels || {};
@@ -171,6 +189,8 @@ module.exports.createModule = function (context) {
             };
         },
         getAccess: access,
+        getAdminSettings: getAdminSettings,
+        normalizeAdminSettings: normalizeAdminSettings,
         initialize: function () {
             if (!unregister) unregister = context.approval.registerProvider(provider);
             return Promise.resolve();
@@ -190,13 +210,9 @@ module.exports.createModule = function (context) {
                 });
             }
             if (asset === "settings") {
-                if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
-                var current = context.settings.read().modules.moverequests || {};
-                return {
-                    ok: true,
-                    settings: current,
-                    meshes: meshRows(user)
-                };
+                var adminSettings = getAdminSettings(user);
+                adminSettings.ok = true;
+                return adminSettings;
             }
             throw new Error("Unknown Move Requests action.");
         },
@@ -210,15 +226,12 @@ module.exports.createModule = function (context) {
             }
             if (asset === "settings") {
                 if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
-                var allowedMeshes = meshRows(user).map(function (mesh) { return mesh.id; });
+                var normalized = normalizeAdminSettings(value, user);
                 return context.settings.update(function (current) {
-                    current.modules.moverequests.hostButtonEnabled = value.hostButtonEnabled !== false;
+                    current.modules.moverequests.hostButtonEnabled = normalized.hostButtonEnabled;
                     current.modules.moverequests.menuEnabled = false;
-                    if (Object.prototype.hasOwnProperty.call(value, "targetMeshApprovalLevels")) {
-                        current.modules.moverequests.targetMeshApprovalLevels = normalizeMeshApprovalLevels(
-                            value.targetMeshApprovalLevels,
-                            allowedMeshes
-                        );
+                    if (Object.prototype.hasOwnProperty.call(normalized, "targetMeshApprovalLevels")) {
+                        current.modules.moverequests.targetMeshApprovalLevels = normalized.targetMeshApprovalLevels;
                     }
                     return current;
                 }).then(function () { return { ok: true }; });

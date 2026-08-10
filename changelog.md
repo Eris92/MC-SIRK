@@ -1,3 +1,13 @@
+## 0.1.1-dev.42 - 2026-08-10
+
+- Admin #249: remove top-level Permissions and reuse the existing collapsible permission renderer inside My Commands/My Scripts with partial module-only save payloads.
+- Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
+- Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
+- Network Settings #128 remains explicitly deferred by user and is not changed in this build.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.42.md`.
+
 ## 0.1.1-dev.41 - 2026-08-10
 
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.

@@ -1,0 +1,16 @@
+"use strict";
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+var root = path.resolve(__dirname, "..");
+var browser = fs.readFileSync(path.join(root, "web", "admin", "admin.js"), "utf8");
+var commandStart = browser.indexOf('} else if (tab === "mycommands")');
+var scriptStart = browser.indexOf('} else {', commandStart);
+var activateStart = browser.indexOf('    function activate');
+var commandPayload = browser.slice(commandStart, scriptStart);
+var scriptPayload = browser.slice(scriptStart, activateStart);
+assert.ok(commandPayload.indexOf("permissions: { mycommands: commandPermissions() }") >= 0);
+assert.ok(commandPayload.indexOf("myscripts: scriptPermissions") < 0, "Commands save must not serialize Scripts permissions.");
+assert.ok(scriptPayload.indexOf("permissions: { myscripts: scriptPermissions() }") >= 0);
+assert.ok(scriptPayload.indexOf("mycommands: commandPermissions") < 0, "Scripts save must not serialize Commands permissions.");
+console.log("Admin permissions placement/partial-save browser contract: OK");

@@ -351,7 +351,13 @@ module.exports.createRuntime = function (options) {
                     });
                 }
                 if (moduleOptions.moverequests) {
-                    current.modules.moverequests.hostButtonEnabled = moduleOptions.moverequests.hostButtonEnabled !== false;
+                    var moveOptions = modules.moverequests && typeof modules.moverequests.normalizeAdminSettings === "function"
+                        ? modules.moverequests.normalizeAdminSettings(moduleOptions.moverequests, user)
+                        : { hostButtonEnabled: moduleOptions.moverequests.hostButtonEnabled !== false };
+                    current.modules.moverequests.hostButtonEnabled = moveOptions.hostButtonEnabled !== false;
+                    if (Object.prototype.hasOwnProperty.call(moveOptions, "targetMeshApprovalLevels")) {
+                        current.modules.moverequests.targetMeshApprovalLevels = moveOptions.targetMeshApprovalLevels;
+                    }
                 }
                 if (moduleOptions.mycommands) {
                     current.modules.mycommands.showOnDevice = moduleOptions.mycommands.showOnDevice !== false;
@@ -401,6 +407,9 @@ module.exports.createRuntime = function (options) {
             modules: diagnostics(user),
             moduleSettings: current.modules,
             uiSettings: shared.copy(current.ui || { iconMode: "auto" }),
+            moveRequestAdmin: modules.moverequests && !modules.moverequests.__loadError && typeof modules.moverequests.getAdminSettings === "function"
+                ? modules.moverequests.getAdminSettings(user)
+                : null,
             folderPermissions: {
                 myscripts: moduleFolders("myscripts"),
                 mycommands: moduleFolders("mycommands")
