@@ -7,7 +7,18 @@ def replace_once(text, old, new, label):
         raise RuntimeError(f"Unexpected {label} count: {count}")
     return text.replace(old, new, 1)
 
-# #128: built-in runAsUser:2 commands must reach the canonical shared user-session owner.
+
+def replace_slice(text, start_marker, end_marker, replacement, label):
+    start = text.find(start_marker)
+    if start < 0:
+        raise RuntimeError(f"Missing start marker: {label}")
+    end = text.find(end_marker, start)
+    if end < 0:
+        raise RuntimeError(f"Missing end marker: {label}")
+    return text[:start] + replacement + text[end:]
+
+# #128: remove the module-local interactive launcher and preserve runAsUser:2
+# so server/core/logged-on-user-command-policy.js remains the single user-session owner.
 server_path = Path("server/modules/commands/index.js")
 server = server_path.read_text(encoding="utf-8")
 start = server.find("    function desktopLaunch(commandText) {")
@@ -22,15 +33,7 @@ server_path.write_text(server, encoding="utf-8")
 
 network_test_path = Path("test/network-command-split.test.js")
 network_test = network_test_path.read_text(encoding="utf-8")
-old_launcher_contract = '''assert.ok(server.indexOf('windowStyle: /(?:^|\\\\s)-WindowStyle\\\\s+Hidden') >= 0,
-    "Interactive desktop launcher must preserve an explicitly hidden PowerShell helper instead of forcing a visible console window.");
-assert.ok(server.indexOf('shell.Run \\\\\\\"" + launchLine.replace(/"/g, \'""\') + "\\\\\\\", " + launch.windowStyle + ", False') >= 0,
-    "VBS must use the parsed window style rather than hardcoding a visible window.");
-assert.ok(server.indexOf('If " + launch.windowStyle + " = 0 Then') >= 0,
-    "A hidden helper must exit the VBS focus loop immediately instead of trying to activate its PowerShell window.");
-
-'''
-new_launcher_contract = '''assert.strictEqual(server.indexOf('function interactiveDesktopCommand('), -1,
+launcher_regression = '''assert.strictEqual(server.indexOf('function interactiveDesktopCommand('), -1,
     "Commands module must not keep a second interactive launcher beside the shared logged-on-user policy.");
 assert.strictEqual(server.indexOf("$taskName='SIRK-Desktop-'"), -1,
     "Built-in runAsUser:2 commands must not be rewritten into the legacy interactive-SYSTEM launcher marker.");
@@ -38,95 +41,80 @@ assert.ok(server.indexOf('return { label: found.command.label, cmd: commandText,
     "Built-in command execution must preserve canonical runAsUser/type so the shared policy owns the user-session launch.");
 
 '''
-network_test = replace_once(network_test, old_launcher_contract, new_launcher_contract, "network duplicate-launcher regression")
+network_test = replace_slice(
+    network_test,
+    "assert.ok(server.indexOf('windowStyle:",
+    "assert.ok(server.indexOf('locales: command.locales || {}')",
+    launcher_regression,
+    "network duplicate-launcher regression",
+)
 network_test_path.write_text(network_test, encoding="utf-8")
 
-# Strengthen the shared owner test with the exact built-in CMD -> hidden PowerShell shape used by Network Settings.
+# Target the canonical logged-on-user owner with the exact CMD -> hidden PowerShell shape.
 policy_test_path = Path("test/logged-on-user-command-policy.test.js")
 policy_test = policy_test_path.read_text(encoding="utf-8")
-old_legacy = '''var legacyUserCmd = {
+legacy_marker = '''var legacyUserCmd = {
     label: "Legacy user command",
     type: 1,
     runAsUser: 1,
     cmd: "whoami && echo %APPDATA%"
 };'''
-new_legacy = '''var networkSettingsCmd = {
+network_fixture = '''var networkSettingsCmd = {
     label: "Network Settings",
     type: 1,
     runAsUser: 2,
-    cmd: "start \\\"\\\" powershell.exe -NoProfile -WindowStyle Hidden -Command \\\"$verb.DoIt()\\\""
+    cmd: 'start "" powershell.exe -NoProfile -WindowStyle Hidden -Command "$verb.DoIt()"'
 };
-var legacyUserCmd = {
-    label: "Legacy user command",
-    type: 1,
-    runAsUser: 1,
-    cmd: "whoami && echo %APPDATA%"
-};'''
-policy_test = replace_once(policy_test, old_legacy, new_legacy, "Network Settings shared-policy fixture")
-old_chain = '''    .then(function () {
+'''
+policy_test = replace_once(policy_test, legacy_marker, network_fixture + legacy_marker, "Network Settings policy fixture")
+chain_marker = '''    .then(function () {
         return device.sendRunCommands({ nodeId: "node/domain/user" }, legacyUserCmd, "user-cmd", 7);
-    })
-    .then(function () {
-        return device.sendRunCommands({ nodeId: "node/domain/system" }, systemCommand, "system", 7);
-    })
-    .then(function () {
-        assert.strictEqual(captured.length, 3, "All commands must reach the MeshAgent transport.");'''
-new_chain = '''    .then(function () {
+    })'''
+chain_replacement = '''    .then(function () {
         return device.sendRunCommands({ nodeId: "node/domain/network" }, networkSettingsCmd, "network-settings", 7);
     })
-    .then(function () {
-        return device.sendRunCommands({ nodeId: "node/domain/user" }, legacyUserCmd, "user-cmd", 7);
-    })
-    .then(function () {
-        return device.sendRunCommands({ nodeId: "node/domain/system" }, systemCommand, "system", 7);
-    })
-    .then(function () {
-        assert.strictEqual(captured.length, 4, "All commands must reach the MeshAgent transport.");'''
-policy_test = replace_once(policy_test, old_chain, new_chain, "shared-policy execution chain")
-old_transformed_cmd = '''        var transformedCmd = captured[1].command;
+''' + chain_marker
+policy_test = replace_once(policy_test, chain_marker, chain_replacement, "Network Settings policy invocation")
+policy_test = replace_once(
+    policy_test,
+    'assert.strictEqual(captured.length, 3, "All commands must reach the MeshAgent transport.");',
+    'assert.strictEqual(captured.length, 4, "All commands must reach the MeshAgent transport.");',
+    "policy capture count",
+)
+assertion_marker = '''        var transformedCmd = captured[1].command;
         assert.strictEqual(transformedCmd.runAsUser, 0,
-            "Legacy runAsUser 1 commands must use the reliable user-session launcher.");
-        assert.strictEqual(transformedCmd.type, 2,
-            "CMD user commands must also use the PowerShell launcher.");
-        assert.ok(decodedPayloads(transformedCmd.cmd).some(function (value) {
-            return value.indexOf("whoami && echo %APPDATA%") >= 0;
-        }), "The original CMD body must be preserved.");
-
-        assert.strictEqual(captured[2].command, systemCommand,
-            "SYSTEM commands must remain unchanged.");'''
-new_transformed_cmd = '''        var transformedNetwork = captured[1].command;
+            "Legacy runAsUser 1 commands must use the reliable user-session launcher.");'''
+network_assertions = '''        var transformedNetwork = captured[1].command;
         assert.strictEqual(transformedNetwork.runAsUser, 0,
-            "Network Settings transport wrapper must run through LocalSystem only after the shared user-session policy owns the launch.");
+            "Network Settings transport wrapper must become LocalSystem only after the shared user-session policy owns the launch.");
         assert.strictEqual(transformedNetwork.type, 2,
             "Network Settings must use the shared PowerShell launcher wrapper.");
         assert.strictEqual(transformedNetwork.cmd.indexOf("SIRK-Desktop-"), -1,
             "Network Settings must not enter the legacy interactive-SYSTEM launcher path.");
         assert.ok(decodedPayloads(transformedNetwork.cmd).some(function (value) {
-            return value.indexOf("start \\\"\\\" powershell.exe -NoProfile -WindowStyle Hidden") >= 0 && value.indexOf("$verb.DoIt()") >= 0;
+            return value.indexOf('start "" powershell.exe -NoProfile -WindowStyle Hidden') >= 0 && value.indexOf("$verb.DoIt()") >= 0;
         }), "The shared logged-on-user owner must preserve the Network Settings CMD body exactly.");
 
         var transformedCmd = captured[2].command;
         assert.strictEqual(transformedCmd.runAsUser, 0,
-            "Legacy runAsUser 1 commands must use the reliable user-session launcher.");
-        assert.strictEqual(transformedCmd.type, 2,
-            "CMD user commands must also use the PowerShell launcher.");
-        assert.ok(decodedPayloads(transformedCmd.cmd).some(function (value) {
-            return value.indexOf("whoami && echo %APPDATA%") >= 0;
-        }), "The original CMD body must be preserved.");
-
-        assert.strictEqual(captured[3].command, systemCommand,
-            "SYSTEM commands must remain unchanged.");'''
-policy_test = replace_once(policy_test, old_transformed_cmd, new_transformed_cmd, "shared Network Settings policy assertions")
+            "Legacy runAsUser 1 commands must use the reliable user-session launcher.");'''
+policy_test = replace_once(policy_test, assertion_marker, network_assertions, "Network Settings shared-owner assertions")
+policy_test = replace_once(
+    policy_test,
+    "        assert.strictEqual(captured[2].command, systemCommand,\n            \"SYSTEM commands must remain unchanged.\");",
+    "        assert.strictEqual(captured[3].command, systemCommand,\n            \"SYSTEM commands must remain unchanged.\");",
+    "SYSTEM capture index",
+)
 policy_test_path.write_text(policy_test, encoding="utf-8")
 
-# #237: MeshCentral owns the modal size; do not force modal-xl from Results.
+# #237: MeshCentral itself owns xxAddAgentModalConf sizing. Results must not force modal-xl.
 results_path = Path("public/shared/ui/results.js")
 results = results_path.read_text(encoding="utf-8")
 results = replace_once(
     results,
     'if (manager.mode === "modern") manager.setContent("xxAddAgent", title, contentHtml, "extra-large");',
     'if (manager.mode === "modern") manager.setContent("xxAddAgent", title, contentHtml);',
-    "Results Modern size override",
+    "Results modal-xl override",
 )
 results_path.write_text(results, encoding="utf-8")
 
@@ -143,7 +131,6 @@ assert.strictEqual(source.indexOf('"extra-large"'), -1,
 native_test = replace_once(native_test, old_native, new_native, "Results native geometry regression")
 native_test_path.write_text(native_test, encoding="utf-8")
 
-# Existing stable-content test must also reject host-level modal-xl, not only plugin-root vw/vh.
 stable_test_path = Path("test/results-viewer-stable-content.test.js")
 stable_test = stable_test_path.read_text(encoding="utf-8")
 marker = '''assert.strictEqual(css.indexOf('.mc-results-viewer-overlay{'), -1,
