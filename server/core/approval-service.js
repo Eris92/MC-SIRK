@@ -16,6 +16,78 @@ module.exports.createApprovalService = function (options) {
     var tokenPath = path.join(path.dirname(databasePath), "approval-api-tokens.json");
     var providers = Object.create(null);
     var queue = Promise.resolve();
+    var defaultPendingIgnoredFields = {
+        approvalLevels: true,
+        confirmedExecution: true,
+        description: true,
+        label: true,
+        multiHost: true,
+        nodeName: true,
+        protocolRunNonce: true
+    };
+
+    function canonicalPendingValue(value, state, depth) {
+        if (state.failed || depth > 16 || state.nodes >= 2048) {
+            state.failed = true;
+            return "";
+        }
+        state.nodes += 1;
+        if (value === null) return "null";
+        if (typeof value === "string") {
+            state.bytes += Buffer.byteLength(value, "utf8");
+            if (state.bytes > 262144) { state.failed = true; return ""; }
+            return JSON.stringify(value);
+        }
+        if (typeof value === "number") return isFinite(value) ? JSON.stringify(value) : "null";
+        if (typeof value === "boolean") return value ? "true" : "false";
+        if (Array.isArray(value)) {
+            var arrayParts = [];
+            for (var arrayIndex = 0; arrayIndex < value.length; arrayIndex += 1) {
+                var arrayValue = canonicalPendingValue(value[arrayIndex], state, depth + 1);
+                if (state.failed) return "";
+                arrayParts.push(arrayValue);
+            }
+            return "[" + arrayParts.join(",") + "]";
+        }
+        if (typeof value === "object") {
+            var objectParts = [];
+            var keys = Object.keys(value).sort();
+            for (var keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
+                var key = keys[keyIndex];
+                state.bytes += Buffer.byteLength(key, "utf8");
+                if (state.bytes > 262144) { state.failed = true; return ""; }
+                var objectValue = canonicalPendingValue(value[key], state, depth + 1);
+                if (state.failed) return "";
+                objectParts.push(JSON.stringify(key) + ":" + objectValue);
+            }
+            return "{" + objectParts.join(",") + "}";
+        }
+        state.failed = true;
+        return "";
+    }
+
+    function defaultPendingRequestKey(type, requester, payload) {
+        var requesterId = shared.cleanText(requester && (requester._id || requester.id), 300).trim();
+        if (!requesterId || !payload || typeof payload !== "object" || Array.isArray(payload)) return "";
+        var effective = {};
+        Object.keys(payload).forEach(function (key) {
+            if (!defaultPendingIgnoredFields[key]) effective[key] = payload[key];
+        });
+        if (!Object.keys(effective).length) return "";
+        var state = { bytes: 0, failed: false, nodes: 0 };
+        var canonical = canonicalPendingValue(effective, state, 0);
+        if (state.failed || !canonical || canonical === "{}") return "";
+        return "sha256:" + crypto.createHash("sha256")
+            .update(String(type || "") + "\u0000" + requesterId + "\u0000" + canonical)
+            .digest("hex");
+    }
+
+    function pendingRequestKey(provider, type, requester, payload) {
+        if (typeof provider.getPendingRequestKey === "function") {
+            return shared.cleanText(provider.getPendingRequestKey(payload, requester), 500).trim();
+        }
+        return defaultPendingRequestKey(type, requester, payload);
+    }
 
     function readRows() {
         var value;
@@ -221,9 +293,6 @@ module.exports.createApprovalService = function (options) {
         var externalIdempotencyKey = idempotencyKey && apiClientId
             ? crypto.createHash("sha256").update(apiClientId + "\u0000" + type + "\u0000" + idempotencyKey).digest("hex")
             : "";
-        var pendingRequestKey = typeof provider.getPendingRequestKey === "function"
-            ? shared.cleanText(provider.getPendingRequestKey(payload), 500).trim()
-            : "";
         var request = {
             id: shared.randomId(12),
             type: type,
@@ -241,6 +310,7 @@ module.exports.createApprovalService = function (options) {
             updatedAt: now,
             executionId: shared.randomId(12)
         };
+        var requestPendingKey = pendingRequestKey(provider, type, user, payload);
         if (externalIdempotencyKey) request.externalIdempotencyKey = externalIdempotencyKey;
         if (apiClientId) request.source = { kind: "api", clientId: apiClientId, name: shared.cleanText(submitOptions && submitOptions.apiClientName, 160) };
         return transact(function (rows) {
@@ -248,12 +318,12 @@ module.exports.createApprovalService = function (options) {
                 var existing = rows.find(function (item) { return item.externalIdempotencyKey === externalIdempotencyKey; });
                 if (existing) return { request: shared.copy(existing), existing: true };
             }
-            if (pendingRequestKey) {
+            if (requestPendingKey) {
                 var supersededAt = Date.now();
                 rows.forEach(function (item) {
                     if (!item || item.type !== type || item.status !== "pending") return;
-                    var itemKey = shared.cleanText(provider.getPendingRequestKey(item.payload || {}), 500).trim();
-                    if (!itemKey || itemKey !== pendingRequestKey) return;
+                    var itemKey = pendingRequestKey(provider, type, item.requester, item.payload || {});
+                    if (!itemKey || itemKey !== requestPendingKey) return;
                     item.status = "superseded";
                     item.updatedAt = supersededAt;
                     item.supersededByRequestId = request.id;
