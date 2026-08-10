@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;
 - [`0.1.1-dev.41`](0.1.1-dev.41.md) — follow-up po real dev.40 FAIL: Network Settings używa trusted elevated interactive token w istniejącym shared ownerze; Admin kopiuje rzeczywistą nieprzezroczystą powierzchnię otaczającą `#p43iframe`;
 - [`0.1.1-dev.40`](0.1.1-dev.40.md) — follow-up po real dev.39 FAIL: Network Settings omija script-oriented Scheduled Task wrapper i trafia do native MeshAgent UserOnly; Admin obserwuje rzeczywisty Modern `#theme-stylesheet` writer/load;
