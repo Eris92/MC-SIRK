@@ -76,12 +76,12 @@ assert.strictEqual(properties.indexOf('Start-Sleep'), -1,
 assert.strictEqual(properties.indexOf('control.exe ncpa.cpl'), -1,
     "Showing Network Connections alone must not count as adapter-properties success.");
 
-assert.ok(server.indexOf('windowStyle: /(?:^|\\s)-WindowStyle\\s+Hidden') >= 0,
-    "Interactive desktop launcher must preserve an explicitly hidden PowerShell helper instead of forcing a visible console window.");
-assert.ok(server.indexOf('shell.Run \\\"" + launchLine.replace(/"/g, \'""\') + "\\\", " + launch.windowStyle + ", False') >= 0,
-    "VBS must use the parsed window style rather than hardcoding a visible window.");
-assert.ok(server.indexOf('If " + launch.windowStyle + " = 0 Then') >= 0,
-    "A hidden helper must exit the VBS focus loop immediately instead of trying to activate its PowerShell window.");
+assert.strictEqual(server.indexOf('function interactiveDesktopCommand('), -1,
+    "Commands module must not keep a second interactive launcher beside the shared logged-on-user policy.");
+assert.strictEqual(server.indexOf("$taskName='SIRK-Desktop-'"), -1,
+    "Built-in runAsUser:2 commands must not be rewritten into the legacy interactive-SYSTEM launcher marker.");
+assert.ok(server.indexOf('return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0 };') >= 0,
+    "Built-in command execution must preserve canonical runAsUser/type so the shared policy owns the user-session launch.");
 
 assert.ok(server.indexOf('locales: command.locales || {}') >= 0,
     "Public catalog must carry command locales so Quick and My Commands share labels.");

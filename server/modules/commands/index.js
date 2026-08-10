@@ -240,63 +240,6 @@ module.exports.createModule = function (context) {
     }
     function psQuote(value) { return String(value == null ? "" : value).replace(/'/g, "''"); }
     function cmdQuote(value) { return String(value == null ? "" : value).replace(/[\r\n]/g, " ").replace(/%/g, "%%").replace(/\^/g, "^^").replace(/!/g, "^^!").replace(/"/g, "^\""); }
-    function desktopLaunch(commandText) {
-        var match = /^start\s+""\s+(?:"([^"]+)"|(\S+))(?:\s+([\s\S]*))?$/i.exec(String(commandText || "").trim());
-        if (!match) throw new Error("Invalid interactive Desktop command.");
-        var executable = match[1] || match[2];
-        var argumentsText = match[3] || "";
-        if (/\.msc$/i.test(executable)) {
-            argumentsText = '"' + executable + '"' + (argumentsText ? " " + argumentsText : "");
-            executable = "mmc.exe";
-        }
-        return { executable: executable, argumentsText: argumentsText, windowStyle: /(?:^|\s)-WindowStyle\s+Hidden(?:\s|$)/i.test(argumentsText) ? 0 : 1 };
-    }
-    function interactiveDesktopCommand(commandText, label) {
-        var launch = desktopLaunch(commandText);
-        var processName = String(launch.executable).split(/[\\/]/).pop();
-        var launchLine = '"' + launch.executable + '"' + (launch.argumentsText ? " " + launch.argumentsText : "");
-        var vbs = [
-            "Set shell = CreateObject(\"WScript.Shell\")",
-            "Set before = CreateObject(\"Scripting.Dictionary\")",
-            "Set wmi = GetObject(\"winmgmts:\\\\.\\root\\cimv2\")",
-            "For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
-            "  before(CStr(proc.ProcessId)) = True",
-            "Next",
-            "shell.Run \"" + launchLine.replace(/"/g, '""') + "\", " + launch.windowStyle + ", False",
-            "If " + launch.windowStyle + " = 0 Then CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True : WScript.Quit 0",
-            "For attempt = 1 To 25",
-            "  WScript.Sleep 200",
-            "  For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
-            "    If Not before.Exists(CStr(proc.ProcessId)) Then shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True : WScript.Quit 0",
-            "  Next",
-            "Next",
-            "For Each proc In wmi.ExecQuery(\"SELECT ProcessId FROM Win32_Process WHERE Name='" + processName.replace(/'/g, "''") + "'\")",
-            "  shell.SendKeys \"%\" : If shell.AppActivate(CLng(proc.ProcessId)) Then CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True : WScript.Quit 0",
-            "Next",
-            "CreateObject(\"Scripting.FileSystemObject\").DeleteFile WScript.ScriptFullName, True"
-        ].join("\r\n");
-        var encodedVbs = Buffer.from(vbs, "utf8").toString("base64");
-        return [
-            "$userName=(Get-Process explorer -IncludeUserName -ErrorAction SilentlyContinue|Where-Object{$_.UserName}|Select-Object -First 1 -ExpandProperty UserName)",
-            "if([string]::IsNullOrWhiteSpace($userName)){$userName=(Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName}",
-            "if([string]::IsNullOrWhiteSpace($userName)){throw 'No interactive Windows user is logged on.'}",
-            "$taskName='SIRK-Desktop-'+[guid]::NewGuid().ToString('N')",
-            "$scriptDirectory=Join-Path $env:ProgramData 'SIRK Management Platform'",
-            "New-Item -ItemType Directory -Path $scriptDirectory -Force|Out-Null",
-            "$scriptPath=Join-Path $scriptDirectory ($taskName+'.vbs')",
-            "[IO.File]::WriteAllBytes($scriptPath,[Convert]::FromBase64String('" + encodedVbs + "'))",
-            "$action=New-ScheduledTaskAction -Execute ($env:SystemRoot+'\\System32\\wscript.exe') -Argument ('//B //NoLogo \"'+$scriptPath+'\"')",
-            "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
-            "try{",
-            "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
-            "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
-            "Start-Sleep -Milliseconds 750",
-            "$taskInfo=Get-ScheduledTaskInfo -TaskName $taskName -ErrorAction Stop",
-            "if($taskInfo.LastRunTime.Year-lt 2000){throw 'The interactive Desktop launcher did not start.'}",
-            "Write-Output 'Started on the interactive desktop: " + psQuote(label || "Command") + "'",
-            "}finally{Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue}"
-        ].join(";");
-    }
     function injectVariables(commandText, type, definitions, supplied, secretValues) {
         var values = validateVariables(definitions, supplied);
         Object.keys(secretValues || {}).forEach(function (name) { values[name] = String(secretValues[name] == null ? "" : secretValues[name]); });
@@ -317,7 +260,6 @@ module.exports.createModule = function (context) {
             var found = findCatalogCommand(payload.commandId);
             if (!found) throw new Error("Command preset not found.");
             var commandText = injectVariables(found.command.cmd, found.command.type, found.command.variables || [], payload.variableValues, null);
-            if (Number(found.command.runAsUser) === 2) return { label: found.command.label, cmd: interactiveDesktopCommand(commandText, found.command.label), type: 2, runAsUser: 0 };
             return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0 };
         }
         var custom = String(payload.command || "");
