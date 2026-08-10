@@ -73,7 +73,7 @@
         var filter = {
             name: "JiraUserFilter",
             label: "Jira users",
-            description: "Choose whether inactive Jira accounts are included in the list.",
+            description: "Choose whether inactive Jira accounts are included in the next user list.",
             required: true,
             control: "select",
             defaultValue: "active",
@@ -82,20 +82,25 @@
                 { value: "all", label: "All" }
             ]
         };
-        var userStep = stepItem(item, "Jira Asset Protocol - User", "Select a Jira user from the cached server-side list.", [filter, jiraUser]);
+        var scopeStep = stepItem(item, "Jira Asset Protocol - User scope", "Choose which Jira accounts are visible.", [filter]);
+        var userStep = stepItem(item, "Jira Asset Protocol - User", "Select a Jira user from the cached server-side list.", [jiraUser]);
         var assetStep = stepItem(item, "Jira Asset Protocol - Asset", "Select equipment currently assigned to the selected Jira user.", [asset]);
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "Confirm transfer/return mode and the IT person before generating the protected PDF.", [transfer, itPerson]);
 
-        return runStep(options, userStep, {}, "Next").then(function (userValues) {
-            if (userValues == null) return null;
-            return runStep(options, assetStep, userValues, "Next").then(function (assetValues) {
-                if (assetValues == null) return null;
-                var accumulated = Object.assign({}, userValues, assetValues);
-                return runStep(options, protocolStep, accumulated, options.primaryLabel || (item.requiresApproval ? "Request" : "Run")).then(function (protocolValues) {
-                    if (protocolValues == null) return null;
-                    var result = Object.assign({}, accumulated, protocolValues);
-                    delete result.JiraUserFilter;
-                    return result;
+        return runStep(options, scopeStep, {}, "Next").then(function (scopeValues) {
+            if (scopeValues == null) return null;
+            return runStep(options, userStep, scopeValues, "Next").then(function (userValues) {
+                if (userValues == null) return null;
+                var selectedUser = Object.assign({}, scopeValues, userValues);
+                return runStep(options, assetStep, selectedUser, "Next").then(function (assetValues) {
+                    if (assetValues == null) return null;
+                    var accumulated = Object.assign({}, selectedUser, assetValues);
+                    return runStep(options, protocolStep, accumulated, options.primaryLabel || (item.requiresApproval ? "Request" : "Run")).then(function (protocolValues) {
+                        if (protocolValues == null) return null;
+                        var result = Object.assign({}, accumulated, protocolValues);
+                        delete result.JiraUserFilter;
+                        return result;
+                    });
                 });
             });
         });
