@@ -1,4 +1,4 @@
-name: Dev40 Patch
+name: Dev40 Gate
 on:
   push:
     branches:
@@ -6,8 +6,8 @@ on:
 permissions:
   contents: write
 jobs:
-  patch:
-    if: ${{ !contains(github.event.head_commit.message, '[dev40 patched]') }}
+  gate:
+    if: ${{ !contains(github.event.head_commit.message, '[dev40 clean]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node scripts/dev40-patch.js
+          cache: npm
+      - run: npm ci
+      - run: node test/network-command-split.test.js
+      - run: node test/logged-on-user-command-policy.test.js
+      - run: node test/admin-host-theme-signal.test.js
+      - run: npm test
+      - run: git diff --check
       - run: |
+          rm -f scripts/dev40-patch.js .dev40-trigger .github/workflows/dev40-patch.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add server/modules/commands/index.js server/core/logged-on-user-command-policy.js web/admin/admin.js test/network-command-split.test.js test/logged-on-user-command-policy.test.js test/admin-host-theme-signal.test.js
-          git commit -m "fix: correct native user UI and admin theme sync [dev40 patched]"
+          git add -A
+          git commit -m "chore: remove dev40 patch infrastructure [dev40 clean]"
           git push origin HEAD:dev-40-network-admin-root-cause
