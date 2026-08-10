@@ -158,7 +158,7 @@
         queryAll(root, ".mc-shared-toolbar-button,.mc-tree-script-action,.mc-results-view-button,.mc-results-copy-button,.mc-definition-remove,.mc-command-run-button,.mc-admin-primary,.mc-admin-secondary,.mc-admin-toolbar button,.mc-admin-inline-actions button,.mc-admin-table-actions button,.mc-move-dialog-actions button,.sirk-quick-command-fallback-close,.sirk-quick-command-submit", function (element) { applyButton(element); });
         queryAll(root, ".mc-shared-nav-item,.mc-approval-provider,.mc-approval-status,.mc-catalog-results,.mc-tree-root,.mc-tree-script,.mc-tree-folder-header,.sirk-quick-command-browser button,.mc-admin-tabs>button,.mc-admin-settings-subnav button,.mc-admin-settings-nav button", applyNav);
         queryAll(root, ".mc-shared-tab", applyTab);
-        queryAll(root, ".mc-shared-card,.mc-approval-request-card,.mc-definition-section,.mc-script-editor-card,.mc-multi-editor-card,.mc-script-definition-card,.mc-script-credentials-card,.mc-admin-card,.mc-admin-provider-card,.mc-admin-permission-folder,.mc-results-debug,.sirk-desktop-commands-panel,.sirk-quick-command-details,.mc-move-dialog,.mc-results-viewer", applyCard);
+        queryAll(root, ".mc-shared-card,.mc-approval-request-card,.mc-definition-section,.mc-script-editor-card,.mc-multi-editor-card,.mc-script-definition-card,.mc-script-credentials-card,.mc-admin-card,.mc-admin-provider-card,.mc-admin-permission-folder,.mc-results-debug,.sirk-desktop-commands-panel,.sirk-quick-command-details,.mc-move-dialog", applyCard);
         queryAll(root, PLUGIN_ROOT_SELECTOR, function (pluginRootElement) {
             queryAll(pluginRootElement, "input:not([type=button]):not([type=submit]):not([type=reset]),textarea,select", applyControl);
         });

@@ -1,3 +1,13 @@
+## 0.1.1-dev.37 - 2026-08-10
+
+- Follow up real `0.1.1-dev.36` smoke evidence: Results content is present but the plugin root still owns a second card/viewport geometry inside the native MeshCentral modal, while Network Settings still does not open properties from the plugin.
+- Remove standalone Results overlay/viewport geometry and stop mapping `.mc-results-viewer` to a second card, leaving the native MeshCentral modal as the sole outer surface/geometry owner while preserving parsed/table/Copy/CSV/Debug content.
+- Tighten Network Settings default-route eligibility so each `Alive` route must map to a `Get-NetAdapter` object with `Status = Up`; preserve IPv4-first/IPv6 fallback and deterministic route/interface metric ordering.
+- Replace the dev.36 PIDL/ShellExecuteEx false-success path with the actual `FolderItem.Verbs()` `Properties/Właściwości` verb and `FolderItemVerb.DoIt()` path proven to open the adapter properties UI on the real Windows host.
+- Keep Issues #237 and #128 open for real dev.37 re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.37.md`.
+
 ## 0.1.1-dev.36 - 2026-08-10
 
 - Follow up real `0.1.1-dev.35` smoke evidence: Results content still flashed instead of presenting one stable final view, and Network Settings still reported launcher start without opening the adapter properties sheet.

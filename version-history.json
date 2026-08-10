@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.37",
+    "date": "2026-08-10",
+    "changes": [
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the follow-up to the real dev.36 Results geometry and Network Settings execution failures.",
+      "Leave the native MeshCentral modal as the only Results outer surface and geometry owner by removing standalone viewer viewport sizing and second-card ownership while preserving structured output, Copy, CSV and full Debug.",
+      "Require an Alive default route to map to an Up adapter before selection, preserving IPv4-first/IPv6 fallback and deterministic metrics so stale routes cannot select a disconnected interface.",
+      "Use the real Network Connections FolderItem Properties/Właściwości verb with FolderItemVerb.DoIt(), proven on the user's Windows host after dev.36 ShellExecuteEx returned false-positive success; keep #237/#128 open for real dev.37 smoke and create no tag/GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.36",
     "date": "2026-08-10",
     "changes": [
