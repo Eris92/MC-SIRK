@@ -31,6 +31,21 @@
         return [Number(match[1]), Number(match[2]), Number(match[3])];
     }
 
+    function hostSurfaceStyle() {
+        if (!hostDocument || !hostWindow || typeof hostWindow.getComputedStyle !== "function") return null;
+        var candidate = hostDocument.getElementById ? hostDocument.getElementById("p43iframe") : null;
+        candidate = candidate && candidate.parentElement ? candidate.parentElement : null;
+        while (candidate) {
+            var candidateStyle = hostWindow.getComputedStyle(candidate);
+            if (candidateStyle && colorParts(candidateStyle.backgroundColor)) {
+                return { element: candidate, style: candidateStyle };
+            }
+            candidate = candidate.parentElement;
+        }
+        var hostBody = hostDocument.body;
+        return hostBody ? { element: hostBody, style: hostWindow.getComputedStyle(hostBody) } : null;
+    }
+
     function hostIsDark() {
         var hostBody = hostDocument && hostDocument.body;
         var htmlTheme = hostDocument && hostDocument.documentElement && hostDocument.documentElement.getAttribute("data-bs-theme");
@@ -40,8 +55,10 @@
         if (bodyTheme === "dark") return true;
         if (bodyTheme === "light") return false;
         if (hostBody && hostBody.classList.contains("night")) return true;
+        var surface = hostSurfaceStyle();
         var bodyStyle = hostBody && hostWindow.getComputedStyle ? hostWindow.getComputedStyle(hostBody) : null;
-        var background = bodyStyle && colorParts(bodyStyle.backgroundColor);
+        var surfaceStyle = surface && surface.style;
+        var background = surfaceStyle && colorParts(surfaceStyle.backgroundColor);
         var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
         if (themeStylesheet && background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
         if (typeof hostWindow.nightMode === "boolean") return hostWindow.nightMode;
@@ -55,7 +72,7 @@
         } catch (error) {}
 
         if (background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
-        var foreground = bodyStyle && colorParts(bodyStyle.color);
+        var foreground = (surfaceStyle && colorParts(surfaceStyle.color)) || (bodyStyle && colorParts(bodyStyle.color));
         return foreground ? ((foreground[0] * 299 + foreground[1] * 587 + foreground[2] * 114) / 1000) > 160 : false;
     }
 
@@ -66,9 +83,9 @@
             root.parentElement.classList.add("sirk-admin-host");
             root.parentElement.setAttribute("data-sirk-host-theme", theme);
             try {
-                var hostBody = hostDocument && hostDocument.body;
-                if (hostBody && hostWindow.getComputedStyle) {
-                    var hostStyle = hostWindow.getComputedStyle(hostBody);
+                var surface = hostSurfaceStyle();
+                var hostStyle = surface && surface.style;
+                if (hostStyle) {
                     root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";
                     root.parentElement.style.color = hostStyle.color || "";
                 }

@@ -33,8 +33,8 @@ assert.ok(properties.indexOf('label: "Network Settings"') >= 0 &&
     "Adapter-properties command must expose the exact Network Settings label in both locales.");
 assert.ok(properties.indexOf('runAsUser: 2') >= 0,
     "Adapter properties must run in the interactive user context.");
-assert.ok(properties.indexOf('type: 2') >= 0 && properties.indexOf('nativeUserSession: true') >= 0,
-    "Network Settings must execute as direct PowerShell through the native MeshAgent UserOnly session, not the script-oriented scheduled-task wrapper.");
+assert.ok(properties.indexOf('type: 2') >= 0 && properties.indexOf('elevatedUserSession: true') >= 0,
+    "Network Settings must request the trusted elevated interactive user token that matches the manually proven Administrator context.");
 assert.strictEqual(properties.indexOf('powershell.exe'), -1,
     "Network Settings must not detach a nested powershell.exe process from the canonical logged-on-user runner.");
 assert.strictEqual(properties.indexOf('start \"\"'), -1,
@@ -86,8 +86,8 @@ assert.strictEqual(server.indexOf('function interactiveDesktopCommand('), -1,
     "Commands module must not keep a second interactive launcher beside the shared logged-on-user policy.");
 assert.strictEqual(server.indexOf("$taskName='SIRK-Desktop-'"), -1,
     "Built-in runAsUser:2 commands must not be rewritten into the legacy interactive-SYSTEM launcher marker.");
-assert.ok(server.indexOf('nativeUserSession: found.command.nativeUserSession === true') >= 0,
-    "Built-in execution must preserve the trusted native-user-session marker from the canonical catalog.");
+assert.ok(server.indexOf('elevatedUserSession: found.command.elevatedUserSession === true') >= 0,
+    "Built-in execution must preserve the trusted elevated-user-session marker from the canonical catalog.");
 
 assert.ok(server.indexOf('locales: command.locales || {}') >= 0,
     "Public catalog must carry command locales so Quick and My Commands share labels.");

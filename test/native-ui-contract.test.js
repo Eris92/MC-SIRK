@@ -142,9 +142,10 @@ assert.strictEqual(commandsServer.indexOf("function desktopLaunch"), -1,
 assert.ok(loggedOnUserPolicy.indexOf("SirkActiveWtsSession") >= 0 &&
     loggedOnUserPolicy.indexOf("Get-Process explorer -IncludeUserName") >= 0,
     "Shared logged-on-user launch must resolve the active WTS/Explorer user session.");
-assert.ok(loggedOnUserPolicy.indexOf("New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited") >= 0 &&
+assert.ok(loggedOnUserPolicy.indexOf('New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel " + runLevel') >= 0 &&
+    loggedOnUserPolicy.indexOf('var runLevel = command && command.elevatedUserSession === true ? "Highest" : "Limited";') >= 0 &&
     loggedOnUserPolicy.indexOf("wscript.exe") >= 0,
-    "GUI runAsUser commands must use the canonical console-free interactive user-session owner.");
+    "GUI runAsUser commands must reuse the canonical console-free interactive user-session owner with bounded trusted elevation.");
 assert.ok(commandsServer.indexOf("showOnDesktop") >= 0 && commandsServer.indexOf("showWithoutDesktop") >= 0,
     "Built-in commands must persist separate Desktop and non-Desktop availability.");
 assert.ok(commandsServer.indexOf("scriptAvailability") >= 0 && commandsServer.indexOf('surface === "desktop"') >= 0,

@@ -19,7 +19,7 @@ var htmlThemeCheck = admin.indexOf('hostDocument.documentElement.getAttribute("d
 assert.ok(htmlThemeCheck >= 0 && nightModeCheck > htmlThemeCheck,
     "Explicit parent data-bs-theme must win over a stale legacy nightMode value when Modern MeshCentral exposes it.");
 
-var hostThemeStart = admin.indexOf("function hostIsDark()");
+var hostThemeStart = admin.indexOf("function hostSurfaceStyle()");
 var hostThemeEnd = admin.indexOf("function syncHostTheme()", hostThemeStart);
 var hostThemeSource = admin.slice(hostThemeStart, hostThemeEnd);
 var evaluateHostTheme = new Function("hostWindow", "hostDocument", "colorParts", hostThemeSource + "\nreturn hostIsDark();");
@@ -52,9 +52,14 @@ assert.ok(admin.indexOf('hostDocument.getElementById("theme-stylesheet")') >= 0 
     admin.indexOf('observer.observe(themeStylesheet, { attributes: true, attributeFilter: ["href"] })') >= 0 &&
     admin.indexOf('themeStylesheet.addEventListener("load", syncHostTheme)') >= 0,
     "The same observer must follow Modern MeshCentral Bootswatch href changes and resync after the stylesheet loads.");
-assert.ok(admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
+assert.ok(admin.indexOf('hostDocument.getElementById("p43iframe")') >= 0 &&
+    admin.indexOf('candidate = candidate && candidate.parentElement ? candidate.parentElement : null;') >= 0 &&
+    admin.indexOf('colorParts(candidateStyle.backgroundColor)') >= 0,
+    "Admin must resolve the actual opaque page-43 surface surrounding the plugin iframe instead of assuming parent.body is the painted surface.");
+assert.ok(admin.indexOf('var surface = hostSurfaceStyle();') >= 0 &&
+    admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
     admin.indexOf('root.parentElement.style.color = hostStyle.color || "";') >= 0,
-    "The iframe Admin surface must copy the effective host surface colors instead of owning a private palette.");
+    "The iframe Admin body must copy effective page-43 surface colors instead of owning a private palette.");
 assert.ok(admin.indexOf('root.setAttribute("data-host-theme", theme)') >= 0 &&
     admin.indexOf('root.parentElement.setAttribute("data-sirk-host-theme", theme)') >= 0,
     "Theme synchronization must keep the existing semantic theme attributes current.");

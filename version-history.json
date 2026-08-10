@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-dev.41",
+    "date": "2026-08-10",
+    "changes": [
+      "Bump the pre-1.0 development revision after real dev.40 Network Settings and Admin theme/color failures.",
+      "Reuse the single logged-on-user launcher with RunLevel Highest only for the trusted Network Settings built-in so its interactive token matches the manually proven elevated Administrator context; ordinary user commands remain Limited.",
+      "Resolve the actual opaque MeshCentral page-43 surface around p43iframe for Admin background/color synchronization instead of assuming parent body is the painted surface.",
+      "Dev41 Patch run 31378927708 and canonical runtime Test #558 are green before bump; #128/#123 remain open for real dev.41 smoke; no tag or GitHub Release."
+    ]
+  },
+  {
     "version": "0.1.1-dev.40",
     "date": "2026-08-10",
     "changes": [

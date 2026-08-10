@@ -83,6 +83,7 @@ function buildLoggedOnUserLauncher(command, options) {
     options = options || {};
     var timeoutSeconds = Math.max(30, Math.min(270, Number(options.timeoutSeconds) || DEFAULT_TIMEOUT_SECONDS));
     var commandType = Number(command && command.type) === 1 ? 1 : 2;
+    var runLevel = command && command.elevatedUserSession === true ? "Highest" : "Limited";
     var command64 = commandBytes(command).toString("base64");
     var runner64 = Buffer.concat([
         Buffer.from([0xef, 0xbb, 0xbf]),
@@ -127,7 +128,7 @@ function buildLoggedOnUserLauncher(command, options) {
         "[IO.File]::WriteAllText($launchCommandPath,$runnerCommand,[Text.Encoding]::Unicode)",
         "$wscript=Join-Path $env:SystemRoot 'System32\\wscript.exe'",
         "$action=New-ScheduledTaskAction -Execute $wscript -Argument ('//B //NoLogo \"'+$launcherPath+'\" \"'+$launchCommandPath+'\"')",
-        "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited",
+        "$principal=New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel " + runLevel,
         "Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal -Force -ErrorAction Stop|Out-Null",
         "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop",
         "$deadline=[DateTime]::UtcNow.AddSeconds(" + timeoutSeconds + ")",
@@ -148,10 +149,8 @@ function transformCommand(command, options) {
     var runAsUser = Number(command.runAsUser);
     var type = Number(command.type);
     if ((runAsUser !== 1 && runAsUser !== 2) || (type !== 1 && type !== 2)) return command;
-    // Trusted built-in native Shell UI commands must use MeshAgent UserOnly directly.
-    // The scheduled-task wrapper exists for profile/env/output semantics and changes
-    // the COM/UI launch chain that Network Settings requires.
-    if (command.nativeUserSession === true && runAsUser === 2) return command;
+    // Interactive GUI commands reuse this single launcher owner. Trusted built-ins may
+    // request the elevated interactive token; ordinary user commands remain Limited.
     if (String(command.cmd || "").indexOf(MARKER) >= 0) return command;
 
     return Object.assign({}, command, {
