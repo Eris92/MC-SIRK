@@ -58,7 +58,7 @@ module.exports.createScriptAdminService = function (options) {
     function configuredProfiles() {
         var configured = context.integrations.configured();
         var values = context.integrations.readSettings();
-        return ["ad", "entra", "jira", "defender", "zabbix"].map(function (name) {
+        return Object.keys(profileLabels).map(function (name) {
             var available = false;
             if (name === "ad") {
                 available = !!(values.ad && values.ad.domain && values.ad.login && configured.adPassword);
@@ -91,11 +91,7 @@ module.exports.createScriptAdminService = function (options) {
     function saveSystemCredentials(user, relativePath, selected) {
         requireAdmin(user);
         var value = script(relativePath);
-        var allowed = configuredProfiles().filter(function (profile) {
-            return profile.configured;
-        }).map(function (profile) {
-            return profile.name;
-        });
+        var allowed = Object.keys(profileLabels);
         selected = (Array.isArray(selected) ? selected : []).map(String).filter(function (name, index, list) {
             return allowed.indexOf(name) >= 0 && list.indexOf(name) === index;
         });
