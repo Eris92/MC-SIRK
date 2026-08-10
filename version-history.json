@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.46",
+    "date": "2026-08-10",
+    "summary": "Move Requests #265: verified current MeshCentral device-group move with fail-closed persistence verification.",
+    "notes": "docs/releases/0.1.1-dev.46.md"
+  },
+  {
     "version": "0.1.1-dev.45",
     "date": "2026-08-10",
     "summary": "Jira Asset Protocol #252: canonical My Scripts workflow with authoritative asset recheck, real milestone progress and protected generated PDF.",

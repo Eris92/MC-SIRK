@@ -1,3 +1,11 @@
+## 0.1.1-dev.46 - 2026-08-10
+
+- Move Requests #265: replace the assumed `MoveNodeToMesh` false-success path with the current MeshCentral `changeDeviceMesh` persistence/session/event semantics in the shared device owner.
+- Execute as the original requester with same-domain/source-target edit-right/type checks, exactly one node write plus one bounded DB verification read; already-current target is a zero-write success and all missing/error/mismatch paths fail closed.
+- Preserve #224 single-pending/idempotency and human-readable summary contracts; pre-bump PR #267 Test #637 / Actions `31403516643` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real MeshCentral move smoke remains required before closing #265. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.46.md`.
+
 ## 0.1.1-dev.45 - 2026-08-10
 
 - Jira #252: complete native My Scripts Asset Protocol on top of the existing Jira user/asset provider and request-bound typed PDF artifact owner.
