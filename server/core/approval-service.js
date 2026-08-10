@@ -4,133 +4,179 @@ var crypto = require("crypto");
 var shared = require("./shared.js");
 
 module.exports.createApprovalService = function (options) {
-    var fs = options.fs, path = options.path, parent = options.parent, source = options.source;
+    var fs = options.fs;
+    var path = options.path;
+    var parent = options.parent;
     var settings = options.settings;
-    var databasePath = options.databasePath || path.join(options.dataRoot, "approvals", "requests.json");
-    var fallbackDatabasePath = options.fallbackDatabasePath || path.join(options.dataRoot || path.dirname(databasePath), "approval-requests.json");
-    var tokenPath = options.tokenPath || path.join(options.dataRoot || path.dirname(databasePath), "api-tokens.json");
+    var databasePath = options.databasePath;
+    var fallbackDatabasePath = options.fallbackDatabasePath || path.join(path.dirname(databasePath), "approval-requests.json");
+    var activeDatabasePath = fallbackDatabasePath && fallbackDatabasePath !== databasePath && fs.existsSync(fallbackDatabasePath)
+        ? fallbackDatabasePath
+        : databasePath;
+    var tokenPath = path.join(path.dirname(databasePath), "approval-api-tokens.json");
     var providers = Object.create(null);
-    var transactionQueue = Promise.resolve();
+    var queue = Promise.resolve();
 
     function readRows() {
-        var value = shared.readJson(fs, databasePath, null);
-        if (!value || !Array.isArray(value.requests)) value = shared.readJson(fs, fallbackDatabasePath, { requests: [] });
+        var value;
+        try {
+            var stat = fs.statSync(activeDatabasePath);
+            if (!stat.isFile()) {
+                var error = new Error("Approval database path is not a file.");
+                error.code = "EISDIR";
+                throw error;
+            }
+            value = JSON.parse(fs.readFileSync(activeDatabasePath, "utf8").replace(/^\uFEFF/, ""));
+        } catch (error) {
+            var code = String(error && error.code || "");
+            if (activeDatabasePath === databasePath && ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) >= 0) {
+                activeDatabasePath = fallbackDatabasePath;
+                value = shared.readJson(fs, activeDatabasePath, { requests: [] });
+            } else if (code === "ENOENT") {
+                value = { requests: [] };
+            } else {
+                value = { requests: [] };
+            }
+        }
         return Array.isArray(value.requests) ? value.requests : [];
     }
+
     function writeRows(rows) {
-        shared.writeJsonAtomic(fs, path, databasePath, { schemaVersion: 3, requests: rows });
+        var value = { schemaVersion: 3, requests: rows };
         try {
-            if (fallbackDatabasePath !== databasePath && fs.existsSync(fallbackDatabasePath)) fs.unlinkSync(fallbackDatabasePath);
-        } catch (error) {}
+            shared.writeJsonAtomic(fs, path, activeDatabasePath, value);
+        } catch (error) {
+            var code = String(error && error.code || "");
+            if (activeDatabasePath !== databasePath || ["EACCES", "EBUSY", "EISDIR", "EPERM"].indexOf(code) < 0) throw error;
+            activeDatabasePath = fallbackDatabasePath;
+            shared.writeJsonAtomic(fs, path, activeDatabasePath, value);
+        }
     }
-    function transact(fn) {
-        var operation = transactionQueue.catch(function () {}).then(function () {
+
+    function transact(work) {
+        var operation = queue.then(function () {
             var rows = readRows();
-            var result = fn(rows);
-            writeRows(rows);
-            return result;
+            return Promise.resolve(work(rows)).then(function (result) {
+                writeRows(rows);
+                return result;
+            });
         });
-        transactionQueue = operation.catch(function () {});
+        queue = operation.catch(function () {});
         return operation;
     }
 
-    function providerConfig(type) {
+    function config(type) {
         var current = settings.read();
-        return current.modules && current.modules.approvals && current.modules.approvals.providers && current.modules.approvals.providers[type] || {};
-    }
-    function providerEnabled(type) {
-        var provider = providers[type];
-        if (!provider) return false;
-        var config = providerConfig(type);
-        return config.enabled !== false && settings.isModuleEnabled(provider.moduleKey || type);
-    }
-    function normalizeLevelList(value) {
-        return (Array.isArray(value) ? value : []).map(Number).filter(function (level, index, all) {
-            return level >= 1 && level <= 3 && all.indexOf(level) === index;
-        }).sort();
-    }
-    function requiredLevels(provider, payload) {
-        if (typeof provider.getApprovalLevels === "function") return normalizeLevelList(provider.getApprovalLevels(payload));
-        return normalizeLevelList(provider.approvalLevels || [1]);
-    }
-    function canSee(user, request) {
-        if (!user || !request) return false;
-        if (shared.isSiteAdmin(user)) return true;
-        if (request.requester && request.requester.id === user._id) return true;
-        var config = providerConfig(request.type), groups = config.levels || {};
-        return Object.keys(groups).some(function (level) { return shared.isUserInAnyGroup(user, groups[level]); });
-    }
-    function currentLevel(request) {
-        if (!request || request.status !== "pending") return 0;
-        var completed = Object.create(null);
-        (request.approvalDecisions || []).forEach(function (decision) {
-            if (decision.approved) completed[decision.level] = true;
-        });
-        var required = normalizeLevelList(request.requiredApprovalLevels);
-        for (var i = 0; i < required.length; i++) if (!completed[required[i]]) return required[i];
-        return 0;
-    }
-    function canDecide(user, request) {
-        if (!user || !request || request.status !== "pending") return false;
-        var level = currentLevel(request);
-        if (!level) return false;
-        if (shared.isSiteAdmin(user)) return true;
-        var config = providerConfig(request.type), groups = config.levels || {};
-        return shared.isUserInAnyGroup(user, groups[level] || []);
-    }
-    function publicRequest(user, request) {
-        var result = shared.copy(request);
-        delete result.payload;
-        delete result.externalIdempotencyKey;
-        result.currentApprovalLevel = currentLevel(request);
-        result.canDecide = canDecide(user, request);
-        var provider = providers[request.type];
-        if (provider && typeof provider.presentRequest === "function") {
-            result = provider.presentRequest(user, result, request) || result;
+        var value = current.modules && current.modules.approvals &&
+            current.modules.approvals.providers &&
+            current.modules.approvals.providers[type] || {};
+        function groups(level) {
+            var list = value.levels && (value.levels[level] || value.levels[String(level)]);
+            return Array.isArray(list) ? list.map(String) : [];
         }
-        return result;
-    }
-    function providerInfo(provider) {
-        var config = providerConfig(provider.type);
         return {
-            type: provider.type,
-            title: provider.title,
-            tabTitle: provider.tabTitle || provider.title,
-            settingsTitle: provider.settingsTitle || provider.title,
-            description: provider.description || "",
-            moduleKey: provider.moduleKey || provider.type,
-            enabled: providerEnabled(provider.type),
-            showTab: config.showTab !== false,
-            showOverview: config.showOverview !== false,
-            columns: provider.columns || ["createdAt", "title", "requester", "status"]
+            enabled: value.enabled !== false,
+            showTab: value.showTab !== false,
+            showOverview: value.showOverview !== false,
+            levels: { 1: groups(1), 2: groups(2), 3: groups(3) }
         };
     }
 
     function registerProvider(provider) {
-        if (!provider || !provider.type) throw new Error("Approval provider type is required.");
-        providers[provider.type] = provider;
-        return function () { if (providers[provider.type] === provider) delete providers[provider.type]; };
+        var type = String(provider && provider.type || "").toLowerCase();
+        if (!/^[a-z][a-z0-9_-]{1,63}$/.test(type)) throw new Error("Invalid approval provider.");
+        providers[type] = provider;
+        return function () { if (providers[type] === provider) delete providers[type]; };
     }
+
+    function providerEnabled(type) {
+        var provider = providers[type];
+        if (!provider) return false;
+        if (provider.moduleKey && !settings.isModuleEnabled(provider.moduleKey)) return false;
+        return config(type).enabled;
+    }
+
     function listProviders() {
-        return Object.keys(providers).map(function (key) { return providerInfo(providers[key]); });
+        return Object.keys(providers).sort().map(function (type) {
+            var provider = providers[type];
+            var value = config(type);
+            return {
+                type: type,
+                title: shared.cleanText(provider.title || type, 120),
+                tabTitle: shared.cleanText(provider.tabTitle || provider.title || type, 120),
+                settingsTitle: shared.cleanText(provider.settingsTitle || (provider.title || type) + " approvers", 160),
+                description: shared.cleanText(provider.description || "", 500),
+                columns: shared.copy(provider.columns || []),
+                enabled: providerEnabled(type),
+                showTab: value.showTab,
+                showOverview: value.showOverview,
+                levels: value.levels
+            };
+        });
+    }
+
+    function requiredLevels(provider, payload) {
+        var value = typeof provider.getApprovalLevels === "function"
+            ? provider.getApprovalLevels(payload)
+            : provider.approvalLevels;
+        value = Array.isArray(value) ? value.map(Number) : [1];
+        return value.filter(function (level, index, list) {
+            return level >= 1 && level <= 3 && list.indexOf(level) === index;
+        }).sort();
+    }
+
+    function currentLevel(request) {
+        var decisions = Array.isArray(request.approvalDecisions) ? request.approvalDecisions : [];
+        var levels = Array.isArray(request.requiredApprovalLevels) ? request.requiredApprovalLevels : [1];
+        for (var index = 0; index < levels.length; index++) {
+            var decided = decisions.some(function (decision) { return Number(decision.level) === Number(levels[index]); });
+            if (!decided) return Number(levels[index]);
+        }
+        return 0;
+    }
+
+    function canDecide(user, request) {
+        if (!user || request.status !== "pending") return false;
+        if (request.requester && request.requester.id === user._id && !shared.isSiteAdmin(user)) return false;
+        if (shared.isSiteAdmin(user)) return true;
+        var level = currentLevel(request);
+        return level > 0 && shared.isUserInAnyGroup(user, config(request.type).levels[level]);
+    }
+
+    function canSee(user, request) {
+        return shared.isSiteAdmin(user) ||
+            !!(user && request.requester && request.requester.id === user._id) ||
+            canDecide(user, request);
+    }
+
+    function publicRequest(user, request) {
+        var result = shared.copy(request);
+        var provider = providers[String(result.type || "").toLowerCase()];
+        if (provider && typeof provider.presentRequest === "function") {
+            var presented = provider.presentRequest(user, result);
+            if (presented && typeof presented === "object" && !Array.isArray(presented)) result = presented;
+        }
+        delete result.payload;
+        result.canDecide = canDecide(user, request);
+        result.currentApprovalLevel = currentLevel(request);
+        return result;
     }
 
     function execute(id) {
-        var execution = null;
+        var execution;
         return transact(function (rows) {
             var request = rows.find(function (item) { return item.id === id; });
-            if (!request) return false;
-            if (request.status !== "approved") return false;
+            if (!request) throw new Error("Approval request not found.");
             var provider = providers[request.type];
             if (!provider || typeof provider.execute !== "function") {
                 request.status = "failed";
-                request.result = { message: "Approval provider execution is unavailable." };
+                request.result = { message: "Approval provider is unavailable." };
                 request.updatedAt = Date.now();
-                return true;
+                return null;
             }
             request.status = "executing";
             request.updatedAt = Date.now();
-            execution = { request: shared.copy(request), provider: provider };
+            execution = { provider: provider, request: shared.copy(request) };
             return true;
         }).then(function () {
             if (!execution) return null;
@@ -256,9 +302,7 @@ module.exports.createApprovalService = function (options) {
             }
             return publicRequest(user, request);
         }).then(function (result) {
-            return executeId ? execute(executeId).then(function (executed) {
-                return executed ? publicRequest(user, executed) : result;
-            }) : result;
+            return executeId ? execute(executeId).then(function () { return result; }) : result;
         });
     }
 
@@ -319,9 +363,11 @@ module.exports.createApprovalService = function (options) {
         var value = shared.readJson(fs, tokenPath, { tokens: [] });
         return Array.isArray(value.tokens) ? value.tokens : [];
     }
+
     function writeTokens(tokens) {
         shared.writeJsonAtomic(fs, path, tokenPath, { schemaVersion: 1, tokens: tokens });
     }
+
     function listApiTokens(user) {
         if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
         return readTokens().map(function (token) {
@@ -330,6 +376,7 @@ module.exports.createApprovalService = function (options) {
             return result;
         });
     }
+
     function createApiToken(user, value) {
         if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
         value = value || {};
@@ -352,6 +399,7 @@ module.exports.createApprovalService = function (options) {
         writeTokens(rows);
         return { token: plain, metadata: listApiTokens(user).find(function (item) { return item.id === token.id; }) };
     }
+
     function revokeApiToken(user, id) {
         if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");
         var rows = readTokens();
@@ -362,6 +410,7 @@ module.exports.createApprovalService = function (options) {
         writeTokens(rows);
         return true;
     }
+
     function authenticateApiToken(plain, scope, type) {
         var hash = crypto.createHash("sha256").update(String(plain || "")).digest("hex");
         var token = readTokens().find(function (item) { return item.enabled !== false && item.hash === hash; });
@@ -370,20 +419,25 @@ module.exports.createApprovalService = function (options) {
         if (type && (token.providers || []).length && token.providers.indexOf(type) < 0) throw new Error("API token cannot use this provider.");
         return token;
     }
+
     function getProviderResources(type, user, query) {
         type = String(type || "").toLowerCase();
         var provider = providers[type];
         if (!provider || !providerEnabled(type)) return Promise.reject(new Error("Approval provider is unavailable."));
-        if (typeof provider.canSubmit === "function" && provider.canSubmit(user) !== true) return Promise.reject(new Error("Permission denied."));
+        if (typeof provider.canSubmit === "function" && provider.canSubmit(user) !== true) {
+            return Promise.reject(new Error("Permission denied."));
+        }
         if (typeof provider.getResources !== "function") return Promise.resolve({});
         return Promise.resolve(provider.getResources(user, query || {}));
     }
+
     function externalContext(tokenText, scope, type) {
         var token = authenticateApiToken(tokenText, scope, type);
         var user = shared.findUser(parent, token.createdBy);
         if (!user) throw new Error("API token owner no longer exists.");
         return { token: token, user: user };
     }
+
     function submitExternal(tokenText, type, payload, note, idempotencyKey) {
         var context = externalContext(tokenText, "requests:write", type);
         return submit(type, context.user, payload, note || "External API", {
@@ -393,11 +447,14 @@ module.exports.createApprovalService = function (options) {
             apiClientName: context.token.name
         });
     }
+
     function decideExternal(tokenText, id, decision, note, idempotencyKey) {
         var context = externalContext(tokenText, "requests:decide");
         var request = readRows().find(function (item) { return item.id === String(id || ""); });
         if (!request) throw new Error("Approval request not found.");
-        if ((context.token.providers || []).length && context.token.providers.indexOf(request.type) < 0) throw new Error("API token cannot use this provider.");
+        if ((context.token.providers || []).length && context.token.providers.indexOf(request.type) < 0) {
+            throw new Error("API token cannot use this provider.");
+        }
         decision = String(decision || "").toLowerCase();
         if (decision !== "approve" && decision !== "reject") throw new Error("Invalid decision.");
         return decide(context.user, request.id, decision === "approve", note, {
@@ -406,6 +463,7 @@ module.exports.createApprovalService = function (options) {
             apiClientName: context.token.name
         });
     }
+
     function getSettings(user) {
         if (!shared.isSiteAdmin(user)) return null;
         var current = settings.read();
@@ -416,6 +474,7 @@ module.exports.createApprovalService = function (options) {
             apiTokens: listApiTokens(user)
         };
     }
+
     function saveProviderSettings(user, type, values) {
         if (!shared.isSiteAdmin(user)) return Promise.reject(new Error("Permission denied."));
         type = String(type || "").toLowerCase();
@@ -443,6 +502,7 @@ module.exports.createApprovalService = function (options) {
             return current;
         });
     }
+
     function initialize() {
         var rows = readRows();
         var changed = false;
@@ -460,10 +520,10 @@ module.exports.createApprovalService = function (options) {
 
     return {
         authenticateApiToken: authenticateApiToken,
+        externalContext: externalContext,
         createApiToken: createApiToken,
         decide: decide,
         decideExternal: decideExternal,
-        execute: execute,
         getProviderResources: getProviderResources,
         getRequest: getRequest,
         getSettings: getSettings,
@@ -472,6 +532,7 @@ module.exports.createApprovalService = function (options) {
         listApiTokens: listApiTokens,
         listProviders: listProviders,
         overview: overview,
+        providerEnabled: providerEnabled,
         registerProvider: registerProvider,
         revokeApiToken: revokeApiToken,
         saveProviderSettings: saveProviderSettings,
