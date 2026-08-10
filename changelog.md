@@ -1,3 +1,12 @@
+## 0.1.1-dev.39 - 2026-08-10
+
+- Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
+- Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
+- Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.39.md`.
+
 ## 0.1.1-dev.38 - 2026-08-10
 
 - Follow up real `0.1.1-dev.37` smoke evidence: Network Settings still failed although the same `FolderItemVerb.DoIt()` operation worked manually, and Results View remained visually unchanged.
