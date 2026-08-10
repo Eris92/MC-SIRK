@@ -31,19 +31,10 @@
         return [Number(match[1]), Number(match[2]), Number(match[3])];
     }
 
-    function hostSurfaceStyle() {
-        if (!hostDocument || !hostWindow || typeof hostWindow.getComputedStyle !== "function") return null;
-        var candidate = hostDocument.getElementById ? hostDocument.getElementById("p43iframe") : null;
-        candidate = candidate && candidate.parentElement ? candidate.parentElement : null;
-        while (candidate) {
-            var candidateStyle = hostWindow.getComputedStyle(candidate);
-            if (candidateStyle && colorParts(candidateStyle.backgroundColor)) {
-                return { element: candidate, style: candidateStyle };
-            }
-            candidate = candidate.parentElement;
-        }
-        var hostBody = hostDocument.body;
-        return hostBody ? { element: hostBody, style: hostWindow.getComputedStyle(hostBody) } : null;
+    function hostBodyStyle() {
+        var hostBody = hostDocument && hostDocument.body;
+        if (!hostBody || !hostWindow || typeof hostWindow.getComputedStyle !== "function") return null;
+        try { return hostWindow.getComputedStyle(hostBody); } catch (error) { return null; }
     }
 
     function hostIsDark() {
@@ -55,12 +46,6 @@
         if (bodyTheme === "dark") return true;
         if (bodyTheme === "light") return false;
         if (hostBody && hostBody.classList.contains("night")) return true;
-        var surface = hostSurfaceStyle();
-        var bodyStyle = hostBody && hostWindow.getComputedStyle ? hostWindow.getComputedStyle(hostBody) : null;
-        var surfaceStyle = surface && surface.style;
-        var background = surfaceStyle && colorParts(surfaceStyle.backgroundColor);
-        var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
-        if (themeStylesheet && background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
         if (typeof hostWindow.nightMode === "boolean") return hostWindow.nightMode;
         try {
             var storedMode = hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode");
@@ -71,8 +56,10 @@
             }
         } catch (error) {}
 
+        var bodyStyle = hostBodyStyle();
+        var background = bodyStyle && colorParts(bodyStyle.backgroundColor);
         if (background) return ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
-        var foreground = (surfaceStyle && colorParts(surfaceStyle.color)) || (bodyStyle && colorParts(bodyStyle.color));
+        var foreground = bodyStyle && colorParts(bodyStyle.color);
         return foreground ? ((foreground[0] * 299 + foreground[1] * 587 + foreground[2] * 114) / 1000) > 160 : false;
     }
 
@@ -83,8 +70,7 @@
             root.parentElement.classList.add("sirk-admin-host");
             root.parentElement.setAttribute("data-sirk-host-theme", theme);
             try {
-                var surface = hostSurfaceStyle();
-                var hostStyle = surface && surface.style;
+                var hostStyle = hostBodyStyle();
                 if (hostStyle) {
                     root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";
                     root.parentElement.style.color = hostStyle.color || "";
@@ -95,41 +81,15 @@
 
     function observeHostTheme() {
         syncHostTheme();
+        if (hostWindow === window || !hostDocument) return;
         if (typeof hostWindow.MutationObserver === "function") {
-            var observedStylesheet = null;
-            var observedSurface = null;
-            var observer;
-            function bindLiveThemeOwners() {
-                var themeStylesheet = hostDocument && hostDocument.getElementById ? hostDocument.getElementById("theme-stylesheet") : null;
-                if (themeStylesheet !== observedStylesheet) {
-                    if (observedStylesheet && typeof observedStylesheet.removeEventListener === "function") observedStylesheet.removeEventListener("load", syncHostTheme);
-                    observedStylesheet = themeStylesheet;
-                    if (observedStylesheet) {
-                        observer.observe(observedStylesheet, { attributes: true, attributeFilter: ["href"] });
-                        if (typeof observedStylesheet.addEventListener === "function") observedStylesheet.addEventListener("load", syncHostTheme);
-                    }
-                }
-                var surface = hostSurfaceStyle();
-                var surfaceElement = surface && surface.element;
-                if (surfaceElement && surfaceElement !== hostDocument.body && surfaceElement !== hostDocument.documentElement && surfaceElement !== observedSurface) {
-                    observedSurface = surfaceElement;
-                    observer.observe(observedSurface, { attributes: true, attributeFilter: ["class", "style"] });
-                }
-            }
-            observer = new hostWindow.MutationObserver(function () {
-                bindLiveThemeOwners();
-                syncHostTheme();
-            });
-            if (hostDocument && hostDocument.documentElement) {
+            var observer = new hostWindow.MutationObserver(syncHostTheme);
+            if (hostDocument.documentElement) {
                 observer.observe(hostDocument.documentElement, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
             }
-            if (hostDocument && hostDocument.body && hostDocument.body !== hostDocument.documentElement) {
-                observer.observe(hostDocument.body, { attributes: true, attributeFilter: ["class", "data-bs-theme"] });
+            if (hostDocument.body && hostDocument.body !== hostDocument.documentElement) {
+                observer.observe(hostDocument.body, { attributes: true, attributeFilter: ["class", "style", "data-bs-theme"] });
             }
-            if (hostDocument && hostDocument.head) {
-                observer.observe(hostDocument.head, { childList: true });
-            }
-            bindLiveThemeOwners();
         }
         if (hostWindow.matchMedia) {
             var systemTheme = hostWindow.matchMedia("(prefers-color-scheme: dark)");
