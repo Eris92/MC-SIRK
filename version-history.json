@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.44",
+    "date": "2026-08-10",
+    "summary": "Shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238).",
+    "notes": "docs/releases/0.1.1-dev.44.md"
+  },
+  {
     "version": "0.1.1-dev.43",
     "date": "2026-08-10",
     "summary": "Commands #247: multi-device selector with All hosts, visible groups/tags, local search, stable nodeId dedupe and maxMultiHostNodes UI guard.",
