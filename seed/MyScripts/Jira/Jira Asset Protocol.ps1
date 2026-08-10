@@ -65,9 +65,9 @@ foreach ($asset in $assets) {
     if ([string]::IsNullOrWhiteSpace($identifier)) { $identifier = Get-ProtocolValue $asset.objectId }
 
     $lines.Add(([string]$index) + '. Hostname: ' + $hostname)
-    $lines.Add('   Model: ' + $(if ($model) { $model } else { '—' }))
-    $lines.Add('   Serial: ' + $(if ($serial) { $serial } else { '—' }))
-    $lines.Add('   Inventory/Asset: ' + $(if ($inventory) { $inventory } elseif ($identifier) { $identifier } else { '—' }))
+    $lines.Add('   Model: ' + $(if ($model) { $model } else { '-' }))
+    $lines.Add('   Serial: ' + $(if ($serial) { $serial } else { '-' }))
+    $lines.Add('   Inventory/Asset: ' + $(if ($inventory) { $inventory } elseif ($identifier) { $identifier } else { '-' }))
 
     $assetRows.Add([pscustomobject]@{
         hostname = $hostname

@@ -1,3 +1,12 @@
+## 0.1.1-dev.45 - 2026-08-10
+
+- Jira #252: complete native My Scripts Asset Protocol on top of the existing Jira user/asset provider and request-bound typed PDF artifact owner.
+- Revalidate the selected Jira user and current assigned assets server-side, support bounded multi-host input and generic opt-in custom IT person input without a Jira-only form or legacy DirectoryTools runtime.
+- Add real milestone progress tied to the Approval request, dependency-free actual PDF generation, exactly-once live auto-open and manual protected Open/Download actions while preserving CSV behavior and withholding Jira credentials from the protocol renderer.
+- Pre-bump PR #264 Test #627 / Actions `31401109532` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira + MeshCentral smoke remains required before closing #252. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.45.md`.
+
 ## 0.1.1-dev.44 - 2026-08-10
 
 - Shared UI #253: move parameterized execution for Quick, My Commands and My Scripts to one native MeshCentral dialog while preserving existing Output/Results ownership and payload semantics.

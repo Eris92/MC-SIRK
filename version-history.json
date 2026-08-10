@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.45",
+    "date": "2026-08-10",
+    "summary": "Jira Asset Protocol #252: canonical My Scripts workflow with authoritative asset recheck, real milestone progress and protected generated PDF.",
+    "notes": "docs/releases/0.1.1-dev.45.md"
+  },
+  {
     "version": "0.1.1-dev.44",
     "date": "2026-08-10",
     "summary": "Shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238).",
