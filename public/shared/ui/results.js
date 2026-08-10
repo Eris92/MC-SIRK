@@ -14,6 +14,33 @@
         return "—";
     }
 
+    function visibleNodeName(nodeId) {
+        nodeId = String(nodeId || "").trim();
+        if (!nodeId) return "";
+        var source = window.nodes;
+        var list = Array.isArray(source) ? source : source && typeof source === "object" ? Object.keys(source).map(function (key) { return source[key]; }) : [];
+        for (var index = 0; index < list.length; index++) {
+            var node = list[index] || {};
+            var id = String(node._id || node.id || node.nodeid || "");
+            if (id !== nodeId) continue;
+            return String(node.name || node.rname || node.hostname || node.host || nodeId);
+        }
+        return nodeId;
+    }
+
+    function resultDeviceName(row) {
+        var storedName = String(valueAt(row, "result.nodeName", "") || "").trim();
+        var nodeId = String(valueAt(row, "result.nodeId", "") || "").trim();
+        var summary = String(row && row.summary || "").replace(/^Device:\s*/i, "").trim();
+        if (storedName && storedName !== nodeId && !/^node\//i.test(storedName)) return storedName;
+        var identity = nodeId || (/^node\//i.test(storedName) ? storedName : "") || (/^node\//i.test(summary) ? summary : "");
+        if (identity) {
+            var resolved = visibleNodeName(identity);
+            if (resolved && resolved !== identity) return resolved;
+        }
+        return storedName || nodeId || summary || "—";
+    }
+
     function parseDownloadResult(value) {
         var raw = String(value == null ? "" : value);
         var downloadPath = "";
@@ -305,7 +332,7 @@
     function defaultColumns(kind) {
         var dateTime = { title: "DateTime", value: function (row) { return row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"; } };
         var command = { title: kind === "commands" ? "Command" : "Script", value: function (row) { return row.title || valueAt(row, "result.command", "") || valueAt(row, "fields.script", "") || row.summary || "—"; } };
-        var device = { title: "Device", value: function (row) { return valueAt(row, "result.nodeName", "") || valueAt(row, "result.nodeId", "") || String(row.summary || "").replace(/^Device:\s*/i, "") || "—"; } };
+        var device = { title: "Device", value: resultDeviceName };
         var columns = kind === "commands" ? [dateTime, device, command] : [dateTime, command];
         columns.push(
             { title: "Requester", value: function (row) { return valueAt(row, "requester.name", "—"); } },
