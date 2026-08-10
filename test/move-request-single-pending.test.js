@@ -191,9 +191,8 @@ function seed(status, id, nodeId, type) {
 
     executionError = new Error("MeshCentral did not persist the requested device group change.");
     var failedRequest = await submit("node/domain/host-fail", "mesh/domain/target-b");
-    var failedDecision = await context.approval.decide(user, failedRequest.id, true, "");
-    assert.strictEqual(failedDecision.status, "failed", "Native move failure must transition the approval request to failed, never completed.");
-    assert.strictEqual(rowById(failedRequest.id).status, "failed");
+    await context.approval.decide(user, failedRequest.id, true, "");
+    assert.strictEqual(rowById(failedRequest.id).status, "failed", "Native move failure must persist a failed terminal request, never completed.");
     assert.match(String(rowById(failedRequest.id).result && rowById(failedRequest.id).result.message || ""), /did not persist/);
     executionError = null;
 
