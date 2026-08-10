@@ -1,0 +1,65 @@
+name: Dev40 Finalize
+on:
+  push:
+    branches: [dev-40-network-admin-root-cause]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[dev40 final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: dev-40-network-admin-root-cause
+          fetch-depth: 2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Restore full changelog and add dev40 entry
+        run: |
+          git fetch origin main --depth=1
+          git show origin/main:changelog.md > /tmp/old-changelog.md
+          cat > /tmp/dev40.md <<'EOF'
+          ## 0.1.1-dev.40 - 2026-08-10
+
+          - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
+          - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
+          - Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
+          - Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag or GitHub Release.
+
+          Current development notes: `docs/releases/0.1.1-dev.40.md`.
+
+          EOF
+          cat /tmp/dev40.md /tmp/old-changelog.md > changelog.md
+      - name: Add version history entry
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='version-history.json';
+          const data=JSON.parse(fs.readFileSync(p,'utf8'));
+          if (!data.some(x=>x.version==='0.1.1-dev.40')) data.unshift({
+            version:'0.1.1-dev.40', date:'2026-08-10', changes:[
+              'Bump the pre-1.0 development revision after real dev.39 Network Settings and Admin theme failures.',
+              'Let only the trusted Network Settings built-in reach MeshAgent as native type-2 UserOnly instead of the shared script-oriented Scheduled Task wrapper, preserving route and Shell Properties semantics.',
+              'Observe the real Modern MeshCentral theme stylesheet href/load signal in the existing Admin theme owner while retaining Classic fallback, form state and F5 recovery.',
+              'Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release.'
+            ]
+          });
+          fs.writeFileSync(p, JSON.stringify(data,null,2)+'\n');
+          NODE
+      - name: Remove temporary workflow before canonical suite
+        run: rm -f .github/workflows/dev40-finalize.yml
+      - run: node test/network-command-split.test.js
+      - run: node test/logged-on-user-command-policy.test.js
+      - run: node test/admin-host-theme-signal.test.js
+      - run: npm test
+      - run: git diff --check
+      - name: Commit finalized exact-version candidate
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "chore: finalize 0.1.1-dev.40 [dev40 final]"
+          git push origin HEAD:dev-40-network-admin-root-cause
