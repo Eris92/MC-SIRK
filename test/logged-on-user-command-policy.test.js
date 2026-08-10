@@ -26,7 +26,7 @@ var networkSettingsCmd = {
     label: "Network Settings",
     type: 2,
     runAsUser: 2,
-    nativeUserSession: true,
+    elevatedUserSession: true,
     cmd: "$shell=New-Object -ComObject Shell.Application;$folder=$shell.Namespace(49);$verb.DoIt()"
 };
 var legacyUserCmd = {
@@ -101,14 +101,16 @@ Promise.resolve()
         }), "The original PowerShell body must be embedded without changing user-profile variables.");
 
         var transformedNetwork = captured[1].command;
-        assert.strictEqual(transformedNetwork, networkSettingsCmd,
-            "Trusted native Shell UI commands must bypass the script-oriented scheduled-task wrapper.");
-        assert.strictEqual(transformedNetwork.runAsUser, 2,
-            "Network Settings must reach MeshAgent as strict UserOnly.");
+        assert.notStrictEqual(transformedNetwork, networkSettingsCmd,
+            "Network Settings must use the shared interactive-user launcher so its elevation is explicit and bounded.");
+        assert.strictEqual(transformedNetwork.runAsUser, 0,
+            "The elevated interactive-user launcher itself must still be started by the LocalSystem MeshAgent service.");
         assert.strictEqual(transformedNetwork.type, 2,
-            "Network Settings must remain direct PowerShell.");
-        assert.strictEqual(transformedNetwork.cmd.indexOf("SIRK-UserCommand-"), -1,
-            "Network Settings must not be rewritten through the logged-on-user scheduled-task wrapper.");
+            "The elevated launcher must remain PowerShell.");
+        assert.ok(transformedNetwork.cmd.indexOf("New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Highest") >= 0,
+            "Network Settings must match the manually proven elevated Administrator token using RunLevel Highest.");
+        assert.ok(decodedPayloads(transformedNetwork.cmd).some(function (value) { return value.indexOf("$verb.DoIt()") >= 0; }),
+            "The proven FolderItemVerb body must be preserved inside the elevated launcher.");
 
         var transformedCmd = captured[2].command;
         assert.strictEqual(transformedCmd.runAsUser, 0,
