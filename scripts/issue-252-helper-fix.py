@@ -28,31 +28,14 @@ first = helper.index("replace_once(", section)
 second = helper.index("replace_once(", first + len("replace_once("))
 helper = helper[:first] + helper[second:]
 
-# Align the executor patch with the exact current owner contract.
-old = '''        var environment = Object.assign({}, process.env, systemEnvironment(script.path), {\n            MYSCRIPTS_REQUEST_ID: request.id,'''
-new = '''        var environment = Object.assign({}, process.env, systemEnvironment(script.path), {\n            MYSCRIPTS_REQUEST_ID: request && request.id || "",'''
-if helper.count(old) != 1:
-    raise SystemExit("executor environment source replacement state is unexpected")
-helper = helper.replace(old, new, 1)
-old = '''        executionOptions = executionOptions || {};\n        var environment = Object.assign({}, process.env, systemEnvironment(script.path), executionOptions.environment || {}, {\n            MYSCRIPTS_REQUEST_ID: request.id,'''
-new = '''        executionOptions = executionOptions || {};\n        var environment = Object.assign({}, process.env, systemEnvironment(script.path), executionOptions.environment || {}, {\n            MYSCRIPTS_REQUEST_ID: request && request.id || "",'''
-if helper.count(old) != 1:
-    raise SystemExit("executor environment target replacement state is unexpected")
-helper = helper.replace(old, new, 1)
-if helper.count('                return run(script, normalized, request);') != 1:
-    raise SystemExit("executor run source replacement state is unexpected")
-helper = helper.replace(
-    '                return run(script, normalized, request);',
-    '            return run(script, payload, request || {});',
-    1,
-)
-if helper.count('                return run(script, normalized, request, executionOptions);') != 1:
-    raise SystemExit("executor run target replacement state is unexpected")
-helper = helper.replace(
-    '                return run(script, normalized, request, executionOptions);',
-    '            return run(script, payload, request || {}, executionOptions);',
-    1,
-)
+# Align generated executor source/target strings with the exact current owner.
+if helper.count("MYSCRIPTS_REQUEST_ID: request.id") != 2:
+    raise SystemExit("executor request-id generator token count is unexpected")
+helper = helper.replace("MYSCRIPTS_REQUEST_ID: request.id", 'MYSCRIPTS_REQUEST_ID: request && request.id || ""')
+if helper.count("return run(script, normalized, request") != 2:
+    raise SystemExit("executor run generator token count is unexpected")
+helper = helper.replace("return run(script, normalized, request);", "return run(script, payload, request || {});")
+helper = helper.replace("return run(script, normalized, request, executionOptions);", "return run(script, payload, request || {}, executionOptions);")
 
 # The shared module has no parseJsonObject helper; keep query JSON parsing local
 # and bounded to a plain object.
