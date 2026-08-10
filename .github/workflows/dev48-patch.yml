@@ -3,10 +3,13 @@ on:
   push:
     branches:
       - fix/dev48-smoke-followup
+concurrency:
+  group: dev48-patch-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   patch:
     if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -21,7 +24,7 @@ jobs:
       - run: npm test
       - name: Commit patch
         run: |
-          rm -f scripts/dev48-smoke-followup.js .github/workflows/dev48-patch.yml
+          rm -f scripts/dev48-smoke-followup.js .github/workflows/dev48-patch.yml docs/dev48-runner-blocker.md
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
