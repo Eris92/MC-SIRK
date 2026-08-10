@@ -38,7 +38,7 @@ assert.strictEqual(evaluateHostTheme({ nightMode: true }, fakeDocument("light"),
     "Modern parent light data-bs-theme must override stale nightMode=true.");
 assert.ok(admin.indexOf('hostBody && hostBody.classList.contains("night")') >= 0,
     "Admin theme detection must honor the parent MeshCentral body.night state.");
-assert.ok(admin.indexOf('hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode")') >= 0 &&
+assert.ok(admin.indexOf('themeStylesheet && background') >= 0 && admin.indexOf('hostWindow.localStorage && hostWindow.localStorage.getItem("nightMode")') >= 0 &&
     admin.indexOf('hostWindow.matchMedia("(prefers-color-scheme: dark)")') >= 0,
     "Stored/system theme fallbacks must use the host window, not the iframe window.");
 
@@ -48,6 +48,10 @@ assert.ok(admin.indexOf('observer.observe(hostDocument.documentElement') >= 0 &&
     admin.indexOf('observer.observe(hostDocument.body') >= 0 &&
     admin.indexOf('attributeFilter: ["class", "data-bs-theme"]') >= 0,
     "The single observer must watch the actual parent host theme attributes/classes.");
+assert.ok(admin.indexOf('hostDocument.getElementById("theme-stylesheet")') >= 0 &&
+    admin.indexOf('observer.observe(themeStylesheet, { attributes: true, attributeFilter: ["href"] })') >= 0 &&
+    admin.indexOf('themeStylesheet.addEventListener("load", syncHostTheme)') >= 0,
+    "The same observer must follow Modern MeshCentral Bootswatch href changes and resync after the stylesheet loads.");
 assert.ok(admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
     admin.indexOf('root.parentElement.style.color = hostStyle.color || "";') >= 0,
     "The iframe Admin surface must copy the effective host surface colors instead of owning a private palette.");
