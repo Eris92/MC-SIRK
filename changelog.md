@@ -22,7 +22,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
 - Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag/GitHub Release.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
@@ -31,7 +31,7 @@ Current development notes: `docs/releases/0.1.1-dev.41.md`.
 - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
 - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
 - Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
-- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
+- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.40.md`.
 
@@ -40,7 +40,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
 - Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
-- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.39.md`.
 
