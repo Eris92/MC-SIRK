@@ -18,7 +18,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
       - name: Apply patch
-        run: python3 .github/scripts/dev37_patch.py
+        run: python3 .github/scripts/dev37_patch2.py
       - name: Commit patch
         run: |
           git diff --check
