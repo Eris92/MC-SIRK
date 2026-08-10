@@ -20,7 +20,9 @@ jobs:
           ref: issue-252-jira-protocol-runtime
       - name: Apply dev45 metadata and correctness cleanup
         run: python scripts/issue-252-finalize.py
-      - name: Validate patch
+      - name: Remove branch-only finalizer before repository validation
+        run: git rm -f scripts/issue-252-finalize.py .github/workflows/issue-252-finalize.yml
+      - name: Validate clean candidate
         run: |
           node -e "require('./server/core/pdf-text-renderer.js').renderTextPdf('Zażółć gęślą jaźń')"
           node test/jira-protocol-runtime.test.js
@@ -29,7 +31,6 @@ jobs:
       - name: Commit clean candidate
         shell: bash
         run: |
-          git rm -f scripts/issue-252-finalize.py .github/workflows/issue-252-finalize.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
