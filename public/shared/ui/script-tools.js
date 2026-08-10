@@ -66,60 +66,23 @@
         var list = Array.isArray(window.nodes) ? window.nodes : [];
         for (var index = 0; index < list.length; index++) {
             var node = list[index];
-            if (node && text(node._id || node.nodeid || node.nodeId || node.id) === text(id)) {
-                return node.name || node.rname || node.host || id;
-            }
-        }
-        var stores = [window.nodes, window.devices];
-        for (var i = 0; i < stores.length; i++) {
-            var item = stores[i] && !Array.isArray(stores[i]) && stores[i][id];
-            if (item && (item.name || item.rname || item.host)) return item.name || item.rname || item.host;
+            if (node && text(node._id) === text(id)) return node.name || node.rname || id;
         }
         return id;
     }
 
     function selectedDevices(currentNodeId) {
         var result = [], seen = Object.create(null);
-        function add(id, name) {
+        function add(id) {
             id = text(id).trim();
-            if (!id || seen[id]) return;
-            if (id.indexOf("node/") < 0 && id.indexOf("node//") < 0) return;
+            if (!id || seen[id] || id.indexOf("node/") !== 0) return;
             seen[id] = true;
-            result.push({ id: id, name: text(name || nodeName(id)) });
+            result.push({ id: id, name: text(nodeName(id)) });
         }
-        function scan(value) {
-            if (!value) return;
-            if (typeof value === "string") { add(value); return; }
-            if (Array.isArray(value)) { value.forEach(scan); return; }
-            if (typeof value !== "object") return;
-            var id = value.nodeId || value.nodeid || value._id || value.id;
-            if (id) add(id, value.name || value.rname || value.host);
-            Object.keys(value).forEach(function (key) {
-                if (key.indexOf("node/") >= 0) add(key, value[key] && value[key].name);
-            });
-        }
-        [
-            "selectedNodes", "selectedNodeIds", "selectedDevices",
-            "multiSelectedNodes", "checkedNodes", "deviceSelection",
-            "selectedDeviceIds", "multiSelectedDevices"
-        ].forEach(function (name) { try { scan(window[name]); } catch (error) {} });
-
-        var selector = [
-            'input[type="checkbox"]:checked[data-nodeid]',
-            'input[type="checkbox"]:checked[data-node-id]',
-            'input[type="checkbox"]:checked[value*="node/"]',
-            '[aria-selected="true"][data-nodeid]',
-            '[aria-selected="true"][data-node-id]',
-            '.selected[data-nodeid]', '.selected[data-node-id]'
-        ].join(",");
-        Array.prototype.forEach.call(document.querySelectorAll(selector), function (element) {
-            var row = element.closest && element.closest("[data-nodeid],[data-node-id]");
-            var id = element.getAttribute("data-nodeid") || element.getAttribute("data-node-id") ||
-                (row && (row.getAttribute("data-nodeid") || row.getAttribute("data-node-id"))) ||
-                element.value;
-            var name = element.getAttribute("data-nodename") || element.getAttribute("data-node-name") ||
-                (row && (row.getAttribute("data-nodename") || row.getAttribute("data-node-name")));
-            add(id, name);
+        var checked = window.checkedNodeids && typeof window.checkedNodeids === "object"
+            ? window.checkedNodeids : {};
+        Object.keys(checked).forEach(function (id) {
+            if (checked[id]) add(id);
         });
         if (!result.length && currentNodeId) add(currentNodeId);
         return result;
@@ -138,10 +101,10 @@
 
         function addNode(node) {
             node = node || {};
-            var id = text(node._id || node.nodeid || node.nodeId || node.id).trim();
+            var id = text(node._id).trim();
             if (!id || byId[id]) return;
-            var name = text(node.name || node.rname || node.host || id).trim() || id;
-            var hostname = text(node.rname || node.host || "").trim();
+            var name = text(node.name || node.rname || id).trim() || id;
+            var hostname = text(node.rname || "").trim();
             var meshId = text(node.meshid || "").trim();
             var mesh = meshId && meshes[meshId];
             var groupName = text(mesh && mesh.name || meshId).trim();
@@ -193,13 +156,7 @@
             initialSeen[id] = true;
             initialIds.push(id);
         }
-        if (window.checkedNodeids && typeof window.checkedNodeids === "object") {
-            Object.keys(window.checkedNodeids).forEach(function (id) {
-                if (window.checkedNodeids[id]) addInitial(id);
-            });
-        }
-        if (!initialIds.length) selectedDevices(currentNodeId).forEach(function (device) { addInitial(device.id); });
-        if (!initialIds.length && currentNodeId) addInitial(currentNodeId);
+        selectedDevices(currentNodeId).forEach(function (device) { addInitial(device.id); });
 
         return { devices: devices, groups: groups, tags: tags, initialIds: initialIds };
     }
