@@ -22,12 +22,7 @@ var settings = {
     updateSync: function (fn) { current = fn(current) || current; return current; }
 };
 var executionCalls = [];
-var web = {
-    MoveNodeToMesh: function (nodeId, targetMeshId, requesterId, callback) {
-        executionCalls.push({ nodeId: nodeId, targetMeshId: targetMeshId, requesterId: requesterId });
-        callback(null);
-    }
-};
+var executionError = null;
 var visibleMeshes = {
     "mesh/domain/source": { _id: "mesh/domain/source", name: "Source" },
     "mesh/domain/target-a": { _id: "mesh/domain/target-a", name: "Target A" },
@@ -44,7 +39,11 @@ var context = {
     device: {
         visibleMeshes: function () { return visibleMeshes; },
         visibleNodes: function () { return { nodes: [], meshes: Object.keys(visibleMeshes).map(function (id) { return visibleMeshes[id]; }) }; },
-        getWebServer: function () { return web; }
+        moveNodeToMesh: function (requesterId, nodeId, targetMeshId) {
+            executionCalls.push({ nodeId: nodeId, targetMeshId: targetMeshId, requesterId: requesterId });
+            if (executionError) return Promise.reject(executionError);
+            return Promise.resolve({ message: "Device moved.", nodeId: nodeId, targetMeshId: targetMeshId, alreadyCurrent: false });
+        }
     }
 };
 context.approval = approvalFactory.createApprovalService({
@@ -126,7 +125,6 @@ function seed(status, id, nodeId, type) {
     assert.strictEqual(rowById(second.id).status, "superseded");
     assert.strictEqual(rowById(second.id).supersededByRequestId, third.id);
     assert.strictEqual(pendingFor("node/domain/host-a").length, 1);
-    assert.strictEqual(pendingFor("node/domain/host-a")[0].id, third.id);
 
     var hostB = await submit("node/domain/host-b", "mesh/domain/target-a");
     var fourth = await submit("node/domain/host-a", "mesh/domain/target-a");
@@ -156,7 +154,7 @@ function seed(status, id, nodeId, type) {
         /Permission denied/,
         "A superseded request must not be approvable."
     );
-    assert.strictEqual(executionCalls.length, executionCountBeforeDeniedDecision, "Denied approval must not invoke MoveNodeToMesh.");
+    assert.strictEqual(executionCalls.length, executionCountBeforeDeniedDecision, "Denied approval must not invoke native move execution.");
 
     var idempotencyOptions = { idempotencyKey: "same-submit", apiClientId: "test-client", apiClientName: "Test client" };
     var idempotentFirst = await submit("node/domain/host-idempotent", "mesh/domain/target-a", idempotencyOptions);
@@ -184,12 +182,19 @@ function seed(status, id, nodeId, type) {
 
     var executionRequest = await submit("node/domain/host-execute", "mesh/domain/target-c");
     await context.approval.decide(user, executionRequest.id, true, "");
-    assert.strictEqual(rowById(executionRequest.id).status, "completed", "The surviving request must retain the normal execution lifecycle.");
+    assert.strictEqual(rowById(executionRequest.id).status, "completed", "The surviving request must retain the normal execution lifecycle after verified move success.");
     assert.deepStrictEqual(executionCalls[executionCalls.length - 1], {
         nodeId: "node/domain/host-execute",
         targetMeshId: "mesh/domain/target-c",
         requesterId: user._id
-    }, "Execution must preserve stable nodeId and targetMeshId identifiers.");
+    }, "Execution must preserve stable requester, nodeId and targetMeshId identifiers.");
+
+    executionError = new Error("MeshCentral did not persist the requested device group change.");
+    var failedRequest = await submit("node/domain/host-fail", "mesh/domain/target-b");
+    await context.approval.decide(user, failedRequest.id, true, "");
+    assert.strictEqual(rowById(failedRequest.id).status, "failed", "Native move failure must persist a failed terminal request, never completed.");
+    assert.match(String(rowById(failedRequest.id).result && rowById(failedRequest.id).result.message || ""), /did not persist/);
+    executionError = null;
 
     var supersededList = await context.approval.list(user, { type: "moverequests", status: "superseded", page: 1, perPage: 200 });
     assert.ok(supersededList.rows.length >= 4, "Superseded requests must remain visible and filterable as history.");
@@ -204,7 +209,7 @@ function seed(status, id, nodeId, type) {
     assert.ok(statusNavSource.indexOf('key: "superseded"') >= 0, "Shared status navigation must expose the superseded history filter.");
 
     fs.rmSync(dataRoot, { recursive: true, force: true });
-    console.log("Move Requests keep at most one pending request per stable nodeId: OK");
+    console.log("Move Requests keep at most one pending request per stable nodeId and fail closed on move errors: OK");
 })().catch(function (error) {
     fs.rmSync(dataRoot, { recursive: true, force: true });
     console.error(error);

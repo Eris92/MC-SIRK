@@ -1,6 +1,8 @@
 "use strict";
 var shared = require("./shared.js");
 
+var MESHRIGHT_EDITMESH = 0x00000001;
+
 module.exports.createDeviceService = function (options) {
     var parent = options.parent, source = options.source;
 
@@ -21,6 +23,15 @@ module.exports.createDeviceService = function (options) {
         var candidates = getServerCandidates();
         for (var i = 0; i < candidates.length; i++) {
             if (candidates[i].db && typeof candidates[i].db.GetAllTypeNoTypeFieldMeshFiltered === "function") return candidates[i].db;
+        }
+        return null;
+    }
+
+    function getMoveDatabase() {
+        var candidates = getServerCandidates();
+        for (var i = 0; i < candidates.length; i++) {
+            var db = candidates[i] && candidates[i].db;
+            if (db && typeof db.Set === "function" && typeof db.Get === "function") return db;
         }
         return null;
     }
@@ -178,6 +189,149 @@ module.exports.createDeviceService = function (options) {
         });
     }
 
+    function normalizeTargetMeshId(domain, targetMeshId) {
+        var value = String(targetMeshId || "").trim();
+        var parts = value.split("/");
+        var domainId = String(domain && domain.id != null ? domain.id : "");
+        if (parts.length !== 3 || parts[0] !== "mesh" || parts[1] !== domainId) {
+            throw new Error("Invalid target device group identifier.");
+        }
+        return value;
+    }
+
+    function persistMovedNode(db, web, node, targetMeshId) {
+        if (!db || typeof db.Set !== "function" || typeof db.Get !== "function") {
+            return Promise.reject(new Error("MeshCentral device move database API is unavailable."));
+        }
+        if (!web || typeof web.cleanDevice !== "function") {
+            return Promise.reject(new Error("MeshCentral device serialization API is unavailable."));
+        }
+        var moved = Object.assign({}, node, { meshid: targetMeshId });
+        var saved;
+        try { saved = web.cleanDevice(moved); }
+        catch (error) { return Promise.reject(error); }
+        return new Promise(function (resolve, reject) {
+            var settled = false;
+            function finish(error) {
+                if (settled) return;
+                settled = true;
+                if (error) { reject(error instanceof Error ? error : new Error(String(error))); return; }
+                try {
+                    db.Get(node._id, function (getError, docs) {
+                        if (getError) { reject(getError instanceof Error ? getError : new Error(String(getError))); return; }
+                        var current = Array.isArray(docs) && docs.length === 1 ? docs[0] : null;
+                        if (!current || String(current.meshid || "") !== targetMeshId) {
+                            reject(new Error("MeshCentral did not persist the requested device group change."));
+                            return;
+                        }
+                        resolve(current);
+                    });
+                } catch (getError) { reject(getError); }
+            }
+            try { db.Set(saved, finish); }
+            catch (error) { finish(error); }
+        });
+    }
+
+    function updateDeviceShares(db, domainId, nodeId, targetMeshId) {
+        if (!db || typeof db.GetAllTypeNoTypeField !== "function" || typeof db.Set !== "function") return;
+        try {
+            db.GetAllTypeNoTypeField("deviceshare", domainId, function (error, docs) {
+                if (error || !Array.isArray(docs)) return;
+                docs.forEach(function (doc) {
+                    if (!doc || String(doc.nodeid || "") !== nodeId) return;
+                    doc.xmeshid = targetMeshId;
+                    doc.type = "deviceshare";
+                    try { db.Set(doc); } catch (ignore) {}
+                });
+            });
+        } catch (error) {}
+    }
+
+    function updateConnectedSessions(web, nodeId, targetMeshId) {
+        if (!web) return;
+        var agents = web.wsagents || web.parent && web.parent.wsagents || {};
+        var agent = agents && agents[nodeId];
+        if (agent) {
+            agent.dbMeshKey = targetMeshId;
+            agent.meshid = targetMeshId.split("/")[2];
+            if (typeof agent.sendUpdatedIntelAmtPolicy === "function") {
+                try { agent.sendUpdatedIntelAmtPolicy(); } catch (error) {}
+            }
+        }
+        var server = web.parent;
+        if (server && server.mqttbroker && typeof server.mqttbroker.changeDeviceMesh === "function") {
+            try { server.mqttbroker.changeDeviceMesh(nodeId, targetMeshId); } catch (error) {}
+        }
+        if (server && server.mpsserver && typeof server.mpsserver.changeDeviceMesh === "function") {
+            try { server.mpsserver.changeDeviceMesh(nodeId, targetMeshId); } catch (error) {}
+        }
+    }
+
+    function dispatchNodeMeshChange(web, user, node, oldMeshId, targetMeshId, targetMesh) {
+        if (!web || !web.parent || typeof web.parent.DispatchEvent !== "function") return;
+        var targets;
+        try {
+            targets = typeof web.CreateMeshDispatchTargets === "function"
+                ? web.CreateMeshDispatchTargets(targetMeshId, [oldMeshId, node._id])
+                : ["*", "server-users", oldMeshId, targetMeshId, node._id];
+        } catch (error) { targets = ["*", "server-users", oldMeshId, targetMeshId, node._id]; }
+        var moved = Object.assign({}, node, { meshid: targetMeshId });
+        var state;
+        try { state = typeof web.parent.GetConnectivityState === "function" ? web.parent.GetConnectivityState(node._id) : null; }
+        catch (error) { state = null; }
+        if (state) moved.conn = state.connectivity;
+        var event = {
+            etype: "node",
+            userid: user && user._id,
+            username: user && user.name,
+            action: "nodemeshchange",
+            nodeid: node._id,
+            node: moved,
+            oldMeshId: oldMeshId,
+            newMeshId: targetMeshId,
+            msgid: 85,
+            msgArgs: [node.name, targetMesh && targetMesh.name],
+            msg: "Moved device " + String(node.name || node._id) + " to group " + String(targetMesh && targetMesh.name || targetMeshId),
+            domain: String(node.domain || targetMesh && targetMesh.domain || "")
+        };
+        try { web.parent.DispatchEvent(targets, source || parent, event); } catch (error) {}
+    }
+
+    function moveNodeToMesh(userId, nodeId, targetMeshId) {
+        var user = shared.findUser(parent, userId);
+        if (!user) return Promise.reject(new Error("Move request user is unavailable."));
+        return resolveNode(user, nodeId).then(function (resolved) {
+            var web = resolved.webServer;
+            var targetId = normalizeTargetMeshId(resolved.domain, targetMeshId);
+            var meshes = getMeshes();
+            var sourceId = String(resolved.node && resolved.node.meshid || "");
+            var sourceMesh = meshes[sourceId];
+            var targetMesh = meshes[targetId];
+            if (!sourceMesh) throw new Error("Source device group is unavailable.");
+            if (!targetMesh) throw new Error("Target device group is unavailable.");
+            if (sourceId === targetId) {
+                return { message: "Device is already in the target group.", nodeId: resolved.nodeId, targetMeshId: targetId, alreadyCurrent: true };
+            }
+            if (sourceMesh.mtype !== targetMesh.mtype) throw new Error("Source and target device groups are of different types.");
+            if ((resolved.rights & MESHRIGHT_EDITMESH) === 0) throw new Error("You do not have permission to move this device from its current group.");
+            if (!web || typeof web.GetMeshRights !== "function") throw new Error("MeshCentral device group rights API is unavailable.");
+            var targetRights;
+            try { targetRights = Number(web.GetMeshRights(user, targetId)) || 0; }
+            catch (error) { throw error; }
+            if ((targetRights & MESHRIGHT_EDITMESH) === 0) throw new Error("You do not have permission to move this device to the target group.");
+
+            var db = getMoveDatabase();
+            return persistMovedNode(db, web, resolved.node, targetId).then(function () {
+                resolved.node.meshid = targetId;
+                updateDeviceShares(db, String(resolved.domain.id || ""), resolved.nodeId, targetId);
+                updateConnectedSessions(web, resolved.nodeId, targetId);
+                dispatchNodeMeshChange(web, user, resolved.node, sourceId, targetId, targetMesh);
+                return { message: "Device moved.", nodeId: resolved.nodeId, targetMeshId: targetId, alreadyCurrent: false };
+            });
+        });
+    }
+
     function sendRunCommands(context, command, responseId, sessionId) {
         return new Promise(function (resolve, reject) {
             var node = context.node, type = Number(command.type) || 1;
@@ -224,6 +378,7 @@ module.exports.createDeviceService = function (options) {
         auditCommand: auditCommand,
         getMeshes: getMeshes,
         getWebServer: getWebServer,
+        moveNodeToMesh: moveNodeToMesh,
         resolveNode: resolveNode,
         sendRunCommands: sendRunCommands,
         visibleMeshes: visibleMeshes,
