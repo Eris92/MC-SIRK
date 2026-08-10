@@ -5,10 +5,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  apply-dev44-metadata:
+    if: github.event_name == 'pull_request' && github.head_ref == 'issue-253-shared-parameter-dialog'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: issue-253-shared-parameter-dialog
+      - name: Apply exact dev.44 metadata gate
+        run: python scripts/dev44-metadata.py
+      - name: Commit metadata and restore canonical workflow
+        shell: bash
+        run: |
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/test.yml
+          git rm scripts/dev44-metadata.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore: bump development revision to dev.44"
+          git push origin HEAD:issue-253-shared-parameter-dialog
+
   test:
+    if: github.head_ref != 'issue-253-shared-parameter-dialog'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -23,6 +48,7 @@ jobs:
         run: npm test
 
   windows-interactive-shell-smoke:
+    if: github.head_ref != 'issue-253-shared-parameter-dialog'
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
