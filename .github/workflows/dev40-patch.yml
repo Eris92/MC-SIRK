@@ -1,0 +1,25 @@
+name: Dev40 Patch
+on:
+  push:
+    branches:
+      - dev-40-network-admin-root-cause
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[dev40 patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev-40-network-admin-root-cause
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/dev40-patch.js
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add server/modules/commands/index.js server/core/logged-on-user-command-policy.js web/admin/admin.js test/network-command-split.test.js test/logged-on-user-command-policy.test.js test/admin-host-theme-signal.test.js
+          git commit -m "fix: correct native user UI and admin theme sync [dev40 patched]"
+          git push origin HEAD:dev-40-network-admin-root-cause
