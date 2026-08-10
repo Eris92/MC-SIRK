@@ -3,7 +3,30 @@
 var DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
 function responseId(command) {
-    return String(command && (command.responseid || command.responseId) || "");
+    var queue = [command];
+    var seen = [];
+    while (queue.length) {
+        var value = queue.shift();
+        if (!value || typeof value !== "object" || seen.indexOf(value) >= 0) continue;
+        seen.push(value);
+        var id = value.responseid || value.responseId;
+        if (id != null && String(id)) return String(id);
+        ["data", "result", "response", "payload"].forEach(function (key) {
+            if (value[key] && typeof value[key] === "object") queue.push(value[key]);
+        });
+    }
+    return "";
+}
+
+function agentNodeId(agent) {
+    return String(agent && (agent.dbNodeKey || agent.nodeid || agent.nodeId) || "");
+}
+
+function isRunCommandsResult(command) {
+    var action = String(command && command.action || "").toLowerCase();
+    var type = String(command && command.type || "").toLowerCase();
+    return action === "runcommands" || action === "runcommand" ||
+        (action === "msg" && (type === "runcommands" || type === "runcommand"));
 }
 
 function createBusyError(active) {
@@ -95,7 +118,11 @@ function apply(plugin, options) {
 
     runtime.captureAgentData = function (command, agent) {
         var id = responseId(command);
-        if (id) clearByResponse(id);
+        var released = id ? clearByResponse(id) : false;
+        if (!released && isRunCommandsResult(command)) {
+            var nodeId = agentNodeId(agent);
+            if (nodeId) clearByNode(nodeId);
+        }
         return originalCapture.call(runtime, command, agent);
     };
 
@@ -108,5 +135,7 @@ function apply(plugin, options) {
 }
 
 module.exports.apply = apply;
+module.exports.agentNodeId = agentNodeId;
 module.exports.createBusyError = createBusyError;
+module.exports.isRunCommandsResult = isRunCommandsResult;
 module.exports.responseId = responseId;
