@@ -78,6 +78,23 @@
         });
         return values;
     }
+    function assetUserDependency(records, assetRecord) {
+        records = Array.isArray(records) ? records : [];
+        var explicit = text(assetRecord && assetRecord.variable && assetRecord.variable.dependsOn).trim();
+        if (explicit) {
+            return records.filter(function (record) {
+                return record.kind === "user" && text(record.variable && record.variable.name) === explicit;
+            })[0] || null;
+        }
+        var assetIndex = records.indexOf(assetRecord);
+        for (var index = assetIndex - 1; index >= 0; index--) {
+            if (records[index] && records[index].kind === "user") return records[index];
+        }
+        return null;
+    }
+    function assetDependsOnUser(records, assetRecord, userRecord) {
+        return !!userRecord && assetUserDependency(records, assetRecord) === userRecord;
+    }
     function firstFocusable(records) {
         for (var index = 0; index < records.length; index++) {
             if (records[index].control && !records[index].control.disabled) return records[index].control;
@@ -271,7 +288,12 @@
             }
             function onUserChanged(event) {
                 if (!event || !event.currentTarget) return;
-                records.filter(function (record) { return record.kind === "asset"; }).forEach(function (record) { loadDynamic(record); });
+                var userRecord = records.filter(function (record) {
+                    return record.kind === "user" && record.control === event.currentTarget;
+                })[0] || null;
+                records.filter(function (record) {
+                    return record.kind === "asset" && assetDependsOnUser(records, record, userRecord);
+                }).forEach(function (record) { loadDynamic(record); });
             }
             function submitRequest() {
                 if (submitting || settled) return false;
@@ -325,6 +347,8 @@
     };
     tools.openParameterDialog = openParameterDialog;
     tools.parameterDialogContract = {
+        assetDependsOnUser: assetDependsOnUser,
+        assetUserDependency: assetUserDependency,
         controlKind: controlKind,
         currentValues: currentValues,
         validate: validate
