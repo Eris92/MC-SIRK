@@ -5,10 +5,10 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.resolve(__dirname, "..");
-var policy = require(path.join(root, "server/core/integration-admin-policy.js"));
 var saveCalls = 0;
 var savedPayload = null;
 var plugin = {
+    shortName: "SIRKPortal",
     runtime: {
         integrations: {
             save: function (user, payload) {
@@ -22,11 +22,7 @@ var plugin = {
         }
     }
 };
-var fallback = {
-    req: function () { throw new Error("Unexpected fallback GET."); },
-    post: function () { throw new Error("Unexpected fallback POST."); }
-};
-var handler = policy.wrap(fallback, plugin);
+var handler = require(path.join(root, "admin.js")).admin(plugin);
 var admin = { _id: "user/domain/admin", siteadmin: 0xFFFFFFFF };
 var user = { _id: "user/domain/user", siteadmin: 0 };
 
@@ -88,10 +84,16 @@ new Promise(function (resolve, reject) {
     });
 }).then(function () {
     var view = fs.readFileSync(path.join(root, "views/SIRK-Portal.handlebars"), "utf8");
+    var adminSource = fs.readFileSync(path.join(root, "admin.js"), "utf8");
     var adminEntrypoint = fs.readFileSync(path.join(root, "SIRKPortalAdmin.js"), "utf8");
     assert.ok(view.indexOf('data-tab="integrations"') >= 0, "Admin must expose the Integrations tab.");
     assert.ok(view.indexOf("asset=integrations-admin.js") >= 0, "Integration UI asset must be loaded by the admin view.");
-    assert.ok(adminEntrypoint.indexOf("integration-admin-policy.js") >= 0, "Admin entrypoint must install the secure integration policy.");
+    assert.ok(adminSource.indexOf('"integrations-admin.js": ["web/admin/integrations.js"') >= 0,
+        "Canonical admin owner must serve the integration editor asset.");
+    assert.ok(adminSource.indexOf('action === "save-integrations"') >= 0 && adminSource.indexOf("integrations.save(user, integrationPayload)") >= 0,
+        "Canonical admin owner must route secure writes to the existing integration service.");
+    assert.strictEqual(adminEntrypoint.trim(), '"use strict";\n\nmodule.exports = require("./admin.js");',
+        "SIRKPortalAdmin must retain canonical delegation without a parallel wrapper owner.");
     console.log("Secure SiteAdmin-only Jira integration configuration and no-secret browser contract: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
