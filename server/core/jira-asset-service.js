@@ -25,7 +25,6 @@ function lower(value) {
 
 function normalizeUser(value) {
     value = object(value);
-    if (value.active === false) return null;
     var accountId = text(value.accountId || value.key || value.name, 500);
     var email = text(value.emailAddress, 500);
     var displayName = text(value.displayName || value.name || email || accountId, 500);
@@ -36,7 +35,8 @@ function normalizeUser(value) {
         label: displayName + (email && lower(email) !== lower(displayName) ? " (" + email + ")" : ""),
         accountId: accountId,
         displayName: displayName,
-        emailAddress: email
+        emailAddress: email,
+        active: value.active !== false
     };
 }
 
@@ -203,12 +203,20 @@ module.exports.createJiraAssetService = function (options) {
         return attempt(0).then(dedupeUsers);
     }
 
-    function listUsers(force) {
+    function filterUsers(result, includeInactive) {
+        var value = Object.assign({}, result || {});
+        value.items = (result && Array.isArray(result.items) ? result.items : []).filter(function (item) {
+            return includeInactive === true || item.active !== false;
+        });
+        return value;
+    }
+
+    function listUsers(force, includeInactive) {
         var cached = readCache();
         if (!force && cached && cached.fetchedAt > Date.now() - USER_CACHE_TTL_MS) {
-            return Promise.resolve({ items: cached.users, stale: false, fetchedAt: cached.fetchedAt });
+            return Promise.resolve(filterUsers({ items: cached.users, stale: false, fetchedAt: cached.fetchedAt }, includeInactive));
         }
-        if (usersInFlight) return usersInFlight;
+        if (usersInFlight) return usersInFlight.then(function (result) { return filterUsers(result, includeInactive); });
         var config = jiraConfig();
         usersInFlight = fetchUsers(config).then(function (users) {
             writeCache(users);
@@ -225,7 +233,7 @@ module.exports.createJiraAssetService = function (options) {
             usersInFlight = null;
             throw error;
         });
-        return usersInFlight;
+        return usersInFlight.then(function (result) { return filterUsers(result, includeInactive); });
     }
 
     function discoverCloudId(config) {
@@ -288,7 +296,7 @@ module.exports.createJiraAssetService = function (options) {
         var details = [model, serial, inventory].filter(Boolean);
         return {
             value: hostname,
-            label: hostname + (details.length ? " — " + details.join(" / ") : ""),
+            label: hostname + (details.length ? " - " + details.join(" / ") : ""),
             objectId: text(entry.id, 200),
             objectKey: text(entry.objectKey, 200),
             hostname: hostname,
@@ -302,7 +310,7 @@ module.exports.createJiraAssetService = function (options) {
         userValue = text(userValue, 500);
         if (!userValue) return Promise.resolve({ items: [] });
         var config = jiraConfig();
-        return Promise.all([listUsers(false), discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
+        return Promise.all([listUsers(false, true), discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
             var identities = selectedUserIdentity(userValue, parts[0].items);
             var endpoint = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
                 "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) +
@@ -341,7 +349,9 @@ module.exports.createJiraAssetService = function (options) {
         optionsFor: function (variable, values, force) {
             variable = object(variable);
             values = object(values);
-            if (lower(variable.control) === "user") return listUsers(force === true);
+            if (lower(variable.control) === "user") {
+                return listUsers(force === true, lower(values.JiraUserFilter) === "all");
+            }
             if (lower(variable.control) === "asset") return listAssets(values.JiraUser || values.jiraUser || "");
             return Promise.resolve({ items: [] });
         }
