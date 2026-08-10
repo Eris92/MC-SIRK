@@ -88,7 +88,11 @@ function apply(plugin) {
     if (!runtime || !module || typeof module.apiGet !== "function" || module.__sirkMultiDeviceCatalogPolicy) return;
     var original = module.apiGet;
     module.apiGet = function (asset, req, user) {
-        if (asset === "multi-devices") return catalog(runtime, user);
+        if (asset === "multi-devices") {
+            var access = typeof module.getAccess === "function" ? module.getAccess(user) : { allowed: false };
+            if (!access || access.allowed !== true) throw new Error("Permission denied.");
+            return catalog(runtime, user);
+        }
         return original.call(module, asset, req, user);
     };
     module.__sirkMultiDeviceCatalogPolicy = true;
