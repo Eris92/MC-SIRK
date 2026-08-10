@@ -349,6 +349,7 @@
             state.outputAttention = false;
             render(panel);
             if (!(value.variables || []).length) {
+                writeDetailsCollapsed(false);
                 submit(value, {}, null, panel);
                 return;
             }
@@ -361,6 +362,7 @@
                 primaryLabel: value.requiresApproval ? "Request" : text("run")
             }).then(function (values) {
                 if (values == null) return;
+                writeDetailsCollapsed(false);
                 submit(value, values, null, panel);
             }).catch(function (error) {
                 setOutput(panel, error.message || String(error), true, false);
