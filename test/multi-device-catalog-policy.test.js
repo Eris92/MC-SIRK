@@ -9,6 +9,7 @@ var hiddenMesh = "mesh/domain/hidden";
 var nodeA = "node/domain/alpha";
 var nodeB = "node/domain/beta";
 var dbCalls = 0;
+var rightsChecks = 0;
 var db = {
     GetAllTypeNoTypeFieldMeshFiltered: function (meshIds, extra, domainId, type, filter, skip, limit, callback) {
         dbCalls += 1;
@@ -32,15 +33,20 @@ var runtime = {
                 value[visibleMesh] = { _id: visibleMesh, name: "Visible group" };
                 return value;
             },
+            resolveNode: function (user, nodeId) {
+                rightsChecks += 1;
+                return nodeId === nodeA ? Promise.resolve({ nodeId: nodeId }) : Promise.reject(new Error("No access"));
+            },
             visibleNodes: function () { throw new Error("DB-backed catalog should not use the fallback path."); }
         }
     }
 };
 
 backendPolicy.catalog(runtime, { domain: "domain" }).then(function (catalog) {
-    assert.strictEqual(dbCalls, 1, "Catalog must use one bounded database read per request.");
-    assert.deepStrictEqual(catalog.nodes.map(function (node) { return node._id; }), [nodeA, nodeB],
-        "Only nodes from visible MeshCentral groups may be returned.");
+    assert.strictEqual(dbCalls, 1, "Catalog must use one database read per request.");
+    assert.strictEqual(rightsChecks, 2, "Every candidate node in a visible group must pass MeshCentral node-level authorization.");
+    assert.deepStrictEqual(catalog.nodes.map(function (node) { return node._id; }), [nodeA],
+        "Node-specific MeshCentral visibility must be enforced before returning catalog metadata.");
     assert.deepStrictEqual(catalog.nodes[0].tags, ["Prod", "Blue"], "Tags must be cleaned and deduplicated without losing order.");
     assert.strictEqual(catalog.meshes[visibleMesh].name, "Visible group", "Visible group presentation metadata must be included.");
     assert.strictEqual(catalog.meshes[hiddenMesh], undefined, "Hidden groups must not be disclosed.");
