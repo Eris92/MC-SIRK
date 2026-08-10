@@ -3,6 +3,7 @@
 var fs = require("fs");
 var path = require("path");
 var shared = require("./server/core/shared.js");
+var artifactFactory = require("./server/core/artifact-service.js");
 
 module.exports.admin = function (plugin) {
     var root = __dirname;
@@ -55,11 +56,61 @@ module.exports.admin = function (plugin) {
         return resolvedTarget.toLowerCase().indexOf(prefix.toLowerCase()) === 0;
     }
 
+    function artifactService() {
+        var context = plugin.runtime && plugin.runtime.context;
+        if (!context || !context.dataRoot || !context.approval) return null;
+        return artifactFactory.createArtifactService({ fs: fs, path: path, dataRoot: context.dataRoot });
+    }
+
+    function serveTypedArtifact(req, res, user, requestId, artifactId) {
+        var context = plugin.runtime && plugin.runtime.context;
+        var service = artifactService();
+        if (!context || !service || !user) {
+            shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
+            return;
+        }
+        try {
+            context.approval.getRequest(user, requestId);
+            var artifact = service.resolve(requestId, artifactId);
+            var disposition = String(req && req.query && req.query.mode || "download").toLowerCase() === "open"
+                ? "inline"
+                : "attachment";
+            var fileName = path.basename(artifact.fileName).replace(/[\r\n"]/g, "_");
+            res.statusCode = 200;
+            setHeader(res, "Content-Type", artifact.contentType);
+            setHeader(res, "Content-Disposition", disposition + "; filename=\"" + fileName + "\"");
+            setHeader(res, "Content-Length", String(artifact.size));
+            setHeader(res, "Cache-Control", "no-store");
+            setHeader(res, "X-Content-Type-Options", "nosniff");
+            var stream = fs.createReadStream(artifact.path);
+            stream.on("error", function () {
+                if (!res.headersSent) shared.send(res, 500, "text/plain; charset=utf-8", "Unable to read artifact");
+                else if (typeof res.destroy === "function") res.destroy();
+            });
+            stream.pipe(res);
+        } catch (error) {
+            var message = errorText(error);
+            var status = /not found/i.test(message) ? 404 : 403;
+            shared.send(res, status, "text/plain; charset=utf-8", status === 404 ? "Artifact not found" : "Forbidden");
+        }
+    }
+
     function serveDownload(req, res, user) {
         if (!user) {
             shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
             return;
         }
+        var requestId = String(req && req.query && req.query.requestId || "").trim();
+        var artifactId = String(req && req.query && req.query.artifactId || "").trim();
+        if (requestId || artifactId) {
+            if (!requestId || !artifactId) {
+                shared.send(res, 400, "text/plain; charset=utf-8", "Invalid artifact request");
+                return;
+            }
+            serveTypedArtifact(req, res, user, requestId, artifactId);
+            return;
+        }
+
         var requested = String(req && req.query && req.query.path || "").trim();
         if (!requested || requested.indexOf("\0") >= 0) {
             shared.send(res, 400, "text/plain; charset=utf-8", "Invalid file path");
