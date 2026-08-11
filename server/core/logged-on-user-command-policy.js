@@ -32,7 +32,7 @@ function activeSessionSource() {
 
 function runnerSource() {
     return [
-        "param([Parameter(Mandatory=$true)][string]$WorkDir,[Parameter(Mandatory=$true)][int]$CommandType)",
+        "param([Parameter(Mandatory=$true)][string]$WorkDir,[Parameter(Mandatory=$true)][int]$CommandType,[Parameter(Mandatory=$true)][int]$DirectPowerShell)",
         "$ErrorActionPreference='Stop'",
         "$outputPath=Join-Path $WorkDir 'output.txt'",
         "$exitPath=Join-Path $WorkDir 'exit.txt'",
@@ -45,9 +45,13 @@ function runnerSource() {
         "if($null -ne $LASTEXITCODE){$exitCode=[int]$LASTEXITCODE}",
         "}else{",
         "$scriptPath=Join-Path $WorkDir 'command.ps1'",
+        "if($DirectPowerShell -eq 1){",
+        "$captured=@(& $scriptPath 2>&1)",
+        "}else{",
         "$powerShell=Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'",
         "$captured=@(& $powerShell '-NoProfile' '-NonInteractive' '-ExecutionPolicy' 'Bypass' '-File' $scriptPath 2>&1)",
         "if($null -ne $LASTEXITCODE){$exitCode=[int]$LASTEXITCODE}",
+        "}",
         "}",
         "}catch{",
         "$captured+=($_ | Out-String)",
@@ -84,6 +88,7 @@ function buildLoggedOnUserLauncher(command, options) {
     var timeoutSeconds = Math.max(30, Math.min(270, Number(options.timeoutSeconds) || DEFAULT_TIMEOUT_SECONDS));
     var commandType = Number(command && command.type) === 1 ? 1 : 2;
     var runLevel = command && command.elevatedUserSession === true ? "Highest" : "Limited";
+    var directPowerShell = commandType === 2 && command && command.elevatedUserSession === true ? 1 : 0;
     var command64 = commandBytes(command).toString("base64");
     var runner64 = Buffer.concat([
         Buffer.from([0xef, 0xbb, 0xbf]),
@@ -113,6 +118,7 @@ function buildLoggedOnUserLauncher(command, options) {
         "& $icacls $workDir '/inheritance:r' '/grant:r' '*S-1-5-18:(OI)(CI)F' ('*'+$userSid+':(OI)(CI)F') '/Q'|Out-Null",
         "if($LASTEXITCODE -ne 0){throw 'Unable to secure the logged-on-user command directory.'}",
         "$commandType=" + commandType,
+        "$directPowerShell=" + directPowerShell,
         "$commandName=if($commandType -eq 1){'command.cmd'}else{'command.ps1'}",
         "$commandPath=Join-Path $workDir $commandName",
         "$runnerPath=Join-Path $workDir 'runner.ps1'",
@@ -124,7 +130,7 @@ function buildLoggedOnUserLauncher(command, options) {
         "[IO.File]::WriteAllBytes($runnerPath,[Convert]::FromBase64String('" + runner64 + "'))",
         "[IO.File]::WriteAllBytes($launcherPath,[Convert]::FromBase64String('" + launcher64 + "'))",
         "$powerShell=Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'",
-        "$runnerCommand='\"'+$powerShell+'\" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"'+$runnerPath+'\" -WorkDir \"'+$workDir+'\" -CommandType '+$commandType",
+        "$runnerCommand='\"'+$powerShell+'\" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File \"'+$runnerPath+'\" -WorkDir \"'+$workDir+'\" -CommandType '+$commandType+' -DirectPowerShell '+$directPowerShell",
         "[IO.File]::WriteAllText($launchCommandPath,$runnerCommand,[Text.Encoding]::Unicode)",
         "$wscript=Join-Path $env:SystemRoot 'System32\\wscript.exe'",
         "$action=New-ScheduledTaskAction -Execute $wscript -Argument ('//B //NoLogo \"'+$launcherPath+'\" \"'+$launchCommandPath+'\"')",
