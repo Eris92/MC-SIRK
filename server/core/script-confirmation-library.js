@@ -56,12 +56,16 @@ function sirkHeaders(source) {
 function jiraAssetPolicy(headers) {
     var policy = {};
     (Array.isArray(headers) ? headers : []).forEach(function (header) {
-        var match = String(header || "").match(/^SirkJiraAsset(Aql|LabelAttribute|MaxResults)\s*:\s*(.*)$/i);
+        var match = String(header || "").match(/^SirkJiraAsset(Aql|LabelAttribute|MaxResults|UserVariable)\s*:\s*(.*)$/i);
         if (!match) return;
         var name = String(match[1] || "").toLowerCase();
         var value = String(match[2] || "").trim();
         if (name === "aql") policy.aql = shared.cleanText(value, 4000).trim();
         if (name === "labelattribute") policy.labelAttribute = shared.cleanText(value, 200).trim();
+        if (name === "uservariable") {
+            var userVariable = shared.cleanText(value, 200).trim().replace(/^[\s$%]+/, "");
+            if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(userVariable)) policy.userVariable = userVariable;
+        }
         if (name === "maxresults") {
             var limit = Number(value);
             if (isFinite(limit) && limit > 0) policy.maxResults = Math.max(10, Math.min(5000, Math.floor(limit)));
@@ -151,7 +155,7 @@ function decorateScript(base, script) {
     result.extraHeaders = sirkHeaders(source);
 
     var policy = jiraAssetPolicy(result.extraHeaders);
-    if (policy.aql || policy.labelAttribute || policy.maxResults) {
+    if (policy.aql || policy.labelAttribute || policy.maxResults || policy.userVariable) {
         result.variables = (result.variables || []).map(function (variable) {
             if (!variable || variable.control !== "asset") return variable;
             var decorated = shared.copy(variable);
