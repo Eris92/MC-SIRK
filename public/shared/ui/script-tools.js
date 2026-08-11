@@ -590,7 +590,7 @@
                         shell.post("system-credentials", {
                             path: script.path,
                             selected: systemCredentials.selected()
-                        }).catch(function () { return null; })
+                        })
                     ]).then(function (results) {
                         tool.state.editMode = false;
                         if (typeof onSaved === "function") onSaved(results[0]);
