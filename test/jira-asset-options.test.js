@@ -19,9 +19,6 @@ function integration(overrides) {
                 token: "TOP-SECRET-TOKEN",
                 cloudId: "cloud-1",
                 workspaceId: "workspace-1",
-                aql: "objectType = Computer",
-                hostnameAttribute: "Hostname",
-                maxResults: 100,
                 verifyTls: true
             }, overrides || {});
         }
@@ -134,35 +131,58 @@ function asset(id, hostname, owner, model) {
         var assetTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-assets-"));
         try {
             var assetCalls = [];
+            var fillerPage = [];
+            for (var index = 0; index < 100; index++) {
+                fillerPage.push(asset("F" + index, "PC-FILLER-" + index, "acc-2", "Filler"));
+            }
+            var script = {
+                path: "Jira/Jira Asset Protocol.ps1",
+                extraHeaders: ["SirkJiraAssetAql: objectType = Computer AND Status = Active"]
+            };
             var assetService = factory.createJiraAssetService({
                 fs: fs,
                 path: path,
                 dataRoot: assetTemp,
-                integrations: integration(),
+                integrations: integration({
+                    aql: "objectType = LegacyGlobalScope",
+                    hostnameAttribute: "Legacy Hostname",
+                    maxResults: 10
+                }),
                 requestJson: function (options) {
                     assetCalls.push(options);
                     if (options.url.indexOf("/rest/api/3/users/search") >= 0) {
                         return Promise.resolve([user("acc-1", "Alpha User", "alpha@example.invalid")]);
                     }
                     if (options.url.indexOf("/object/aql") >= 0) {
-                        return Promise.resolve({ values: [
-                            asset("1", "PC-ALPHA", "acc-1", "ThinkPad"),
-                            asset("2", "PC-BETA", "acc-2", "EliteBook")
-                        ] });
+                        var startAt = Number(new URL(options.url).searchParams.get("startAt")) || 0;
+                        if (startAt === 0) return Promise.resolve({ values: fillerPage, total: 101 });
+                        if (startAt === 100) return Promise.resolve({ values: [asset("1", "PC-ALPHA", "acc-1", "ThinkPad")], total: 101 });
+                        return Promise.resolve({ values: [], total: 101 });
                     }
                     return Promise.reject(new Error("Unexpected request: " + options.url));
                 }
             });
-            var assets = await assetService.listAssets("acc-1");
-            assert.strictEqual(assets.items.length, 1, "Asset options must be filtered by the selected Jira user identity.");
+            var assets = await assetService.listAssets("acc-1", script);
+            assert.strictEqual(assets.items.length, 1, "Asset options must be filtered by the selected Jira user identity across pages.");
             assert.strictEqual(assets.items[0].value, "PC-ALPHA");
             assert.ok(assets.items[0].label.indexOf("ThinkPad") >= 0, "Asset label should reuse normalized model data.");
-            var aqlCall = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; })[0];
-            assert.ok(aqlCall, "Assets must use the current POST /object/aql endpoint.");
-            assert.strictEqual(aqlCall.method, "POST");
-            assert.strictEqual(aqlCall.json.qlQuery, "objectType = Computer", "Assets must reuse the configured AQL.");
-            assert.ok(aqlCall.url.indexOf("cloud-1") >= 0 && aqlCall.url.indexOf("workspace-1") >= 0,
-                "Configured cloudId/workspaceId must avoid unnecessary discovery requests.");
+            var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
+            assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate instead of applying a global one-page result cap.");
+            aqlCalls.forEach(function (call) {
+                assert.strictEqual(call.method, "POST");
+                assert.strictEqual(call.json.qlQuery, "objectType = Computer AND Status = Active",
+                    "Asset AQL must come from authoritative script metadata, not legacy global integration fields.");
+                assert.strictEqual(new URL(call.url).searchParams.get("maxResults"), "100",
+                    "Interactive Assets pagination must use a provider-local page bound, not the legacy global maxResults.");
+                assert.ok(call.url.indexOf("cloud-1") >= 0 && call.url.indexOf("workspace-1") >= 0,
+                    "Configured cloudId/workspaceId must avoid unnecessary discovery requests.");
+            });
+            assert.strictEqual(new URL(aqlCalls[0].url).searchParams.get("startAt"), "0");
+            assert.strictEqual(new URL(aqlCalls[1].url).searchParams.get("startAt"), "100");
+            assert.throws(function () {
+                assetService.listAssets("acc-1", { path: "Jira/Unsafe.ps1", extraHeaders: [] });
+            }, /scope is not declared by the script/,
+            "VariableAsset must fail closed when its authoritative script declares no Jira Assets scope.");
         } finally {
             fs.rmSync(assetTemp, { recursive: true, force: true });
         }
@@ -171,12 +191,14 @@ function asset(id, hostname, owner, model) {
             "My Scripts backend must expose one dynamic variable option endpoint.");
         assert.ok(automationServer.indexOf('admin.hasSystemCredential(optionScript.path, "jira")') >= 0,
             "Dynamic Jira options must require the script's Jira profile assignment.");
+        assert.ok(automationServer.indexOf("jiraAssets.optionsFor(variable, value.values, value.force === true, optionScript)") >= 0,
+            "Backend must pass the authoritative stored script to the Jira option provider instead of accepting client AQL.");
         assert.ok(automationClient.indexOf('module.api.post("variable-options"') >= 0,
             "My Scripts must connect the shared #253 dialog provider to the backend option owner.");
         assert.strictEqual(automationClient.indexOf("window.prompt"), -1,
             "Jira migration must not reintroduce a browser prompt or inline legacy form.");
 
-        console.log("Jira cached user options, v2 fallback, stale cache, dependent Assets AQL and profile gate: OK");
+        console.log("Jira cached users, script-scoped paginated Assets and authoritative profile/scope gates: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
