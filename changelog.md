@@ -1,3 +1,9 @@
+## 0.1.1-dev.63 - 2026-08-11
+
+- Reduce both Jira cache dialogs to the single `Wymuś odświeżenie` checkbox label.
+
+Current development notes: `docs/releases/0.1.1-dev.63.md`.
+
 ## 0.1.1-dev.62 - 2026-08-11
 
 - Keep system credential assignments attached to a stable `SirkWorkflow` identity when a workflow script moves into a subfolder.
