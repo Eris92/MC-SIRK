@@ -8,7 +8,9 @@ var CELL = 1.55;
 var GLYPH_W = 5;
 var GLYPH_H = 7;
 var ADVANCE = 6 * CELL;
-var LINE_HEIGHT = 12.5;
+// Polish diacritics extend above the 7-row bitmap and ogonek extends below it.
+// Keep enough leading for the complete marked glyph, not only the base matrix.
+var LINE_HEIGHT = 18;
 var MAX_COLUMNS = Math.floor((PAGE_WIDTH - (MARGIN_X * 2)) / ADVANCE);
 var MAX_LINES = Math.floor((PAGE_HEIGHT - (MARGIN_Y * 2)) / LINE_HEIGHT);
 

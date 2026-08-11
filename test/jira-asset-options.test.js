@@ -239,6 +239,11 @@ function asset(id, hostname, owner, model) {
                 "Asset pagination must use a bounded provider page size and advance startAt.");
             assert.ok(aqlCalls[0].url.indexOf("cloud-1") >= 0 && aqlCalls[0].url.indexOf("workspace-1") >= 0,
                 "Configured cloudId/workspaceId must avoid unnecessary discovery requests.");
+            var cachedOtherUser = await assetService.listAssets("acc-2", assetVariable, false);
+            assert.ok(cachedOtherUser.items.length > 0, "One daily asset snapshot must serve a different user's equipment.");
+            assert.strictEqual(assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; }).length, 2,
+                "Fresh 24h Jira Assets cache must suppress a repeated full scan for every protocol.");
+            assert.ok(fs.existsSync(assetService.assetCachePath), "Jira Assets must be persisted in a separate shared cache file.");
             var beforeMissingUser = assetCalls.length;
             var noUserYet = await assetService.optionsFor(assetVariable, {}, false);
             assert.deepStrictEqual(noUserYet.items, [],

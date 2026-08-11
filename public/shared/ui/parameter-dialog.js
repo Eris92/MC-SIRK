@@ -18,7 +18,7 @@
     }
     function controlKind(variable) {
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
-        return ["select", "switch", "user", "asset"].indexOf(kind) >= 0 ? kind : "text";
+        return ["select", "switch", "user", "asset", "assetmulti"].indexOf(kind) >= 0 ? kind : "text";
     }
     function allowCustom(item, variable) {
         var name = text(variable && variable.name).trim().toLowerCase();
@@ -78,7 +78,35 @@
         (Array.isArray(options) ? options : []).forEach(function (option) { appendOption(select, option); });
         var preferred = defaultValue(variable);
         if (preferred) select.value = preferred;
+        if (!select.value) {
+            var selected = (Array.isArray(options) ? options : []).filter(function (option) {
+                return option && typeof option === "object" && option.selected === true;
+            })[0];
+            if (selected) select.value = optionValue(selected);
+        }
         if (!select.value && select.options.length && !placeholder) select.selectedIndex = 0;
+    }
+    function setChecklistOptions(host, control, options, single) {
+        while (host && host.firstChild) host.removeChild(host.firstChild);
+        var selected = text(control && control.value).split(/[;,|\r\n]+/).filter(Boolean);
+        (Array.isArray(options) ? options : []).forEach(function (option, index) {
+            if (!host) return;
+            var value = optionValue(option);
+            if (!value) return;
+            var row = document.createElement("label");
+            row.className = "mc-parameter-checklist-item";
+            var box = document.createElement("input");
+            box.type = single ? "radio" : "checkbox";
+            if (single) box.name = control.name + "Option";
+            box.value = value;
+            box.checked = selected.indexOf(value) >= 0;
+            box.id = host.id + "Option" + index;
+            var label = document.createElement("span");
+            label.textContent = optionLabel(option) || value;
+            row.appendChild(box);
+            row.appendChild(label);
+            host.appendChild(row);
+        });
     }
     function setDatalistOptions(list, options) {
         while (list && list.firstChild) list.removeChild(list.firstChild);
@@ -116,7 +144,11 @@
     }
     function firstFocusable(records) {
         for (var index = 0; index < records.length; index++) {
-            if (records[index].control && !records[index].control.disabled) return records[index].control;
+            if (records[index].control && records[index].control.type !== "hidden" && !records[index].control.disabled) return records[index].control;
+            if (records[index].optionHost) {
+                var option = records[index].optionHost.querySelector('input:not([disabled])');
+                if (option) return option;
+            }
         }
         return null;
     }
@@ -156,21 +188,34 @@
         (item.variables || []).forEach(function (variable, index) {
             var kind = controlKind(variable);
             var customUser = kind === "user" && allowCustom(item, variable);
+            var listMode = variable.listMode === true && (kind === "user" || kind === "select");
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
             var caption = document.createElement("span");
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
-            row.appendChild(caption);
+            if (variable.hideLabel !== true) row.appendChild(caption);
             var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
             var control = document.createElement(useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
             var listId = "";
-            if (kind === "switch") {
+            var optionHostId = "";
+            if (kind === "assetmulti" || listMode) {
+                control.type = "hidden";
+                control.value = defaultValue(variable);
+                row.appendChild(control);
+                var optionHost = document.createElement("div");
+                optionHostId = prefix + "Checklist" + index;
+                optionHost.id = optionHostId;
+                optionHost.className = "mc-parameter-checklist";
+                row.appendChild(optionHost);
+                if (listMode && kind === "select") setChecklistOptions(optionHost, control, variable.options || [], true);
+            } else if (kind === "switch") {
                 control.type = "checkbox";
                 control.checked = checkedDefault(variable);
+                if (control.checked) control.setAttribute("checked", "checked");
                 row.appendChild(control);
             } else if (kind === "text" || customUser) {
                 control.type = "text";
@@ -198,7 +243,7 @@
                 row.appendChild(hint);
             }
             content.appendChild(row);
-            definitions.push({ variable: variable, kind: kind, customUser: customUser, id: control.id, listId: listId });
+            definitions.push({ variable: variable, kind: kind, customUser: customUser, listMode: listMode, id: control.id, listId: listId, optionHostId: optionHostId });
         });
         var status = document.createElement("div");
         status.id = prefix + "Status";
@@ -227,8 +272,11 @@
                 variable: definition.variable,
                 kind: definition.kind,
                 customUser: definition.customUser,
+                listMode: definition.listMode,
                 control: document.getElementById(definition.id),
                 list: definition.listId ? document.getElementById(definition.listId) : null,
+                optionHost: definition.optionHostId ? document.getElementById(definition.optionHostId) : null,
+                allOptions: [],
                 loading: false,
                 loadFailed: false,
                 loadSequence: 0
@@ -238,7 +286,7 @@
         var submit = document.getElementById("idx_dlgOkButton");
         var cancel = document.getElementById("idx_dlgCancelButton");
         var close = document.getElementById("id_dialogclose");
-        if (records.some(function (record) { return !record.control || (record.customUser && !record.list); }) || !status || !submit) {
+            if (records.some(function (record) { return !record.control || (record.customUser && !record.list) || ((record.kind === "assetmulti" || record.listMode) && !record.optionHost); }) || !status || !submit) {
             return Promise.reject(new Error("Native MeshCentral parameter dialog controls are unavailable."));
         }
         records.forEach(function (record) {
@@ -274,6 +322,12 @@
                 if (modernModal) modernModal.removeEventListener("hidden.bs.modal", onHidden);
                 records.forEach(function (record) {
                     if (record.kind === "user") record.control.removeEventListener("change", onUserChanged);
+                    if (record.optionHost) {
+                        record.optionHost.removeEventListener("change", onChecklistChanged);
+                        record.optionHost.removeEventListener("dblclick", onOptionDoubleClick);
+                    }
+                    record.control.removeEventListener("input", onFilterChanged);
+                    record.control.removeEventListener("change", onFilterChanged);
                 });
                 writeButtonText(submit, originalSubmitText);
                 submit.disabled = originalSubmitDisabled;
@@ -293,7 +347,7 @@
                 cleanup();
             }
             function loadDynamic(record) {
-                if ((record.kind !== "user" && record.kind !== "asset") || typeof provider !== "function") {
+                if ((record.kind !== "user" && record.kind !== "asset" && record.kind !== "assetmulti") || typeof provider !== "function") {
                     if (record.customUser) setDatalistOptions(record.list, record.variable.options || []);
                     else if (record.kind === "user" || record.kind === "asset") {
                         setOptions(record.control, record.variable.options || [], record.variable, record.variable.required ? "Select…" : "None");
@@ -314,24 +368,74 @@
                 record.loading = true;
                 record.loadFailed = false;
                 record.control.disabled = true;
-                setOptions(record.control, [], record.variable, "Loading…");
+                if (record.kind === "assetmulti" || record.listMode) setChecklistOptions(record.optionHost, record.control, [], record.listMode);
+                else setOptions(record.control, [], record.variable, "Loading…");
                 refreshSubmitState();
                 return Promise.resolve(provider(record.variable, currentValues(records), item)).then(function (optionsValue) {
                     if (cleaned || requestSequence !== record.loadSequence) return;
                     record.loading = false;
                     record.loadFailed = false;
                     record.control.disabled = false;
-                    setOptions(record.control, optionsValue, record.variable, record.variable.required ? "Select…" : "None");
+                    record.allOptions = Array.isArray(optionsValue) ? optionsValue.slice() : [];
+                    if (record.kind === "assetmulti" || record.listMode) setChecklistOptions(record.optionHost, record.control, record.allOptions, record.listMode);
+                    else applyUserFilter(record);
                     refreshSubmitState();
                 }).catch(function (error) {
                     if (cleaned || requestSequence !== record.loadSequence) return;
                     record.loading = false;
                     record.loadFailed = true;
                     record.control.disabled = true;
-                    setOptions(record.control, [], record.variable, "Unavailable");
+                    if (record.kind === "assetmulti" || record.listMode) setChecklistOptions(record.optionHost, record.control, [], record.listMode);
+                    else setOptions(record.control, [], record.variable, "Unavailable");
                     setStatus(status, error && error.message || String(error), true);
                     refreshSubmitState();
                 });
+            }
+            function valueRecord(name) {
+                return records.filter(function (record) { return text(record.variable && record.variable.name) === text(name); })[0] || null;
+            }
+            function applyUserFilter(record) {
+                if (!record || record.kind !== "user" || record.customUser || (!record.variable.searchVariable && !record.variable.activeOnlyVariable)) {
+                    if (record && record.kind !== "assetmulti" && !record.listMode) setOptions(record.control, record.allOptions, record.variable, record.variable.required ? "Select…" : "None");
+                    return;
+                }
+                var searchRecord = valueRecord(record.variable.searchVariable);
+                var activeRecord = valueRecord(record.variable.activeOnlyVariable);
+                var query = text(searchRecord && searchRecord.control.value).trim().toLowerCase();
+                var activeOnly = !activeRecord || activeRecord.control.checked;
+                var filtered = record.allOptions.filter(function (option) {
+                    if (activeOnly && option && typeof option === "object" && option.active === false) return false;
+                    return !query || (optionLabel(option) + " " + optionValue(option)).toLowerCase().indexOf(query) >= 0;
+                });
+                var previous = record.control.value;
+                if (record.listMode) setChecklistOptions(record.optionHost, record.control, filtered, true);
+                else setOptions(record.control, filtered, record.variable, record.variable.required ? "Select…" : "None");
+                if (previous && filtered.some(function (option) { return optionValue(option) === previous; })) record.control.value = previous;
+            }
+            function onFilterChanged(event) {
+                var changedName = text(event && event.currentTarget && event.currentTarget.name);
+                records.filter(function (record) {
+                    return record.kind === "user" && (text(record.variable.searchVariable) === changedName || text(record.variable.activeOnlyVariable) === changedName);
+                }).forEach(applyUserFilter);
+            }
+            function onChecklistChanged(event) {
+                var host = event && event.currentTarget;
+                var record = records.filter(function (candidate) { return candidate.optionHost === host; })[0];
+                if (!record) return;
+                record.control.value = Array.prototype.filter.call(host.querySelectorAll('input[type="checkbox"],input[type="radio"]'), function (box) {
+                    return box.checked;
+                }).map(function (box) { return box.value; }).join(";");
+                setStatus(status, "", false);
+            }
+            function onOptionDoubleClick(event) {
+                var host = event && event.currentTarget;
+                var record = records.filter(function (candidate) { return candidate.optionHost === host; })[0];
+                var option = event && event.target && event.target.closest ? event.target.closest("label") : null;
+                var box = option && option.querySelector ? option.querySelector('input[type="radio"]') : null;
+                if (!record || !box || record.variable.submitOnDoubleClick !== true) return;
+                box.checked = true;
+                record.control.value = box.value;
+                submitRequest();
             }
             function onUserChanged(event) {
                 if (!event || !event.currentTarget) return;
@@ -339,7 +443,7 @@
                     return record.kind === "user" && record.control === event.currentTarget;
                 })[0] || null;
                 records.filter(function (record) {
-                    return record.kind === "asset" && assetDependsOnUser(records, record, userRecord);
+                    return (record.kind === "asset" || record.kind === "assetmulti") && assetDependsOnUser(records, record, userRecord);
                 }).forEach(function (record) { loadDynamic(record); });
             }
             function submitRequest() {
@@ -369,16 +473,27 @@
             records.filter(function (record) { return record.kind === "user"; }).forEach(function (record) {
                 record.control.addEventListener("change", onUserChanged);
             });
+            records.forEach(function (record) {
+                if (record.optionHost) {
+                    record.optionHost.addEventListener("change", onChecklistChanged);
+                    if (record.variable.submitOnDoubleClick === true) record.optionHost.addEventListener("dblclick", onOptionDoubleClick);
+                }
+                if (record.kind === "text" || record.kind === "switch") {
+                    record.control.addEventListener("input", onFilterChanged);
+                    record.control.addEventListener("change", onFilterChanged);
+                }
+            });
             if (cancel) cancel.addEventListener("click", onCancel, true);
             if (close) close.addEventListener("click", onCancel, true);
 
             if (manager.mode === "modern") {
-                if (modernModal) modernModal.addEventListener("hidden.bs.modal", onHidden);
                 manager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest);
+                if (modernModal) modernModal.addEventListener("hidden.bs.modal", onHidden);
+                refreshSubmitState();
             } else submit.addEventListener("click", onClassicSubmit, true);
 
             Promise.all(records.filter(function (record) {
-                return record.kind === "user" || record.kind === "asset";
+                return record.kind === "user" || record.kind === "asset" || record.kind === "assetmulti";
             }).map(loadDynamic)).then(function () {
                 if (cleaned) return;
                 var focus = firstFocusable(records);

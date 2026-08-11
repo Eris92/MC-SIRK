@@ -74,8 +74,62 @@ module.exports.createModule = function (context) {
     function dynamicVariable(script, name) {
         name = String(name || "");
         return (script && script.variables || []).filter(function (variable) {
-            return String(variable.name || "") === name && (variable.control === "user" || variable.control === "asset");
+            return String(variable.name || "") === name && (variable.control === "user" || variable.control === "asset" || variable.control === "assetmulti");
         })[0] || null;
+    }
+    function meshUserOptions(currentUser) {
+        var web = shared.getWebServer(context.parent), users = web && web.users || {};
+        var currentId = String(currentUser && currentUser._id || "");
+        var seen = Object.create(null);
+        return Object.keys(users).map(function (id) {
+            var entry = users[id];
+            if (!entry || entry.deleted != null) return null;
+            var value = shared.userName(entry);
+            var key = value.toLowerCase();
+            if (!value || seen[key]) return null;
+            seen[key] = true;
+            return { value: value, label: value, selected: String(entry._id || id) === currentId };
+        }).filter(Boolean).sort(function (a, b) {
+            if (a.selected !== b.selected) return a.selected ? -1 : 1;
+            return a.label.localeCompare(b.label, "pl", { sensitivity: "base" });
+        });
+    }
+    function workflow(script, name) {
+        return !!(script && Array.isArray(script.extraHeaders) && script.extraHeaders.some(function (header) {
+            return new RegExp("^SirkWorkflow\\s*:\\s*" + name + "\\s*$", "i").test(String(header || "").trim());
+        }));
+    }
+    function headerValue(script, name) {
+        var prefix = new RegExp("^" + name + "\\s*:\\s*(.+)$", "i"), value = "";
+        (script && Array.isArray(script.extraHeaders) ? script.extraHeaders : []).some(function (header) {
+            var match = prefix.exec(String(header || "").trim());
+            if (!match) return false;
+            value = match[1].trim(); return true;
+        });
+        return value;
+    }
+    function cacheWorkflow(script) {
+        if (workflow(script, "JiraUsersCache")) return "users";
+        if (workflow(script, "JiraAssetsCache")) return "assets";
+        return "";
+    }
+    function executeCacheWorkflow(script, payload) {
+        var kind = cacheWorkflow(script), values = payload && payload.variableValues || {};
+        var force = /^(1|true|yes|tak|on)$/i.test(String(values.Force || ""));
+        var operation;
+        if (kind === "users") operation = jiraAssets.listUsers(force, true);
+        else {
+            operation = jiraAssets.listAssets("", { control: "asset", jiraAsset: {
+                aql: headerValue(script, "SirkJiraAssetAql"),
+                labelAttribute: headerValue(script, "SirkJiraAssetLabelAttribute") || "Nazwa_sieciowa",
+                maxResults: 5000, userVariable: ""
+            } }, force);
+        }
+        return operation.then(function (result) {
+            var count = result && Array.isArray(result.items) ? result.items.length : 0;
+            var message = (kind === "users" ? "Jira users cache" : "Jira assets cache") + " is ready: " + count + " items.";
+            return { message: message, output: message, rawOutput: message, data: { cache: kind, count: count, forced: force, stale: result && result.stale === true }, exitCode: 0, scriptPath: script.path, label: script.label || script.name };
+        });
     }
     function signalProtocolStart(payload, request) {
         var nonce = String(payload && payload.protocolRunNonce || "");
@@ -119,6 +173,10 @@ module.exports.createModule = function (context) {
             requireScriptAccess(requester, payload && payload.scriptPath);
             var script = library.getScript(payload && payload.scriptPath, true);
             if (!script) throw new Error("Script not found.");
+            if (cacheWorkflow(script)) {
+                if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
+                return executeCacheWorkflow(script, payload);
+            }
             if (jiraProtocol.isProtocolScript(script)) {
                 if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
                 signalProtocolStart(payload, request);
@@ -207,6 +265,9 @@ module.exports.createModule = function (context) {
                 if (!optionScript) throw new Error("Script not found.");
                 var variable = dynamicVariable(optionScript, value.variableName);
                 if (!variable) throw new Error("Dynamic script variable not found.");
+                if (variable.optionSource === "mesh-users" || (jiraProtocol.isProtocolScript(optionScript) && variable.name === "ItPerson")) {
+                    return { ok: true, items: meshUserOptions(user), stale: false, warning: "" };
+                }
                 if (!admin.hasSystemCredential(optionScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
                 }
@@ -229,7 +290,7 @@ module.exports.createModule = function (context) {
                 var language = String(value.language || "en").toLowerCase() === "pl" ? "pl" : "en";
                 var locale = requestedScript.locales && requestedScript.locales[language] || {};
                 var protocol = jiraProtocol.isProtocolScript(requestedScript);
-                if (protocol && !admin.hasSystemCredential(requestedScript.path, "jira")) {
+                if ((protocol || cacheWorkflow(requestedScript)) && !admin.hasSystemCredential(requestedScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
                 }
                 var payload = {

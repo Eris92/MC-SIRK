@@ -4,6 +4,7 @@ var httpClient = require("./http-client.js");
 var shared = require("./shared.js");
 
 var USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+var ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var USER_PAGE_SIZE = 100;
 var MAX_USERS = 1000;
 var ASSET_PAGE_SIZE = 500;
@@ -101,7 +102,9 @@ module.exports.createJiraAssetService = function (options) {
     var integrations = options.integrations;
     var requestJson = options.requestJson || httpClient.requestJson;
     var cachePath = path.join(dataRoot, "jira-users-cache.json");
+    var assetCachePath = path.join(dataRoot, "jira-assets-cache.json");
     var usersInFlight = null;
+    var assetsInFlight = Object.create(null);
 
     function jiraConfig() {
         var value = integrations.get("jira") || {};
@@ -175,6 +178,26 @@ module.exports.createJiraAssetService = function (options) {
             try { fs.unlinkSync(cachePath); } catch (ignore) {}
             fs.renameSync(temp, cachePath);
         }
+    }
+    function readAssetCache(aql) {
+        try {
+            var parsed = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
+            var entry = parsed && parsed.version === 1 && parsed.queries && parsed.queries[aql];
+            if (!entry || !Array.isArray(entry.entries)) return null;
+            return { fetchedAt: Number(entry.fetchedAt) || 0, entries: entry.entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
+        } catch (error) { return null; }
+    }
+    function writeAssetCache(aql, entries) {
+        var value = { version: 1, queries: {} };
+        try {
+            var current = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
+            if (current && current.version === 1 && current.queries && typeof current.queries === "object") value = current;
+        } catch (error) {}
+        value.queries[aql] = { fetchedAt: Date.now(), entries: entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
+        var temp = assetCachePath + ".tmp-" + process.pid + "-" + Date.now();
+        fs.writeFileSync(temp, JSON.stringify(value), { encoding: "utf8", mode: 384 });
+        try { fs.renameSync(temp, assetCachePath); }
+        catch (error) { try { fs.unlinkSync(assetCachePath); } catch (ignore) {} fs.renameSync(temp, assetCachePath); }
     }
 
     function fetchUsersFrom(config, endpoint) {
@@ -308,16 +331,22 @@ module.exports.createJiraAssetService = function (options) {
         var labelValues = attributes[lower(policy.labelAttribute)] || [];
         var hostname = text(labelValues[0] || entry.label || entry.objectKey || entry.id, 500);
         if (!hostname) return null;
-        var model = text((attributes.model || attributes["model name"] || [])[0], 300);
-        var serial = text((attributes["serial number"] || attributes.serial || [])[0], 300);
-        var inventory = text((attributes["inventory number"] || attributes.inventory || [])[0], 300);
-        var details = [model, serial, inventory].filter(Boolean);
+        var objectType = text(entry.objectType && entry.objectType.name || entry.objectTypeName, 300);
+        var model = text((attributes.model || attributes["model name"] || attributes["model urządzenia"] || [])[0], 300);
+        var manufacturer = text((attributes.manufacturer || attributes.producent || attributes.vendor || attributes.marka || [])[0], 300);
+        var serial = text((attributes["serial number"] || attributes.serial || attributes["numer seryjny"] || [])[0], 300);
+        var inventory = text((attributes["inventory number"] || attributes.inventory || attributes["numer inwentarzowy"] || attributes["nr inwentarzowy"] || [])[0], 300);
+        var details = [objectType, model, serial, inventory].filter(function (value, index, all) {
+            return value && lower(value) !== lower(hostname) && all.map(lower).indexOf(lower(value)) === index;
+        });
         return {
             value: hostname,
-            label: hostname + (details.length ? " - " + details.join(" / ") : ""),
+            label: hostname + (details.length ? " — " + details.join(" / ") : ""),
             objectId: text(entry.id, 200),
             objectKey: text(entry.objectKey, 200),
+            objectType: objectType,
             hostname: hostname,
+            manufacturer: manufacturer,
             model: model,
             serialNumber: serial,
             inventoryNumber: inventory
@@ -332,7 +361,7 @@ module.exports.createJiraAssetService = function (options) {
         return pageLength >= ASSET_PAGE_SIZE;
     }
 
-    function listAssets(userValue, variable) {
+    function listAssets(userValue, variable, force) {
         userValue = text(userValue, 500);
         var config = jiraConfig();
         var policy;
@@ -342,80 +371,121 @@ module.exports.createJiraAssetService = function (options) {
         var usersPromise = userValue ? listUsers(false, true) : Promise.resolve({ items: [] });
         return Promise.all([usersPromise, discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
             var identities = selectedUserIdentity(userValue, parts[0].items);
-            var baseUrl = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
-                "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) + "/v1/object/aql";
-            var items = [];
-            var seen = Object.create(null);
-            var startAt = 0;
-            var pageCount = 0;
-            var scanTruncated = false;
-
-            function next() {
-                if (items.length >= policy.maxResults) {
-                    return Promise.resolve({ items: items.slice(0, policy.maxResults), truncated: true });
-                }
-                if (pageCount >= MAX_ASSET_SCAN_PAGES) {
-                    scanTruncated = true;
-                    return Promise.resolve({ items: items, truncated: true });
-                }
-
-                var endpoint = baseUrl + "?startAt=" + startAt + "&maxResults=" + ASSET_PAGE_SIZE + "&includeAttributes=true";
-                pageCount++;
-                return requestJson({
-                    url: endpoint,
-                    method: "POST",
-                    headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
-                    json: { qlQuery: policy.aql },
-                    verifyTls: config.verifyTls,
-                    timeoutMs: 30000,
-                    maxBytes: 16 * 1024 * 1024,
-                    errorPrefix: "Jira Assets"
-                }).then(function (response) {
-                    var page = responseItems(response);
-                    page.filter(function (entry) {
-                        return entryMatchesUser(entry, identities);
-                    }).map(function (entry) {
-                        return normalizeAsset(entry, policy);
-                    }).filter(Boolean).forEach(function (item) {
-                        var key = lower(item.value);
-                        if (!key || seen[key] || items.length >= policy.maxResults) return;
-                        seen[key] = true;
-                        items.push(item);
-                    });
-
-                    var more = pageHasMore(response, startAt, page.length);
-                    startAt += page.length;
-                    if (!more || !page.length) return { items: items, truncated: false };
-                    return next();
-                });
+            var workspaceBase = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
+                "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) + "/v1";
+            var baseUrl = workspaceBase + "/object/aql";
+            var cached = readAssetCache(policy.aql);
+            function missingAttributeNames(entries) {
+                return entries.some(function (entry) { return array(entry && entry.attributes).some(function (attribute) {
+                    return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name, 300);
+                }); });
             }
-
-            return next().then(function (result) {
-                result.items.sort(function (a, b) { return a.label.localeCompare(b.label); });
-                if (result.truncated === true || scanTruncated) {
-                    result.warning = "Jira asset selector reached its script/provider safety limit. Narrow the script AQL for interactive selection.";
+            function enrichAttributeNames(entries) {
+                var typeIds = [], seenTypes = Object.create(null);
+                entries.forEach(function (entry) {
+                    var missing = array(entry && entry.attributes).some(function (attribute) {
+                        return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name, 300);
+                    });
+                    var typeId = text(entry && entry.objectType && entry.objectType.id, 100);
+                    if (missing && typeId && !seenTypes[typeId]) { seenTypes[typeId] = true; typeIds.push(typeId); }
+                });
+                function next(index) {
+                    if (index >= typeIds.length) return Promise.resolve(entries);
+                    var typeId = typeIds[index];
+                    return requestJson({
+                        url: workspaceBase + "/objecttype/" + encodeURIComponent(typeId) + "/attributes",
+                        method: "GET", headers: { Authorization: authHeader(config), Accept: "application/json" },
+                        verifyTls: config.verifyTls, timeoutMs: 30000, maxBytes: 4 * 1024 * 1024,
+                        errorPrefix: "Jira Assets attributes"
+                    }).then(function (definitions) {
+                        var names = Object.create(null);
+                        array(definitions).forEach(function (definition) {
+                            var id = text(definition && definition.id, 100), name = text(definition && definition.name, 300);
+                            if (id && name) names[id] = name;
+                        });
+                        entries.forEach(function (entry) {
+                            if (text(entry && entry.objectType && entry.objectType.id, 100) !== typeId) return;
+                            array(entry.attributes).forEach(function (attribute) {
+                                var id = text(attribute && (attribute.objectTypeAttributeId || attribute.id), 100);
+                                if (names[id]) attribute.objectTypeAttribute = { name: names[id] };
+                            });
+                        });
+                    }).catch(function () {}).then(function () { return next(index + 1); });
                 }
-                return result;
+                return next(0);
+            }
+            function fetchEntries() {
+                if (!force && cached && cached.fetchedAt > Date.now() - ASSET_CACHE_TTL_MS) {
+                    if (!missingAttributeNames(cached.entries)) return Promise.resolve({ entries: cached.entries, stale: false });
+                    return enrichAttributeNames(cached.entries).then(function (entries) {
+                        writeAssetCache(policy.aql, entries);
+                        return { entries: entries, stale: false };
+                    });
+                }
+                if (assetsInFlight[policy.aql]) return assetsInFlight[policy.aql];
+                var entries = [], startAt = 0, pageCount = 0, truncated = false;
+                function next() {
+                    if (pageCount >= MAX_ASSET_SCAN_PAGES) { truncated = true; return Promise.resolve(); }
+                    var endpoint = baseUrl + "?startAt=" + startAt + "&maxResults=" + ASSET_PAGE_SIZE + "&includeAttributes=true";
+                    pageCount++;
+                    return requestJson({
+                        url: endpoint, method: "POST",
+                        headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
+                        json: { qlQuery: policy.aql }, verifyTls: config.verifyTls,
+                        timeoutMs: 30000, maxBytes: 16 * 1024 * 1024, errorPrefix: "Jira Assets"
+                    }).then(function (response) {
+                        var page = responseItems(response);
+                        entries = entries.concat(page);
+                        var more = pageHasMore(response, startAt, page.length);
+                        startAt += page.length;
+                        return more && page.length ? next() : null;
+                    });
+                }
+                assetsInFlight[policy.aql] = next().then(function () {
+                    return enrichAttributeNames(entries);
+                }).then(function (enriched) {
+                    writeAssetCache(policy.aql, enriched);
+                    return { entries: enriched, stale: false, truncated: truncated };
+                }).catch(function (error) {
+                    if (cached && cached.entries.length) return { entries: cached.entries, stale: true, warning: text(error.message || error, 1000) };
+                    throw error;
+                }).then(function (result) { delete assetsInFlight[policy.aql]; return result; }, function (error) {
+                    delete assetsInFlight[policy.aql]; throw error;
+                });
+                return assetsInFlight[policy.aql];
+            }
+            return fetchEntries().then(function (source) {
+                var seen = Object.create(null), items = [];
+                source.entries.filter(function (entry) { return entryMatchesUser(entry, identities); }).map(function (entry) {
+                    return normalizeAsset(entry, policy);
+                }).filter(Boolean).forEach(function (item) {
+                    var key = lower(item.value);
+                    if (!key || seen[key] || items.length >= policy.maxResults) return;
+                    seen[key] = true; items.push(item);
+                });
+                items.sort(function (a, b) { return a.label.localeCompare(b.label); });
+                return { items: items, stale: source.stale === true, truncated: source.truncated === true || items.length >= policy.maxResults, warning: source.warning || "" };
             });
         });
     }
 
     return {
         cachePath: cachePath,
+        assetCachePath: assetCachePath,
         listAssets: listAssets,
         listUsers: listUsers,
         optionsFor: function (variable, values, force) {
             variable = object(variable);
             values = object(values);
             if (lower(variable.control) === "user") {
-                return listUsers(force === true, lower(values.JiraUserFilter) === "all");
+                return listUsers(force === true, variable.name === "JiraUser" || lower(values.JiraUserFilter) === "all");
             }
             if (lower(variable.control) === "asset") {
                 var policy = object(variable.jiraAsset);
                 var userVariable = text(policy.userVariable, 200).replace(/^[\s$%]+/, "");
                 var userValue = userVariable ? values[userVariable] : "";
                 if (userVariable && !text(userValue, 500)) return Promise.resolve({ items: [] });
-                return listAssets(userValue, variable);
+                return listAssets(userValue, variable, force === true);
             }
             return Promise.resolve({ items: [] });
         }
