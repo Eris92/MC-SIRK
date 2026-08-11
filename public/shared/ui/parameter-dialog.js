@@ -89,6 +89,7 @@
     function setChecklistOptions(host, control, options, single) {
         while (host && host.firstChild) host.removeChild(host.firstChild);
         var selected = text(control && control.value).split(/[;,|\r\n]+/).filter(Boolean);
+        var fragment = host ? document.createDocumentFragment() : null;
         (Array.isArray(options) ? options : []).forEach(function (option, index) {
             if (!host) return;
             var value = optionValue(option);
@@ -105,8 +106,9 @@
             label.textContent = optionLabel(option) || value;
             row.appendChild(box);
             row.appendChild(label);
-            host.appendChild(row);
+            fragment.appendChild(row);
         });
+        if (host && fragment) host.appendChild(fragment);
     }
     function setDatalistOptions(list, options) {
         while (list && list.firstChild) list.removeChild(list.firstChild);
@@ -484,10 +486,8 @@
                     record.optionHost.addEventListener("change", onChecklistChanged);
                     if (record.variable.submitOnDoubleClick === true) record.optionHost.addEventListener("dblclick", onOptionDoubleClick);
                 }
-                if (record.kind === "text" || record.kind === "switch") {
-                    record.control.addEventListener("input", onFilterChanged);
-                    record.control.addEventListener("change", onFilterChanged);
-                }
+                if (record.kind === "text") record.control.addEventListener("input", onFilterChanged);
+                else if (record.kind === "switch") record.control.addEventListener("change", onFilterChanged);
             });
             if (cancel) cancel.addEventListener("click", onCancel, true);
             if (close) close.addEventListener("click", onCancel, true);

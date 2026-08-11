@@ -73,7 +73,8 @@
             label: "Szukaj",
             required: false,
             control: "text",
-            defaultValue: ""
+            defaultValue: "",
+            inlineLabel: true
         };
         jiraUser = copy(jiraUser);
         jiraUser.label = "Użytkownicy";
@@ -93,6 +94,7 @@
         transfer.control = "select";
         transfer.listMode = true;
         transfer.hideLabel = true;
+        transfer.defaultValue = "true";
         transfer.options = [
             { value: "true", label: "Przekazanie sprzętu" },
             { value: "false", label: "Odbiór sprzętu" }

@@ -169,5 +169,11 @@ assert.ok(dialog.indexOf('box.type = single ? "radio" : "checkbox"') >= 0,
     "Shared option lists must use radio inputs for exclusive choices and checkboxes for multi-select assets.");
 assert.ok(dialog.indexOf('document.createElement(listMode ? "input" : useSelect ? "select" : "input")') >= 0,
     "List-mode selects must create a hidden-capable input instead of mutating the read-only HTMLSelectElement.type property.");
+assert.ok(dialog.indexOf('if (record.kind === "text") record.control.addEventListener("input", onFilterChanged);') >= 0,
+    "Text search must filter on input without a duplicate change rebuild.");
+assert.ok(dialog.indexOf('else if (record.kind === "switch") record.control.addEventListener("change", onFilterChanged);') >= 0,
+    "Active-only checkbox must rebuild the large user list once per click.");
+assert.ok(dialog.indexOf('document.createDocumentFragment()') >= 0,
+    "Large user and asset checklists must be attached in one DOM operation.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

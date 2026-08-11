@@ -1,3 +1,11 @@
+## 0.1.1-dev.58 - 2026-08-11
+
+- Restore original Jira aliases for protocol SN and inventory-number fields, including `SN` and `Numer_inwentarzowy`.
+- Rebuild the large user checklist once per active-only click and attach its rows in one DOM operation.
+- Stretch the Search input from its compact label and select `Przekazanie sprzętu` by default.
+
+Current development notes: `docs/releases/0.1.1-dev.58.md`.
+
 ## 0.1.1-dev.57 - 2026-08-11
 
 - Honor Jira Assets `hasMoreResults` ahead of the capped `total`/`isLast` metadata so the daily equipment snapshot continues beyond 1,000 objects.

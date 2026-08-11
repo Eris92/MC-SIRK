@@ -81,6 +81,7 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.strictEqual(calls[0].item.variables[0].control, "switch");
     assert.strictEqual(calls[0].item.variables[0].defaultValue, "true");
     assert.strictEqual(calls[0].item.variables[0].inlineControl, true);
+    assert.strictEqual(calls[0].item.variables[1].inlineLabel, true);
     assert.strictEqual(calls[0].item.variables[2].searchVariable, "JiraUserSearch");
     assert.strictEqual(calls[0].item.variables[2].label, "Użytkownicy");
     assert.strictEqual(calls[0].item.variables[2].listMode, true);
@@ -94,6 +95,7 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.deepStrictEqual(Array.prototype.map.call(calls[2].item.variables, function (item) { return item.name; }), ["IsTransferProtocol", "ItPerson"]);
     assert.strictEqual(calls[2].item.variables[0].control, "select");
     assert.strictEqual(calls[2].item.variables[0].listMode, true);
+    assert.strictEqual(calls[2].item.variables[0].defaultValue, "true");
     assert.strictEqual(calls[2].item.variables[0].options[0].label, "Przekazanie sprzętu");
     assert.strictEqual(calls[2].item.variables[0].options[1].label, "Odbiór sprzętu");
     assert.strictEqual(calls[2].item.variables[1].optionSource, "mesh-users");

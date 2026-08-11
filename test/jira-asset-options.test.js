@@ -55,8 +55,12 @@ function asset(id, hostname, owner, model) {
                 objectAttributeValues: [{ value: model, displayValue: model }]
             },
             {
-                objectTypeAttribute: { name: "Serial Number" },
+                objectTypeAttribute: { name: "SN" },
                 objectAttributeValues: [{ value: "SN-" + id, displayValue: "SN-" + id }]
+            },
+            {
+                objectTypeAttribute: { name: "Numer_inwentarzowy" },
+                objectAttributeValues: [{ value: "INV-" + id, displayValue: "INV-" + id }]
             }
         ]
     };
@@ -259,6 +263,8 @@ function asset(id, hostname, owner, model) {
             var assets = await assetService.optionsFor(assetVariable, { JiraUser: "acc-1" }, false);
             assert.deepStrictEqual(assets.items.map(function (item) { return item.value; }), ["PC-ALPHA", "PC-OMEGA"],
                 "Asset options must paginate the script AQL and filter every page by the script-bound Jira user identity.");
+            assert.strictEqual(assets.items[0].serialNumber, "SN-1", "Original-script SN attribute must reach the protocol row.");
+            assert.strictEqual(assets.items[0].inventoryNumber, "INV-1", "Original-script Numer_inwentarzowy attribute must reach the protocol row.");
             var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
             assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate beyond the first Atlassian page when required.");
             assert.strictEqual(aqlCalls[1].url.indexOf("startAt=500") >= 0, true,

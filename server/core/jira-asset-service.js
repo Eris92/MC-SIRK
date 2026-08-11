@@ -348,8 +348,8 @@ module.exports.createJiraAssetService = function (options) {
         var objectType = text(entry.objectType && entry.objectType.name || entry.objectTypeName, 300);
         var model = text((attributes.model || attributes["model name"] || attributes["model urządzenia"] || [])[0], 300);
         var manufacturer = text((attributes.manufacturer || attributes.producent || attributes.vendor || attributes.marka || [])[0], 300);
-        var serial = text((attributes["serial number"] || attributes.serial || attributes["numer seryjny"] || [])[0], 300);
-        var inventory = text((attributes["inventory number"] || attributes.inventory || attributes["numer inwentarzowy"] || attributes["nr inwentarzowy"] || [])[0], 300);
+        var serial = text((attributes["serial number"] || attributes.serial || attributes["numer seryjny"] || attributes["s/n"] || attributes.sn || attributes["service tag"] || [])[0], 300);
+        var inventory = text((attributes["inventory number"] || attributes.inventory || attributes["numer inwentarzowy"] || attributes.numer_inwentarzowy || attributes["asset tag"] || attributes.tag || attributes.inwentarz || attributes["nr inv"] || attributes["nr. inv"] || attributes["nr inwentarzowy"] || [])[0], 300);
         var details = [objectType, model, serial, inventory].filter(function (value, index, all) {
             return value && lower(value) !== lower(hostname) && all.map(lower).indexOf(lower(value)) === index;
         });
