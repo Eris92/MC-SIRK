@@ -1,3 +1,12 @@
+## 0.1.1-dev.52 - 2026-08-11
+
+- Real `0.1.1-dev.51` Jira + MeshCentral re-smoke still failed after the first User scope OK: the Modern modal closed and the wizard did not advance, proving the dev.50 wizard-only lifecycle correction ineffective.
+- Move the correction to the actual shared owner: successful Modern `openParameterDialog()` submissions now retain validated values and resolve only from the already-attached `hidden.bs.modal` event after MeshCentral finishes hiding the host modal.
+- Keep Classic completion immediate and preserve cancel/null, duplicate-submit guard, dynamic option provider and Jira four-step wizard semantics without a timer, polling loop, MutationObserver, custom modal or wizard-local hidden listener.
+- Pre-bump PR #298 Actions `31498772028` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral re-smoke remains required for #296/#290. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.52.md`.
+
 ## 0.1.1-dev.51 - 2026-08-11
 
 - Keep `server/core/jira-asset-service.js` as the single Jira user-cache owner: 24h-fresh data is reused, an expired cache refreshes before user-bound Assets resolution, stale data is fallback-only, and Jira tokens are never cached.

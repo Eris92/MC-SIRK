@@ -252,6 +252,7 @@
         var originalSubmitDisabled = !!submit.disabled;
         var modernModal = document.getElementById("xxAddAgentModal");
         var submitting = false;
+        var submittedValues = null;
         var settled = false;
         var cleaned = false;
 
@@ -288,7 +289,7 @@
                 cleanup();
             }
             function onHidden() {
-                if (!settled) finish(null);
+                if (!settled) finish(submitting ? submittedValues : null);
                 cleanup();
             }
             function loadDynamic(record) {
@@ -346,9 +347,12 @@
                 var values = validate(records, status);
                 if (!values) return false;
                 submitting = true;
+                submittedValues = values;
                 refreshSubmitState();
-                finish(values);
-                if (manager.mode === "classic") cleanup();
+                if (manager.mode === "classic") {
+                    finish(values);
+                    cleanup();
+                }
                 return true;
             }
             function onClassicSubmit(event) {
