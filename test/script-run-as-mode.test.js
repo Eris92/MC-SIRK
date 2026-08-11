@@ -13,6 +13,8 @@ try {
     fs.writeFileSync(scriptPath, [
         "#PL Test konta",
         "#EN Account test",
+        "# SirkWorkflow: JiraAssetProtocol",
+        "# SirkJiraAssetAql: objectType = Computer",
         "# runAsUser: 1",
         "",
         "[Security.Principal.WindowsIdentity]::GetCurrent().Name"
@@ -29,6 +31,10 @@ try {
     var legacy = library.getScript("whoami.ps1", true);
     assert.strictEqual(legacy.runAsUser, 2,
         "Legacy runAsUser:1 must be exposed as strict logged-on-user mode.");
+    assert.deepStrictEqual(legacy.extraHeaders, [
+        "SirkWorkflow: JiraAssetProtocol",
+        "SirkJiraAssetAql: objectType = Computer"
+    ], "Runtime scripts must expose bounded authoritative Sirk metadata from their stored header.");
 
     var systemSaved = library.saveDefinition("whoami.ps1", {
         runAsUser: 0,
@@ -43,6 +49,8 @@ try {
         "SYSTEM mode must remain MeshAgent mode 0.");
     assert.ok(/^# runAsUser: 0$/mi.test(fs.readFileSync(scriptPath, "utf8")),
         "Saving SYSTEM mode must persist an explicit runAsUser:0 directive.");
+    assert.ok(systemSaved.script.extraHeaders.indexOf("SirkJiraAssetAql: objectType = Computer") >= 0,
+        "Definition save must preserve script-owned Jira scope metadata.");
 
     var userSaved = library.saveDefinition("whoami.ps1", {
         runAsUser: 2,
@@ -57,6 +65,8 @@ try {
         "Logged-on-user mode must remain MeshAgent UserOnly mode 2.");
     assert.ok(/^# runAsUser: 2$/mi.test(fs.readFileSync(scriptPath, "utf8")),
         "Saving logged-on-user mode must persist runAsUser:2.");
+    assert.ok(userSaved.script.extraHeaders.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0,
+        "Sirk workflow metadata must survive repeated definition saves.");
 
     var browser = fs.readFileSync(path.join(__dirname, "..", "public", "shared", "ui", "script-tools.js"), "utf8");
     assert.ok(browser.indexOf('var runAs = createSelect(["0", "2"], String(value.runAsUser || 0))') >= 0,
@@ -68,7 +78,7 @@ try {
     assert.strictEqual(browser.indexOf('createSelect(["0", "1", "2"]'), -1,
         "Legacy runAsUser:1 must not return as an editor choice.");
 
-    console.log("Script run-as mode contract: OK");
+    console.log("Script run-as mode and authoritative Sirk metadata contract: OK");
 } finally {
     fs.rmSync(root, { recursive: true, force: true });
 }
