@@ -6,6 +6,7 @@ var shared = require("./shared.js");
 var CONFIRM_DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
 var RUN_AS_DIRECTIVE = /^\s*#\s*runAsUser\s*:\s*([012])\s*$/i;
 var MULTI_HOST_DIRECTIVE = /^\s*#\s*MultiHost\s*:\s*(true|false)\s*$/i;
+var SIRK_HEADER = /^\s*#\s*(Sirk[A-Za-z0-9_-]*\s*:\s*.+?)\s*$/i;
 var DECORATED_TREE_CACHE_MS = 5000;
 
 function normalizeRunAsUser(value) {
@@ -28,6 +29,20 @@ function headerBoolean(source, directive, defaultValue) {
         if (match) enabled = String(match[1]).toLowerCase() === "true";
     }
     return enabled;
+}
+
+function sirkHeaders(source) {
+    var lines = String(source && source.text || source || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+    var result = [];
+    for (var index = 0; index < lines.length; index++) {
+        var line = String(lines[index] || "");
+        var trimmed = line.trim();
+        if (!trimmed) continue;
+        if (trimmed.charAt(0) !== "#") break;
+        var match = line.match(SIRK_HEADER);
+        if (match) result.push(shared.cleanText(match[1], 5000).trim());
+    }
+    return result;
 }
 
 function parseEnabled(source) {
@@ -118,6 +133,7 @@ function decorateScript(base, script) {
     result.confirmExecution = parseEnabled(source);
     result.multiHost = parseMultiHost(source);
     result.runAsUser = normalizeRunAsUser(result.runAsUser);
+    result.extraHeaders = sirkHeaders(source);
     return result;
 }
 
@@ -216,5 +232,6 @@ module.exports.createScriptLibrary = function (options) {
 
 module.exports.normalizeRunAsUser = normalizeRunAsUser;
 module.exports.parseMultiHost = parseMultiHost;
+module.exports.sirkHeaders = sirkHeaders;
 module.exports.updateRunAsDirective = updateRunAsDirective;
 module.exports.updateMultiHostDirective = updateMultiHostDirective;
