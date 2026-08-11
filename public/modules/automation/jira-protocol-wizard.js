@@ -86,6 +86,7 @@
         asset.description = "";
         asset.control = "assetmulti";
         transfer = copy(transfer);
+        transfer.description = "";
         transfer.control = "select";
         transfer.listMode = true;
         transfer.hideLabel = true;
@@ -94,6 +95,7 @@
             { value: "false", label: "Odbiór sprzętu" }
         ];
         itPerson = copy(itPerson);
+        itPerson.description = "";
         itPerson.optionSource = "mesh-users";
         delete itPerson.defaultValue;
 

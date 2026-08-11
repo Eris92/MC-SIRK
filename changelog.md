@@ -3,6 +3,7 @@
 - Add a persistent PNG protocol-logo section with preview and Change action under Settings > General; generated PDFs reuse the same data-root asset.
 - Match searchable user and equipment checklist borders to native input fields while preserving the corrected exclusive protocol radio list.
 - Keep parsed Jira user/equipment daily snapshots hot in the shared cache owner so each protocol does not reparse the large cache files.
+- Paginate the shared Jira directory beyond the former 1,000-account cutoff and remove inherited help text from the final protocol step.
 
 Current development notes: `docs/releases/0.1.1-dev.56.md`.
 

@@ -156,6 +156,29 @@ function asset(id, hostname, owner, model) {
         assert.strictEqual(second.items.length, 2);
         assert.strictEqual(calls.length, 1, "Fresh 24h cache must suppress duplicate Jira calls.");
 
+        var completeTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-complete-users-"));
+        try {
+            var completeCalls = 0;
+            var completeService = factory.createJiraAssetService({
+                fs: fs, path: path, dataRoot: completeTemp, integrations: integration(),
+                requestJson: function (options) {
+                    if (options.url.indexOf("/rest/api/3/users/search") < 0) return Promise.reject(new Error("unexpected endpoint"));
+                    completeCalls++;
+                    var startAt = Number(new URL(options.url).searchParams.get("startAt"));
+                    if (startAt < 1000) return Promise.resolve(Array.from({ length: 100 }, function (_, index) {
+                        return user("bulk-" + (startAt + index), "Bulk " + (startAt + index), "");
+                    }));
+                    return Promise.resolve([user("target-user", "Krzysztof Lechmyc", "")]);
+                }
+            });
+            var completeUsers = await completeService.listUsers(true, true);
+            assert.ok(completeUsers.items.some(function (item) { return item.displayName === "Krzysztof Lechmyc"; }),
+                "The shared Jira directory must paginate beyond 1000 accounts instead of silently omitting valid users.");
+            assert.strictEqual(completeCalls, 11);
+        } finally {
+            fs.rmSync(completeTemp, { recursive: true, force: true });
+        }
+
         var fallbackCalls = [];
         var fallbackTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-fallback-"));
         try {
