@@ -41,6 +41,18 @@ assert.ok(script.indexOf('sirk-quick-command-browser mc-shared-layout') >= 0 &&
 assert.ok(script.indexOf("window.SharedScriptTools.openParameterDialog") >= 0 &&
     script.indexOf("sirk-quick-command-submit") < 0,
     "Quick parameterized execution must use the shared native dialog instead of an inline Run action.");
+assert.ok(script.indexOf("window.SharedScriptTools.openConfirmationDialog") >= 0,
+    "Quick ConfirmExecution must reuse the shared native MeshCentral confirmation dialog.");
+assert.strictEqual(script.indexOf("window.confirm("), -1,
+    "Quick must never fall back to browser-native confirmation.");
+assert.ok(script.indexOf("function confirmAndSubmit(item, values, trigger, panel)") >= 0 &&
+    script.indexOf("return confirmAndSubmit(value, values, button, panel)") >= 0,
+    "Parameterized Quick execution must pass collected values through exactly one confirmation gate.");
+assert.ok(script.indexOf("confirmedExecution: confirmedExecution === true") >= 0 &&
+    script.indexOf("if (item.confirmExecution && confirmedExecution !== true)") >= 0,
+    "Quick must send confirmedExecution only after explicit native confirmation and reject bypass attempts.");
+assert.ok(script.indexOf("Native MeshCentral confirmation dialog is unavailable.") >= 0,
+    "Quick must fail visibly instead of executing when the shared native dialog owner is unavailable.");
 assert.ok(css.indexOf("grid-template-columns:minmax(165px,205px) minmax(285px,340px) minmax(240px,300px)!important") >= 0,
     "Quick commands must keep the My Commands first two columns and use a smaller details column.");
 assert.ok(css.indexOf("grid-template-columns:64px minmax(285px,340px) minmax(240px,300px)!important") >= 0,
@@ -62,4 +74,4 @@ assert.ok(css.indexOf(".sirk-quick-command-toolbar-host .mc-shared-toolbar") >= 
     css.indexOf(".sirk-desktop-commands .mc-shared-toolbar-button") >= 0,
     "Quick commands toolbar must inherit the same live-theme visual contract as Commands.");
 
-console.log("Quick toolbar, Favorites, native parameter dialog, output collapse and non-attention refresh: OK");
+console.log("Quick toolbar, Favorites, native parameter/confirmation dialogs, output collapse and non-attention refresh: OK");
