@@ -85,6 +85,8 @@ Promise.resolve()
         assert.ok(transformedPowerShell.cmd.indexOf("$directPowerShell=0") >= 0 &&
             transformedPowerShell.cmd.indexOf("-DirectPowerShell '+$directPowerShell") >= 0,
             "Ordinary user PowerShell must retain the isolated child-process execution path.");
+        assert.ok(transformedPowerShell.cmd.indexOf("$runnerMode=if($directPowerShell -eq 1){' -STA'}else{' -NonInteractive'}") >= 0,
+            "Ordinary commands and trusted Shell UI commands must select their runner mode from one shared owner.");
         assert.ok(transformedPowerShell.cmd.indexOf("icacls.exe") >= 0 &&
             transformedPowerShell.cmd.indexOf("S-1-5-18") >= 0,
             "Temporary command files must be restricted to SYSTEM and the selected user.");
@@ -114,6 +116,9 @@ Promise.resolve()
             "Network Settings must match the manually proven elevated Administrator token using RunLevel Highest.");
         assert.ok(transformedNetwork.cmd.indexOf("$directPowerShell=1") >= 0,
             "Trusted elevated PowerShell must execute directly in the interactive task runner instead of spawning a second PowerShell host.");
+        assert.ok(transformedNetwork.cmd.indexOf("$runnerMode=if($directPowerShell -eq 1){' -STA'}else{' -NonInteractive'}") >= 0 &&
+            transformedNetwork.cmd.indexOf("-NoProfile'+$runnerMode+' -ExecutionPolicy") >= 0,
+            "Trusted Shell UI PowerShell must use an STA interactive runner rather than the ordinary NonInteractive host.");
         assert.ok(decodedPayloads(transformedNetwork.cmd).some(function (value) { return value.indexOf("$verb.DoIt()") >= 0; }),
             "The proven FolderItemVerb body must be preserved inside the elevated launcher.");
         assert.ok(decodedPayloads(transformedNetwork.cmd).some(function (value) {
