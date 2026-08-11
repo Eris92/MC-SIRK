@@ -400,6 +400,94 @@
         return (data.modules || []).some(function (item) { return item.key === key && item.enabled === true; });
     }
 
+    function protocolLogoSection(host) {
+        var section = element("section", "mc-admin-branding");
+        section.appendChild(element("h4", "", "Protocol logo"));
+        section.appendChild(element("p", "mc-admin-card-description", "This logo is shared by generated Jira equipment protocols."));
+        var preview = element("div", "mc-admin-logo-preview");
+        var image = document.createElement("img");
+        image.alt = "Current protocol logo";
+        var empty = element("span", "", "No logo uploaded");
+        image.onload = function () { image.hidden = false; empty.hidden = true; };
+        image.onerror = function () { image.hidden = true; empty.hidden = false; };
+        preview.appendChild(image);
+        preview.appendChild(empty);
+        section.appendChild(preview);
+
+        var file = document.createElement("input");
+        file.type = "file";
+        file.accept = "image/png,.png";
+        file.hidden = true;
+        var row = element("div", "mc-admin-inline-actions");
+        var button = element("button", "mc-admin-secondary", "Change");
+        button.type = "button";
+        var status = element("span", "mc-admin-save-status", "");
+        button.onclick = function () { file.click(); };
+        file.onchange = function () {
+            var selected = file.files && file.files[0];
+            if (!selected) return;
+            if (selected.type !== "image/png" || selected.size > 1024 * 1024) {
+                status.className = "mc-admin-save-status mc-admin-error";
+                status.textContent = "Select a PNG file no larger than 1 MB.";
+                file.value = "";
+                return;
+            }
+            button.disabled = true;
+            status.className = "mc-admin-save-status";
+            status.textContent = "Uploading…";
+            var reader = new FileReader();
+            reader.onerror = function () {
+                button.disabled = false;
+                status.className = "mc-admin-save-status mc-admin-error";
+                status.textContent = "Unable to read the selected file.";
+            };
+            reader.onload = function () {
+                var bytes = String(reader.result || "").split(",")[1] || "";
+                var body = new URLSearchParams();
+                body.set("action", "upload-protocol-logo");
+                body.set("logoData", bytes);
+                var url = new URL("pluginadmin.ashx", window.location.href);
+                url.searchParams.set("pin", root.getAttribute("data-plugin") || "SIRKPortal");
+                url.searchParams.set("action", "upload-protocol-logo");
+                fetch(url.href, {
+                    method: "POST", credentials: "same-origin",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8", "Accept": "application/json" },
+                    body: body.toString()
+                }).then(function (response) {
+                    return response.json().then(function (result) {
+                        if (!response.ok || !result.ok) throw new Error(result.error || "Upload failed.");
+                        return result;
+                    });
+                }).then(function (result) {
+                    image.src = logoUrl(result.version);
+                    status.className = "mc-admin-save-status";
+                    status.textContent = "Logo updated";
+                }).catch(function (error) {
+                    status.className = "mc-admin-save-status mc-admin-error";
+                    status.textContent = error.message || String(error);
+                }).then(function () {
+                    button.disabled = false;
+                    file.value = "";
+                });
+            };
+            reader.readAsDataURL(selected);
+        };
+        row.appendChild(button);
+        row.appendChild(status);
+        section.appendChild(file);
+        section.appendChild(row);
+        host.appendChild(section);
+        image.src = logoUrl(Date.now());
+    }
+
+    function logoUrl(version) {
+        var url = new URL("pluginadmin.ashx", window.location.href);
+        url.searchParams.set("pin", root.getAttribute("data-plugin") || "SIRKPortal");
+        url.searchParams.set("asset", "protocol-logo");
+        url.searchParams.set("v", String(version || Date.now()));
+        return url.href;
+    }
+
     function renderGeneral(card) {
         card.appendChild(element("h3", "", "General"));
         card.appendChild(element("p", "mc-admin-card-description", "Select which menu icon family is used independently of the loaded MeshCentral theme."));
@@ -408,6 +496,7 @@
             { value: "classic", label: "Classic" },
             { value: "modern", label: "Modern" }
         ], String(data.uiSettings && data.uiSettings.iconMode || "auto"));
+        protocolLogoSection(card);
         actions(card, function () {
             return { modules: {}, moduleOptions: { general: { iconMode: iconMode.value } } };
         });

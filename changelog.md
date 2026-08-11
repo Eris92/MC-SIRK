@@ -1,3 +1,10 @@
+## 0.1.1-dev.56 - 2026-08-11
+
+- Add a persistent PNG protocol-logo section with preview and Change action under Settings > General; generated PDFs reuse the same data-root asset.
+- Match searchable user and equipment checklist borders to native input fields while preserving the corrected exclusive protocol radio list.
+
+Current development notes: `docs/releases/0.1.1-dev.56.md`.
+
 ## 0.1.1-dev.55 - 2026-08-11
 
 - Fix the Jira protocol transfer/return radio list by creating its hidden value owner as an input instead of assigning the read-only `HTMLSelectElement.type` property.

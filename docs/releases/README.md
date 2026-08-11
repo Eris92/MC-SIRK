@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native field borders for Jira user/equipment lists;
 - [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective Jira transfer/return list control after real Modern smoke exposed a read-only `HTMLSelectElement.type` assignment;
 - [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
 - [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
