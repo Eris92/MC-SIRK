@@ -1,3 +1,28 @@
+## 0.1.1-dev.54 - 2026-08-11
+
+- Replace the Jira protocol scope/user split with one native dialog: checked-by-default active-only filter, separate client-side search and cached Jira user selector.
+- Render Jira users as a filtered scrollable single-select list with double-click advance, and render transfer/return as mutually exclusive choices without instructional filler.
+- Restore multi-equipment protocol selection as a checkbox list and widen the script-owned AQL to all user-equipment types under `Sprzęt użytkownika`.
+- Add a separate 24-hour Jira Assets cache alongside the existing users cache; every script-owned AQL reuses its fresh snapshot instead of scanning Jira per protocol.
+- Add separately executable `Jira Cache Users` and `Jira Cache Assets` scripts with an optional Force switch, both delegated to the shared server-side cache owner.
+- Source the IT person from MeshCentral users and preselect the real name of the current operator.
+- Replace the diagnostic bitmap document with styled A4 HTML-to-PDF rendering, a table/signature layout and a logo loaded from `server/assets/protocol-logo.svg`.
+
+Current development notes: `docs/releases/0.1.1-dev.54.md`.
+
+## 0.1.1-dev.53 - 2026-08-11
+
+- Real `0.1.1-dev.52` Jira + MeshCentral smoke confirmed that the Modern dialog lifecycle now advances, but the User selector remained empty because `SharedScriptTools.create()` instances did not expose the shared dynamic-option provider setter used by My Scripts.
+- Extend the existing parameter-dialog instance bridge with `setParameterOptionProvider`, so the canonical Automation provider reaches shared User/Asset controls and the backend Jira cache route is actually invoked.
+- Point the Jira Asset Protocol script-owned policy at the real CMDB `Komputer` type and its `Nazwa_sieciowa` display attribute; the previous English `Computer` AQL selected four unassigned LanSweeper records and made every user-bound Asset result empty.
+- Parenthesize protocol environment-value helper calls inside PowerShell hashtables so Windows PowerShell 5.1 emits the structured execution result instead of failing with an argument-type mismatch before PDF generation.
+- Reapply the shared submit-button state after Modern `showModal()` so a host-disabled OK button from a previous dialog cannot make the next Scope step inert.
+- Keep the Polish protocol script encoded with UTF-8 BOM so Windows PowerShell 5.1 preserves native text and PDF characters instead of producing mojibake.
+- Register shared Modern hidden resolution after native `showModal()` installs its disposal handler, ensuring MeshCentral releases the current modal before the Jira wizard opens its next step.
+- Add a focused instance-contract regression and preserve one shared provider owner without polling, timers, observers, custom dialogs or Jira-local option loading. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.53.md`.
+
 ## 0.1.1-dev.52 - 2026-08-11
 
 - Real `0.1.1-dev.51` Jira + MeshCentral re-smoke still failed after the first User scope OK: the Modern modal closed and the wizard did not advance, proving the dev.50 wizard-only lifecycle correction ineffective.

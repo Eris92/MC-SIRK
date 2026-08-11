@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 92" role="img" aria-label="SIRK Management Platform">
+  <rect width="92" height="92" rx="18" fill="#17365d"/>
+  <path d="M22 25h48v10H34v12h30v10H34v12h36v10H22z" fill="#fff"/>
+  <path d="M70 25 48 47l22 22" fill="none" stroke="#40a9c7" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="112" y="48" font-family="Arial,Helvetica,sans-serif" font-size="38" font-weight="700" fill="#17365d">SIRK</text>
+  <text x="114" y="72" font-family="Arial,Helvetica,sans-serif" font-size="15" letter-spacing="1.6" fill="#47657f">MANAGEMENT PLATFORM</text>
+</svg>

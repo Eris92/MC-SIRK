@@ -4,7 +4,9 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.52`](0.1.1-dev.52.md) — corrective Modern parameter-dialog lifecycle: successful submit resolves only after host `hidden.bs.modal`, preventing the next Jira wizard step from racing a still-closing modal; real Jira/MeshCentral re-smoke pending;
+- [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
+- [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
+- [`0.1.1-dev.52`](0.1.1-dev.52.md) — corrective Modern parameter-dialog lifecycle: successful submit resolves only after host `hidden.bs.modal`, preventing the next Jira wizard step from racing a still-closing modal;
 - [`0.1.1-dev.51`](0.1.1-dev.51.md) — Jira user cache refresh-before-Assets contract, hidden internal `_shared` My Scripts paths i always-visible disabled/enabled Credentials action; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.50`](0.1.1-dev.50.md) — corrective Jira wizard follow-up po real dev.49 FAIL: next step chains from the shared dialog promise without a second modal-hidden wait; real Jira/MeshCentral re-smoke pending;
 - [`0.1.1-dev.49`](0.1.1-dev.49.md) — Jira #290: global integration connection-only, script-owned Assets scope/user binding i paginated dynamic options; real Jira/MeshCentral smoke pending;

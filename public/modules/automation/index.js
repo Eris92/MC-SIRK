@@ -552,7 +552,7 @@
     if (tools && typeof tools.setParameterOptionProvider === "function") {
         tools.setParameterOptionProvider(function (variable, values, item) {
             var control = String(variable && variable.control || "").toLowerCase();
-            if (!item || !item.path || (control !== "user" && control !== "asset")) return [];
+            if (!item || !item.path || (control !== "user" && control !== "asset" && control !== "assetmulti")) return [];
             return module.api.post("variable-options", {
                 scriptPath: item.path,
                 variableName: variable.name,

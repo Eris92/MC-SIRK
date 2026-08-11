@@ -5,7 +5,7 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.join(__dirname, "..");
-function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
+function read(relative) { return fs.readFileSync(path.join(root, relative), "utf8").replace(/\r\n/g, "\n"); }
 
 var desktop = read("public/native/desktop-commands.js");
 var desktopCss = read("public/native/desktop-commands.css");

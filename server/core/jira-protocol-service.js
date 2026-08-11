@@ -1,7 +1,8 @@
 "use strict";
 
 var artifactFactory = require("./artifact-service.js");
-var pdfRenderer = require("./pdf-text-renderer.js");
+var documentTemplateRenderer = require("./document-template-renderer.js");
+var htmlPdfRenderer = require("./html-pdf-renderer.js");
 var shared = require("./shared.js");
 
 var MAX_PROGRESS_ENTRIES = 200;
@@ -64,12 +65,25 @@ function findAsset(assets, value) {
             .some(function (candidate) { return lower(candidate) === wanted; });
     })[0] || null;
 }
+function findMeshUser(parent, value) {
+    var wanted = lower(value), web = shared.getWebServer(parent), users = web && web.users || {};
+    if (!wanted) return null;
+    var ids = Object.keys(users);
+    for (var index = 0; index < ids.length; index++) {
+        var user = users[ids[index]];
+        if (!user || user.deleted != null) continue;
+        if (lower(shared.userName(user)) === wanted || lower(user._id || ids[index]) === wanted || lower(user.name) === wanted) return user;
+    }
+    return null;
+}
 
 module.exports.createJiraProtocolService = function (options) {
     options = options || {};
     var context = options.context;
     var jiraAssets = options.jiraAssets;
     var executor = options.executor;
+    var renderProtocolDocument = options.renderProtocolDocument || documentTemplateRenderer.renderJiraAssetProtocol;
+    var renderHtmlPdf = options.renderHtmlPdf || htmlPdfRenderer.renderHtmlPdf;
     var artifactService = options.artifactService || artifactFactory.createArtifactService({
         fs: context.fs,
         path: context.nativePath || context.path,
@@ -157,11 +171,13 @@ module.exports.createJiraProtocolService = function (options) {
             usersResult = users || { items: [] };
             selectedUser = findUser(usersResult.items, inputs.userValue);
             if (!selectedUser) throw new Error("Selected Jira user is no longer available.");
-            selectedItPerson = findUser(usersResult.items, inputs.itPersonValue) || {
-                value: inputs.itPersonValue,
-                accountId: "",
-                emailAddress: "",
-                displayName: inputs.itPersonValue
+            var meshItPerson = findMeshUser(context.parent, inputs.itPersonValue);
+            if (!meshItPerson && context.parent) throw new Error("Selected IT person is no longer available in MeshCentral.");
+            selectedItPerson = {
+                value: meshItPerson && (meshItPerson._id || meshItPerson.name) || inputs.itPersonValue,
+                accountId: meshItPerson && meshItPerson._id || "",
+                emailAddress: meshItPerson && (meshItPerson.email || meshItPerson.mail) || "",
+                displayName: meshItPerson ? shared.userName(meshItPerson) : inputs.itPersonValue
             };
             updateProgress(requestId, 25, "Resolving Jira Assets", "running");
             return jiraAssets.listAssets(selectedUser.value || inputs.userValue, assetVariable);
@@ -197,7 +213,9 @@ module.exports.createJiraProtocolService = function (options) {
                 throw new Error("Protocol renderer returned an invalid result.");
             }
             var protocolText = text(rendered.text, 500000);
-            var pdf = pdfRenderer.renderTextPdf(protocolText);
+            var protocolHtml = renderProtocolDocument(rendered.data);
+            if (!text(protocolHtml, 1000000)) throw new Error("Shared document template returned no styled HTML document.");
+            return renderHtmlPdf(protocolHtml).then(function (pdf) {
             if (!Buffer.isBuffer(pdf) || pdf.length < 100 || pdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) {
                 throw new Error("PDF renderer returned an invalid artifact.");
             }
@@ -220,6 +238,7 @@ module.exports.createJiraProtocolService = function (options) {
                 scriptPath: script.path,
                 label: script.label || script.name || "Jira Asset Protocol"
             };
+            });
         }).catch(function (error) {
             var previous = progressByRequest[requestId];
             updateProgress(requestId, previous && previous.percent || 0, "Failed", "failed");

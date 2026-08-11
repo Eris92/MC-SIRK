@@ -91,6 +91,12 @@ assert.strictEqual(submitBlock.indexOf("finish(values);"), submitBlock.indexOf('
 assert.ok(submitBlock.indexOf('if (manager.mode === "classic")') >= 0 &&
     submitBlock.indexOf("finish(values);") > submitBlock.indexOf('if (manager.mode === "classic")'),
     "Modern OK must not resolve the shared promise before hidden.bs.modal; Classic still resolves immediately.");
+var modernShow = dialog.indexOf('manager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest);');
+assert.ok(modernShow >= 0 && dialog.indexOf("refreshSubmitState();", modernShow) > modernShow,
+    "Modern parameter dialogs must reapply their submit state after the host show call mutates the shared OK button.");
+var modernHiddenRegistration = dialog.indexOf('modernModal.addEventListener("hidden.bs.modal", onHidden);', modernShow);
+assert.ok(modernHiddenRegistration > modernShow,
+    "MeshCentral must register its modal-disposal hidden handler before the shared dialog registers next-step resolution.");
 
 var focused = false;
 var invalid = false;
@@ -132,6 +138,12 @@ assert.strictEqual(typeof instance.openParameterDialog, "function",
     "SharedScriptTools.create() instances used by Commands/My Scripts must expose the shared parameter dialog.");
 assert.strictEqual(typeof instance.openConfirmationDialog, "function",
     "SharedScriptTools.create() instances must expose the shared confirmation dialog.");
+assert.strictEqual(typeof instance.setParameterOptionProvider, "function",
+    "SharedScriptTools.create() instances must expose the shared dynamic-option provider bridge.");
+var instanceProvider = function () { return Promise.resolve([{ value: "jira-user" }]); };
+instance.setParameterOptionProvider(instanceProvider);
+assert.strictEqual(context.window.SharedScriptTools.parameterDialogContract.optionProvider(), instanceProvider,
+    "The instance bridge must register the provider used by shared user and asset controls.");
 
 var required = fakeControl("");
 var flag = fakeControl("");
@@ -149,5 +161,11 @@ focused = false;
 var values = contract.validate(records, status);
 assert.strictEqual(values.RequiredText, "value");
 assert.strictEqual(values.Flag, false, "Switch values must preserve boolean mapping.");
+assert.ok(dialog.indexOf('control.setAttribute("checked", "checked")') >= 0,
+    "Checked switch defaults must survive native dialog innerHTML serialization.");
+assert.ok(dialog.indexOf('record.variable.submitOnDoubleClick === true') >= 0,
+    "A list variable may advance the existing shared dialog on an explicit double click.");
+assert.ok(dialog.indexOf('box.type = single ? "radio" : "checkbox"') >= 0,
+    "Shared option lists must use radio inputs for exclusive choices and checkboxes for multi-select assets.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

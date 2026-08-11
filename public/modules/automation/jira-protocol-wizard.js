@@ -60,39 +60,62 @@
         var itPerson = variable(item, "ItPerson");
         if (!jiraUser || !asset || !transfer || !itPerson) return originalOpen(options);
 
-        var filter = {
-            name: "JiraUserFilter",
-            label: "Jira users",
-            description: "Choose whether inactive Jira accounts are included in the next user list.",
-            required: true,
-            control: "select",
-            defaultValue: "active",
-            options: [
-                { value: "active", label: "Active only" },
-                { value: "all", label: "All" }
-            ]
+        var activeOnly = {
+            name: "JiraUserActiveOnly",
+            label: "Tylko aktywni użytkownicy",
+            required: false,
+            control: "switch",
+            defaultValue: "true"
         };
-        var scopeStep = stepItem(item, "Jira Asset Protocol - User scope", "Choose which Jira accounts are visible.", [filter]);
-        var userStep = stepItem(item, "Jira Asset Protocol - User", "Select a Jira user from the cached server-side list.", [jiraUser]);
-        var assetStep = stepItem(item, "Jira Asset Protocol - Asset", "Select equipment currently assigned to the selected Jira user.", [asset]);
-        var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "Confirm transfer/return mode and the IT person before generating the protected PDF.", [transfer, itPerson]);
+        var search = {
+            name: "JiraUserSearch",
+            label: "Szukaj",
+            required: false,
+            control: "text",
+            defaultValue: ""
+        };
+        jiraUser = copy(jiraUser);
+        jiraUser.label = "Użytkownicy";
+        jiraUser.description = "";
+        jiraUser.listMode = true;
+        jiraUser.submitOnDoubleClick = true;
+        jiraUser.searchVariable = "JiraUserSearch";
+        jiraUser.activeOnlyVariable = "JiraUserActiveOnly";
+        asset = copy(asset);
+        asset.label = "Sprzęt";
+        asset.description = "";
+        asset.control = "assetmulti";
+        transfer = copy(transfer);
+        transfer.control = "select";
+        transfer.listMode = true;
+        transfer.hideLabel = true;
+        transfer.options = [
+            { value: "true", label: "Przekazanie sprzętu" },
+            { value: "false", label: "Odbiór sprzętu" }
+        ];
+        itPerson = copy(itPerson);
+        itPerson.optionSource = "mesh-users";
+        delete itPerson.defaultValue;
 
-        return runStep(options, scopeStep, {}, "Next").then(function (scopeValues) {
-            if (scopeValues == null) return null;
-            return runStep(options, userStep, scopeValues, "Next").then(function (userValues) {
+        var userStep = stepItem(item, "Jira Asset Protocol - User", "", [activeOnly, search, jiraUser]);
+        var assetStep = stepItem(item, "Sprzęt", "", [asset]);
+        var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
+
+        return runStep(options, userStep, {}, "Next").then(function (userValues) {
                 if (userValues == null) return null;
-                var selectedUser = Object.assign({}, scopeValues, userValues);
+                var selectedUser = Object.assign({}, userValues);
                 return runStep(options, assetStep, selectedUser, "Next").then(function (assetValues) {
                     if (assetValues == null) return null;
                     var accumulated = Object.assign({}, selectedUser, assetValues);
                     return runStep(options, protocolStep, accumulated, options.primaryLabel || (item.requiresApproval ? "Request" : "Run")).then(function (protocolValues) {
                         if (protocolValues == null) return null;
                         var result = Object.assign({}, accumulated, protocolValues);
-                        delete result.JiraUserFilter;
+                        result.IsTransferProtocol = text(result.IsTransferProtocol).toLowerCase() === "true";
+                        delete result.JiraUserActiveOnly;
+                        delete result.JiraUserSearch;
                         return result;
                     });
                 });
-            });
         });
     }
 

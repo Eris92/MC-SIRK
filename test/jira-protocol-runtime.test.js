@@ -8,12 +8,15 @@ var path = require("path");
 var root = path.join(__dirname, "..");
 var protocolFactory = require(path.join(root, "server/core/jira-protocol-service.js"));
 var artifactFactory = require(path.join(root, "server/core/artifact-service.js"));
+var documentRenderer = require(path.join(root, "server/core/document-template-renderer.js"));
 var pdfRenderer = require(path.join(root, "server/core/pdf-text-renderer.js"));
+var pdfRendererSource = fs.readFileSync(path.join(root, "server/core/pdf-text-renderer.js"), "utf8");
 var serverSource = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 var executorSource = fs.readFileSync(path.join(root, "server/core/server-script-executor.js"), "utf8");
 var clientSource = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
 var dialogSource = fs.readFileSync(path.join(root, "public/shared/ui/parameter-dialog.js"), "utf8");
 var seedSource = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Asset Protocol.ps1"), "utf8");
+var sharedTemplateSource = fs.readFileSync(path.join(root, "server/templates/document-a4.html"), "utf8");
 
 function jiraUser(value, name, email) {
     return { value: value, accountId: value, displayName: name, emailAddress: email, label: name };
@@ -40,6 +43,8 @@ function jiraAsset(value, model, serial, inventory) {
         var directPdf = pdfRenderer.renderTextPdf("PROTOKÓŁ\nZażółć gęślą jaźń");
         assert.ok(Buffer.isBuffer(directPdf) && directPdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0,
             "Protocol renderer must emit actual PDF bytes, not HTML/print markup.");
+        assert.ok(pdfRendererSource.indexOf("var LINE_HEIGHT = 18;") >= 0,
+            "Bitmap PDF line spacing must include Polish marks above and below the base glyph.");
 
         var executorCalls = [];
         var authoritativeVariable = null;
@@ -58,6 +63,14 @@ function jiraAsset(value, model, serial, inventory) {
                     ] });
                 }
             },
+            renderHtmlPdf: function (html) {
+                assert.ok(html.indexOf("<html") >= 0, "Styled HTML must be the authoritative PDF input.");
+                assert.ok(html.indexOf("Łukasz Żółć") >= 0 && html.indexOf("ThinkPad T14") >= 0,
+                    "Shared document template must render protocol data returned by PowerShell.");
+                assert.ok(html.indexOf("Protokół zdawczo-odbiorczy") >= 0 && html.indexOf("odbiór sprzętu przez pracownika") >= 0,
+                    "Protocol PDF must preserve the original document title and transfer wording.");
+                return Promise.resolve(directPdf);
+            },
             executor: {
                 execute: function (payload, request, executionOptions) {
                     executorCalls.push({ payload: payload, request: request, options: executionOptions });
@@ -66,8 +79,16 @@ function jiraAsset(value, model, serial, inventory) {
                             protocol: true,
                             message: "Gotowe",
                             text: "PROTOKÓŁ PRZEKAZANIA SPRZĘTU\nUżytkownik: Łukasz Żółć\nOsoba IT: Żaneta Ślusarz\nZażółć gęślą jaźń",
-                            html: "<html><body>escaped</body></html>",
-                            data: { mode: "transfer" }
+                            data: {
+                                mode: "transfer",
+                                generatedAt: "2026-08-11T10:20:30.000Z",
+                                user: { name: "Łukasz Żółć", email: "lukasz@example.invalid" },
+                                itPerson: { name: "Żaneta Ślusarz", email: "zaneta@example.invalid" },
+                                assets: [
+                                    { hostname: "PC-01", manufacturer: "Lenovo", model: "ThinkPad T14", serialNumber: "SN-01", inventoryNumber: "INV-01", assetIdentifier: "IT-PC-01" },
+                                    { hostname: "PC-02", manufacturer: "HP", model: "EliteBook 840", serialNumber: "SN-02", inventoryNumber: "INV-02", assetIdentifier: "IT-PC-02" }
+                                ]
+                            }
                         },
                         exitCode: 0
                     });
@@ -166,15 +187,46 @@ function jiraAsset(value, model, serial, inventory) {
             seedSource.indexOf("VariableSwitchRequired: $IsTransferProtocol") >= 0 &&
             seedSource.indexOf("VariableUserRequired: $ItPerson") >= 0,
             "Canonical seed workflow must preserve the legacy four-input contract.");
-        assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0 && seedSource.indexOf("SirkAllowCustom: ItPerson") >= 0);
-        assert.ok(seedSource.indexOf("SirkJiraAssetAql: objectType = Computer") >= 0 &&
-            seedSource.indexOf("SirkJiraAssetLabelAttribute: Hostname") >= 0 &&
+        assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0);
+        assert.strictEqual(seedSource.indexOf("SirkAllowCustom: ItPerson"), -1,
+            "IT person must be selected from authoritative MeshCentral users, not a custom Jira-style datalist.");
+        assert.ok(seedSource.indexOf('SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")') >= 0 &&
+            seedSource.indexOf("SirkJiraAssetLabelAttribute: Nazwa_sieciowa") >= 0 &&
             seedSource.indexOf("SirkJiraAssetUserVariable: JiraUser") >= 0,
             "Canonical Jira protocol must own its Assets query, display attribute and Jira user binding in script metadata.");
+        ["USER_ID", "USER_NAME", "USER_EMAIL", "IT_ID", "IT_NAME", "IT_EMAIL"].forEach(function (name) {
+            assert.ok(seedSource.indexOf("(Get-ProtocolValue $env:SIRK_PROTOCOL_" + name + ")") >= 0,
+                "PowerShell hashtable values must parenthesize protocol helper calls: " + name);
+        });
+        assert.ok(seedSource.indexOf("$mode = if ($transfer)") >= 0 && seedSource.indexOf("mode = $mode") >= 0,
+            "PowerShell result hashtable must reuse a precomputed protocol mode value.");
+        assert.ok(seedSource.indexOf("assets = $assetRows.ToArray()") >= 0,
+            "Windows PowerShell 5.1 must materialize the generic asset list before nesting it in the result object.");
+        assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
+            "The canonical Polish PowerShell protocol must retain a UTF-8 BOM for Windows PowerShell 5.1.");
         assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1,
             "Canonical protocol renderer must not consume or print the Jira token.");
         assert.strictEqual(seedSource.indexOf("DirectoryTools"), -1,
             "Canonical protocol workflow must not depend on legacy DirectoryTools paths/settings.");
+        assert.strictEqual(seedSource.indexOf("<style>"), -1,
+            "Protocol PowerShell must not duplicate the shared document layout or CSS.");
+        assert.ok(sharedTemplateSource.indexOf("{{DOCUMENT_BODY}}") >= 0 && sharedTemplateSource.indexOf("<style>") >= 0,
+            "The A4 layout must be an external reusable template with a body slot.");
+        assert.ok(sharedTemplateSource.indexOf("--accent: #19833e") >= 0 && sharedTemplateSource.indexOf(".people") >= 0 &&
+            sharedTemplateSource.indexOf(".note") >= 0 && sharedTemplateSource.indexOf("{{LOGO_MARKUP}}") >= 0,
+            "Shared template must preserve the original green INVESTA layout and external logo slot.");
+        assert.strictEqual(documentRenderer.templatePath, path.join(root, "server/templates/document-a4.html"));
+        var escapedDocument = documentRenderer.renderJiraAssetProtocol({
+            mode: "return",
+            generatedAt: "2026-08-11T10:20:30.000Z",
+            user: { name: "<script>alert(1)</script>", email: "a&b@example.invalid" },
+            itPerson: { name: "IT" },
+            assets: [{ hostname: "PC<01", model: "A&B", serialNumber: "\"SN\"", inventoryNumber: "", assetIdentifier: "IT-1" }]
+        });
+        assert.strictEqual(escapedDocument.indexOf("<script>alert(1)</script>"), -1,
+            "Shared template renderer must escape all script/Jira supplied values.");
+        assert.ok(escapedDocument.indexOf("&lt;script&gt;alert(1)&lt;/script&gt;") >= 0 && escapedDocument.indexOf("A&amp;B") >= 0,
+            "Shared template renderer must preserve user data as escaped text.");
 
         console.log("Jira Asset Protocol lifecycle, script-owned authoritative recheck, progress and protected PDF contract: OK");
     } finally {

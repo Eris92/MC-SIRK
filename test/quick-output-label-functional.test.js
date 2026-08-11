@@ -4,7 +4,7 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-var source = fs.readFileSync(path.join(__dirname, "..", "public", "native", "desktop-commands.js"), "utf8");
+var source = fs.readFileSync(path.join(__dirname, "..", "public", "native", "desktop-commands.js"), "utf8").replace(/\r\n/g, "\n");
 
 assert.ok(source.indexOf('hideDetails: "Ukryj wynik", showDetails: "Pokaż wynik"') >= 0 &&
     source.indexOf('hideDetails: "Hide output", showDetails: "Show output"') >= 0,
