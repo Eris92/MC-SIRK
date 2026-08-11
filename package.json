@@ -1,6 +1,6 @@
 {
   "name": "sirk-portal",
-  "version": "0.1.1-dev.52",
+  "version": "0.1.1-dev.53",
   "private": true,
   "scripts": {
     "test": "node scripts/run-tests.js",

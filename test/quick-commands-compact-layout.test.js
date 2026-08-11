@@ -5,8 +5,8 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.join(__dirname, "..");
-var css = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.css"), "utf8");
-var script = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8");
+var css = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.css"), "utf8").replace(/\r\n/g, "\n");
+var script = fs.readFileSync(path.join(root, "public", "native", "desktop-commands.js"), "utf8").replace(/\r\n/g, "\n");
 
 assert.ok(css.indexOf(".sirk-quick-command-header{display:none!important}") >= 0,
     "The separate Quick commands title row must stay hidden so the toolbar is first.");

@@ -132,7 +132,7 @@ assert.deepStrictEqual(Array.from(currentFallback.initialIds), [nodeA],
     "When native selection is empty, the current visible node must seed initial state and legacy selection aliases must be ignored.");
 
 var selectedStart = source.indexOf("function selectedDevices");
-var selectedEnd = source.indexOf("\n\n    function maxMultiHostNodes", selectedStart);
+var selectedEnd = source.indexOf("    function maxMultiHostNodes", selectedStart);
 var selectedSource = source.slice(selectedStart, selectedEnd);
 assert.ok(selectedStart >= 0 && selectedEnd > selectedStart, "The canonical native selection adapter must exist.");
 assert.ok(selectedSource.indexOf("window.checkedNodeids") >= 0, "Native checkedNodeids must be the only MeshCentral multi-selection owner.");
@@ -146,7 +146,7 @@ assert.strictEqual(selectedSource.indexOf("document.querySelectorAll"), -1, "Nat
 });
 
 var multiStart = source.indexOf("function openMultiExecution");
-var multiEnd = source.indexOf("\n\n            var tool =", multiStart);
+var multiEnd = source.indexOf("            var tool =", multiStart);
 var multiSource = source.slice(multiStart, multiEnd);
 assert.ok(multiStart >= 0 && multiEnd > multiStart, "The shared multi-device renderer must exist.");
 assert.strictEqual(multiSource.indexOf("shell.api("), -1, "Opening or searching the selector must not request a new host catalog.");

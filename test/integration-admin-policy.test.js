@@ -97,7 +97,7 @@ new Promise(function (resolve, reject) {
         "Canonical admin owner must serve the integration editor asset.");
     assert.ok(adminSource.indexOf('action === "save-integrations"') >= 0 && adminSource.indexOf("integrations.save(user, integrationPayload)") >= 0,
         "Canonical admin owner must route secure writes to the existing integration service.");
-    assert.strictEqual(adminEntrypoint.trim(), '"use strict";\n\nmodule.exports = require("./admin.js");',
+    assert.strictEqual(adminEntrypoint.replace(/\r\n/g, "\n").trim(), '"use strict";\n\nmodule.exports = require("./admin.js");',
         "SIRKPortalAdmin must retain canonical delegation without a parallel wrapper owner.");
     console.log("Secure SiteAdmin-only shared integration configuration and no-secret browser contract: OK");
 }).catch(function (error) {

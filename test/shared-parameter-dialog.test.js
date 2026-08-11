@@ -132,6 +132,12 @@ assert.strictEqual(typeof instance.openParameterDialog, "function",
     "SharedScriptTools.create() instances used by Commands/My Scripts must expose the shared parameter dialog.");
 assert.strictEqual(typeof instance.openConfirmationDialog, "function",
     "SharedScriptTools.create() instances must expose the shared confirmation dialog.");
+assert.strictEqual(typeof instance.setParameterOptionProvider, "function",
+    "SharedScriptTools.create() instances must expose the shared dynamic-option provider bridge.");
+var instanceProvider = function () { return Promise.resolve([{ value: "jira-user" }]); };
+instance.setParameterOptionProvider(instanceProvider);
+assert.strictEqual(context.window.SharedScriptTools.parameterDialogContract.optionProvider(), instanceProvider,
+    "The instance bridge must register the provider used by shared user and asset controls.");
 
 var required = fakeControl("");
 var flag = fakeControl("");

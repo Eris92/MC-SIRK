@@ -4,9 +4,9 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 var root = path.resolve(__dirname, "..");
-var server = fs.readFileSync(path.join(root, "server/modules/commands/index.js"), "utf8");
-var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8");
-var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8");
+var server = fs.readFileSync(path.join(root, "server/modules/commands/index.js"), "utf8").replace(/\r\n/g, "\n");
+var commands = fs.readFileSync(path.join(root, "public/modules/commands/index.js"), "utf8").replace(/\r\n/g, "\n");
+var quick = fs.readFileSync(path.join(root, "public/native/desktop-commands.js"), "utf8").replace(/\r\n/g, "\n");
 
 function entry(id) {
     var marker = '{ id: "' + id + '"';

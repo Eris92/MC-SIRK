@@ -1,3 +1,11 @@
+## 0.1.1-dev.53 - 2026-08-11
+
+- Real `0.1.1-dev.52` Jira + MeshCentral smoke confirmed that the Modern dialog lifecycle now advances, but the User selector remained empty because `SharedScriptTools.create()` instances did not expose the shared dynamic-option provider setter used by My Scripts.
+- Extend the existing parameter-dialog instance bridge with `setParameterOptionProvider`, so the canonical Automation provider reaches shared User/Asset controls and the backend Jira cache route is actually invoked.
+- Add a focused instance-contract regression and preserve one shared provider owner without polling, timers, observers, custom dialogs or Jira-local option loading. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.53.md`.
+
 ## 0.1.1-dev.52 - 2026-08-11
 
 - Real `0.1.1-dev.51` Jira + MeshCentral re-smoke still failed after the first User scope OK: the Modern modal closed and the wizard did not advance, proving the dev.50 wizard-only lifecycle correction ineffective.

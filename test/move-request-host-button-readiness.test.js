@@ -5,8 +5,8 @@ var fs = require("fs");
 var path = require("path");
 
 var root = path.join(__dirname, "..");
-var runtimeSource = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"), "utf8");
-var moduleSource = fs.readFileSync(path.join(root, "public", "modules", "move-requests", "index.js"), "utf8");
+var runtimeSource = fs.readFileSync(path.join(root, "public", "shared", "runtime.js"), "utf8").replace(/\r\n/g, "\n");
+var moduleSource = fs.readFileSync(path.join(root, "public", "modules", "move-requests", "index.js"), "utf8").replace(/\r\n/g, "\n");
 
 assert.ok(runtimeSource.indexOf('id: "MoveRequestHostButton"') >= 0,
     "Move Request host action metadata must live in the shared bootstrap/runtime owner.");

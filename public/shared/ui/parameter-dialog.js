@@ -483,6 +483,7 @@
         assetUserDependency: assetUserDependency,
         controlKind: controlKind,
         currentValues: currentValues,
+        optionProvider: function () { return sharedOptionProvider; },
         validate: validate
     };
 
@@ -496,6 +497,9 @@
                 };
                 instance.openConfirmationDialog = function (dialogOptions) {
                     return tools.openConfirmationDialog(dialogOptions);
+                };
+                instance.setParameterOptionProvider = function (provider) {
+                    return tools.setParameterOptionProvider(provider);
                 };
             }
             return instance;
