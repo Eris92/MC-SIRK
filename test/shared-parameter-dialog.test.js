@@ -79,6 +79,18 @@ assert.ok(dialog.indexOf('record.kind === "asset"') >= 0 && dialog.indexOf("onUs
     "Asset controls must be refreshable after a real parent user change.");
 assert.ok(dialog.indexOf("if (settled) return;") >= 0,
     "Shared confirmation dialog must settle once even on repeated confirm/cancel events.");
+assert.ok(dialog.indexOf("var submittedValues = null;") >= 0 && dialog.indexOf("submittedValues = values;") >= 0,
+    "Modern parameter submission must retain validated values until the host modal finishes hiding.");
+assert.ok(dialog.indexOf("if (!settled) finish(submitting ? submittedValues : null);") >= 0,
+    "The authoritative Modern hidden event must resolve submitted values, or null when no submit occurred.");
+var submitStart = dialog.indexOf("function submitRequest()");
+var submitEnd = dialog.indexOf("function onClassicSubmit", submitStart);
+var submitBlock = dialog.slice(submitStart, submitEnd);
+assert.strictEqual(submitBlock.indexOf("finish(values);"), submitBlock.indexOf('if (manager.mode === "classic")') >= 0 ? submitBlock.indexOf("finish(values);") : -1,
+    "Classic completion must remain inside the Classic-only branch.");
+assert.ok(submitBlock.indexOf('if (manager.mode === "classic")') >= 0 &&
+    submitBlock.indexOf("finish(values);") > submitBlock.indexOf('if (manager.mode === "classic")'),
+    "Modern OK must not resolve the shared promise before hidden.bs.modal; Classic still resolves immediately.");
 
 var focused = false;
 var invalid = false;
@@ -138,4 +150,4 @@ var values = contract.validate(records, status);
 assert.strictEqual(values.RequiredText, "value");
 assert.strictEqual(values.Flag, false, "Switch values must preserve boolean mapping.");
 
-console.log("Shared native execution parameter/confirmation dialog, consumers, loader order and validation: OK");
+console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");
