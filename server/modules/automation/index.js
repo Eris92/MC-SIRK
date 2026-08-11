@@ -193,7 +193,7 @@ module.exports.createModule = function (context) {
                 if (!admin.hasSystemCredential(optionScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
                 }
-                return jiraAssets.optionsFor(variable, value.values, value.force === true).then(function (result) {
+                return jiraAssets.optionsFor(variable, value.values, value.force === true, optionScript).then(function (result) {
                     return {
                         ok: true,
                         items: result.items || [],
