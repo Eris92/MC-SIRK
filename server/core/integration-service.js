@@ -85,8 +85,7 @@ module.exports.createIntegrationService = function (options) {
                 current.entra && current.entra.tenantId && current.entra.clientId && secretValue.entraClientSecret
             ),
             jira: !!(
-                current.jira && current.jira.url && current.jira.email &&
-                current.jira.projectKey && secretValue.jiraToken
+                current.jira && current.jira.url && current.jira.email && secretValue.jiraToken
             ),
             defender: !!(
                 current.defender && current.defender.tenantId &&
