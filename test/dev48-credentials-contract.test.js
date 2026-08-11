@@ -29,6 +29,13 @@ assert.strictEqual(tools.indexOf('box.disabled = profile.configured !== true'), 
     "System credential assignment must not be disabled just because the global profile is not configured yet.");
 assert.ok(tools.indexOf('profile.configured ? "Configured" : "Not configured globally"') >= 0,
     "System credential readiness must remain visible without blocking assignment.");
+var definitionSaveStart = tools.indexOf("save.onclick = function ()");
+var definitionSaveEnd = tools.indexOf("if (credentials) {", definitionSaveStart);
+var definitionSave = tools.slice(definitionSaveStart, definitionSaveEnd);
+assert.ok(definitionSaveStart >= 0 && definitionSaveEnd > definitionSaveStart,
+    "Definition Editor save lifecycle must remain inspectable in the shared owner.");
+assert.strictEqual(definitionSave.indexOf("catch(function () { return null; })"), -1,
+    "Definition Editor must not swallow System credentials save failures and close as if the assignment succeeded.");
 
 assert.ok(scriptAdmin.indexOf('var allowed = Object.keys(profileLabels);') >= 0,
     "System credential assignments must validate against canonical profile names, not current readiness.");
