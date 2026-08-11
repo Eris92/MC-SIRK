@@ -26,6 +26,15 @@ function protocolScript(script) {
     }));
 }
 
+function protocolAssetVariable(script) {
+    var variables = script && Array.isArray(script.variables) ? script.variables : [];
+    return variables.filter(function (variable) {
+        return variable && variable.control === "asset" && String(variable.name || "") === "PcName";
+    })[0] || variables.filter(function (variable) {
+        return variable && variable.control === "asset";
+    })[0] || null;
+}
+
 function selectedAssetValues(value) {
     var seen = Object.create(null);
     return String(value == null ? "" : value).split(/[;,|\r\n]+/).map(function (item) {
@@ -131,6 +140,8 @@ module.exports.createJiraProtocolService = function (options) {
         if (!protocolScript(script)) return Promise.reject(new Error("Invalid Jira protocol workflow."));
         var requestId = text(request && request.id, 128);
         if (!requestId) return Promise.reject(new Error("Protocol request ID is unavailable."));
+        var assetVariable = protocolAssetVariable(script);
+        if (!assetVariable) return Promise.reject(new Error("Jira protocol asset variable is unavailable."));
 
         var inputs;
         try { inputs = normalizeProtocolInputs(payload); }
@@ -153,7 +164,7 @@ module.exports.createJiraProtocolService = function (options) {
                 displayName: inputs.itPersonValue
             };
             updateProgress(requestId, 25, "Resolving Jira Assets", "running");
-            return jiraAssets.listAssets(selectedUser.value || inputs.userValue);
+            return jiraAssets.listAssets(selectedUser.value || inputs.userValue, assetVariable);
         }).then(function (assets) {
             var available = assets && Array.isArray(assets.items) ? assets.items : [];
             selectedAssets = inputs.assetValues.map(function (value) {
