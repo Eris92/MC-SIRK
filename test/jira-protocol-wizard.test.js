@@ -41,7 +41,17 @@ var tools = {
 };
 var sandbox = {
     window: { SharedScriptTools: tools },
-    document: { getElementById: function () { return null; } },
+    document: {
+        getElementById: function (id) {
+            if (id !== "xxAddAgentModal") return null;
+            return {
+                classList: { contains: function (name) { return name === "show"; } },
+                addEventListener: function () {
+                    throw new Error("Wizard must not wait for a second modal hidden event after the shared dialog has already resolved.");
+                }
+            };
+        }
+    },
     Promise: Promise,
     JSON: JSON,
     Object: Object,
@@ -86,6 +96,8 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.strictEqual(values.IsTransferProtocol, true);
     assert.strictEqual(Object.prototype.hasOwnProperty.call(values, "JiraUserFilter"), false,
         "Synthetic wizard-only filter must never be sent as a script variable.");
+    assert.strictEqual(source.indexOf("afterModernHidden"), -1,
+        "Wizard must chain from the shared dialog promise and must not wait for an extra hidden.bs.modal event that MeshCentral may not emit.");
 
     calls.length = 0;
     return sandbox.window.SharedScriptTools.openParameterDialog({
@@ -102,7 +114,7 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
         "Canonical admin asset map must serve the wizard without a parallel wrapper.");
     assert.strictEqual(pluginMain.indexOf("MutationObserver"), -1, "Wizard startup must not add a DOM polling/observer loop.");
     assert.strictEqual(source.indexOf("window.prompt"), -1, "Wizard must never fall back to free-text browser prompts.");
-    console.log("Jira protocol four-step shared-native wizard, provider context and non-Jira isolation: OK");
+    console.log("Jira protocol four-step shared-native wizard, next-step lifecycle, provider context and non-Jira isolation: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
