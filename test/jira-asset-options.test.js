@@ -7,8 +7,11 @@ var path = require("path");
 
 var root = path.join(__dirname, "..");
 var factory = require(path.join(root, "server/core/jira-asset-service.js"));
+var integrationFactory = require(path.join(root, "server/core/integration-service.js"));
+var scriptLibraryFactory = require(path.join(root, "server/core/script-confirmation-library.js"));
 var automationServer = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 var automationClient = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
+var adminIntegrations = fs.readFileSync(path.join(root, "web/admin/integrations.js"), "utf8");
 
 function integration(overrides) {
     return {
@@ -19,9 +22,10 @@ function integration(overrides) {
                 token: "TOP-SECRET-TOKEN",
                 cloudId: "cloud-1",
                 workspaceId: "workspace-1",
-                aql: "objectType = Computer",
-                hostnameAttribute: "Hostname",
-                maxResults: 100,
+                projectKey: "LEGACY",
+                aql: "objectType = LegacyGlobalScope",
+                hostnameAttribute: "LegacyHostname",
+                maxResults: 10,
                 verifyTls: true
             }, overrides || {});
         }
@@ -61,6 +65,60 @@ function asset(id, hostname, owner, model) {
 (async function () {
     var temp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-options-"));
     try {
+        var readiness = integrationFactory.createIntegrationService({
+            settings: {
+                read: function () {
+                    return { integrations: { jira: { url: "https://example.atlassian.net", email: "service@example.invalid" } } };
+                }
+            },
+            secrets: {
+                get: function () { return { jiraToken: "TOP-SECRET-TOKEN" }; }
+            },
+            parent: {}
+        }).configured();
+        assert.strictEqual(readiness.jira, true,
+            "Jira readiness must require connection credentials only, not one global project key.");
+
+        ["Project key", "Hostname attribute", "Asset field ID", "Assets AQL scope", "Max asset results", "Enable Jira Assets/CMDB"].forEach(function (label) {
+            assert.strictEqual(adminIntegrations.indexOf(label), -1,
+                "Admin Jira integration must not own script/query restriction: " + label);
+        });
+        assert.ok(adminIntegrations.indexOf("Assets workspace ID") >= 0 && adminIntegrations.indexOf("Cloud ID") >= 0,
+            "Connection/discovery identifiers must remain available in the global Jira profile.");
+        assert.ok(adminIntegrations.indexOf("Verify Jira TLS certificate") >= 0,
+            "TLS verification remains connection security and must stay global.");
+
+        var policyRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-script-policy-"));
+        try {
+            fs.writeFileSync(path.join(policyRoot, "Policy.ps1"), [
+                "# Policy",
+                "# VariableAssetRequired: $PcName, Asset",
+                "# SirkWorkflow: JiraAssetProtocol",
+                "# SirkJiraAssetAql: objectType = Computer",
+                "# SirkJiraAssetLabelAttribute: Hostname",
+                "# SirkJiraAssetMaxResults: 25",
+                "",
+                "Write-Output 'ok'"
+            ].join("\n"), "utf8");
+            var policyLibrary = scriptLibraryFactory.createScriptLibrary({
+                fs: fs,
+                path: path,
+                root: policyRoot,
+                readOnly: true
+            });
+            var policyScript = policyLibrary.getScript("Policy.ps1", false);
+            var policyVariable = policyScript.variables.filter(function (item) { return item.control === "asset"; })[0];
+            assert.ok(policyScript.extraHeaders.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0,
+                "Sirk workflow metadata must remain available to backend consumers.");
+            assert.deepStrictEqual(policyVariable.jiraAsset, {
+                aql: "objectType = Computer",
+                labelAttribute: "Hostname",
+                maxResults: 25
+            }, "Jira asset policy must be owned by script metadata.");
+        } finally {
+            fs.rmSync(policyRoot, { recursive: true, force: true });
+        }
+
         var calls = [];
         var service = factory.createJiraAssetService({
             fs: fs,
@@ -84,7 +142,7 @@ function asset(id, hostname, owner, model) {
         var first = await service.listUsers(false);
         assert.strictEqual(first.stale, false);
         assert.deepStrictEqual(first.items.map(function (item) { return item.value; }), ["acc-1", "acc-2"],
-            "Jira users must be active, deduplicated and sorted by display label.");
+            "Jira users must be instance-wide, active, deduplicated and sorted by display label.");
         assert.strictEqual(calls.length, 1, "A short Jira user page must finish without an extra request.");
 
         var cache = fs.readFileSync(service.cachePath, "utf8");
@@ -134,6 +192,10 @@ function asset(id, hostname, owner, model) {
         var assetTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-assets-"));
         try {
             var assetCalls = [];
+            var firstPage = [asset("1", "PC-ALPHA", "acc-1", "ThinkPad")];
+            for (var assetIndex = 2; assetIndex <= 500; assetIndex++) {
+                firstPage.push(asset(String(assetIndex), "PC-OTHER-" + assetIndex, "acc-2", "Other"));
+            }
             var assetService = factory.createJiraAssetService({
                 fs: fs,
                 path: path,
@@ -145,24 +207,37 @@ function asset(id, hostname, owner, model) {
                         return Promise.resolve([user("acc-1", "Alpha User", "alpha@example.invalid")]);
                     }
                     if (options.url.indexOf("/object/aql") >= 0) {
-                        return Promise.resolve({ values: [
-                            asset("1", "PC-ALPHA", "acc-1", "ThinkPad"),
-                            asset("2", "PC-BETA", "acc-2", "EliteBook")
-                        ] });
+                        if (options.url.indexOf("startAt=0") >= 0) return Promise.resolve({ values: firstPage, total: 501 });
+                        if (options.url.indexOf("startAt=500") >= 0) {
+                            return Promise.resolve({ values: [asset("501", "PC-OMEGA", "acc-1", "Latitude")], total: 501 });
+                        }
                     }
                     return Promise.reject(new Error("Unexpected request: " + options.url));
                 }
             });
-            var assets = await assetService.listAssets("acc-1");
-            assert.strictEqual(assets.items.length, 1, "Asset options must be filtered by the selected Jira user identity.");
-            assert.strictEqual(assets.items[0].value, "PC-ALPHA");
-            assert.ok(assets.items[0].label.indexOf("ThinkPad") >= 0, "Asset label should reuse normalized model data.");
-            var aqlCall = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; })[0];
-            assert.ok(aqlCall, "Assets must use the current POST /object/aql endpoint.");
-            assert.strictEqual(aqlCall.method, "POST");
-            assert.strictEqual(aqlCall.json.qlQuery, "objectType = Computer", "Assets must reuse the configured AQL.");
-            assert.ok(aqlCall.url.indexOf("cloud-1") >= 0 && aqlCall.url.indexOf("workspace-1") >= 0,
+            var assetVariable = {
+                control: "asset",
+                jiraAsset: {
+                    aql: "objectType = Computer",
+                    labelAttribute: "Hostname",
+                    maxResults: 10
+                }
+            };
+            var assets = await assetService.listAssets("acc-1", assetVariable);
+            assert.deepStrictEqual(assets.items.map(function (item) { return item.value; }), ["PC-ALPHA", "PC-OMEGA"],
+                "Asset options must paginate the script AQL and filter every page by the selected Jira user identity.");
+            var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
+            assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate beyond the first Atlassian page when required.");
+            assert.strictEqual(aqlCalls[0].method, "POST");
+            assert.strictEqual(aqlCalls[0].json.qlQuery, "objectType = Computer",
+                "Asset provider must use script-owned AQL instead of legacy global Jira AQL.");
+            assert.ok(aqlCalls[0].url.indexOf("maxResults=500") >= 0 && aqlCalls[1].url.indexOf("startAt=500") >= 0,
+                "Asset pagination must use a bounded provider page size and advance startAt.");
+            assert.ok(aqlCalls[0].url.indexOf("cloud-1") >= 0 && aqlCalls[0].url.indexOf("workspace-1") >= 0,
                 "Configured cloudId/workspaceId must avoid unnecessary discovery requests.");
+            await assert.rejects(function () {
+                return assetService.listAssets("acc-1", { control: "asset" });
+            }, /query is not configured/, "Dynamic Assets must fail closed when the script does not declare its Jira query scope.");
         } finally {
             fs.rmSync(assetTemp, { recursive: true, force: true });
         }
@@ -176,7 +251,7 @@ function asset(id, hostname, owner, model) {
         assert.strictEqual(automationClient.indexOf("window.prompt"), -1,
             "Jira migration must not reintroduce a browser prompt or inline legacy form.");
 
-        console.log("Jira cached user options, v2 fallback, stale cache, dependent Assets AQL and profile gate: OK");
+        console.log("Jira connection-only readiness, script-owned Assets scope, pagination and cached users: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
