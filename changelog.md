@@ -1,3 +1,12 @@
+## 0.1.1-dev.51 - 2026-08-11
+
+- Keep `server/core/jira-asset-service.js` as the single Jira user-cache owner: 24h-fresh data is reused, an expired cache refreshes before user-bound Assets resolution, stale data is fallback-only, and Jira tokens are never cached.
+- Reserve underscore-prefixed My Scripts paths such as `_shared` for internal reusable content; omit them from the public tree and reject direct public script/API execution paths.
+- Keep the My Scripts Credentials key visible in Edit mode for all editable scripts: enabled for local or declared system-credential consumers and disabled/grey when unused, with Jira Asset Protocol declaring `SirkSystemCredential: Jira`.
+- Pre-bump PR #295 Actions `31493372964` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral smoke remains required for #294/#290. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.51.md`.
+
 ## 0.1.1-dev.50 - 2026-08-11
 
 - Real `0.1.1-dev.49` Jira + MeshCentral smoke exposed a Modern native-dialog lifecycle failure: accepting the first Jira user-scope step closed the modal and the four-step wizard stopped.
@@ -75,7 +84,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
@@ -93,7 +102,7 @@ Current development notes: `docs/releases/0.1.1-dev.41.md`.
 - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
 - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
 - Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
-- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag or GitHub Release.
+- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.40.md`.
 

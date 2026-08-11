@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.50
+# SIRK Management Platform 0.1.1-dev.51
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -35,7 +35,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.50.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.51.md)
 
 ## Warstwy
 
@@ -112,7 +112,7 @@ SIRK nie utrzymuje własnego systemu audit logów. `server/core/mesh-events.js` 
 
 ## Atomic render
 
-`public/shared/module-shell.js` renderuje nowe `secondary` i `details` poza live DOM. `renderSequence` odrzuca nieaktualne operacje, a zawartość strony jest podmieniana dopiero podczas atomic commit.
+`public/shared/module-shell.js` renderuje nowe `secondary` i `details` poza live DOM. `renderSequence` odrzuca nieaktualny render, a zawartość strony jest podmieniana dopiero podczas atomic commit.
 
 Przejście pomiędzy workspace SIRK nie wykonuje pośredniego `go(1)`, dzięki czemu Devices nie jest odtwarzane pomiędzy modułami.
 

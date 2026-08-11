@@ -18,6 +18,13 @@
         return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.siteAdmin);
     }
 
+    function usesCredentials(script) {
+        if (script && Array.isArray(script.secretVariables) && script.secretVariables.length > 0) return true;
+        return !!(script && Array.isArray(script.extraHeaders) && script.extraHeaders.some(function (header) {
+            return /^SirkSystemCredential\s*:\s*\S+/i.test(String(header || "").trim());
+        }));
+    }
+
     function sync(shell) {
         tools.syncToolbar(shell.state.page && shell.state.page.toolbar, mode, treeState.selectedScript, {
             canEdit: admin(shell),
@@ -337,7 +344,7 @@
     }
 
     function actions(shell, script) {
-        return tools.scriptActions(script, {
+        var definitions = tools.scriptActions(script, {
             canEdit: admin(shell),
             enableMulti: false,
             onEdit: function (item) {
@@ -362,6 +369,25 @@
             },
             onLinkCopied: function (item) {}
         });
+        if (tools.state.editMode && admin(shell) && !definitions.some(function (definition) {
+            return definition && definition.key === "credentials";
+        })) {
+            var enabled = usesCredentials(script);
+            definitions.unshift({
+                key: "credentials",
+                icon: "key",
+                disabled: !enabled,
+                className: "mc-tree-credential-action",
+                title: enabled ? "Configure script credentials" : "This script does not use credentials",
+                onClick: enabled ? function () {
+                    treeState.selectedScript = script.path;
+                    tools.openCredentialsEditor(shell, script, function () {
+                        note(shell, "Credentials saved", "Encrypted credentials for this script were updated.");
+                    });
+                } : null
+            });
+        }
+        return definitions;
     }
 
     function primary(shell, host) {

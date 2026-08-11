@@ -32,11 +32,28 @@ module.exports.createModule = function (context) {
         return !groups.length || shared.isUserInAnyGroup(user, groups);
     }
     function requireAdmin(user) { if (!shared.isSiteAdmin(user)) throw new Error("Permission denied."); }
-    function tree() { return library.getTree(); }
+    function internalScriptPath(relativePath) {
+        return String(relativePath || "").replace(/\\/g, "/").split("/").some(function (part) {
+            return /^_/.test(part);
+        });
+    }
+    function publicTree(node) {
+        if (!node) return node;
+        var result = shared.copy(node);
+        if (result.type !== "directory") return result;
+        result.children = (result.children || []).filter(function (child) {
+            return !internalScriptPath(child && (child.path || child.name));
+        }).map(publicTree);
+        return result;
+    }
+    function tree() { return publicTree(library.getTree()); }
     function folderKeys() { return (tree().children || []).map(function (item) { return String(item.path || item.name || ""); }); }
     function folderRules() { return (context.settings.read().modules.myscripts || {}).folderPermissions || {}; }
     function visibleTree(user) { return folderAccess.filterTree(tree(), folderRules(), user); }
-    function requireScriptAccess(user, relativePath) { return folderAccess.requirePath(user, folderRules(), relativePath); }
+    function requireScriptAccess(user, relativePath) {
+        if (internalScriptPath(relativePath)) throw new Error("Script not found.");
+        return folderAccess.requirePath(user, folderRules(), relativePath);
+    }
     function folderSettings() {
         var rules = folderRules();
         return (tree().children || []).map(function (item) {

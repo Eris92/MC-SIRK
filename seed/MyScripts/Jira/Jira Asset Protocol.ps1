@@ -6,6 +6,7 @@
 # VariableSwitchRequired: $IsTransferProtocol, false, Przekazanie sprzętu|Włącz dla przekazania; wyłącz dla zwrotu.
 # VariableUserRequired: $ItPerson, Osoba IT|Możesz wybrać osobę z Jira albo wpisać bezpieczną wartość własną.
 # SirkWorkflow: JiraAssetProtocol
+# SirkSystemCredential: Jira
 # SirkAllowCustom: ItPerson
 # SirkJiraAssetAql: objectType = Computer
 # SirkJiraAssetLabelAttribute: Hostname

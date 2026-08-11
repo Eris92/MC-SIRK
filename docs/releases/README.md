@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.51`](0.1.1-dev.51.md) — Jira user cache refresh-before-Assets contract, hidden internal `_shared` My Scripts paths i always-visible disabled/enabled Credentials action; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.50`](0.1.1-dev.50.md) — corrective Jira wizard follow-up po real dev.49 FAIL: next step chains from the shared dialog promise without a second modal-hidden wait; real Jira/MeshCentral re-smoke pending;
 - [`0.1.1-dev.49`](0.1.1-dev.49.md) — Jira #290: global integration connection-only, script-owned Assets scope/user binding i paginated dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
