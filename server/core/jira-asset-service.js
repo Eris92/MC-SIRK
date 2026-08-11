@@ -6,6 +6,9 @@ var shared = require("./shared.js");
 var USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var USER_PAGE_SIZE = 100;
 var MAX_USERS = 1000;
+var ASSET_PAGE_SIZE = 100;
+var MAX_ASSET_SCAN = 2000;
+var MAX_ASSET_OPTIONS = 500;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -89,6 +92,27 @@ function attributeMap(entry) {
     return result;
 }
 
+function scriptHeader(script, name, limit) {
+    var pattern = new RegExp("^" + name + "\\s*:\\s*(.+)$", "i");
+    var result = "";
+    array(script && script.extraHeaders).some(function (header) {
+        var match = pattern.exec(text(header, 5000));
+        if (!match) return false;
+        result = text(match[1], limit || 4000);
+        return true;
+    });
+    return result;
+}
+
+function assetScope(script) {
+    var aql = scriptHeader(script, "SirkJiraAssetAql", 4000);
+    if (!aql) throw new Error("Jira asset scope is not declared by the script.");
+    return {
+        aql: aql,
+        hostnameAttribute: scriptHeader(script, "SirkJiraHostnameAttribute", 200) || "Hostname"
+    };
+}
+
 module.exports.createJiraAssetService = function (options) {
     options = options || {};
     var fs = options.fs;
@@ -106,12 +130,14 @@ module.exports.createJiraAssetService = function (options) {
         catch (error) { throw new Error("Jira URL is not configured."); }
         if (endpoint.protocol !== "https:") throw new Error("Jira URL must use HTTPS.");
         if (!value.email || !value.token) throw new Error("Jira credentials are not configured.");
-        value.url = endpoint.href.replace(/\/$/, "");
-        value.maxResults = Math.max(10, Math.min(500, Number(value.maxResults) || 100));
-        value.aql = text(value.aql, 4000) || "objectType = Computer";
-        value.hostnameAttribute = text(value.hostnameAttribute, 200) || "Hostname";
-        value.verifyTls = value.verifyTls !== false;
-        return value;
+        return {
+            url: endpoint.href.replace(/\/$/, ""),
+            email: text(value.email, 500),
+            token: String(value.token || ""),
+            workspaceId: text(value.workspaceId, 200),
+            cloudId: text(value.cloudId, 200),
+            verifyTls: value.verifyTls !== false
+        };
     }
 
     function authHeader(config) {
@@ -237,7 +263,7 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function discoverCloudId(config) {
-        if (text(config.cloudId, 200)) return Promise.resolve(text(config.cloudId, 200));
+        if (config.cloudId) return Promise.resolve(config.cloudId);
         return requestJson({
             url: config.url + "/_edge/tenant_info",
             method: "GET",
@@ -254,7 +280,7 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function discoverWorkspaceId(config) {
-        if (text(config.workspaceId, 200)) return Promise.resolve(text(config.workspaceId, 200));
+        if (config.workspaceId) return Promise.resolve(config.workspaceId);
         return siteRequest(config, "/rest/servicedeskapi/assets/workspace?start=0&limit=50", { errorPrefix: "Jira Assets workspace discovery" }).then(function (response) {
             var values = responseItems(response);
             var workspaceId = values.length ? text(values[0] && values[0].workspaceId, 200) : "";
@@ -284,10 +310,10 @@ module.exports.createJiraAssetService = function (options) {
         return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
     }
 
-    function normalizeAsset(entry, config) {
+    function normalizeAsset(entry, scope) {
         entry = object(entry);
         var attributes = attributeMap(entry);
-        var hostnameValues = attributes[lower(config.hostnameAttribute)] || [];
+        var hostnameValues = attributes[lower(scope.hostnameAttribute)] || [];
         var hostname = text(hostnameValues[0] || entry.label || entry.objectKey || entry.id, 500);
         if (!hostname) return null;
         var model = text((attributes.model || attributes["model name"] || [])[0], 300);
@@ -306,37 +332,68 @@ module.exports.createJiraAssetService = function (options) {
         };
     }
 
-    function listAssets(userValue) {
-        userValue = text(userValue, 500);
-        if (!userValue) return Promise.resolve({ items: [] });
-        var config = jiraConfig();
-        return Promise.all([listUsers(false, true), discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
-            var identities = selectedUserIdentity(userValue, parts[0].items);
-            var endpoint = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
-                "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) +
-                "/v1/object/aql?startAt=0&maxResults=" + config.maxResults + "&includeAttributes=true";
+    function fetchAssetOptions(config, cloudId, workspaceId, scope, identities) {
+        var result = [];
+        var seen = Object.create(null);
+        var startAt = 0;
+        var scanned = 0;
+
+        function next() {
+            if (scanned >= MAX_ASSET_SCAN || result.length >= MAX_ASSET_OPTIONS) return Promise.resolve(result);
+            var pageSize = Math.min(ASSET_PAGE_SIZE, MAX_ASSET_SCAN - scanned);
+            var endpoint = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(cloudId) +
+                "/jsm/assets/workspace/" + encodeURIComponent(workspaceId) +
+                "/v1/object/aql?startAt=" + startAt + "&maxResults=" + pageSize + "&includeAttributes=true";
             return requestJson({
                 url: endpoint,
                 method: "POST",
                 headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
-                json: { qlQuery: config.aql },
+                json: { qlQuery: scope.aql },
                 verifyTls: config.verifyTls,
                 timeoutMs: 30000,
                 maxBytes: 16 * 1024 * 1024,
                 errorPrefix: "Jira Assets"
             }).then(function (response) {
-                var seen = Object.create(null);
-                var items = responseItems(response).filter(function (entry) {
-                    return entryMatchesUser(entry, identities);
-                }).map(function (entry) {
-                    return normalizeAsset(entry, config);
-                }).filter(function (item) {
-                    if (!item) return false;
+                var page = responseItems(response);
+                var responseValue = object(response);
+                scanned += page.length;
+                page.forEach(function (entry) {
+                    if (result.length >= MAX_ASSET_OPTIONS || !entryMatchesUser(entry, identities)) return;
+                    var item = normalizeAsset(entry, scope);
+                    if (!item) return;
                     var key = lower(item.value);
-                    if (!key || seen[key]) return false;
+                    if (!key || seen[key]) return;
                     seen[key] = true;
-                    return true;
-                }).sort(function (a, b) { return a.label.localeCompare(b.label); });
+                    result.push(item);
+                });
+                startAt += page.length;
+                var total = Number(responseValue.total);
+                if (
+                    !page.length ||
+                    page.length < pageSize ||
+                    responseValue.isLast === true ||
+                    responseValue.last === true ||
+                    (isFinite(total) && total >= 0 && startAt >= total) ||
+                    scanned >= MAX_ASSET_SCAN ||
+                    result.length >= MAX_ASSET_OPTIONS
+                ) return result;
+                return next();
+            });
+        }
+
+        return next().then(function (items) {
+            return items.sort(function (a, b) { return a.label.localeCompare(b.label); });
+        });
+    }
+
+    function listAssets(userValue, script) {
+        userValue = text(userValue, 500);
+        if (!userValue) return Promise.resolve({ items: [] });
+        var scope = assetScope(script);
+        var config = jiraConfig();
+        return Promise.all([listUsers(false, true), discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
+            var identities = selectedUserIdentity(userValue, parts[0].items);
+            return fetchAssetOptions(config, parts[1], parts[2], scope, identities).then(function (items) {
                 return { items: items };
             });
         });
@@ -346,14 +403,16 @@ module.exports.createJiraAssetService = function (options) {
         cachePath: cachePath,
         listAssets: listAssets,
         listUsers: listUsers,
-        optionsFor: function (variable, values, force) {
+        optionsFor: function (variable, values, force, script) {
             variable = object(variable);
             values = object(values);
             if (lower(variable.control) === "user") {
                 return listUsers(force === true, lower(values.JiraUserFilter) === "all");
             }
-            if (lower(variable.control) === "asset") return listAssets(values.JiraUser || values.jiraUser || "");
+            if (lower(variable.control) === "asset") return listAssets(values.JiraUser || values.jiraUser || "", script);
             return Promise.resolve({ items: [] });
         }
     };
 };
+
+module.exports.assetScope = assetScope;
