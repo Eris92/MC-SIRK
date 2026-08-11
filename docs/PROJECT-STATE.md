@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.51`
+Current version: `0.1.1-dev.52`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -59,6 +59,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/shared/ui/shared-ui.css` — współdzielona geometria workspace/kolumn;
 - `public/shared/ui/toolbar.js` + `toolbar-api.js` — toolbar i Edit/Multi;
 - `public/shared/ui/toolbar-config.js` — `MeshThemeAdapter` i integracja natywnych klas MeshCentral;
+- `public/shared/ui/parameter-dialog.js` — jeden owner natywnego MeshCentral parameter/confirmation dialog lifecycle; w Modern udany parameter submit jest finalizowany dopiero po hostowym `hidden.bs.modal`, aby kolejny dialog nie ścigał się z trwającym hide transition;
 - `public/shared/ui/results.js` — wyniki, CSV oraz live content Results montowany do natywnego dialog managera MeshCentral;
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
@@ -127,15 +128,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.51
-config.json  -> 0.1.1-dev.51
+package.json -> 0.1.1-dev.52
+config.json  -> 0.1.1-dev.52
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.51.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.52.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
