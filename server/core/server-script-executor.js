@@ -74,7 +74,14 @@ module.exports.createServerScriptExecutor = function (options) {
     function systemEnvironment(scriptPath) {
         var selected = assignedProfiles(scriptPath);
         var environment = {};
+        var readiness = context.integrations.configured();
         function enabled(name) { return selected.indexOf(name) >= 0; }
+
+        selected.forEach(function (name) {
+            if (readiness[name] !== true) {
+                throw new Error("System credential profile '" + name + "' is assigned but not configured globally.");
+            }
+        });
 
         if (enabled("ad")) {
             var ad = context.integrations.get("ad");

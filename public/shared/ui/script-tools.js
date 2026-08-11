@@ -388,7 +388,6 @@
             box.type = "checkbox";
             box.value = profile.name;
             box.checked = profile.selected === true;
-            box.disabled = profile.configured !== true;
             label.appendChild(box);
             label.appendChild(element("span", "mc-system-credential-name", profile.label || profile.name));
             label.appendChild(element(
@@ -407,7 +406,7 @@
         return {
             element: section,
             selected: function () {
-                return boxes.filter(function (box) { return box.checked && !box.disabled; })
+                return boxes.filter(function (box) { return box.checked; })
                     .map(function (box) { return box.value; });
             }
         };
@@ -560,9 +559,12 @@
 
                 var actions = element("div", "mc-script-manage-actions");
                 var save = shell.element("button", "btn btn-primary btn-sm", "Save");
-                var credentials = shell.element("button", "btn btn-secondary btn-sm", "Credentials");
+                var credentials = (secretState.variables || []).length
+                    ? shell.element("button", "btn btn-secondary btn-sm", "Credentials")
+                    : null;
                 var cancel = shell.element("button", "btn btn-secondary btn-sm", "Cancel");
-                save.type = credentials.type = cancel.type = "button";
+                save.type = cancel.type = "button";
+                if (credentials) credentials.type = "button";
 
                 save.onclick = function () {
                     save.disabled = true;
@@ -588,7 +590,7 @@
                         shell.post("system-credentials", {
                             path: script.path,
                             selected: systemCredentials.selected()
-                        }).catch(function () { return null; })
+                        })
                     ]).then(function (results) {
                         tool.state.editMode = false;
                         if (typeof onSaved === "function") onSaved(results[0]);
@@ -599,18 +601,20 @@
                     });
                 };
 
-                credentials.onclick = function () {
-                    tool.openCredentialsEditor(shell, script, function (result) {
-                        if (typeof onSaved === "function") onSaved(result || null);
-                    });
-                };
+                if (credentials) {
+                    credentials.onclick = function () {
+                        tool.openCredentialsEditor(shell, script, function (result) {
+                            if (typeof onSaved === "function") onSaved(result || null);
+                        });
+                    };
+                }
                 cancel.onclick = function () {
                     tool.state.editMode = false;
                     if (typeof onSaved === "function") onSaved(null);
                 };
 
                 actions.appendChild(save);
-                actions.appendChild(credentials);
+                if (credentials) actions.appendChild(credentials);
                 actions.appendChild(cancel);
                 card.appendChild(actions);
                 host.appendChild(card);
@@ -977,7 +981,7 @@
                     config = config || {}; var actions = [];
                     if (state.linkPickMode) actions.push({ key: "link", icon: "link", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
                     if (state.editMode) {
-                        if (config.canEdit === true) actions.push({ key: "credentials", icon: "key", disabled: false, className: "mc-tree-credential-action", title: "Configure script and system credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
+                        if (config.canEdit === true && Array.isArray(script.secretVariables) && script.secretVariables.length > 0) actions.push({ key: "credentials", icon: "key", disabled: false, className: "mc-tree-credential-action", title: "Configure script-local credentials", onClick: function () { if (config.onCredentials) config.onCredentials(script); } });
                         actions.push({ key: "favorite", icon: "star", active: isFavorite(script.path), className: "mc-tree-favorite-action", title: isFavorite(script.path) ? "Remove from favorites" : "Add to favorites", onClick: function () { toggleFavorite(script.path); if (config.onFavoriteChanged) config.onFavoriteChanged(script); } });
                         actions.push({ key: "link", icon: "link", title: "Copy bookmarkable link for this script", onClick: function () { copyScriptLink(script.path).then(function () { if (config.onLinkCopied) config.onLinkCopied(script); }); } });
                         if (config.canEdit === true) actions.push({ key: "edit", icon: "edit", title: "Edit script definition and approval levels", onClick: function () { if (config.onEdit) config.onEdit(script); } });

@@ -130,10 +130,16 @@
                     var item = context.buttons[key];
                     if (!item) return;
                     var active = value === true;
+                    var iconOnly = key === "favorites" || key === "manage" || key === "multi";
                     item.classList.toggle("is-active", active);
                     item.setAttribute("aria-pressed", active ? "true" : "false");
+                    if (iconOnly) item.setAttribute("data-sirk-icon-active-only", "true");
+                    else item.removeAttribute("data-sirk-icon-active-only");
                     var icon = item.querySelector && item.querySelector(".mc-shared-toolbar-icon");
-                    if (icon) icon.classList.toggle("is-favorite-active", key === "favorites" && active);
+                    if (icon) {
+                        icon.classList.toggle("is-toolbar-active", iconOnly && active);
+                        icon.classList.toggle("is-favorite-active", key === "favorites" && active);
+                    }
                     updateModeClass(context, key, active);
                     if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.button === "function") {
                         window.MeshThemeAdapter.button(item);

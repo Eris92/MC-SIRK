@@ -8,6 +8,8 @@ var vm = require("vm");
 var root = path.join(__dirname, "..");
 var source = fs.readFileSync(path.join(root, "public", "shared", "ui", "script-tools.js"), "utf8");
 var toolbarConfig = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-config.js"), "utf8");
+var toolbarApi = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar-api.js"), "utf8");
+var toolbarCss = fs.readFileSync(path.join(root, "public", "shared", "ui", "toolbar.css"), "utf8");
 
 var stored = Object.create(null);
 var context = {
@@ -89,15 +91,16 @@ assert.strictEqual(active.multi, false, "The Multi toolbar button must be inacti
 assert.strictEqual(visible.manage, true, "The Edit button must remain visible while active.");
 assert.strictEqual(visible.multi, true, "The Multi button must remain available as a direct switch from Edit.");
 assert.strictEqual(actionKeys(), "credentials,favorite,link,edit",
-    "Edit mode must expose Credentials, Favorite, Copy link and Edit in a stable order.");
+    "Edit mode must expose Credentials, Favorite, Copy link and Edit when local secrets exist.");
 assert.strictEqual(actions()[0].disabled, false,
-    "Credentials must be enabled when secret variables are configured.");
+    "Credentials must be enabled when local secret variables exist.");
 
 script.secretVariables = [];
-assert.strictEqual(actionKeys(), "credentials,favorite,link,edit",
-    "Scripts without secrets must keep the same Edit action layout.");
-assert.strictEqual(actions()[0].disabled, true,
-    "Credentials must remain visible but disabled when no secret variables exist.");
+assert.strictEqual(actionKeys(), "favorite,link,edit",
+    "Scripts without local SaveSecret directives must not expose the standalone Credentials action.");
+delete script.secretVariables;
+assert.strictEqual(actionKeys(), "favorite,link,edit",
+    "Missing secretVariables metadata must fail closed and hide standalone Credentials.");
 script.secretVariables = [{ name: "Password" }];
 
 tools.toggleMulti(toolbar);
@@ -133,7 +136,17 @@ assert.ok(source.indexOf('if (state.multiPickMode) state.editMode = false') >= 0
 assert.ok(/manage:[^\n]*order: 40/.test(toolbarConfig), "Edit must remain directly before Multi.");
 assert.ok(/multi:[^\n]*order: 41/.test(toolbarConfig), "Multi must remain directly beside Edit.");
 assert.ok(/refresh:[^\n]*order: 50/.test(toolbarConfig), "Refresh must remain after the Edit and Multi controls.");
+assert.ok(toolbarApi.indexOf('key === "favorites" || key === "manage" || key === "multi"') >= 0,
+    "Favorites, Edit and Multi must share the icon-only active visual contract.");
+assert.ok(toolbarApi.indexOf('item.setAttribute("aria-pressed", active ? "true" : "false")') >= 0,
+    "Icon-only active state must preserve aria-pressed semantics.");
+assert.ok(toolbarApi.indexOf('icon.classList.toggle("is-toolbar-active", iconOnly && active)') >= 0,
+    "Edit and Multi must toggle the shared gold active-icon modifier.");
+assert.ok(toolbarConfig.indexOf('element.getAttribute("data-sirk-icon-active-only") !== "true"') >= 0,
+    "MeshThemeAdapter must keep icon-only toolbar modes on the base button surface.");
+assert.ok(toolbarCss.indexOf('.mc-shared-toolbar-icon.is-toolbar-active,.mc-shared-toolbar-icon.is-favorite-active{color:var(--bs-warning,#ffc107)}') >= 0,
+    "The shared toolbar must reuse one warning/gold token for active icons.");
 assert.strictEqual(source.indexOf('createElement("style")'), -1,
     "Edit/Multi behavior must not install runtime styles; styling belongs to static CSS.");
 
-console.log("Edit and Multi remain visible, mutually exclusive and expose the full Edit action set: OK");
+console.log("Edit and Multi remain mutually exclusive with gated credentials and icon-only active styling: OK");
