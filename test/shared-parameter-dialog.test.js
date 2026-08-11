@@ -167,5 +167,7 @@ assert.ok(dialog.indexOf('record.variable.submitOnDoubleClick === true') >= 0,
     "A list variable may advance the existing shared dialog on an explicit double click.");
 assert.ok(dialog.indexOf('box.type = single ? "radio" : "checkbox"') >= 0,
     "Shared option lists must use radio inputs for exclusive choices and checkboxes for multi-select assets.");
+assert.ok(dialog.indexOf('document.createElement(listMode ? "input" : useSelect ? "select" : "input")') >= 0,
+    "List-mode selects must create a hidden-capable input instead of mutating the read-only HTMLSelectElement.type property.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

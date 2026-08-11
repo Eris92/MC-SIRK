@@ -196,7 +196,7 @@
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
             if (variable.hideLabel !== true) row.appendChild(caption);
             var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
-            var control = document.createElement(useSelect ? "select" : "input");
+            var control = document.createElement(listMode ? "input" : useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";

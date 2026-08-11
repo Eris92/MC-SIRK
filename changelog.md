@@ -1,3 +1,9 @@
+## 0.1.1-dev.55 - 2026-08-11
+
+- Fix the Jira protocol transfer/return radio list by creating its hidden value owner as an input instead of assigning the read-only `HTMLSelectElement.type` property.
+
+Current development notes: `docs/releases/0.1.1-dev.55.md`.
+
 ## 0.1.1-dev.54 - 2026-08-11
 
 - Replace the Jira protocol scope/user split with one native dialog: checked-by-default active-only filter, separate client-side search and cached Jira user selector.
