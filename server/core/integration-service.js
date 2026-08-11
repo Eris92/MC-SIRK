@@ -85,8 +85,7 @@ module.exports.createIntegrationService = function (options) {
                 current.entra && current.entra.tenantId && current.entra.clientId && secretValue.entraClientSecret
             ),
             jira: !!(
-                current.jira && current.jira.url && current.jira.email &&
-                current.jira.projectKey && secretValue.jiraToken
+                current.jira && current.jira.url && current.jira.email && secretValue.jiraToken
             ),
             defender: !!(
                 current.defender && current.defender.tenantId &&
@@ -163,17 +162,9 @@ module.exports.createIntegrationService = function (options) {
         result.jira = {
             url: text(jira.url, 1000).replace(/\/+$/, ""),
             email: text(jira.email, 500),
-            projectKey: text(jira.projectKey, 100),
-            assetFieldId: text(jira.assetFieldId, 100),
-            hostnameAttribute: text(jira.hostnameAttribute, 200) || "Hostname",
             workspaceId: text(jira.workspaceId, 200),
             cloudId: text(jira.cloudId, 200),
-            aql: text(jira.aql, 4000) || "objectType = Computer",
-            maxResults: Math.max(10, Math.min(500, Number(jira.maxResults) || 100)),
             verifyTls: asBoolean(jira.verifyTls, true),
-            cmdbEnabled: asBoolean(jira.cmdbEnabled, true),
-            approvalTransitionId: text(jira.approvalTransitionId, 100),
-            closeTransitionId: text(jira.closeTransitionId, 100),
             health: normalizeHealth(jira.health)
         };
         result.defender = {
