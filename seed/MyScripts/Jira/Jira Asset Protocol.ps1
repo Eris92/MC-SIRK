@@ -9,6 +9,7 @@
 # SirkAllowCustom: ItPerson
 # SirkJiraAssetAql: objectType = Computer
 # SirkJiraAssetLabelAttribute: Hostname
+# SirkJiraAssetUserVariable: JiraUser
 # MultiHost: false
 # runAsUser: 0
 
