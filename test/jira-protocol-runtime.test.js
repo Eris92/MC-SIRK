@@ -82,7 +82,12 @@ function jiraAsset(value, model, serial, inventory) {
             variables: [{
                 name: "PcName",
                 control: "asset",
-                jiraAsset: { aql: "objectType = Computer", labelAttribute: "Hostname", maxResults: 1000 }
+                jiraAsset: {
+                    aql: "objectType = Computer",
+                    labelAttribute: "Hostname",
+                    maxResults: 1000,
+                    userVariable: "JiraUser"
+                }
             }]
         };
         var request = { id: "Req_123456", requester: { id: "user/1", name: "Operator" } };
@@ -105,6 +110,8 @@ function jiraAsset(value, model, serial, inventory) {
         assert.strictEqual(service.progress(request.id, "completed").stage, "Ready");
         assert.strictEqual(authoritativeVariable.jiraAsset.aql, "objectType = Computer",
             "Authoritative execution recheck must reuse the script-owned Jira asset policy.");
+        assert.strictEqual(authoritativeVariable.jiraAsset.userVariable, "JiraUser",
+            "Authoritative execution recheck must preserve the script-owned Jira user binding.");
         assert.strictEqual(executorCalls.length, 1);
         assert.strictEqual(executorCalls[0].options.skipSystemEnvironment, true,
             "Protocol renderer must not receive the assigned Jira token/system integration environment.");
@@ -161,8 +168,9 @@ function jiraAsset(value, model, serial, inventory) {
             "Canonical seed workflow must preserve the legacy four-input contract.");
         assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0 && seedSource.indexOf("SirkAllowCustom: ItPerson") >= 0);
         assert.ok(seedSource.indexOf("SirkJiraAssetAql: objectType = Computer") >= 0 &&
-            seedSource.indexOf("SirkJiraAssetLabelAttribute: Hostname") >= 0,
-            "Canonical Jira protocol must own its Assets query and display attribute in script metadata.");
+            seedSource.indexOf("SirkJiraAssetLabelAttribute: Hostname") >= 0 &&
+            seedSource.indexOf("SirkJiraAssetUserVariable: JiraUser") >= 0,
+            "Canonical Jira protocol must own its Assets query, display attribute and Jira user binding in script metadata.");
         assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1,
             "Canonical protocol renderer must not consume or print the Jira token.");
         assert.strictEqual(seedSource.indexOf("DirectoryTools"), -1,
