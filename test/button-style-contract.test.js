@@ -31,7 +31,10 @@ assert.ok(toolbar.indexOf('className = "btn btn-secondary btn-sm mc-shared-toolb
 assert.ok(toolbarApi.indexOf('item.disabled = key === "favorites" ? false : value === false') >= 0,
     "Favorites must remain clickable even when the current page is Results.");
 assert.ok(toolbarApi.indexOf('icon.classList.toggle("is-favorite-active", key === "favorites" && active)') >= 0,
-    "Shared Favorites state must mark only the toolbar icon for semantic highlighting.");
+    "Shared Favorites state must preserve its existing icon marker.");
+assert.ok(toolbarApi.indexOf('icon.classList.toggle("is-toolbar-active", iconOnly && active)') >= 0 &&
+    toolbarApi.indexOf('key === "favorites" || key === "manage" || key === "multi"') >= 0,
+    "Favorites, Edit and Multi must share the icon-only active visual contract.");
 assert.ok(tools.indexOf('toolbar.setActive("favorites", state.favoritesOnly && scriptsMode)') >= 0 &&
     tools.indexOf('updateTitle(toolbar, "favorites", state.favoritesOnly ? "Show all scripts" : "Show favorites")') >= 0,
     "SharedScriptTools must own Favorites state/title without a toolbar monkey-patch.");
@@ -56,8 +59,8 @@ assert.ok(css.indexOf(".mc-tree-script-action") >= 0 && css.indexOf(".mc-shared-
 assert.strictEqual(css.indexOf('.mc-tree-favorite-action,.mc-tree-favorite-action:hover,.mc-tree-favorite-action:focus,.mc-tree-favorite-action:active{background-color:transparent!important;border-color:transparent!important;color:inherit!important}'), -1,
     "Per-row Favorite must retain the same native button surface as the other script actions.");
 assert.ok(css.indexOf('.mc-tree-favorite-action .mc-tree-script-action-icon.is-favorite-active{color:var(--bs-warning,#ffc107)!important}') >= 0 &&
-    css.indexOf('.mc-shared-toolbar-icon.is-favorite-active{color:var(--bs-warning,#ffc107)}') >= 0,
-    "Only the Favorite star icon may become warning/yellow.");
+    css.indexOf('.mc-shared-toolbar-icon.is-toolbar-active,.mc-shared-toolbar-icon.is-favorite-active{color:var(--bs-warning,#ffc107)}') >= 0,
+    "Per-row Favorites and shared toolbar active icons must use the canonical warning/gold token without a custom surface palette.");
 assert.strictEqual(mainCss.indexOf("mc-tree-favorite-action"), -1,
     "Favorite state must not have a duplicate main.css owner.");
 [theme, toolbar, toolbarApi, tools].forEach(function (source) {
@@ -65,4 +68,4 @@ assert.strictEqual(mainCss.indexOf("mc-tree-favorite-action"), -1,
         "Button/theming modules must not inject runtime styles.");
 });
 
-console.log("Native buttons with explicit action icons and icon-only Favorites highlight: OK");
+console.log("Native buttons with explicit action icons and icon-only Favorites/Edit/Multi highlight: OK");
