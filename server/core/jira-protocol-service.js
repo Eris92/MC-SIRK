@@ -153,7 +153,7 @@ module.exports.createJiraProtocolService = function (options) {
                 displayName: inputs.itPersonValue
             };
             updateProgress(requestId, 25, "Resolving Jira Assets", "running");
-            return jiraAssets.listAssets(selectedUser.value || inputs.userValue);
+            return jiraAssets.listAssets(selectedUser.value || inputs.userValue, script);
         }).then(function (assets) {
             var available = assets && Array.isArray(assets.items) ? assets.items : [];
             selectedAssets = inputs.assetValues.map(function (value) {
