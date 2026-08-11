@@ -1,3 +1,9 @@
+## 0.1.1-dev.62 - 2026-08-11
+
+- Keep system credential assignments attached to a stable `SirkWorkflow` identity when a workflow script moves into a subfolder.
+
+Current development notes: `docs/releases/0.1.1-dev.62.md`.
+
 ## 0.1.1-dev.61 - 2026-08-11
 
 - Preserve the intrinsic-width marker on the checklist row copied by MeshCentral into the native modal.

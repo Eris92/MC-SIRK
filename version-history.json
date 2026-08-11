@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.62",
+    "date": "2026-08-11",
+    "summary": "Preserve workflow system credential assignments across script folder moves.",
+    "notes": "docs/releases/0.1.1-dev.62.md"
+  },
+  {
     "version": "0.1.1-dev.61",
     "date": "2026-08-11",
     "summary": "Preserve the equipment width marker through native modal HTML transfer.",

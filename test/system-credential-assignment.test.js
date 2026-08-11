@@ -85,6 +85,21 @@ assert.deepStrictEqual(stored[assignmentNamespace]["folder/test.ps1"].slice().so
 assert.strictEqual(service.hasSystemCredential("folder/test.ps1", "jira"), true,
     "Assigned unconfigured profile must remain discoverable to runtime policy.");
 
+var workflowPath = "Jira/Jira Asset Protocol.ps1";
+var workflowLibrary = {
+    getScript: function (relativePath) {
+        if (String(relativePath) !== workflowPath) return null;
+        return { path: workflowPath, extraHeaders: ["SirkWorkflow: JiraAssetProtocol"], variables: [], secretVariables: [] };
+    }
+};
+var workflowService = createService({ context: context, library: workflowLibrary, namespace: "script-secrets.myscripts" });
+stored[assignmentNamespace]["jira/jira asset protocol.ps1"] = ["jira"];
+workflowPath = "Jira/Protokoły/Jira Asset Protocol.ps1";
+assert.strictEqual(workflowService.hasSystemCredential(workflowPath, "jira"), true,
+    "A workflow script moved into a subfolder must retain its uniquely matching legacy system credential assignment.");
+assert.deepStrictEqual(stored[assignmentNamespace]["@workflow:jiraassetprotocol"], ["jira"],
+    "A moved workflow must migrate its legacy path assignment to a stable workflow identity.");
+
 service.saveSystemCredentials(admin, "folder/test.ps1", ["jira"]);
 var originalExecFile = childProcess.execFile;
 var execCalls = [];

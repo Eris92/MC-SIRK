@@ -8,6 +8,21 @@ function keyFor(value) {
         .toLowerCase();
 }
 
+function workflowKey(value) {
+    var headers = value && Array.isArray(value.extraHeaders) ? value.extraHeaders : [];
+    var match = null;
+    headers.some(function (header) {
+        match = /^SirkWorkflow\s*:\s*([^\s]+)\s*$/i.exec(String(header || "").trim());
+        return !!match;
+    });
+    return match ? "@workflow:" + keyFor(match[1]) : "";
+}
+
+function fileNameKey(value) {
+    var parts = keyFor(value).split("/");
+    return parts[parts.length - 1] || "";
+}
+
 module.exports.createScriptAdminService = function (options) {
     options = options || {};
     var context = options.context;
@@ -47,7 +62,20 @@ module.exports.createScriptAdminService = function (options) {
     function selectedProfiles(relativePath) {
         var value = script(relativePath);
         var assignments = readAssignments();
-        var selected = assignments[keyFor(value.path)];
+        var pathKey = keyFor(value.path);
+        var stableKey = workflowKey(value);
+        var selected = assignments[stableKey] || assignments[pathKey];
+        if (!Array.isArray(selected) && stableKey) {
+            var fileName = fileNameKey(value.path);
+            var legacyKeys = Object.keys(assignments).filter(function (key) {
+                return key.indexOf("@workflow:") !== 0 && fileNameKey(key) === fileName && Array.isArray(assignments[key]);
+            });
+            if (legacyKeys.length === 1) {
+                selected = assignments[legacyKeys[0]];
+                assignments[stableKey] = selected.slice();
+                context.secrets.set(assignmentNamespace, assignments);
+            }
+        }
         return Array.isArray(selected) ? selected.map(String) : [];
     }
 
@@ -96,7 +124,7 @@ module.exports.createScriptAdminService = function (options) {
             return allowed.indexOf(name) >= 0 && list.indexOf(name) === index;
         });
         var assignments = readAssignments();
-        var key = keyFor(value.path);
+        var key = workflowKey(value) || keyFor(value.path);
         if (selected.length) assignments[key] = selected;
         else delete assignments[key];
         context.secrets.set(assignmentNamespace, assignments);
