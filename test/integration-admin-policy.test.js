@@ -71,18 +71,32 @@ new Promise(function (resolve, reject) {
     return new Promise(function (resolve, reject) {
         handler.req({ query: { asset: "integrations-admin.js" } }, response(function (status, headers, body) {
             try {
+                body = String(body);
                 assert.strictEqual(status, 200);
                 assert.ok(/text\/javascript/.test(headers["Content-Type"] || ""));
-                assert.ok(String(body).indexOf("Save integrations") >= 0,
+                assert.ok(body.indexOf("Save integrations") >= 0,
                     "The shared Jira/AD/Entra integration editor must expose one canonical save action.");
-                assert.ok(String(body).indexOf('disclosure(card, "Jira")') >= 0 &&
-                    String(body).indexOf('disclosure(card, "Active Directory")') >= 0 &&
-                    String(body).indexOf('disclosure(card, "AAD / Entra ID")') >= 0,
+                assert.ok(body.indexOf('disclosure(card, "Jira")') >= 0 &&
+                    body.indexOf('disclosure(card, "Active Directory")') >= 0 &&
+                    body.indexOf('disclosure(card, "AAD / Entra ID")') >= 0,
                     "Jira, AD and Entra must share the collapsed integration surface.");
-                assert.ok(String(body).indexOf('input.type = options.type || "text"') >= 0);
-                assert.ok(String(body).indexOf('type: "password"') >= 0, "Secret editors must remain password inputs.");
-                assert.ok(String(body).indexOf("if (jiraToken.value) secrets.jiraToken = jiraToken.value") >= 0,
+                assert.ok(body.indexOf('input.type = options.type || "text"') >= 0);
+                assert.ok(body.indexOf('type: "password"') >= 0, "Secret editors must remain password inputs.");
+                assert.ok(body.indexOf("if (jiraToken.value) secrets.jiraToken = jiraToken.value") >= 0,
                     "Blank token must preserve the existing server-side secret.");
+                ["Jira URL", "Jira account email", "Jira API token", "Assets workspace ID (optional)", "Cloud ID (optional)", "Verify Jira TLS certificate"].forEach(function (label) {
+                    assert.ok(body.indexOf(label) >= 0, "Connection-only Jira UI is missing: " + label);
+                });
+                ["Project key", "Hostname attribute", "Asset field ID", "Assets AQL scope", "Max asset results", "Enable Jira Assets/CMDB"].forEach(function (label) {
+                    assert.strictEqual(body.indexOf(label), -1, "Global Jira scope control must be removed: " + label);
+                });
+                assert.ok(body.indexOf("Project, object type, AQL and result scope belong to each consuming script.") >= 0,
+                    "Admin Jira UI must explain that operational scope belongs to scripts.");
+                assert.ok(body.indexOf("integrations.jira = {") >= 0 &&
+                    body.indexOf("projectKey: projectKey.value") < 0 &&
+                    body.indexOf("aql: aql.value") < 0 &&
+                    body.indexOf("maxResults") < 0,
+                    "Jira save payload must be reconstructed from connection fields instead of carrying legacy scope forward.");
                 resolve();
             } catch (error) { reject(error); }
         }), admin);
@@ -99,7 +113,7 @@ new Promise(function (resolve, reject) {
         "Canonical admin owner must route secure writes to the existing integration service.");
     assert.strictEqual(adminEntrypoint.trim(), '"use strict";\n\nmodule.exports = require("./admin.js");',
         "SIRKPortalAdmin must retain canonical delegation without a parallel wrapper owner.");
-    console.log("Secure SiteAdmin-only shared integration configuration and no-secret browser contract: OK");
+    console.log("Secure connection-only Jira integration configuration and no-secret browser contract: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
