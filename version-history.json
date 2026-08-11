@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.50",
+    "date": "2026-08-11",
+    "summary": "Corrective Jira wizard next-step lifecycle fix after real dev.49 smoke failure.",
+    "notes": "docs/releases/0.1.1-dev.50.md"
+  },
+  {
     "version": "0.1.1-dev.49",
     "date": "2026-08-11",
     "summary": "Jira #290: connection-only global integration with script-owned Assets query scope, user binding and paginated dynamic options.",
@@ -64,7 +70,7 @@
       "Bump the pre-1.0 development revision after real dev.39 Network Settings and Admin theme failures.",
       "Let only the trusted Network Settings built-in reach MeshAgent as native type-2 UserOnly instead of the shared script-oriented Scheduled Task wrapper, preserving route and Shell Properties semantics.",
       "Observe the real Modern MeshCentral theme stylesheet href/load signal in the existing Admin theme owner while retaining Classic fallback, form state and F5 recovery.",
-      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release."
+      "Pre-bump full npm test and canonical runtime Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release."
     ]
   },
   {
