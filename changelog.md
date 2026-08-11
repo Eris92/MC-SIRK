@@ -1,3 +1,12 @@
+## 0.1.1-dev.50 - 2026-08-11
+
+- Real `0.1.1-dev.49` Jira + MeshCentral smoke exposed a Modern native-dialog lifecycle failure: accepting the first Jira user-scope step closed the modal and the four-step wizard stopped.
+- Remove the wizard-local second `hidden.bs.modal` wait and chain each next step directly from the existing shared `openParameterDialog()` promise, leaving MeshCentral as the single modal lifecycle owner.
+- Add a negative regression where the modal still reports `show` and any attempt to attach the obsolete extra hidden listener fails; preserve the same four shared native steps, provider context and no polling/timer/observer/custom-modal behavior.
+- Issue #290 remains open for real `0.1.1-dev.50` re-smoke of all four steps and final protocol/PDF flow. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.50.md`.
+
 ## 0.1.1-dev.49 - 2026-08-11
 
 - Jira #290: reduce global Jira Admin configuration to reusable connection/discovery credentials and remove the global project/AQL/asset-type/result-limit policy from integration readiness and UI.

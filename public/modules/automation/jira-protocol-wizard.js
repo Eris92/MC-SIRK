@@ -36,13 +36,6 @@
             variables: variables.filter(Boolean).map(copy)
         };
     }
-    function afterModernHidden() {
-        var modal = document.getElementById("xxAddAgentModal");
-        if (!modal || !modal.classList || !modal.classList.contains("show")) return Promise.resolve();
-        return new Promise(function (resolve) {
-            modal.addEventListener("hidden.bs.modal", resolve, { once: true });
-        });
-    }
     function providerFor(baseValues, explicitProvider) {
         var provider = typeof explicitProvider === "function" ? explicitProvider : optionProvider;
         if (typeof provider !== "function") return null;
@@ -57,9 +50,6 @@
             trigger: options.trigger,
             primaryLabel: primaryLabel,
             resolveOptions: providerFor(baseValues, options.resolveOptions)
-        }).then(function (values) {
-            if (values == null) return null;
-            return afterModernHidden().then(function () { return values; });
         });
     }
     function runWizard(options) {
