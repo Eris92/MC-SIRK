@@ -1,3 +1,12 @@
+## 0.1.1-dev.49 - 2026-08-11
+
+- Jira #290: reduce global Jira Admin configuration to reusable connection/discovery credentials and remove the global project/AQL/asset-type/result-limit policy from integration readiness and UI.
+- Keep Jira users instance-wide, move dynamic Assets AQL/display/UI-limit/user-binding policy into server-owned script metadata, and paginate Atlassian Assets pages with bounded interactive-provider safety limits.
+- Keep the Jira Asset Protocol `Computer`/`Hostname`/`JiraUser` scope in its own script while allowing other scripts to own different or unbound Assets scopes; full audit scripts can page Jira directly through their assigned system credential without a global Assets cap.
+- Pre-bump PR #291 Actions `31461688515` GREEN on Linux `npm test` and Windows interactive-shell smoke. Final exact-version CI and real Jira/MeshCentral smoke are required before closing #290. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.49.md`.
+
 ## 0.1.1-dev.48 - 2026-08-11
 
 - Complete the shared credentials/native-dialog follow-up for #280/#281 and corrective task packets #284-#288 without adding a second secret store, modal framework, polling loop or per-row credentials request.
