@@ -92,11 +92,13 @@ function asset(id, hostname, owner, model) {
         try {
             fs.writeFileSync(path.join(policyRoot, "Policy.ps1"), [
                 "# Policy",
+                "# VariableUserRequired: $JiraUser, User",
                 "# VariableAssetRequired: $PcName, Asset",
                 "# SirkWorkflow: JiraAssetProtocol",
                 "# SirkJiraAssetAql: objectType = Computer",
                 "# SirkJiraAssetLabelAttribute: Hostname",
                 "# SirkJiraAssetMaxResults: 25",
+                "# SirkJiraAssetUserVariable: JiraUser",
                 "",
                 "Write-Output 'ok'"
             ].join("\n"), "utf8");
@@ -113,8 +115,9 @@ function asset(id, hostname, owner, model) {
             assert.deepStrictEqual(policyVariable.jiraAsset, {
                 aql: "objectType = Computer",
                 labelAttribute: "Hostname",
-                maxResults: 25
-            }, "Jira asset policy must be owned by script metadata.");
+                maxResults: 25,
+                userVariable: "JiraUser"
+            }, "Jira asset query, display, UI limit and user binding must be owned by script metadata.");
         } finally {
             fs.rmSync(policyRoot, { recursive: true, force: true });
         }
@@ -220,12 +223,13 @@ function asset(id, hostname, owner, model) {
                 jiraAsset: {
                     aql: "objectType = Computer",
                     labelAttribute: "Hostname",
-                    maxResults: 10
+                    maxResults: 10,
+                    userVariable: "JiraUser"
                 }
             };
-            var assets = await assetService.listAssets("acc-1", assetVariable);
+            var assets = await assetService.optionsFor(assetVariable, { JiraUser: "acc-1" }, false);
             assert.deepStrictEqual(assets.items.map(function (item) { return item.value; }), ["PC-ALPHA", "PC-OMEGA"],
-                "Asset options must paginate the script AQL and filter every page by the selected Jira user identity.");
+                "Asset options must paginate the script AQL and filter every page by the script-bound Jira user identity.");
             var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
             assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate beyond the first Atlassian page when required.");
             assert.strictEqual(aqlCalls[0].method, "POST");
@@ -235,11 +239,62 @@ function asset(id, hostname, owner, model) {
                 "Asset pagination must use a bounded provider page size and advance startAt.");
             assert.ok(aqlCalls[0].url.indexOf("cloud-1") >= 0 && aqlCalls[0].url.indexOf("workspace-1") >= 0,
                 "Configured cloudId/workspaceId must avoid unnecessary discovery requests.");
+            var beforeMissingUser = assetCalls.length;
+            var noUserYet = await assetService.optionsFor(assetVariable, {}, false);
+            assert.deepStrictEqual(noUserYet.items, [],
+                "A script that explicitly binds Assets to a user variable must wait for that variable instead of widening scope.");
+            assert.strictEqual(assetCalls.length, beforeMissingUser,
+                "Missing required user binding must not issue a widened Jira request.");
             await assert.rejects(function () {
                 return assetService.listAssets("acc-1", { control: "asset" });
             }, /query is not configured/, "Dynamic Assets must fail closed when the script does not declare its Jira query scope.");
         } finally {
             fs.rmSync(assetTemp, { recursive: true, force: true });
+        }
+
+        var genericTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-generic-assets-"));
+        try {
+            var genericCalls = [];
+            var genericService = factory.createJiraAssetService({
+                fs: fs,
+                path: path,
+                dataRoot: genericTemp,
+                integrations: integration(),
+                requestJson: function (options) {
+                    genericCalls.push(options);
+                    if (options.url.indexOf("/rest/api/") >= 0 && options.url.indexOf("users") >= 0) {
+                        return Promise.reject(new Error("Generic asset selector must not fetch users."));
+                    }
+                    if (options.url.indexOf("/object/aql") >= 0) {
+                        return Promise.resolve({
+                            values: [
+                                asset("900", "PRINTER-01", "acc-1", "LaserJet"),
+                                asset("901", "PRINTER-02", "acc-2", "MFP")
+                            ],
+                            total: 2,
+                            isLast: true
+                        });
+                    }
+                    return Promise.reject(new Error("Unexpected request: " + options.url));
+                }
+            });
+            var genericVariable = {
+                control: "asset",
+                jiraAsset: {
+                    aql: "objectType = Printer",
+                    labelAttribute: "Hostname",
+                    maxResults: 100
+                }
+            };
+            var genericAssets = await genericService.optionsFor(genericVariable, {}, false);
+            assert.deepStrictEqual(genericAssets.items.map(function (item) { return item.value; }), ["PRINTER-01", "PRINTER-02"],
+                "Asset selectors without a script-declared user binding must return the whole script-owned AQL scope.");
+            assert.strictEqual(genericCalls.filter(function (call) { return call.url.indexOf("users") >= 0; }).length, 0,
+                "Generic asset scope must not have a hidden global JiraUser dependency.");
+            assert.strictEqual(genericCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; })[0].json.qlQuery,
+                "objectType = Printer", "Different scripts must be free to own different Jira Assets scopes.");
+        } finally {
+            fs.rmSync(genericTemp, { recursive: true, force: true });
         }
 
         assert.ok(automationServer.indexOf('asset === "variable-options"') >= 0,
@@ -251,7 +306,7 @@ function asset(id, hostname, owner, model) {
         assert.strictEqual(automationClient.indexOf("window.prompt"), -1,
             "Jira migration must not reintroduce a browser prompt or inline legacy form.");
 
-        console.log("Jira connection-only readiness, script-owned Assets scope, pagination and cached users: OK");
+        console.log("Jira connection-only readiness, script-owned Assets scope/user binding, pagination and cached users: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
