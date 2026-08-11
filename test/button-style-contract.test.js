@@ -45,10 +45,11 @@ assert.ok(automation.indexOf('tools.toggleFavorites(toolbar') >= 0 && automation
 
 assert.ok(tree.indexOf("var renderedKeys = Object.create(null)") >= 0 && tree.indexOf("if (renderedKeys[identity]) return") >= 0,
     "Tree rows must render at most one action for each action key.");
-assert.ok(tree.indexOf('icon.className = "mc-tree-script-action-icon"') >= 0 &&
-    tree.indexOf('icon.textContent = definition.icon || "•"') >= 0 &&
+assert.ok(tree.indexOf('var namedIcons = { link: "🔗", key: "🔑", star: "★", edit: "✎", multi: "⟳" }') >= 0 &&
+    tree.indexOf('icon.className = "mc-tree-script-action-icon"') >= 0 &&
+    tree.indexOf('icon.textContent = namedIcons[definition.icon] || definition.icon || "•"') >= 0 &&
     tree.indexOf('action.appendChild(icon)') >= 0,
-    "Edit and Multi actions must render an explicit icon element instead of relying on button text/theme timing.");
+    "Edit and Multi actions must render an explicit icon element with the shared named-icon fallback instead of relying on button text/theme timing.");
 assert.ok(tree.indexOf('icon.classList.toggle("is-favorite-active", identity === "favorite" && active)') >= 0,
     "Per-script Favorite must mark only its star icon as active.");
 assert.ok(tree.indexOf('action.classList.toggle("is-active", active)') >= 0 && tree.indexOf('action.setAttribute("aria-pressed", active ? "true" : "false")') >= 0,
