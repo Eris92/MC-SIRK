@@ -38,7 +38,17 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
         integrations: {
             ad: { domain: "example.local", login: "svc-ad", health: { status: "ok" } },
             entra: { tenantId: "tenant", clientId: "entra-client", health: { status: "warning", messagePl: "Problemy z hostami", messageEn: "Host retrieval problems" } },
-            jira: { url: "https://example.atlassian.net", email: "svc@example.test", projectKey: "OPS", health: { status: "invalid", messagePl: "\u0000test" } },
+            jira: {
+                url: "https://example.atlassian.net",
+                email: "svc@example.test",
+                workspaceId: "workspace-1",
+                cloudId: "cloud-1",
+                verifyTls: true,
+                projectKey: "LEGACY",
+                aql: "objectType = Legacy",
+                maxResults: 10,
+                health: { status: "invalid", messagePl: "\u0000test" }
+            },
             defender: { tenantId: "tenant", clientId: "defender-client", health: { status: "critical", messagePl: "Awaria", messageEn: "Failure" } },
             zabbix: { url: "https://zabbix.example.test", username: "svc-zabbix", health: { status: "ok" } }
         },
@@ -57,7 +67,15 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
     assert.strictEqual(summary.items.find(function (item) { return item.key === "entra"; }).messagePl, "Problemy z hostami");
     assert.strictEqual(summary.items.find(function (item) { return item.key === "jira"; }).status, "ok");
     assert.strictEqual(summary.items.find(function (item) { return item.key === "jira"; }).messagePl, "test");
-    console.log("Integration health checks passed.");
+    assert.strictEqual(service.configured().jira, true,
+        "Jira readiness must require only URL, account email and the write-only token.");
+    var jira = service.readSettings().jira;
+    assert.strictEqual(jira.projectKey, undefined, "Legacy project scope must not remain canonical after an integration save.");
+    assert.strictEqual(jira.aql, undefined, "Legacy global AQL must not remain canonical after an integration save.");
+    assert.strictEqual(jira.maxResults, undefined, "Legacy global result caps must not remain canonical after an integration save.");
+    assert.strictEqual(jira.workspaceId, "workspace-1");
+    assert.strictEqual(jira.cloudId, "cloud-1");
+    console.log("Integration health and Jira connection-only readiness checks passed.");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
