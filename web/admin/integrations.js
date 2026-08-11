@@ -81,6 +81,11 @@
         var entra = values.entra || {};
 
         var jiraBox = disclosure(card, "Jira");
+        jiraBox.appendChild(element(
+            "p",
+            "mc-admin-card-description",
+            "Configure the shared Jira connection here. Project, object type, AQL and result scope belong to each consuming script."
+        ));
         var jiraUrl = field(jiraBox, "Jira URL", jira.url || "", { placeholder: "https://tenant.atlassian.net" });
         var jiraEmail = field(jiraBox, "Jira account email", jira.email || "");
         var jiraToken = field(jiraBox, "Jira API token", "", {
@@ -88,15 +93,9 @@
             placeholder: configured.jiraToken ? "Configured - leave blank to keep" : "Required"
         });
         jiraToken.autocomplete = "new-password";
-        var projectKey = field(jiraBox, "Project key", jira.projectKey || "");
-        var workspaceId = field(jiraBox, "Assets workspace ID", jira.workspaceId || "");
-        var cloudId = field(jiraBox, "Cloud ID", jira.cloudId || "");
-        var hostnameAttribute = field(jiraBox, "Hostname attribute", jira.hostnameAttribute || "Hostname");
-        var assetFieldId = field(jiraBox, "Asset field ID", jira.assetFieldId || "");
-        var aql = field(jiraBox, "Assets AQL scope", jira.aql || "objectType = Computer", { multiline: true, rows: 3 });
-        var maxResults = field(jiraBox, "Max asset results", jira.maxResults || 100, { type: "number", min: 10, max: 500 });
+        var workspaceId = field(jiraBox, "Assets workspace ID (optional)", jira.workspaceId || "");
+        var cloudId = field(jiraBox, "Cloud ID (optional)", jira.cloudId || "");
         var verifyTls = checkbox(jiraBox, "Verify Jira TLS certificate", jira.verifyTls !== false);
-        var cmdbEnabled = checkbox(jiraBox, "Enable Jira Assets/CMDB", jira.cmdbEnabled !== false);
 
         var adBox = disclosure(card, "Active Directory");
         var adDomain = field(adBox, "AD domain", ad.domain || "");
@@ -130,19 +129,14 @@
             status.textContent = "Saving...";
 
             var integrations = clone(values);
-            integrations.jira = Object.assign({}, jira, {
+            integrations.jira = {
                 url: jiraUrl.value,
                 email: jiraEmail.value,
-                projectKey: projectKey.value,
-                assetFieldId: assetFieldId.value,
-                hostnameAttribute: hostnameAttribute.value,
                 workspaceId: workspaceId.value,
                 cloudId: cloudId.value,
-                aql: aql.value,
-                maxResults: Number(maxResults.value) || 100,
                 verifyTls: verifyTls.checked,
-                cmdbEnabled: cmdbEnabled.checked
-            });
+                health: clone(jira.health)
+            };
             integrations.ad = Object.assign({}, ad, {
                 domain: adDomain.value,
                 login: adLogin.value
