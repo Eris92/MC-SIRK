@@ -195,12 +195,18 @@ function asset(id, hostname, owner, model) {
         var assetTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-assets-"));
         try {
             var assetCalls = [];
+            var assetCacheReads = 0;
+            var assetFs = Object.create(fs);
+            assetFs.readFileSync = function (filePath) {
+                if (path.resolve(filePath) === path.resolve(path.join(assetTemp, "jira-assets-cache.json"))) assetCacheReads++;
+                return fs.readFileSync.apply(fs, arguments);
+            };
             var firstPage = [asset("1", "PC-ALPHA", "acc-1", "ThinkPad")];
             for (var assetIndex = 2; assetIndex <= 500; assetIndex++) {
                 firstPage.push(asset(String(assetIndex), "PC-OTHER-" + assetIndex, "acc-2", "Other"));
             }
             var assetService = factory.createJiraAssetService({
-                fs: fs,
+                fs: assetFs,
                 path: path,
                 dataRoot: assetTemp,
                 integrations: integration(),
@@ -243,6 +249,8 @@ function asset(id, hostname, owner, model) {
             assert.ok(cachedOtherUser.items.length > 0, "One daily asset snapshot must serve a different user's equipment.");
             assert.strictEqual(assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; }).length, 2,
                 "Fresh 24h Jira Assets cache must suppress a repeated full scan for every protocol.");
+            assert.strictEqual(assetCacheReads, 1,
+                "The shared service must keep the parsed daily Assets snapshot hot instead of reparsing the large JSON file per protocol.");
             assert.ok(fs.existsSync(assetService.assetCachePath), "Jira Assets must be persisted in a separate shared cache file.");
             var beforeMissingUser = assetCalls.length;
             var noUserYet = await assetService.optionsFor(assetVariable, {}, false);
