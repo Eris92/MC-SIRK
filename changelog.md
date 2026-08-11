@@ -1,3 +1,12 @@
+## 0.1.1-dev.48 - 2026-08-11
+
+- Complete the shared credentials/native-dialog follow-up for #280/#281 and corrective task packets #284-#288 without adding a second secret store, modal framework, polling loop or per-row credentials request.
+- Gate standalone Script credentials on persisted local `SaveSecret*` metadata while keeping System credentials in Definition Editor, and allow known System credential assignments before global readiness with fail-closed runtime checks.
+- Keep Definition Editor geometry stable on hover/focus, use one gold active-icon contract for Favorites/Edit/Multi without persistent selected button surfaces, and move Quick `ConfirmExecution` from browser `window.confirm()` to the existing native MeshCentral confirmation lifecycle with exactly-one submit semantics.
+- PR #289 exact-head Linux `npm test` and Windows interactive-shell smoke are the merge gate. #128 and #252 remain open for their required real Windows / Jira+MeshCentral acceptance evidence. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.48.md`.
+
 ## 0.1.1-dev.47 - 2026-08-10
 
 - Jira #252: restore SiteAdmin-only Jira integration configuration through the existing integration/secret owner, keeping the token write-only and out of browser responses.
@@ -171,7 +180,7 @@ Current development notes: `docs/releases/0.1.1-dev.30.md`.
 - Deliver the real `0.1.1-dev.28` smoke follow-up from PR #225 for Admin theme synchronization, native Devices control isolation and shared Output hover geometry.
 - Make Admin consume the explicit MeshCentral `data-bs-theme` signal and existing host/system surface tokens without adding a second observer, polling, request or rerender.
 - Scope generic `MeshThemeAdapter` form-control classes to SIRK roots and keep shared Output/detail cards invariant against host hover transform/scale/zoom while preserving host colors and shared column sizing.
-- Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke; keep the revision below `1.0.0` with no tag or GitHub Release.
+- Keep Issues #123, #126 and #134 open for real MeshCentral re-smoke; keep the change below `1.0.0` with no tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.29.md`.
 

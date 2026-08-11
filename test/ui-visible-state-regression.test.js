@@ -28,15 +28,17 @@ var editStart = tools.indexOf("if (state.editMode) {", actionsStart);
 var editEnd = tools.indexOf("if (state.multiPickMode", editStart);
 var editBlock = tools.slice(editStart, editEnd);
 var credentials = editBlock.indexOf('key: "credentials"');
-var favorite = editBlock.indexOf('key: "favorite"', credentials);
+var favorite = editBlock.indexOf('key: "favorite"', Math.max(0, credentials));
 var link = editBlock.indexOf('key: "link"', favorite);
 var edit = editBlock.indexOf('key: "edit"', link);
 assert.ok(credentials >= 0 && favorite > credentials && link > favorite && edit > link,
-    "Edit mode action order must be Credentials, Favorite, Copy link, Edit.");
-assert.ok(editBlock.indexOf('disabled: !hasCredentials') >= 0,
-    "Credentials must remain visible but disabled when the script has no secret variables.");
+    "When local secrets exist, Edit mode action order must be Credentials, Favorite, Copy link, Edit.");
+assert.ok(editBlock.indexOf("config.canEdit === true && Array.isArray(script.secretVariables) && script.secretVariables.length > 0") >= 0,
+    "Standalone Credentials must be rendered only for editable scripts with backend-declared local SaveSecret variables.");
+assert.strictEqual(editBlock.indexOf('disabled: !hasCredentials'), -1,
+    "Scripts without local secrets must omit standalone Credentials instead of reserving a disabled action.");
 assert.ok(tree.indexOf('action.disabled = definition.disabled === true') >= 0 && tree.indexOf('if (action.disabled) return;') >= 0,
-    "Tree actions must render and enforce disabled actions.");
+    "Tree actions must continue to render and enforce disabled actions for contracts that still use them.");
 assert.ok(css.indexOf('.mc-shared-page :is(.sirk-shared-list-item,.mc-shared-nav-item):is(.active,.is-active)') >= 0,
     "All shared first/second-column navigation rows, including Approval, must use one visible selected-state fallback.");
 assert.ok(css.indexOf('.sirk-quick-command-browser button:is(.active,.is-active)') >= 0,
@@ -44,4 +46,4 @@ assert.ok(css.indexOf('.sirk-quick-command-browser button:is(.active,.is-active)
 assert.ok(css.indexOf('var(--bs-primary,currentColor)') >= 0,
     "Visible selection must derive from the active host theme rather than a private fixed color.");
 
-console.log("Visible first-paint menu icon family, Edit actions and selected rows regression contract: OK");
+console.log("Visible first-paint menu icon family, gated Edit credentials and selected rows regression contract: OK");

@@ -73,10 +73,15 @@ new Promise(function (resolve, reject) {
             try {
                 assert.strictEqual(status, 200);
                 assert.ok(/text\/javascript/.test(headers["Content-Type"] || ""));
-                assert.ok(String(body).indexOf("Save Jira integration") >= 0);
+                assert.ok(String(body).indexOf("Save integrations") >= 0,
+                    "The shared Jira/AD/Entra integration editor must expose one canonical save action.");
+                assert.ok(String(body).indexOf('disclosure(card, "Jira")') >= 0 &&
+                    String(body).indexOf('disclosure(card, "Active Directory")') >= 0 &&
+                    String(body).indexOf('disclosure(card, "AAD / Entra ID")') >= 0,
+                    "Jira, AD and Entra must share the collapsed integration surface.");
                 assert.ok(String(body).indexOf('input.type = options.type || "text"') >= 0);
-                assert.ok(String(body).indexOf('type: "password"') >= 0, "Token editor must be a password input.");
-                assert.ok(String(body).indexOf("if (token.value) secrets.jiraToken = token.value") >= 0,
+                assert.ok(String(body).indexOf('type: "password"') >= 0, "Secret editors must remain password inputs.");
+                assert.ok(String(body).indexOf("if (jiraToken.value) secrets.jiraToken = jiraToken.value") >= 0,
                     "Blank token must preserve the existing server-side secret.");
                 resolve();
             } catch (error) { reject(error); }
@@ -94,7 +99,7 @@ new Promise(function (resolve, reject) {
         "Canonical admin owner must route secure writes to the existing integration service.");
     assert.strictEqual(adminEntrypoint.trim(), '"use strict";\n\nmodule.exports = require("./admin.js");',
         "SIRKPortalAdmin must retain canonical delegation without a parallel wrapper owner.");
-    console.log("Secure SiteAdmin-only Jira integration configuration and no-secret browser contract: OK");
+    console.log("Secure SiteAdmin-only shared integration configuration and no-secret browser contract: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
