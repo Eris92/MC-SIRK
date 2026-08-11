@@ -42,14 +42,16 @@ function jiraAsset(value, model, serial, inventory) {
             "Protocol renderer must emit actual PDF bytes, not HTML/print markup.");
 
         var executorCalls = [];
+        var authoritativeVariable = null;
         var service = protocolFactory.createJiraProtocolService({
             context: { fs: fs, path: path, nativePath: path, dataRoot: temp },
             jiraAssets: {
                 listUsers: function () {
                     return Promise.resolve({ items: [jiraUser("acc-1", "Łukasz Żółć", "lukasz@example.invalid")] });
                 },
-                listAssets: function (userValue) {
+                listAssets: function (userValue, variable) {
                     assert.strictEqual(userValue, "acc-1", "Execution must resolve assets for the authoritative selected Jira identity.");
+                    authoritativeVariable = variable;
                     return Promise.resolve({ items: [
                         jiraAsset("PC-01", "ThinkPad T14", "SN-01", "INV-01"),
                         jiraAsset("PC-02", "EliteBook 840", "SN-02", "INV-02")
@@ -76,7 +78,12 @@ function jiraAsset(value, model, serial, inventory) {
         var script = {
             path: "Jira/Jira Asset Protocol.ps1",
             label: "Jira Asset Protocol",
-            extraHeaders: ["SirkWorkflow: JiraAssetProtocol", "SirkAllowCustom: ItPerson"]
+            extraHeaders: ["SirkWorkflow: JiraAssetProtocol", "SirkAllowCustom: ItPerson"],
+            variables: [{
+                name: "PcName",
+                control: "asset",
+                jiraAsset: { aql: "objectType = Computer", labelAttribute: "Hostname", maxResults: 1000 }
+            }]
         };
         var request = { id: "Req_123456", requester: { id: "user/1", name: "Operator" } };
         var payload = {
@@ -96,6 +103,8 @@ function jiraAsset(value, model, serial, inventory) {
             "Public protocol result must never expose filesystem paths.");
         assert.strictEqual(service.progress(request.id, "completed").percent, 100);
         assert.strictEqual(service.progress(request.id, "completed").stage, "Ready");
+        assert.strictEqual(authoritativeVariable.jiraAsset.aql, "objectType = Computer",
+            "Authoritative execution recheck must reuse the script-owned Jira asset policy.");
         assert.strictEqual(executorCalls.length, 1);
         assert.strictEqual(executorCalls[0].options.skipSystemEnvironment, true,
             "Protocol renderer must not receive the assigned Jira token/system integration environment.");
@@ -151,12 +160,15 @@ function jiraAsset(value, model, serial, inventory) {
             seedSource.indexOf("VariableUserRequired: $ItPerson") >= 0,
             "Canonical seed workflow must preserve the legacy four-input contract.");
         assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0 && seedSource.indexOf("SirkAllowCustom: ItPerson") >= 0);
+        assert.ok(seedSource.indexOf("SirkJiraAssetAql: objectType = Computer") >= 0 &&
+            seedSource.indexOf("SirkJiraAssetLabelAttribute: Hostname") >= 0,
+            "Canonical Jira protocol must own its Assets query and display attribute in script metadata.");
         assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1,
             "Canonical protocol renderer must not consume or print the Jira token.");
         assert.strictEqual(seedSource.indexOf("DirectoryTools"), -1,
             "Canonical protocol workflow must not depend on legacy DirectoryTools paths/settings.");
 
-        console.log("Jira Asset Protocol lifecycle, authoritative asset recheck, real progress and protected PDF contract: OK");
+        console.log("Jira Asset Protocol lifecycle, script-owned authoritative recheck, progress and protected PDF contract: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
