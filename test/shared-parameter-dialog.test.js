@@ -175,5 +175,7 @@ assert.ok(dialog.indexOf('else if (record.kind === "switch") record.control.addE
     "Active-only checkbox must rebuild the large user list once per click.");
 assert.ok(dialog.indexOf('document.createDocumentFragment()') >= 0,
     "Large user and asset checklists must be attached in one DOM operation.");
+assert.ok(dialog.indexOf('if (box.checked) box.setAttribute("checked", "checked")') >= 0,
+    "Default list selection must survive native dialog innerHTML serialization.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

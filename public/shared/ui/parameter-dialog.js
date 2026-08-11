@@ -101,6 +101,7 @@
             if (single) box.name = control.name + "Option";
             box.value = value;
             box.checked = selected.indexOf(value) >= 0;
+            if (box.checked) box.setAttribute("checked", "checked");
             box.id = host.id + "Option" + index;
             var label = document.createElement("span");
             label.textContent = optionLabel(option) || value;

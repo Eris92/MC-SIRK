@@ -1,3 +1,9 @@
+## 0.1.1-dev.59 - 2026-08-11
+
+- Preserve the default `Przekazanie sprzętu` radio state through MeshCentral's native modal HTML transfer.
+
+Current development notes: `docs/releases/0.1.1-dev.59.md`.
+
 ## 0.1.1-dev.58 - 2026-08-11
 
 - Restore original Jira aliases for protocol SN and inventory-number fields, including `SN` and `Numer_inwentarzowy`.

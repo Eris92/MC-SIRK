@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.59",
+    "date": "2026-08-11",
+    "summary": "Preserve the Jira protocol default radio selection in the native MeshCentral modal.",
+    "notes": "docs/releases/0.1.1-dev.59.md"
+  },
+  {
     "version": "0.1.1-dev.58",
     "date": "2026-08-11",
     "summary": "Restore protocol asset identifiers and remove the active-only filter UI stall.",
