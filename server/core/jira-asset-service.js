@@ -6,6 +6,10 @@ var shared = require("./shared.js");
 var USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var USER_PAGE_SIZE = 100;
 var MAX_USERS = 1000;
+var ASSET_PAGE_SIZE = 500;
+var DEFAULT_ASSET_OPTION_LIMIT = 1000;
+var MAX_ASSET_OPTION_LIMIT = 5000;
+var MAX_ASSET_SCAN_PAGES = 20;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -107,11 +111,24 @@ module.exports.createJiraAssetService = function (options) {
         if (endpoint.protocol !== "https:") throw new Error("Jira URL must use HTTPS.");
         if (!value.email || !value.token) throw new Error("Jira credentials are not configured.");
         value.url = endpoint.href.replace(/\/$/, "");
-        value.maxResults = Math.max(10, Math.min(500, Number(value.maxResults) || 100));
-        value.aql = text(value.aql, 4000) || "objectType = Computer";
-        value.hostnameAttribute = text(value.hostnameAttribute, 200) || "Hostname";
         value.verifyTls = value.verifyTls !== false;
         return value;
+    }
+
+    function assetPolicy(variable) {
+        var value = object(variable && variable.jiraAsset);
+        var aql = text(value.aql, 4000);
+        if (!aql) throw new Error("Jira asset query is not configured for this script.");
+        var requested = Number(value.maxResults);
+        var maxResults = isFinite(requested) && requested > 0 ? Math.floor(requested) : DEFAULT_ASSET_OPTION_LIMIT;
+        var userVariable = text(value.userVariable, 200).replace(/^[\s$%]+/, "");
+        if (userVariable && !/^[A-Za-z_][A-Za-z0-9_]*$/.test(userVariable)) userVariable = "";
+        return {
+            aql: aql,
+            labelAttribute: text(value.labelAttribute, 200) || "Hostname",
+            maxResults: Math.max(10, Math.min(MAX_ASSET_OPTION_LIMIT, maxResults)),
+            userVariable: userVariable
+        };
     }
 
     function authHeader(config) {
@@ -265,6 +282,7 @@ module.exports.createJiraAssetService = function (options) {
 
     function selectedUserIdentity(userValue, users) {
         var wanted = lower(userValue);
+        if (!wanted) return [];
         var found = (users || []).filter(function (item) {
             return lower(item.value) === wanted || lower(item.accountId) === wanted || lower(item.emailAddress) === wanted;
         })[0] || null;
@@ -279,16 +297,16 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function entryMatchesUser(entry, identities) {
-        if (!identities.length) return false;
+        if (!identities.length) return true;
         var strings = collectStrings(array(entry && entry.attributes), [], 0).map(lower);
         return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
     }
 
-    function normalizeAsset(entry, config) {
+    function normalizeAsset(entry, policy) {
         entry = object(entry);
         var attributes = attributeMap(entry);
-        var hostnameValues = attributes[lower(config.hostnameAttribute)] || [];
-        var hostname = text(hostnameValues[0] || entry.label || entry.objectKey || entry.id, 500);
+        var labelValues = attributes[lower(policy.labelAttribute)] || [];
+        var hostname = text(labelValues[0] || entry.label || entry.objectKey || entry.id, 500);
         if (!hostname) return null;
         var model = text((attributes.model || attributes["model name"] || [])[0], 300);
         var serial = text((attributes["serial number"] || attributes.serial || [])[0], 300);
@@ -306,38 +324,78 @@ module.exports.createJiraAssetService = function (options) {
         };
     }
 
-    function listAssets(userValue) {
+    function pageHasMore(response, startAt, pageLength) {
+        response = object(response);
+        if (response.isLast === true) return false;
+        var total = Number(response.totalFilterCount != null ? response.totalFilterCount : response.total);
+        if (isFinite(total) && total >= 0) return startAt + pageLength < total;
+        return pageLength >= ASSET_PAGE_SIZE;
+    }
+
+    function listAssets(userValue, variable) {
         userValue = text(userValue, 500);
-        if (!userValue) return Promise.resolve({ items: [] });
         var config = jiraConfig();
-        return Promise.all([listUsers(false, true), discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
+        var policy;
+        try { policy = assetPolicy(variable); }
+        catch (error) { return Promise.reject(error); }
+
+        var usersPromise = userValue ? listUsers(false, true) : Promise.resolve({ items: [] });
+        return Promise.all([usersPromise, discoverCloudId(config), discoverWorkspaceId(config)]).then(function (parts) {
             var identities = selectedUserIdentity(userValue, parts[0].items);
-            var endpoint = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
-                "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) +
-                "/v1/object/aql?startAt=0&maxResults=" + config.maxResults + "&includeAttributes=true";
-            return requestJson({
-                url: endpoint,
-                method: "POST",
-                headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
-                json: { qlQuery: config.aql },
-                verifyTls: config.verifyTls,
-                timeoutMs: 30000,
-                maxBytes: 16 * 1024 * 1024,
-                errorPrefix: "Jira Assets"
-            }).then(function (response) {
-                var seen = Object.create(null);
-                var items = responseItems(response).filter(function (entry) {
-                    return entryMatchesUser(entry, identities);
-                }).map(function (entry) {
-                    return normalizeAsset(entry, config);
-                }).filter(function (item) {
-                    if (!item) return false;
-                    var key = lower(item.value);
-                    if (!key || seen[key]) return false;
-                    seen[key] = true;
-                    return true;
-                }).sort(function (a, b) { return a.label.localeCompare(b.label); });
-                return { items: items };
+            var baseUrl = "https://api.atlassian.com/ex/jira/" + encodeURIComponent(parts[1]) +
+                "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) + "/v1/object/aql";
+            var items = [];
+            var seen = Object.create(null);
+            var startAt = 0;
+            var pageCount = 0;
+            var scanTruncated = false;
+
+            function next() {
+                if (items.length >= policy.maxResults) {
+                    return Promise.resolve({ items: items.slice(0, policy.maxResults), truncated: true });
+                }
+                if (pageCount >= MAX_ASSET_SCAN_PAGES) {
+                    scanTruncated = true;
+                    return Promise.resolve({ items: items, truncated: true });
+                }
+
+                var endpoint = baseUrl + "?startAt=" + startAt + "&maxResults=" + ASSET_PAGE_SIZE + "&includeAttributes=true";
+                pageCount++;
+                return requestJson({
+                    url: endpoint,
+                    method: "POST",
+                    headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
+                    json: { qlQuery: policy.aql },
+                    verifyTls: config.verifyTls,
+                    timeoutMs: 30000,
+                    maxBytes: 16 * 1024 * 1024,
+                    errorPrefix: "Jira Assets"
+                }).then(function (response) {
+                    var page = responseItems(response);
+                    page.filter(function (entry) {
+                        return entryMatchesUser(entry, identities);
+                    }).map(function (entry) {
+                        return normalizeAsset(entry, policy);
+                    }).filter(Boolean).forEach(function (item) {
+                        var key = lower(item.value);
+                        if (!key || seen[key] || items.length >= policy.maxResults) return;
+                        seen[key] = true;
+                        items.push(item);
+                    });
+
+                    var more = pageHasMore(response, startAt, page.length);
+                    startAt += page.length;
+                    if (!more || !page.length) return { items: items, truncated: false };
+                    return next();
+                });
+            }
+
+            return next().then(function (result) {
+                result.items.sort(function (a, b) { return a.label.localeCompare(b.label); });
+                if (result.truncated === true || scanTruncated) {
+                    result.warning = "Jira asset selector reached its script/provider safety limit. Narrow the script AQL for interactive selection.";
+                }
+                return result;
             });
         });
     }
@@ -352,7 +410,13 @@ module.exports.createJiraAssetService = function (options) {
             if (lower(variable.control) === "user") {
                 return listUsers(force === true, lower(values.JiraUserFilter) === "all");
             }
-            if (lower(variable.control) === "asset") return listAssets(values.JiraUser || values.jiraUser || "");
+            if (lower(variable.control) === "asset") {
+                var policy = object(variable.jiraAsset);
+                var userVariable = text(policy.userVariable, 200).replace(/^[\s$%]+/, "");
+                var userValue = userVariable ? values[userVariable] : "";
+                if (userVariable && !text(userValue, 500)) return Promise.resolve({ items: [] });
+                return listAssets(userValue, variable);
+            }
             return Promise.resolve({ items: [] });
         }
     };

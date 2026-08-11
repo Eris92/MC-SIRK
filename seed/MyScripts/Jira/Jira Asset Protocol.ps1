@@ -7,6 +7,9 @@
 # VariableUserRequired: $ItPerson, Osoba IT|Możesz wybrać osobę z Jira albo wpisać bezpieczną wartość własną.
 # SirkWorkflow: JiraAssetProtocol
 # SirkAllowCustom: ItPerson
+# SirkJiraAssetAql: objectType = Computer
+# SirkJiraAssetLabelAttribute: Hostname
+# SirkJiraAssetUserVariable: JiraUser
 # MultiHost: false
 # runAsUser: 0
 

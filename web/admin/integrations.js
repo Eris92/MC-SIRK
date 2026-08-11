@@ -69,7 +69,7 @@
         card.appendChild(element(
             "p",
             "mc-admin-card-description",
-            "Global system credentials used by Script credentials assignments. Secrets are write-only and remain encrypted server-side."
+            "Global system credentials used by Script credentials assignments. Query scope and result limits are owned by each script. Secrets are write-only and remain encrypted server-side."
         ));
         content.appendChild(card);
 
@@ -88,15 +88,9 @@
             placeholder: configured.jiraToken ? "Configured - leave blank to keep" : "Required"
         });
         jiraToken.autocomplete = "new-password";
-        var projectKey = field(jiraBox, "Project key", jira.projectKey || "");
-        var workspaceId = field(jiraBox, "Assets workspace ID", jira.workspaceId || "");
-        var cloudId = field(jiraBox, "Cloud ID", jira.cloudId || "");
-        var hostnameAttribute = field(jiraBox, "Hostname attribute", jira.hostnameAttribute || "Hostname");
-        var assetFieldId = field(jiraBox, "Asset field ID", jira.assetFieldId || "");
-        var aql = field(jiraBox, "Assets AQL scope", jira.aql || "objectType = Computer", { multiline: true, rows: 3 });
-        var maxResults = field(jiraBox, "Max asset results", jira.maxResults || 100, { type: "number", min: 10, max: 500 });
+        var workspaceId = field(jiraBox, "Assets workspace ID", jira.workspaceId || "", { placeholder: "Optional - auto-discovered when empty" });
+        var cloudId = field(jiraBox, "Cloud ID", jira.cloudId || "", { placeholder: "Optional - auto-discovered when empty" });
         var verifyTls = checkbox(jiraBox, "Verify Jira TLS certificate", jira.verifyTls !== false);
-        var cmdbEnabled = checkbox(jiraBox, "Enable Jira Assets/CMDB", jira.cmdbEnabled !== false);
 
         var adBox = disclosure(card, "Active Directory");
         var adDomain = field(adBox, "AD domain", ad.domain || "");
@@ -133,15 +127,9 @@
             integrations.jira = Object.assign({}, jira, {
                 url: jiraUrl.value,
                 email: jiraEmail.value,
-                projectKey: projectKey.value,
-                assetFieldId: assetFieldId.value,
-                hostnameAttribute: hostnameAttribute.value,
                 workspaceId: workspaceId.value,
                 cloudId: cloudId.value,
-                aql: aql.value,
-                maxResults: Number(maxResults.value) || 100,
-                verifyTls: verifyTls.checked,
-                cmdbEnabled: cmdbEnabled.checked
+                verifyTls: verifyTls.checked
             });
             integrations.ad = Object.assign({}, ad, {
                 domain: adDomain.value,

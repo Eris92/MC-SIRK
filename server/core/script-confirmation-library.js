@@ -40,6 +40,40 @@ function parseMultiHost(source) {
     return headerBoolean(source, MULTI_HOST_DIRECTIVE, true);
 }
 
+function sirkHeaders(source) {
+    var lines = String(source && source.text || source || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+    var result = [];
+    for (var index = 0; index < lines.length; index++) {
+        var trimmed = String(lines[index] || "").trim();
+        if (!trimmed) continue;
+        if (trimmed.charAt(0) !== "#") break;
+        var header = trimmed.replace(/^\s*#\s*/, "");
+        if (/^Sirk[A-Za-z0-9_-]*\s*:/i.test(header)) result.push(header);
+    }
+    return result;
+}
+
+function jiraAssetPolicy(headers) {
+    var policy = {};
+    (Array.isArray(headers) ? headers : []).forEach(function (header) {
+        var match = String(header || "").match(/^SirkJiraAsset(Aql|LabelAttribute|MaxResults|UserVariable)\s*:\s*(.*)$/i);
+        if (!match) return;
+        var name = String(match[1] || "").toLowerCase();
+        var value = String(match[2] || "").trim();
+        if (name === "aql") policy.aql = shared.cleanText(value, 4000).trim();
+        if (name === "labelattribute") policy.labelAttribute = shared.cleanText(value, 200).trim();
+        if (name === "uservariable") {
+            var userVariable = shared.cleanText(value, 200).trim().replace(/^[\s$%]+/, "");
+            if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(userVariable)) policy.userVariable = userVariable;
+        }
+        if (name === "maxresults") {
+            var limit = Number(value);
+            if (isFinite(limit) && limit > 0) policy.maxResults = Math.max(10, Math.min(5000, Math.floor(limit)));
+        }
+    });
+    return policy;
+}
+
 function splitHeader(sourceText) {
     var newline = String(sourceText || "").indexOf("\r\n") >= 0 ? "\r\n" : "\n";
     var lines = String(sourceText || "").replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -118,6 +152,17 @@ function decorateScript(base, script) {
     result.confirmExecution = parseEnabled(source);
     result.multiHost = parseMultiHost(source);
     result.runAsUser = normalizeRunAsUser(result.runAsUser);
+    result.extraHeaders = sirkHeaders(source);
+
+    var policy = jiraAssetPolicy(result.extraHeaders);
+    if (policy.aql || policy.labelAttribute || policy.maxResults || policy.userVariable) {
+        result.variables = (result.variables || []).map(function (variable) {
+            if (!variable || variable.control !== "asset") return variable;
+            var decorated = shared.copy(variable);
+            decorated.jiraAsset = shared.copy(policy);
+            return decorated;
+        });
+    }
     return result;
 }
 
