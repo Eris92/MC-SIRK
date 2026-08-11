@@ -1,3 +1,9 @@
+## 0.1.1-dev.60 - 2026-08-11
+
+- Expand the equipment-selection modal to its longest option and keep equipment labels on one line, bounded by the viewport.
+
+Current development notes: `docs/releases/0.1.1-dev.60.md`.
+
 ## 0.1.1-dev.59 - 2026-08-11
 
 - Preserve the default `Przekazanie sprzętu` radio state through MeshCentral's native modal HTML transfer.

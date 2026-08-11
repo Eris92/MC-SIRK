@@ -180,6 +180,7 @@
     function buildContent(item, prefix) {
         var content = document.createElement("div");
         content.className = "mc-parameter-dialog-content";
+        if (item && item.fitOptionWidth === true) content.classList.add("mc-parameter-dialog-fit-options");
         var description = localized(item, "description") || text(item && item.description);
         if (description) {
             var intro = document.createElement("p");

@@ -106,6 +106,7 @@
 
         var userStep = stepItem(item, "Jira Asset Protocol - User", "", [activeOnly, search, jiraUser]);
         var assetStep = stepItem(item, "Sprzęt do protokołu", "", [asset]);
+        assetStep.fitOptionWidth = true;
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
 
         return runStep(options, userStep, {}, "Next").then(function (userValues) {

@@ -9,6 +9,7 @@ var root = path.join(__dirname, "..");
 function source(relative) { return fs.readFileSync(path.join(root, relative), "utf8"); }
 
 var dialog = source("public/shared/ui/parameter-dialog.js");
+var toolbar = source("public/shared/ui/toolbar.css");
 var commands = source("public/modules/commands/index.js");
 var scripts = source("public/modules/automation/index.js");
 var quick = source("public/native/desktop-commands.js");
@@ -177,5 +178,7 @@ assert.ok(dialog.indexOf('document.createDocumentFragment()') >= 0,
     "Large user and asset checklists must be attached in one DOM operation.");
 assert.ok(dialog.indexOf('if (box.checked) box.setAttribute("checked", "checked")') >= 0,
     "Default list selection must survive native dialog innerHTML serialization.");
+assert.ok(dialog.indexOf('item.fitOptionWidth === true') >= 0 && toolbar.indexOf('.mc-parameter-dialog-fit-options') >= 0,
+    "Option-width dialogs must expose one scoped intrinsic-width styling contract.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

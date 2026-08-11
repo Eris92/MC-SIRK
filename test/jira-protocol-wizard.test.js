@@ -89,6 +89,7 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.strictEqual(calls[0].item.variables[2].submitOnDoubleClick, true);
     assert.strictEqual(calls[0].item.description, "");
     assert.deepStrictEqual(Array.prototype.map.call(calls[1].item.variables, function (item) { return item.name; }), ["PcName"]);
+    assert.strictEqual(calls[1].item.fitOptionWidth, true);
     assert.strictEqual(calls[1].item.variables[0].control, "assetmulti");
     assert.strictEqual(calls[1].item.variables[0].label, "Sprzęt");
     assert.strictEqual(calls[1].item.variables[0].hideLabel, true);
