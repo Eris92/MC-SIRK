@@ -191,10 +191,11 @@
             var listMode = variable.listMode === true && (kind === "user" || kind === "select");
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
+            if (variable.inlineLabel === true) row.classList.add("mc-parameter-dialog-inline-label");
             var caption = document.createElement("span");
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
-            if (variable.hideLabel !== true) row.appendChild(caption);
+            if (variable.hideLabel !== true && !(kind === "switch" && variable.inlineControl === true)) row.appendChild(caption);
             var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
             var control = document.createElement(listMode ? "input" : useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
@@ -203,6 +204,7 @@
             var listId = "";
             var optionHostId = "";
             if (kind === "assetmulti" || listMode) {
+                row.classList.add("mc-parameter-dialog-checklist-row");
                 control.type = "hidden";
                 control.value = defaultValue(variable);
                 row.appendChild(control);
@@ -217,6 +219,10 @@
                 control.checked = checkedDefault(variable);
                 if (control.checked) control.setAttribute("checked", "checked");
                 row.appendChild(control);
+                if (variable.inlineControl === true) {
+                    row.classList.add("mc-parameter-dialog-inline-check");
+                    if (variable.hideLabel !== true) row.appendChild(caption);
+                }
             } else if (kind === "text" || customUser) {
                 control.type = "text";
                 control.value = defaultValue(variable);

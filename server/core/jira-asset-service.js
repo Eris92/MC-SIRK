@@ -369,6 +369,7 @@ module.exports.createJiraAssetService = function (options) {
 
     function pageHasMore(response, startAt, pageLength) {
         response = object(response);
+        if (response.hasMoreResults === true) return true;
         if (response.isLast === true) return false;
         var total = Number(response.totalFilterCount != null ? response.totalFilterCount : response.total);
         if (isFinite(total) && total >= 0) return startAt + pageLength < total;

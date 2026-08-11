@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.57",
+    "date": "2026-08-11",
+    "summary": "Complete Jira Assets daily pagination and correct the User/equipment dialog layout and active-only control.",
+    "notes": "docs/releases/0.1.1-dev.57.md"
+  },
+  {
     "version": "0.1.1-dev.56",
     "date": "2026-08-11",
     "summary": "Persistent shared protocol logo and native list-field borders for the Jira protocol workflow.",

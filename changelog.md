@@ -1,3 +1,11 @@
+## 0.1.1-dev.57 - 2026-08-11
+
+- Honor Jira Assets `hasMoreResults` ahead of the capped `total`/`isLast` metadata so the daily equipment snapshot continues beyond 1,000 objects.
+- Align the Jira User step with the accepted layout: directly clickable active-only checkbox, inline Search row and unlabeled full-width user list.
+- Use the `Sprzęt do protokołu` title and an unlabeled full-width multi-equipment checklist.
+
+Current development notes: `docs/releases/0.1.1-dev.57.md`.
+
 ## 0.1.1-dev.56 - 2026-08-11
 
 - Add a persistent PNG protocol-logo section with preview and Change action under Settings > General; generated PDFs reuse the same data-root asset.

@@ -239,9 +239,9 @@ function asset(id, hostname, owner, model) {
                         return Promise.resolve([user("acc-1", "Alpha User", "alpha@example.invalid")]);
                     }
                     if (options.url.indexOf("/object/aql") >= 0) {
-                        if (options.url.indexOf("startAt=0") >= 0) return Promise.resolve({ values: firstPage, total: 501 });
+                        if (options.url.indexOf("startAt=0") >= 0) return Promise.resolve({ values: firstPage, total: 1000, isLast: true, hasMoreResults: true });
                         if (options.url.indexOf("startAt=500") >= 0) {
-                            return Promise.resolve({ values: [asset("501", "PC-OMEGA", "acc-1", "Latitude")], total: 501 });
+                            return Promise.resolve({ values: [asset("501", "PC-OMEGA", "acc-1", "Latitude")], total: 1000, isLast: true, hasMoreResults: false });
                         }
                     }
                     return Promise.reject(new Error("Unexpected request: " + options.url));
@@ -261,6 +261,8 @@ function asset(id, hostname, owner, model) {
                 "Asset options must paginate the script AQL and filter every page by the script-bound Jira user identity.");
             var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
             assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate beyond the first Atlassian page when required.");
+            assert.strictEqual(aqlCalls[1].url.indexOf("startAt=500") >= 0, true,
+                "Atlassian hasMoreResults must override its capped total/isLast metadata and advance the daily snapshot.");
             assert.strictEqual(aqlCalls[0].method, "POST");
             assert.strictEqual(aqlCalls[0].json.qlQuery, "objectType = Computer",
                 "Asset provider must use script-owned AQL instead of legacy global Jira AQL.");
