@@ -195,6 +195,7 @@
             var listMode = variable.listMode === true && (kind === "user" || kind === "select");
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
+            if (item && item.fitOptionWidth === true) row.classList.add("mc-parameter-dialog-fit-options");
             if (variable.inlineLabel === true) row.classList.add("mc-parameter-dialog-inline-label");
             var caption = document.createElement("span");
             caption.className = "mc-script-form-label";

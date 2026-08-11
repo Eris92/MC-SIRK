@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.61`](0.1.1-dev.61.md) — native-modal-safe equipment width marker;
 - [`0.1.1-dev.60`](0.1.1-dev.60.md) — intrinsic-width Jira equipment modal with unwrapped option labels;
 - [`0.1.1-dev.59`](0.1.1-dev.59.md) — native-modal persistence for the default Jira protocol radio selection;
 - [`0.1.1-dev.58`](0.1.1-dev.58.md) — restored SN/inventory aliases, bounded active-only rendering and corrected protocol defaults;

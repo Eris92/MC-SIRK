@@ -1,3 +1,9 @@
+## 0.1.1-dev.61 - 2026-08-11
+
+- Preserve the intrinsic-width marker on the checklist row copied by MeshCentral into the native modal.
+
+Current development notes: `docs/releases/0.1.1-dev.61.md`.
+
 ## 0.1.1-dev.60 - 2026-08-11
 
 - Expand the equipment-selection modal to its longest option and keep equipment labels on one line, bounded by the viewport.

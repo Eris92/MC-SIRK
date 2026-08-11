@@ -180,5 +180,7 @@ assert.ok(dialog.indexOf('if (box.checked) box.setAttribute("checked", "checked"
     "Default list selection must survive native dialog innerHTML serialization.");
 assert.ok(dialog.indexOf('item.fitOptionWidth === true') >= 0 && toolbar.indexOf('.mc-parameter-dialog-fit-options') >= 0,
     "Option-width dialogs must expose one scoped intrinsic-width styling contract.");
+assert.ok(dialog.indexOf('row.classList.add("mc-parameter-dialog-fit-options")') >= 0,
+    "The intrinsic-width marker must survive MeshCentral's innerHTML-only native modal transfer.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");
