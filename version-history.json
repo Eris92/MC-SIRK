@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.72",
+    "date": "2026-08-12",
+    "summary": "Preserve explicit Jira reference identities in the compact Assets cache and make technical test builds use distinct development revisions.",
+    "notes": "docs/releases/0.1.1-dev.72.md"
+  },
+  {
     "version": "0.1.1-dev.71",
     "date": "2026-08-12",
     "summary": "Compact the workspace-wide Jira Assets cache and reject huge legacy snapshots without parsing them.",
