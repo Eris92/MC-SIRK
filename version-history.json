@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.64",
+    "date": "2026-08-12",
+    "summary": "Make styled protocol PDF rendering safe for Windows service execution with an isolated per-render Chrome/Edge profile.",
+    "notes": "docs/releases/0.1.1-dev.64.md"
+  },
+  {
     "version": "0.1.1-dev.63",
     "date": "2026-08-11",
     "summary": "Remove explanatory copy from both Jira cache dialogs.",
@@ -528,7 +534,7 @@
     "date": "2026-08-07",
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from main.",
-      "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the toolbar row height.",
+      "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the Quick toolbar row height.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
   },

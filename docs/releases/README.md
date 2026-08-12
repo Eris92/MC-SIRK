@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.64`](0.1.1-dev.64.md) — Windows service-safe styled protocol PDF rendering with an isolated per-render Chrome/Edge profile;
 - [`0.1.1-dev.63`](0.1.1-dev.63.md) — concise Force-only Jira cache dialogs;
 - [`0.1.1-dev.62`](0.1.1-dev.62.md) — stable workflow credential assignment across script folder moves;
 - [`0.1.1-dev.61`](0.1.1-dev.61.md) — native-modal-safe equipment width marker;

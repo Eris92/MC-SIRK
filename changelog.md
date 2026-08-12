@@ -1,3 +1,11 @@
+## 0.1.1-dev.64 - 2026-08-12
+
+- Give every styled protocol PDF render an isolated writable Chrome/Edge `--user-data-dir` inside the existing bounded temporary render directory so MeshCentral Windows service execution does not depend on or collide with a default browser profile.
+- Run the browser from that same writable directory, suppress first-run/default-browser startup paths, retain bounded cleanup, and expose bounded browser stderr/stdout when rendering fails.
+- Add a focused regression covering the service-safe browser profile, output path, cleanup and diagnostics after real Jira Asset Protocol smoke reached Edge and failed before creating `protocol.pdf`.
+
+Current development notes: `docs/releases/0.1.1-dev.64.md`.
+
 ## 0.1.1-dev.63 - 2026-08-11
 
 - Reduce both Jira cache dialogs to the single `Wymuś odświeżenie` checkbox label.
@@ -188,7 +196,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
 - Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 

@@ -23,6 +23,25 @@ function removeTree(directory) {
     try { fs.rmSync(directory, { recursive: true, force: true }); } catch (error) {}
 }
 
+function browserArguments(directory, htmlPath, pdfPath) {
+    return [
+        "--headless=new",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--user-data-dir=" + path.join(directory, "browser-profile"),
+        "--no-pdf-header-footer",
+        "--print-to-pdf=" + pdfPath,
+        fileUrl(htmlPath)
+    ];
+}
+
+function failureMessage(error, stdout, stderr) {
+    var detail = String(stderr || stdout || error && error.message || error || "Browser process failed.").trim();
+    detail = detail.replace(/\s+/g, " ").slice(0, 2000);
+    return "Browser PDF renderer failed: " + detail;
+}
+
 function renderHtmlPdf(html, options) {
     options = options || {};
     var executable = options.browserPath || browserPath();
@@ -37,12 +56,14 @@ function renderHtmlPdf(html, options) {
     html = String(html || "").replace(/__SIRK_DOCUMENT_LOGO_MARKUP__/g, logoMarkup);
     fs.writeFileSync(htmlPath, html, "utf8");
     return new Promise(function (resolve, reject) {
-        childProcess.execFile(executable, [
-            "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
-            "--print-to-pdf=" + pdfPath, fileUrl(htmlPath)
-        ], { windowsHide: true, timeout: 45000 }, function (error) {
+        childProcess.execFile(executable, browserArguments(directory, htmlPath, pdfPath), {
+            windowsHide: true,
+            timeout: 45000,
+            cwd: directory,
+            maxBuffer: 2 * 1024 * 1024
+        }, function (error, stdout, stderr) {
             try {
-                if (error) throw error;
+                if (error) throw new Error(failureMessage(error, stdout, stderr));
                 var result = fs.readFileSync(pdfPath);
                 if (result.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) throw new Error("Browser returned invalid PDF bytes.");
                 resolve(result);
@@ -52,4 +73,8 @@ function renderHtmlPdf(html, options) {
     });
 }
 
-module.exports = { renderHtmlPdf: renderHtmlPdf, browserPath: browserPath };
+module.exports = {
+    renderHtmlPdf: renderHtmlPdf,
+    browserPath: browserPath,
+    browserArguments: browserArguments
+};
