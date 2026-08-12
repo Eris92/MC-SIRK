@@ -12,6 +12,8 @@ var ASSET_PAGE_SIZE = 500;
 var DEFAULT_ASSET_OPTION_LIMIT = 1000;
 var MAX_ASSET_OPTION_LIMIT = 5000;
 var MAX_ASSET_SCAN_PAGES = 100;
+var ASSET_PAGE_CONCURRENCY = 3;
+var ASSET_REFRESH_MAX_MS = 180000;
 var ASSET_CACHE_VERSION = 3;
 
 function text(value, limit) {
@@ -462,6 +464,12 @@ module.exports.createJiraAssetService = function (options) {
         return pageLength >= ASSET_PAGE_SIZE;
     }
 
+    function responseTotal(response) {
+        response = object(response);
+        var total = Number(response.totalFilterCount != null ? response.totalFilterCount : response.total);
+        return isFinite(total) && total >= 0 ? total : -1;
+    }
+
     function listAssets(userValue, variable, force) {
         userValue = text(userValue, 500);
         var config = jiraConfig();
@@ -511,9 +519,10 @@ module.exports.createJiraAssetService = function (options) {
                     var typeId = text(entry && entry.objectType && entry.objectType.id, 100);
                     if (missing && typeId && !seenTypes[typeId]) { seenTypes[typeId] = true; typeIds.push(typeId); }
                 });
-                function next(index) {
-                    if (index >= typeIds.length) return Promise.resolve(entries);
-                    var typeId = typeIds[index];
+                var cursor = 0;
+                function worker() {
+                    if (cursor >= typeIds.length) return Promise.resolve();
+                    var typeId = typeIds[cursor++];
                     return requestJson({
                         url: workspaceBase + "/objecttype/" + encodeURIComponent(typeId) + "/attributes",
                         method: "GET", headers: { Authorization: authHeader(config), Accept: "application/json" },
@@ -532,9 +541,12 @@ module.exports.createJiraAssetService = function (options) {
                                 if (names[id]) attribute.objectTypeAttribute = { name: names[id] };
                             });
                         });
-                    }).catch(function () {}).then(function () { return next(index + 1); });
+                    }).catch(function () {}).then(worker);
                 }
-                return next(0);
+                var workers = [];
+                var workerCount = Math.min(ASSET_PAGE_CONCURRENCY, typeIds.length);
+                for (var index = 0; index < workerCount; index++) workers.push(worker());
+                return Promise.all(workers).then(function () { return entries; });
             }
             function fetchEntries() {
                 if (!force && cached && cached.fetchedAt > Date.now() - ASSET_CACHE_TTL_MS) {
@@ -543,12 +555,22 @@ module.exports.createJiraAssetService = function (options) {
                         return { entries: writeAssetCache(policy.aql, entries), stale: false };
                     });
                 }
+                if (!force && cached && cached.entries.length && assetsInFlight[policy.aql]) {
+                    return Promise.resolve({
+                        entries: cached.entries,
+                        stale: true,
+                        warning: "Jira Assets cache refresh is still running; using the previous snapshot."
+                    });
+                }
                 if (assetsInFlight[policy.aql]) return assetsInFlight[policy.aql];
-                var entries = [], startAt = 0, pageCount = 0, truncated = false;
-                function next() {
-                    if (pageCount >= MAX_ASSET_SCAN_PAGES) { truncated = true; return Promise.resolve(); }
+                var entries = [], truncated = false;
+                var refreshDeadline = Date.now() + ASSET_REFRESH_MAX_MS;
+
+                function requestPage(startAt) {
+                    if (Date.now() >= refreshDeadline) {
+                        return Promise.reject(new Error("Jira Assets refresh exceeded the 180 second safety bound."));
+                    }
                     var endpoint = baseUrl + "?startAt=" + startAt + "&maxResults=" + ASSET_PAGE_SIZE + "&includeAttributes=true";
-                    pageCount++;
                     return requestJson({
                         url: endpoint, method: "POST",
                         headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
@@ -556,16 +578,74 @@ module.exports.createJiraAssetService = function (options) {
                         timeoutMs: 30000, maxBytes: 16 * 1024 * 1024, errorPrefix: "Jira Assets"
                     }).then(function (response) {
                         var page = applyResponseAttributeNames(response, responseItems(response));
-                        entries = entries.concat(page);
-                        var more = pageHasMore(response, startAt, page.length);
-                        startAt += page.length;
-                        return more && page.length ? next() : null;
+                        var count = page.length;
+                        var more = pageHasMore(response, startAt, count);
+                        var total = responseTotal(response);
+                        var prepared = missingAttributeNames(page) ? enrichAttributeNames(page) : Promise.resolve(page);
+                        return prepared.then(function (enriched) {
+                            return {
+                                count: count,
+                                more: more,
+                                total: total,
+                                entries: enriched.map(compactAssetEntry)
+                            };
+                        });
                     });
                 }
-                assetsInFlight[policy.aql] = next().then(function () {
-                    return enrichAttributeNames(entries);
-                }).then(function (enriched) {
-                    return { entries: writeAssetCache(policy.aql, enriched), stale: false, truncated: truncated };
+
+                function fetchConcurrent(starts) {
+                    var cursor = 0;
+                    var stopped = false;
+                    var firstError = null;
+                    function worker() {
+                        if (stopped || cursor >= starts.length) return Promise.resolve();
+                        if (Date.now() >= refreshDeadline) {
+                            stopped = true;
+                            firstError = new Error("Jira Assets refresh exceeded the 180 second safety bound.");
+                            return Promise.resolve();
+                        }
+                        var startAt = starts[cursor++];
+                        return requestPage(startAt).then(function (page) {
+                            entries = entries.concat(page.entries);
+                        }, function (error) {
+                            stopped = true;
+                            if (!firstError) firstError = error;
+                        }).then(worker);
+                    }
+                    var workers = [];
+                    var workerCount = Math.min(ASSET_PAGE_CONCURRENCY, starts.length);
+                    for (var index = 0; index < workerCount; index++) workers.push(worker());
+                    return Promise.all(workers).then(function () {
+                        if (firstError) throw firstError;
+                    });
+                }
+
+                function fetchSequential(startAt, pageCount) {
+                    if (pageCount >= MAX_ASSET_SCAN_PAGES) {
+                        truncated = true;
+                        return Promise.resolve();
+                    }
+                    return requestPage(startAt).then(function (page) {
+                        entries = entries.concat(page.entries);
+                        if (!page.more || !page.count) return null;
+                        return fetchSequential(startAt + page.count, pageCount + 1);
+                    });
+                }
+
+                assetsInFlight[policy.aql] = requestPage(0).then(function (firstPage) {
+                    entries = entries.concat(firstPage.entries);
+                    if (!firstPage.more || !firstPage.count) return null;
+                    var maxEntries = ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES;
+                    if (firstPage.total >= 0 && firstPage.count === ASSET_PAGE_SIZE) {
+                        var upperBound = Math.min(firstPage.total, maxEntries);
+                        var starts = [];
+                        for (var startAt = ASSET_PAGE_SIZE; startAt < upperBound; startAt += ASSET_PAGE_SIZE) starts.push(startAt);
+                        if (firstPage.total > maxEntries) truncated = true;
+                        return fetchConcurrent(starts);
+                    }
+                    return fetchSequential(firstPage.count, 1);
+                }).then(function () {
+                    return { entries: writeAssetCache(policy.aql, entries), stale: false, truncated: truncated };
                 }).catch(function (error) {
                     if (cached && cached.entries.length) return { entries: cached.entries, stale: true, warning: text(error.message || error, 1000) };
                     throw error;
