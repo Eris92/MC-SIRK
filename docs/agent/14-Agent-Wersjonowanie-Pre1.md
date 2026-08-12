@@ -55,6 +55,8 @@ Przy zwykłej iteracji zwiększaj tylko rewizję development:
 ...
 ```
 
+Każda kolejna zmiana techniczna przeznaczona do instalacji lub testu użytkownika musi zwiększać rewizję development. Nie pozostawiaj tej samej wersji po kolejnym runtime fixie, nawet gdy zmiana jest mała, ponieważ wersja pluginu ma jednoznacznie identyfikować kod faktycznie zainstalowany w MeshCentral.
+
 Bump nie jest automatycznie wymagany dla samej dokumentacji. Jeśli zadanie obejmuje wersję/release artifact, zsynchronizuj wszystkie aktywne źródła wersji w jednej zmianie.
 
 ## Release gate 1.0.0
