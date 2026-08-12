@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.67",
+    "date": "2026-08-12",
+    "summary": "Keep styled Jira protocol PDF rendering first and fall back to the existing dependency-free direct PDF renderer when Edge fails.",
+    "notes": "docs/releases/0.1.1-dev.67.md"
+  },
+  {
     "version": "0.1.1-dev.66",
     "date": "2026-08-12",
     "summary": "Exclude Jira identity objects from assigned Assets and add bounded Edge PDF headless compatibility.",
