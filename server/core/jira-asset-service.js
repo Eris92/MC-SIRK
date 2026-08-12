@@ -313,7 +313,7 @@ module.exports.createJiraAssetService = function (options) {
         return siteRequest(config, "/rest/servicedeskapi/assets/workspace?start=0&limit=50", { errorPrefix: "Jira Assets workspace discovery" }).then(function (response) {
             var values = responseItems(response);
             var workspaceId = values.length ? text(values[0] && values[0].workspaceId, 200) : "";
-            if (!workspaceId) throw new Error("Jira Assets workspace discovery returned no workspaceId.");
+            if (!workspaceId) throw new Error("Jira Assets workspaceId discovery returned no workspaceId.");
             return workspaceId;
         });
     }
@@ -334,10 +334,38 @@ module.exports.createJiraAssetService = function (options) {
         });
     }
 
+    function referenceStrings(value) {
+        value = object(value);
+        var result = [];
+        if (value.user) collectStrings(value.user, result, 0);
+        if (value.referencedObject) {
+            var referenced = object(value.referencedObject);
+            collectStrings({
+                id: referenced.id,
+                label: referenced.label,
+                objectKey: referenced.objectKey,
+                name: referenced.name,
+                attributes: referenced.attributes
+            }, result, 0);
+        }
+        if (value.referencedType === true) {
+            collectStrings(value.value, result, 0);
+            collectStrings(value.searchValue, result, 0);
+            collectStrings(value.displayValue, result, 0);
+        }
+        return result.map(lower);
+    }
+
     function entryMatchesUser(entry, identities) {
         if (!identities.length) return true;
-        var strings = collectStrings(array(entry && entry.attributes), [], 0).map(lower);
-        return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
+        var ownLabel = lower(entry && (entry.label || entry.name));
+        if (ownLabel && identities.indexOf(ownLabel) >= 0) return false;
+        return array(entry && entry.attributes).some(function (attribute) {
+            return array(attribute && attribute.objectAttributeValues).some(function (value) {
+                var strings = referenceStrings(value);
+                return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
+            });
+        });
     }
 
     function normalizeAsset(entry, policy) {
