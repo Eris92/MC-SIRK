@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.74",
+    "date": "2026-08-12",
+    "summary": "Recognize localized plural Jira identity object types when resolving selected users to assigned equipment.",
+    "notes": "docs/releases/0.1.1-dev.74.md"
+  },
+  {
     "version": "0.1.1-dev.73",
     "date": "2026-08-12",
     "summary": "Resolve Jira equipment through workspace Users/person identity objects while preserving bounded user binding.",
