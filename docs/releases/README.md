@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.72`](0.1.1-dev.72.md) — preserve explicit Jira reference identities in compact Assets cache and require distinct technical test-build revisions;
 - [`0.1.1-dev.71`](0.1.1-dev.71.md) — compact the Jira Assets cache and reject huge legacy snapshots without parsing them;
 - [`0.1.1-dev.70`](0.1.1-dev.70.md) — consume Jira AQL attribute metadata directly and invalidate unmatchable Assets cache snapshots;
 - [`0.1.1-dev.69`](0.1.1-dev.69.md) — isolate Windows admin tests from machine-wide fallback settings while preserving the production default;
@@ -88,7 +89,7 @@ Nie rekonstruuj, nie kontynuuj ani nie promuj numeracji `1.8.x` jako aktualnej l
 ## Przy zmianie wersji
 
 1. odczytaj `docs/agent/14-Agent-Wersjonowanie-Pre1.md`;
-2. zwiększ tylko rewizję `0.1.1-dev.X`, jeśli bump jest wymagany;
+2. zwiększ tylko rewizję `0.1.1-dev.X` dla każdej kolejnej zmiany technicznej przeznaczonej do instalacji/testu użytkownika;
 3. utrzymaj identyczną wersję w `package.json` i `config.json`;
 4. zaktualizuj bieżące development notes, `changelog.md` i `version-history.json` jeśli zadanie obejmuje wersję;
 5. uruchom wymagane targeted tests, a przed świadomym release pełne `npm test` i real MeshCentral smoke test;

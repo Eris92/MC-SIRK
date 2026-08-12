@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.71
+# SIRK Management Platform 0.1.1-dev.72
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -35,7 +35,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.71.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.72.md)
 
 ## Warstwy
 

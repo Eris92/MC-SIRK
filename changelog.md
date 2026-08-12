@@ -1,3 +1,11 @@
+## 0.1.1-dev.72 - 2026-08-12
+
+- Preserve explicit Jira user/object reference identities in compact Assets cache schema v4 regardless of localized or non-semantic attribute names.
+- Keep plain-string user matching restricted to assignment-semantic attributes and invalidate v3 snapshots that could lose authoritative reference identities.
+- Require every subsequent technical build intended for user installation/testing to increment the `0.1.1-dev.X` revision so installed code is unambiguous.
+
+Current development notes: `docs/releases/0.1.1-dev.72.md`.
+
 ## 0.1.1-dev.71 - 2026-08-12
 
 - Replace the raw Jira Assets cache payload with a compact schema that retains only object identity, display fields and assignment-match values required by the selector and protocol.
@@ -34,7 +42,7 @@ Current development notes: `docs/releases/0.1.1-dev.68.md`.
 
 - Real `0.1.1-dev.66` smoke confirmed both Edge CLI headless print paths still fail in the MeshCentral Windows service context and do not yield a usable `protocol.pdf`.
 - Keep styled Chrome/Edge HTML rendering as the preferred Jira protocol path, then reuse the existing dependency-free `pdf-text-renderer.js` exactly once when browser rendering fails or returns invalid PDF bytes.
-- Preserve `%PDF-1.` validation, protected artifact ownership and combined bounded diagnostics without `--no-sandbox`, a new dependency, polling or a second lifecycle owner.
+- Preserve `%PDF-1.` validation, protected artifact ownership and combined bounded diagnostics without `--no-sandbox`, a new dependency, polling or a second protocol lifecycle owner.
 - Review the user-supplied Jira PowerShell workflow bodies while retaining the current workspace-wide Jira metadata to avoid reintroducing the prior assigned-Assets scope regression.
 
 Current development notes: `docs/releases/0.1.1-dev.67.md`.

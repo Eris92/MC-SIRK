@@ -107,7 +107,7 @@ Dla runtime najpierw potwierdź realny loader/route/require, potem ownera i bezp
 
 ## Git, wersja i weryfikacja
 
-Zmiany techniczne przeznaczone do integracji/testu używają linii `0.1.1-dev.X`; `package.json` i `config.json` muszą być zgodne. `1.0.0` pozostaje zablokowane bez jawnej decyzji użytkownika. Sama dokumentacja nie wymaga bumpu.
+Zmiany techniczne przeznaczone do integracji/testu używają linii `0.1.1-dev.X`; `package.json` i `config.json` muszą być zgodne. Każda nowa zmiana techniczna przeznaczona do testów użytkownika musi zwiększyć rewizję development, aby zainstalowana wersja była jednoznacznie rozpoznawalna; nie pozostawiaj tej samej rewizji po kolejnym runtime fixie. `1.0.0` pozostaje zablokowane bez jawnej decyzji użytkownika. Sama dokumentacja nie wymaga bumpu.
 
 Po zmianie wykonaj najmniejszą adekwatną weryfikację: syntax/targeted test/direct result + kontrola diffu. Full `npm test` tylko dla shared runtime/loader/public contract/security albo gdy targeted test nie wystarcza.
 
