@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.65`](0.1.1-dev.65.md) — invalidate the legacy 1000-user cache snapshot and expose workspace-wide user-bound Jira Assets;
 - [`0.1.1-dev.64`](0.1.1-dev.64.md) — Windows service-safe styled protocol PDF rendering with an isolated per-render Chrome/Edge profile;
 - [`0.1.1-dev.63`](0.1.1-dev.63.md) — concise Force-only Jira cache dialogs;
 - [`0.1.1-dev.62`](0.1.1-dev.62.md) — stable workflow credential assignment across script folder moves;
@@ -23,7 +24,7 @@ Aktualna linia development:
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
 - [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
-- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
+- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
 - [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;

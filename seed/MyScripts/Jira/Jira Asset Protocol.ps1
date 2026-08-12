@@ -2,13 +2,14 @@
 # PL: Protokół Jira Asset|Wybierz użytkownika, przypisany sprzęt, tryb operacji i osobę IT.
 # EN: Jira Asset Protocol|Select a Jira user, assigned asset, operation type and IT person.
 # VariableUserRequired: $JiraUser, Użytkownik Jira|Dane są pobierane z aktualnego profilu Jira i cache MC-SIRK.
-# VariableAssetRequired: $PcName, Sprzęt|Lista jest zawężona do sprzętu przypisanego do wybranego użytkownika.
+# VariableAssetRequired: $PcName, Sprzęt|Lista jest zawężona do wszystkich assetów przypisanych do wybranego użytkownika.
 # VariableSwitchRequired: $IsTransferProtocol, false, Przekazanie sprzętu|Włącz dla przekazania; wyłącz dla zwrotu.
 # VariableUserRequired: $ItPerson, Osoba IT|Lista użytkowników MeshCentral; domyślnie aktualnie zalogowany operator.
 # SirkWorkflow: JiraAssetProtocol
 # SirkSystemCredential: Jira
-# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")
+# SirkJiraAssetAql: Key is not EMPTY
 # SirkJiraAssetLabelAttribute: Nazwa_sieciowa
+# SirkJiraAssetMaxResults: 5000
 # SirkJiraAssetUserVariable: JiraUser
 # MultiHost: false
 # runAsUser: 0

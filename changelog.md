@@ -1,3 +1,11 @@
+## 0.1.1-dev.65 - 2026-08-12
+
+- Invalidate the legacy Jira users cache schema once so a still-fresh historical 1000-account snapshot is repopulated through the existing bounded pagination path.
+- Expand the canonical Jira Asset Protocol and explicit Jira Assets cache from the `Sprzęt użytkownika` object-type hierarchy to workspace-wide `Key is not EMPTY`, while retaining authoritative server-side Jira-user identity binding.
+- Raise the protocol selector only to the existing 5000-option ceiling and keep the shared workspace snapshot bounded to 100 pages / 50,000 objects; add mixed-object-type and legacy-cache regressions.
+
+Current development notes: `docs/releases/0.1.1-dev.65.md`.
+
 ## 0.1.1-dev.64 - 2026-08-12
 
 - Give every styled protocol PDF render an isolated writable Chrome/Edge `--user-data-dir` inside the existing bounded temporary render directory so MeshCentral Windows service execution does not depend on or collide with a default browser profile.
@@ -187,7 +195,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
@@ -196,7 +204,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
 - Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag/GitHub Release.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
