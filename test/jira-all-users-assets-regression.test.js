@@ -34,14 +34,14 @@ function user(index) {
     };
 }
 
-function asset(id, label, type, values) {
+function asset(id, label, type, values, attributeName) {
     return {
         id: id,
         objectKey: "KEY-" + id,
         label: label,
         objectType: { id: "type-" + type.toLowerCase(), name: type },
         attributes: [{
-            objectTypeAttribute: { name: "Owner" },
+            objectTypeAttribute: { name: attributeName || "Owner" },
             objectAttributeValues: values
         }]
     };
@@ -128,8 +128,8 @@ function objectUserReference(id, displayName) {
                             asset("1", "Laptop-01", "Komputer", [directUserReference("acc-1", "User 1")]),
                             asset("2", "Phone-01", "Telefon", [objectUserReference("1", "User 1")]),
                             asset("3", "Monitor-Other", "Monitor", [directUserReference("acc-2", "User 2")]),
-                            asset("4", "User 1", "Users", [directUserReference("acc-1", "User 1")]),
-                            asset("5", "Document-With-Identity-Text", "Document", [{ value: "acc-1", displayValue: "acc-1" }])
+                            asset("4", "User 1", "Users", [directUserReference("acc-1", "User 1")], "Jira User"),
+                            asset("5", "Document-With-Identity-Text", "Document", [{ value: "acc-1", displayValue: "acc-1" }], "Notes")
                         ],
                         hasMoreResults: false,
                         isLast: true
@@ -154,7 +154,7 @@ function objectUserReference(id, displayName) {
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
             "User-bound Assets must include different referenced object types without returning the selected Users identity object.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
-            "Only explicit Jira user/object references may bind an asset; unrelated plain identity text must not match.");
+            "Only explicit references or assignment attributes may bind an asset; unrelated plain identity text must not match.");
     } finally {
         fs.rmSync(assetTemp, { recursive: true, force: true });
     }
