@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.71",
+    "date": "2026-08-12",
+    "summary": "Compact the workspace-wide Jira Assets cache and reject huge legacy snapshots without parsing them.",
+    "notes": "docs/releases/0.1.1-dev.71.md"
+  },
+  {
     "version": "0.1.1-dev.70",
     "date": "2026-08-12",
     "summary": "Use Jira AQL response attribute metadata directly so Assets cache completes faster and user-bound equipment remains matchable.",
