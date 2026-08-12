@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.72`
+Current version: `0.1.1-dev.71`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,7 +49,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; workspace-wide snapshot zachowuje bounded scan, strony AQL są kompaktowane przed retencją i przy znanym totalu pobierane z bounded concurrency, a nie-force lookup może użyć poprzedniego v3 snapshotu podczas jawnego refreshu; user binding opiera się na jawnych Jira user/object references albo assignment-semantic attributes i nie zwraca samego wybranego identity object; token nie trafia do cache;
+- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; workspace-wide snapshot zachowuje bounded scan, ale user binding opiera się na jawnych Jira user/object references albo assignment-semantic attributes i nie zwraca samego wybranego identity object; token nie trafia do cache;
 - `server/core/html-pdf-renderer.js` — jeden owner styled HTML -> PDF przez lokalny Chrome/Edge oraz bounded dependency-free direct PDF fallback; każdy render używa osobnego zapisywalnego browser profile w bounded temp directory, Edge używa dwóch bounded trybów headless, a po ich niepowodzeniu `fallbackText` może zostać wyrenderowany przez istniejący `pdf-text-renderer.js` bez wyłączania sandboxa;
 - `server/core/jira-protocol-service.js` — jeden protocol lifecycle owner; deleguje PDF dokładnie raz do `html-pdf-renderer.js`, przekazuje canonical protocol text jako `fallbackText` i zapisuje artefakt dopiero po walidacji `%PDF-1.`;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
@@ -130,15 +130,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.72
-config.json  -> 0.1.1-dev.72
+package.json -> 0.1.1-dev.71
+config.json  -> 0.1.1-dev.71
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.72.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.71.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
