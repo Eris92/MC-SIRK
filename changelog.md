@@ -1,3 +1,10 @@
+## 0.1.1-dev.73 - 2026-08-12
+
+- Resolve Jira equipment assigned through workspace Users/person identity objects by deriving the selected user's object id/key/label aliases from the existing bounded Assets snapshot.
+- Preserve direct Jira user references, exclude the identity object itself, and keep unrelated plain-text matching constrained.
+
+Current development notes: `docs/releases/0.1.1-dev.73.md`.
+
 ## 0.1.1-dev.72 - 2026-08-12
 
 - Preserve explicit Jira user/object reference identities in compact Assets cache schema v4 regardless of localized or non-semantic attribute names.

@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.73`](0.1.1-dev.73.md) — resolve Jira equipment through workspace Users/person identity objects;
 - [`0.1.1-dev.72`](0.1.1-dev.72.md) — preserve explicit Jira reference identities in compact Assets cache and require distinct technical test-build revisions;
 - [`0.1.1-dev.71`](0.1.1-dev.71.md) — compact the Jira Assets cache and reject huge legacy snapshots without parsing them;
 - [`0.1.1-dev.70`](0.1.1-dev.70.md) — consume Jira AQL attribute metadata directly and invalidate unmatchable Assets cache snapshots;
