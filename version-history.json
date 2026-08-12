@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.68",
+    "date": "2026-08-12",
+    "summary": "Move Jira protocol direct PDF fallback into the HTML renderer owner so Edge failures cannot bypass fallback handling.",
+    "notes": "docs/releases/0.1.1-dev.68.md"
+  },
+  {
     "version": "0.1.1-dev.67",
     "date": "2026-08-12",
     "summary": "Keep styled Jira protocol PDF rendering first and fall back to the existing dependency-free direct PDF renderer when Edge fails.",
