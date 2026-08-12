@@ -416,7 +416,7 @@ module.exports.createJiraAssetService = function (options) {
 
     function identityObjectType(entry) {
         var typeName = lower(entry && entry.objectType && entry.objectType.name || entry && entry.objectTypeName);
-        return /(user|users|person|people|employee|pracownik|uzytk|użytk|osoba)/i.test(typeName);
+        return /(user|users|person|people|employee|pracowni|uzytk|użytk|osob)/i.test(typeName);
     }
 
     function identityObjectMatchesUser(entry, identities) {
