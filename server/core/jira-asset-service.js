@@ -12,6 +12,7 @@ var ASSET_PAGE_SIZE = 500;
 var DEFAULT_ASSET_OPTION_LIMIT = 1000;
 var MAX_ASSET_OPTION_LIMIT = 5000;
 var MAX_ASSET_SCAN_PAGES = 100;
+var ASSET_CACHE_VERSION = 2;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -196,16 +197,16 @@ module.exports.createJiraAssetService = function (options) {
                 assetCacheMemory = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
             }
             var parsed = assetCacheMemory;
-            var entry = parsed && parsed.version === 1 && parsed.queries && parsed.queries[aql];
+            var entry = parsed && parsed.version === ASSET_CACHE_VERSION && parsed.queries && parsed.queries[aql];
             if (!entry || !Array.isArray(entry.entries)) return null;
             return { fetchedAt: Number(entry.fetchedAt) || 0, entries: entry.entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
         } catch (error) { return null; }
     }
     function writeAssetCache(aql, entries) {
-        var value = { version: 1, queries: {} };
+        var value = { version: ASSET_CACHE_VERSION, queries: {} };
         if (!assetCacheLoaded) readAssetCache(aql);
         var current = assetCacheMemory;
-        if (current && current.version === 1 && current.queries && typeof current.queries === "object") value = current;
+        if (current && current.version === ASSET_CACHE_VERSION && current.queries && typeof current.queries === "object") value = current;
         value.queries[aql] = { fetchedAt: Date.now(), entries: entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
         var temp = assetCachePath + ".tmp-" + process.pid + "-" + Date.now();
         fs.writeFileSync(temp, JSON.stringify(value), { encoding: "utf8", mode: 384 });
@@ -425,6 +426,27 @@ module.exports.createJiraAssetService = function (options) {
                 "/jsm/assets/workspace/" + encodeURIComponent(parts[2]) + "/v1";
             var baseUrl = workspaceBase + "/object/aql";
             var cached = readAssetCache(policy.aql);
+            var responseAttributeNames = Object.create(null);
+            function applyResponseAttributeNames(response, entries) {
+                response = object(response);
+                var definitions = array(response.objectTypeAttributes);
+                if (!definitions.length) definitions = array(response.results && response.results.objectTypeAttributes);
+                definitions.forEach(function (definition) {
+                    var id = text(definition && definition.id, 100);
+                    var name = text(definition && definition.name, 300);
+                    if (id && name) responseAttributeNames[id] = name;
+                });
+                entries.forEach(function (entry) {
+                    array(entry && entry.attributes).forEach(function (attribute) {
+                        var id = text(attribute && attribute.objectTypeAttributeId, 100);
+                        if (!id || !responseAttributeNames[id]) return;
+                        attribute.objectTypeAttribute = Object.assign({}, object(attribute.objectTypeAttribute), {
+                            name: responseAttributeNames[id]
+                        });
+                    });
+                });
+                return entries;
+            }
             function missingAttributeNames(entries) {
                 return entries.some(function (entry) { return array(entry && entry.attributes).some(function (attribute) {
                     return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name, 300);
@@ -484,7 +506,7 @@ module.exports.createJiraAssetService = function (options) {
                         json: { qlQuery: policy.aql }, verifyTls: config.verifyTls,
                         timeoutMs: 30000, maxBytes: 16 * 1024 * 1024, errorPrefix: "Jira Assets"
                     }).then(function (response) {
-                        var page = responseItems(response);
+                        var page = applyResponseAttributeNames(response, responseItems(response));
                         entries = entries.concat(page);
                         var more = pageHasMore(response, startAt, page.length);
                         startAt += page.length;

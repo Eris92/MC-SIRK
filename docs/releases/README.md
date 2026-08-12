@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.70`](0.1.1-dev.70.md) — consume Jira AQL attribute metadata directly and invalidate unmatchable Assets cache snapshots;
 - [`0.1.1-dev.69`](0.1.1-dev.69.md) — isolate Windows admin tests from machine-wide fallback settings while preserving the production default;
 - [`0.1.1-dev.68`](0.1.1-dev.68.md) — renderer-owned direct PDF fallback after real dev.67 Edge failure still escaped the protocol lifecycle;
 - [`0.1.1-dev.67`](0.1.1-dev.67.md) — keep styled Jira protocol PDF first, then reuse the existing direct PDF renderer as a bounded browser-failure fallback;
