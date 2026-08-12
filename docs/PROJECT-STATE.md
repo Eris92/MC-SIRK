@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.75`
+Current version: `0.1.1-dev.76`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,7 +49,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; generic script-owned Assets nadal wspierają bounded workspace-wide scan, compact cache v4, bounded concurrency, response attribute metadata i jawne Jira user/object references. Kanoniczny `Jira Asset Protocol` oraz `Jira Cache Assets` od `0.1.1-dev.75` wracają do ostatniego real-smoke-working scope z dev.64: `objectType in objectTypeAndChildren("Sprzęt użytkownika")`; token nie trafia do cache;
+- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; generic script-owned Assets nadal wspierają bounded scan, compact cache v4, bounded concurrency, response attribute metadata i jawne Jira user/object references. Kanoniczny `Jira Asset Protocol` oraz `Jira Cache Assets` od `0.1.1-dev.76` zachowują działający hierarchy anchor `objectTypeAndChildren("Sprzęt użytkownika")` i rozszerzają źródło o obie strony Assets reference graph (`outboundReferences()` + `inboundReferences()`), aby istniejący server-side Jira-user alias bridge mógł zwrócić także przypisane telefony, monitory i inne typy bez powrotu do nieskutecznego workspace-wide `Key is not EMPTY`; token nie trafia do cache;
 - `server/core/html-pdf-renderer.js` — jeden owner styled HTML -> PDF przez lokalny Chrome/Edge oraz bounded dependency-free direct PDF fallback; każdy render używa osobnego zapisywalnego browser profile w bounded temp directory, Edge używa dwóch bounded trybów headless, a po ich niepowodzeniu `fallbackText` może zostać wyrenderowany przez istniejący `pdf-text-renderer.js` bez wyłączania sandboxa;
 - `server/core/jira-protocol-service.js` — jeden protocol lifecycle owner; deleguje PDF dokładnie raz do `html-pdf-renderer.js`, przekazuje canonical protocol text jako `fallbackText` i zapisuje artefakt dopiero po walidacji `%PDF-1.`;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
@@ -130,8 +130,8 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.75
-config.json  -> 0.1.1-dev.75
+package.json -> 0.1.1-dev.76
+config.json  -> 0.1.1-dev.76
 ```
 
 Każda zmiana techniczna przeznaczona do instalacji/testu użytkownika zwiększa rewizję development, aby panel MeshCentral jednoznacznie identyfikował zainstalowany kod.
@@ -140,7 +140,7 @@ Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible 
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.75.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.76.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
