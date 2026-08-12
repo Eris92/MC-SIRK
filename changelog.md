@@ -1,3 +1,11 @@
+## 0.1.1-dev.76 - 2026-08-12
+
+- Real `0.1.1-dev.75` smoke confirms equipment selection and PDF generation work again, but the restored dev.64 hierarchy still exposes PC-class equipment only.
+- Keep the working `objectTypeAndChildren("Sprzęt użytkownika")` source as an anchor and add `object HAVING outboundReferences()` plus `object HAVING inboundReferences()` so the existing server-side identity bridge can see heterogeneous referenced equipment and its referenced user/person objects.
+- Do not restore the failed workspace-wide `Key is not EMPTY` source; keep bounded pagination/cache, compact reference metadata, authoritative recheck and PDF lifecycle unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.76.md`.
+
 ## 0.1.1-dev.75 - 2026-08-12
 
 - Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.
@@ -405,7 +413,7 @@ Current development notes: `docs/releases/0.1.1-dev.29.md`.
 ## 0.1.1-dev.28 - 2026-08-09
 
 - Deliver Issue #213 second-column shared navigation icon-size contract from PR #222 so MeshCentral update detection installs the larger shared/Quick list icons.
-- Use one shared 28 px item-identifying icon slot with 24 px SVG artwork across My Scripts, My Commands, Approval Center and Quick while preserving first-column Collapse geometry.
+- Use one shared 28 px item-identifying icon slot with 24 px SVG artwork across My Scripts, My Commands, Approval Center i Quick while preserving first-column Collapse geometry.
 - Keep action-rail icon/button geometry, neutral icon color, selected-state indicators, custom image aspect ratio and existing lifecycle/request behavior unchanged.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 

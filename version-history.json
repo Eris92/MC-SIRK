@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.76",
+    "date": "2026-08-12",
+    "summary": "Keep the working Jira equipment hierarchy and include both sides of the Assets reference graph so heterogeneous assigned equipment can resolve to the selected user.",
+    "notes": "docs/releases/0.1.1-dev.76.md"
+  },
+  {
     "version": "0.1.1-dev.75",
     "date": "2026-08-12",
     "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
