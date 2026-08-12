@@ -246,7 +246,7 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function fetchUsers(config) {
-        var endpoints = ["/rest/api/3/users", "/rest/api/3/users/search", "/rest/api/2/users", "/rest/api/2/users/search"];
+        var endpoints = ["/rest/api/3/users/search", "/rest/api/2/users/search", "/rest/api/2/users"];
         var lastError = null;
         function attempt(index) {
             if (index >= endpoints.length) return Promise.reject(lastError || new Error("Jira users are unavailable."));
