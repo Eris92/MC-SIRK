@@ -1,3 +1,12 @@
+## 0.1.1-dev.55 - 2026-08-12
+
+- Real `0.1.1-dev.54` Jira Asset Protocol smoke failed before the native wizard opened with `Cannot set property type of #<HTMLSelectElement> which has only a getter`.
+- Fix the shared parameter-dialog root cause: `select + listMode` no longer creates a SELECT and then writes `type = "hidden"`; every checklist-backed `listMode`/`assetmulti` state owner is a hidden INPUT while ordinary select/user/asset controls keep their existing element semantics.
+- Add a focused control-owner regression covering select/user list mode, assetmulti, ordinary select/asset/user and custom-user paths without a second renderer, timer, observer or DOM repair layer.
+- Keep Issue #296 open for real Modern user -> equipment -> protocol -> execution -> PDF smoke. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.1-dev.55.md`.
+
 ## 0.1.1-dev.54 - 2026-08-11
 
 - Replace the Jira protocol scope/user split with one native dialog: checked-by-default active-only filter, separate client-side search and cached Jira user selector.
@@ -348,7 +357,7 @@ Current development notes: `docs/releases/0.1.1-dev.18.md`.
 ## 0.1.1-dev.17 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal DOM fix from current `main`.
-- Match the current MeshCentral ModernModal structure with `modal -> modal-dialog modal-dialog-centered -> modal-content` instead of attaching `modal-content` directly below the overlay.
+- Match the current MeshCentral ModernModal structure with modal -> modal-dialog modal-dialog-centered -> modal-content instead of attaching modal-content directly below the overlay.
 - Keep the existing Move Request overlay/lifecycle and `MeshThemeAdapter` ownership; do not add a new modal framework, background workaround, observer, timer, polling loop or DOM repair layer.
 - Preserve Classic `style10`, native primary `Submit request`, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
@@ -483,7 +492,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 ## 0.1.1-dev.3 — 2026-08-07
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
-- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
+- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native form-control styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
 Development notes: `docs/releases/0.1.1-dev.3.md`.
