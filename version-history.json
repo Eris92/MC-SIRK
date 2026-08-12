@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.66",
+    "date": "2026-08-12",
+    "summary": "Exclude Jira identity objects from assigned Assets and add bounded Edge PDF headless compatibility.",
+    "notes": "docs/releases/0.1.1-dev.66.md"
+  },
+  {
     "version": "0.1.1-dev.65",
     "date": "2026-08-12",
     "summary": "Invalidate the legacy 1000-user Jira cache snapshot and expose workspace-wide Assets assigned to the selected Jira user.",
