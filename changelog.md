@@ -1,3 +1,11 @@
+## 0.1.1-dev.70 - 2026-08-12
+
+- Consume the canonical top-level `objectTypeAttributes` returned by Jira Assets `/object/aql` and bind each entry's `objectTypeAttributeId` before user assignment filtering.
+- Avoid slow per-object-type attribute discovery when the AQL page already contains authoritative definitions.
+- Invalidate legacy Assets cache snapshots that lack attribute names so assigned equipment is repopulated and user-bound protocol selection no longer returns an empty list.
+
+Current development notes: `docs/releases/0.1.1-dev.70.md`.
+
 ## 0.1.1-dev.69 - 2026-08-12
 
 - Isolate runtime-backed admin tests from an existing machine-wide `%PROGRAMDATA%` fallback store while preserving the production fallback contract by default.
