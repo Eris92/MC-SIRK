@@ -20,10 +20,6 @@
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
         return ["select", "switch", "user", "asset", "assetmulti"].indexOf(kind) >= 0 ? kind : "text";
     }
-    function controlElementTag(kind, customUser, listMode) {
-        if (kind === "assetmulti" || listMode) return "input";
-        return kind === "select" || kind === "asset" || (kind === "user" && !customUser) ? "select" : "input";
-    }
     function allowCustom(item, variable) {
         var name = text(variable && variable.name).trim().toLowerCase();
         if (!name) return false;
@@ -93,6 +89,7 @@
     function setChecklistOptions(host, control, options, single) {
         while (host && host.firstChild) host.removeChild(host.firstChild);
         var selected = text(control && control.value).split(/[;,|\r\n]+/).filter(Boolean);
+        var fragment = host ? document.createDocumentFragment() : null;
         (Array.isArray(options) ? options : []).forEach(function (option, index) {
             if (!host) return;
             var value = optionValue(option);
@@ -104,13 +101,15 @@
             if (single) box.name = control.name + "Option";
             box.value = value;
             box.checked = selected.indexOf(value) >= 0;
+            if (box.checked) box.setAttribute("checked", "checked");
             box.id = host.id + "Option" + index;
             var label = document.createElement("span");
             label.textContent = optionLabel(option) || value;
             row.appendChild(box);
             row.appendChild(label);
-            host.appendChild(row);
+            fragment.appendChild(row);
         });
+        if (host && fragment) host.appendChild(fragment);
     }
     function setDatalistOptions(list, options) {
         while (list && list.firstChild) list.removeChild(list.firstChild);
@@ -181,6 +180,7 @@
     function buildContent(item, prefix) {
         var content = document.createElement("div");
         content.className = "mc-parameter-dialog-content";
+        if (item && item.fitOptionWidth === true) content.classList.add("mc-parameter-dialog-fit-options");
         var description = localized(item, "description") || text(item && item.description);
         if (description) {
             var intro = document.createElement("p");
@@ -195,17 +195,21 @@
             var listMode = variable.listMode === true && (kind === "user" || kind === "select");
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
+            if (item && item.fitOptionWidth === true) row.classList.add("mc-parameter-dialog-fit-options");
+            if (variable.inlineLabel === true) row.classList.add("mc-parameter-dialog-inline-label");
             var caption = document.createElement("span");
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
-            if (variable.hideLabel !== true) row.appendChild(caption);
-            var control = document.createElement(controlElementTag(kind, customUser, listMode));
+            if (variable.hideLabel !== true && !(kind === "switch" && variable.inlineControl === true)) row.appendChild(caption);
+            var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
+            var control = document.createElement(listMode ? "input" : useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
             var listId = "";
             var optionHostId = "";
             if (kind === "assetmulti" || listMode) {
+                row.classList.add("mc-parameter-dialog-checklist-row");
                 control.type = "hidden";
                 control.value = defaultValue(variable);
                 row.appendChild(control);
@@ -220,6 +224,10 @@
                 control.checked = checkedDefault(variable);
                 if (control.checked) control.setAttribute("checked", "checked");
                 row.appendChild(control);
+                if (variable.inlineControl === true) {
+                    row.classList.add("mc-parameter-dialog-inline-check");
+                    if (variable.hideLabel !== true) row.appendChild(caption);
+                }
             } else if (kind === "text" || customUser) {
                 control.type = "text";
                 control.value = defaultValue(variable);
@@ -481,10 +489,8 @@
                     record.optionHost.addEventListener("change", onChecklistChanged);
                     if (record.variable.submitOnDoubleClick === true) record.optionHost.addEventListener("dblclick", onOptionDoubleClick);
                 }
-                if (record.kind === "text" || record.kind === "switch") {
-                    record.control.addEventListener("input", onFilterChanged);
-                    record.control.addEventListener("change", onFilterChanged);
-                }
+                if (record.kind === "text") record.control.addEventListener("input", onFilterChanged);
+                else if (record.kind === "switch") record.control.addEventListener("change", onFilterChanged);
             });
             if (cancel) cancel.addEventListener("click", onCancel, true);
             if (close) close.addEventListener("click", onCancel, true);
@@ -599,7 +605,6 @@
         allowCustom: allowCustom,
         assetDependsOnUser: assetDependsOnUser,
         assetUserDependency: assetUserDependency,
-        controlElementTag: controlElementTag,
         controlKind: controlKind,
         currentValues: currentValues,
         optionProvider: function () { return sharedOptionProvider; },

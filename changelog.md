@@ -1,9 +1,61 @@
-## 0.1.1-dev.55 - 2026-08-12
+## 0.1.1-dev.63 - 2026-08-11
 
-- Real `0.1.1-dev.54` Jira Asset Protocol smoke failed before the native wizard opened with `Cannot set property type of #<HTMLSelectElement> which has only a getter`.
-- Fix the shared parameter-dialog root cause: `select + listMode` no longer creates a SELECT and then writes `type = "hidden"`; every checklist-backed `listMode`/`assetmulti` state owner is a hidden INPUT while ordinary select/user/asset controls keep their existing element semantics.
-- Add a focused control-owner regression covering select/user list mode, assetmulti, ordinary select/asset/user and custom-user paths without a second renderer, timer, observer or DOM repair layer.
-- Keep Issue #296 open for real Modern user -> equipment -> protocol -> execution -> PDF smoke. No tag/GitHub Release.
+- Reduce both Jira cache dialogs to the single `Wymuś odświeżenie` checkbox label.
+
+Current development notes: `docs/releases/0.1.1-dev.63.md`.
+
+## 0.1.1-dev.62 - 2026-08-11
+
+- Keep system credential assignments attached to a stable `SirkWorkflow` identity when a workflow script moves into a subfolder.
+
+Current development notes: `docs/releases/0.1.1-dev.62.md`.
+
+## 0.1.1-dev.61 - 2026-08-11
+
+- Preserve the intrinsic-width marker on the checklist row copied by MeshCentral into the native modal.
+
+Current development notes: `docs/releases/0.1.1-dev.61.md`.
+
+## 0.1.1-dev.60 - 2026-08-11
+
+- Expand the equipment-selection modal to its longest option and keep equipment labels on one line, bounded by the viewport.
+
+Current development notes: `docs/releases/0.1.1-dev.60.md`.
+
+## 0.1.1-dev.59 - 2026-08-11
+
+- Preserve the default `Przekazanie sprzętu` radio state through MeshCentral's native modal HTML transfer.
+
+Current development notes: `docs/releases/0.1.1-dev.59.md`.
+
+## 0.1.1-dev.58 - 2026-08-11
+
+- Restore original Jira aliases for protocol SN and inventory-number fields, including `SN` and `Numer_inwentarzowy`.
+- Rebuild the large user checklist once per active-only click and attach its rows in one DOM operation.
+- Stretch the Search input from its compact label and select `Przekazanie sprzętu` by default.
+
+Current development notes: `docs/releases/0.1.1-dev.58.md`.
+
+## 0.1.1-dev.57 - 2026-08-11
+
+- Honor Jira Assets `hasMoreResults` ahead of the capped `total`/`isLast` metadata so the daily equipment snapshot continues beyond 1,000 objects.
+- Align the Jira User step with the accepted layout: directly clickable active-only checkbox, inline Search row and unlabeled full-width user list.
+- Use the `Sprzęt do protokołu` title and an unlabeled full-width multi-equipment checklist.
+
+Current development notes: `docs/releases/0.1.1-dev.57.md`.
+
+## 0.1.1-dev.56 - 2026-08-11
+
+- Add a persistent PNG protocol-logo section with preview and Change action under Settings > General; generated PDFs reuse the same data-root asset.
+- Match searchable user and equipment checklist borders to native input fields while preserving the corrected exclusive protocol radio list.
+- Keep parsed Jira user/equipment daily snapshots hot in the shared cache owner so each protocol does not reparse the large cache files.
+- Paginate the shared Jira directory beyond the former 1,000-account cutoff and remove inherited help text from the final protocol step.
+
+Current development notes: `docs/releases/0.1.1-dev.56.md`.
+
+## 0.1.1-dev.55 - 2026-08-11
+
+- Fix the Jira protocol transfer/return radio list by creating its hidden value owner as an input instead of assigning the read-only `HTMLSelectElement.type` property.
 
 Current development notes: `docs/releases/0.1.1-dev.55.md`.
 
@@ -357,7 +409,7 @@ Current development notes: `docs/releases/0.1.1-dev.18.md`.
 ## 0.1.1-dev.17 — 2026-08-08
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal DOM fix from current `main`.
-- Match the current MeshCentral ModernModal structure with modal -> modal-dialog modal-dialog-centered -> modal-content instead of attaching modal-content directly below the overlay.
+- Match the current MeshCentral ModernModal structure with `modal -> modal-dialog modal-dialog-centered -> modal-content` instead of attaching `modal-content` directly below the overlay.
 - Keep the existing Move Request overlay/lifecycle and `MeshThemeAdapter` ownership; do not add a new modal framework, background workaround, observer, timer, polling loop or DOM repair layer.
 - Preserve Classic `style10`, native primary `Submit request`, Move Request backend semantics and the existing #127 pending/success/error lifecycle.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
@@ -492,7 +544,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 ## 0.1.1-dev.3 — 2026-08-07
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
-- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native form-control styling cannot change the Quick toolbar row height on Search on/off.
+- Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
 Development notes: `docs/releases/0.1.1-dev.3.md`.

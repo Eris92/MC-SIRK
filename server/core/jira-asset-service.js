@@ -6,7 +6,7 @@ var shared = require("./shared.js");
 var USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var USER_PAGE_SIZE = 100;
-var MAX_USERS = 1000;
+var MAX_USERS = 10000;
 var ASSET_PAGE_SIZE = 500;
 var DEFAULT_ASSET_OPTION_LIMIT = 1000;
 var MAX_ASSET_OPTION_LIMIT = 5000;
@@ -105,6 +105,10 @@ module.exports.createJiraAssetService = function (options) {
     var assetCachePath = path.join(dataRoot, "jira-assets-cache.json");
     var usersInFlight = null;
     var assetsInFlight = Object.create(null);
+    var userCacheLoaded = false;
+    var userCacheMemory = null;
+    var assetCacheLoaded = false;
+    var assetCacheMemory = null;
 
     function jiraConfig() {
         var value = integrations.get("jira") || {};
@@ -153,13 +157,16 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function readCache() {
+        if (userCacheLoaded) return userCacheMemory;
+        userCacheLoaded = true;
         try {
             var parsed = JSON.parse(fs.readFileSync(cachePath, "utf8"));
             if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.users)) return null;
-            return {
+            userCacheMemory = {
                 fetchedAt: Number(parsed.fetchedAt) || 0,
                 users: parsed.users.slice(0, MAX_USERS).map(normalizeUser).filter(Boolean)
             };
+            return userCacheMemory;
         } catch (error) {
             return null;
         }
@@ -178,10 +185,16 @@ module.exports.createJiraAssetService = function (options) {
             try { fs.unlinkSync(cachePath); } catch (ignore) {}
             fs.renameSync(temp, cachePath);
         }
+        userCacheLoaded = true;
+        userCacheMemory = { fetchedAt: Date.now(), users: users.slice(0, MAX_USERS).map(normalizeUser).filter(Boolean) };
     }
     function readAssetCache(aql) {
         try {
-            var parsed = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
+            if (!assetCacheLoaded) {
+                assetCacheLoaded = true;
+                assetCacheMemory = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
+            }
+            var parsed = assetCacheMemory;
             var entry = parsed && parsed.version === 1 && parsed.queries && parsed.queries[aql];
             if (!entry || !Array.isArray(entry.entries)) return null;
             return { fetchedAt: Number(entry.fetchedAt) || 0, entries: entry.entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
@@ -189,15 +202,16 @@ module.exports.createJiraAssetService = function (options) {
     }
     function writeAssetCache(aql, entries) {
         var value = { version: 1, queries: {} };
-        try {
-            var current = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
-            if (current && current.version === 1 && current.queries && typeof current.queries === "object") value = current;
-        } catch (error) {}
+        if (!assetCacheLoaded) readAssetCache(aql);
+        var current = assetCacheMemory;
+        if (current && current.version === 1 && current.queries && typeof current.queries === "object") value = current;
         value.queries[aql] = { fetchedAt: Date.now(), entries: entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
         var temp = assetCachePath + ".tmp-" + process.pid + "-" + Date.now();
         fs.writeFileSync(temp, JSON.stringify(value), { encoding: "utf8", mode: 384 });
         try { fs.renameSync(temp, assetCachePath); }
         catch (error) { try { fs.unlinkSync(assetCachePath); } catch (ignore) {} fs.renameSync(temp, assetCachePath); }
+        assetCacheLoaded = true;
+        assetCacheMemory = value;
     }
 
     function fetchUsersFrom(config, endpoint) {
@@ -334,8 +348,8 @@ module.exports.createJiraAssetService = function (options) {
         var objectType = text(entry.objectType && entry.objectType.name || entry.objectTypeName, 300);
         var model = text((attributes.model || attributes["model name"] || attributes["model urządzenia"] || [])[0], 300);
         var manufacturer = text((attributes.manufacturer || attributes.producent || attributes.vendor || attributes.marka || [])[0], 300);
-        var serial = text((attributes["serial number"] || attributes.serial || attributes["numer seryjny"] || [])[0], 300);
-        var inventory = text((attributes["inventory number"] || attributes.inventory || attributes["numer inwentarzowy"] || attributes["nr inwentarzowy"] || [])[0], 300);
+        var serial = text((attributes["serial number"] || attributes.serial || attributes["numer seryjny"] || attributes["s/n"] || attributes.sn || attributes["service tag"] || [])[0], 300);
+        var inventory = text((attributes["inventory number"] || attributes.inventory || attributes["numer inwentarzowy"] || attributes.numer_inwentarzowy || attributes["asset tag"] || attributes.tag || attributes.inwentarz || attributes["nr inv"] || attributes["nr. inv"] || attributes["nr inwentarzowy"] || [])[0], 300);
         var details = [objectType, model, serial, inventory].filter(function (value, index, all) {
             return value && lower(value) !== lower(hostname) && all.map(lower).indexOf(lower(value)) === index;
         });
@@ -355,6 +369,7 @@ module.exports.createJiraAssetService = function (options) {
 
     function pageHasMore(response, startAt, pageLength) {
         response = object(response);
+        if (response.hasMoreResults === true) return true;
         if (response.isLast === true) return false;
         var total = Number(response.totalFilterCount != null ? response.totalFilterCount : response.total);
         if (isFinite(total) && total >= 0) return startAt + pageLength < total;

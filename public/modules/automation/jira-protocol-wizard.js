@@ -65,18 +65,21 @@
             label: "Tylko aktywni użytkownicy",
             required: false,
             control: "switch",
-            defaultValue: "true"
+            defaultValue: "true",
+            inlineControl: true
         };
         var search = {
             name: "JiraUserSearch",
             label: "Szukaj",
             required: false,
             control: "text",
-            defaultValue: ""
+            defaultValue: "",
+            inlineLabel: true
         };
         jiraUser = copy(jiraUser);
         jiraUser.label = "Użytkownicy";
         jiraUser.description = "";
+        jiraUser.hideLabel = true;
         jiraUser.listMode = true;
         jiraUser.submitOnDoubleClick = true;
         jiraUser.searchVariable = "JiraUserSearch";
@@ -84,21 +87,26 @@
         asset = copy(asset);
         asset.label = "Sprzęt";
         asset.description = "";
+        asset.hideLabel = true;
         asset.control = "assetmulti";
         transfer = copy(transfer);
+        transfer.description = "";
         transfer.control = "select";
         transfer.listMode = true;
         transfer.hideLabel = true;
+        transfer.defaultValue = "true";
         transfer.options = [
             { value: "true", label: "Przekazanie sprzętu" },
             { value: "false", label: "Odbiór sprzętu" }
         ];
         itPerson = copy(itPerson);
+        itPerson.description = "";
         itPerson.optionSource = "mesh-users";
         delete itPerson.defaultValue;
 
         var userStep = stepItem(item, "Jira Asset Protocol - User", "", [activeOnly, search, jiraUser]);
-        var assetStep = stepItem(item, "Sprzęt", "", [asset]);
+        var assetStep = stepItem(item, "Sprzęt do protokołu", "", [asset]);
+        assetStep.fitOptionWidth = true;
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
 
         return runStep(options, userStep, {}, "Next").then(function (userValues) {

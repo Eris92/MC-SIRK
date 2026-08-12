@@ -1,8 +1,56 @@
 [
   {
+    "version": "0.1.1-dev.63",
+    "date": "2026-08-11",
+    "summary": "Remove explanatory copy from both Jira cache dialogs.",
+    "notes": "docs/releases/0.1.1-dev.63.md"
+  },
+  {
+    "version": "0.1.1-dev.62",
+    "date": "2026-08-11",
+    "summary": "Preserve workflow system credential assignments across script folder moves.",
+    "notes": "docs/releases/0.1.1-dev.62.md"
+  },
+  {
+    "version": "0.1.1-dev.61",
+    "date": "2026-08-11",
+    "summary": "Preserve the equipment width marker through native modal HTML transfer.",
+    "notes": "docs/releases/0.1.1-dev.61.md"
+  },
+  {
+    "version": "0.1.1-dev.60",
+    "date": "2026-08-11",
+    "summary": "Fit the Jira equipment modal to unwrapped option labels within the viewport.",
+    "notes": "docs/releases/0.1.1-dev.60.md"
+  },
+  {
+    "version": "0.1.1-dev.59",
+    "date": "2026-08-11",
+    "summary": "Preserve the Jira protocol default radio selection in the native MeshCentral modal.",
+    "notes": "docs/releases/0.1.1-dev.59.md"
+  },
+  {
+    "version": "0.1.1-dev.58",
+    "date": "2026-08-11",
+    "summary": "Restore protocol asset identifiers and remove the active-only filter UI stall.",
+    "notes": "docs/releases/0.1.1-dev.58.md"
+  },
+  {
+    "version": "0.1.1-dev.57",
+    "date": "2026-08-11",
+    "summary": "Complete Jira Assets daily pagination and correct the User/equipment dialog layout and active-only control.",
+    "notes": "docs/releases/0.1.1-dev.57.md"
+  },
+  {
+    "version": "0.1.1-dev.56",
+    "date": "2026-08-11",
+    "summary": "Persistent shared protocol logo and native list-field borders for the Jira protocol workflow.",
+    "notes": "docs/releases/0.1.1-dev.56.md"
+  },
+  {
     "version": "0.1.1-dev.55",
-    "date": "2026-08-12",
-    "summary": "Corrective shared parameter-dialog list-mode control ownership after real Jira Protocol HTMLSelectElement crash.",
+    "date": "2026-08-11",
+    "summary": "Correct Jira protocol transfer/return list control creation after real Modern UI smoke.",
     "notes": "docs/releases/0.1.1-dev.55.md"
   },
   {
@@ -110,7 +158,7 @@
       "Bump the pre-1.0 development revision after real dev.38 Network Settings and Admin theme regressions while Results/View passes.",
       "Execute Network Settings as direct type-2 PowerShell through the single canonical logged-on-user runner instead of detaching powershell.exe via CMD start; preserve the proven route/adapter and real Shell Properties verb body.",
       "Prefer explicit parent data-bs-theme over stale legacy nightMode in the existing Admin host theme owner while retaining Classic fallbacks and copied host surface; add functional stale-signal regression.",
-      "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release."
+      "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke; no automatic tag or GitHub Release."
     ]
   },
   {
@@ -421,7 +469,7 @@
       "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
       "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
-      "Keep stable execution IDs, authorization and the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release."
+      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
   },
   {

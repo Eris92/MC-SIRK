@@ -3,6 +3,7 @@
 var artifactFactory = require("./artifact-service.js");
 var documentTemplateRenderer = require("./document-template-renderer.js");
 var htmlPdfRenderer = require("./html-pdf-renderer.js");
+var brandingFactory = require("./branding-service.js");
 var shared = require("./shared.js");
 
 var MAX_PROGRESS_ENTRIES = 200;
@@ -84,6 +85,11 @@ module.exports.createJiraProtocolService = function (options) {
     var executor = options.executor;
     var renderProtocolDocument = options.renderProtocolDocument || documentTemplateRenderer.renderJiraAssetProtocol;
     var renderHtmlPdf = options.renderHtmlPdf || htmlPdfRenderer.renderHtmlPdf;
+    var branding = brandingFactory.createBrandingService({
+        fs: context.fs,
+        path: context.nativePath || context.path,
+        dataRoot: context.dataRoot
+    });
     var artifactService = options.artifactService || artifactFactory.createArtifactService({
         fs: context.fs,
         path: context.nativePath || context.path,
@@ -215,7 +221,7 @@ module.exports.createJiraProtocolService = function (options) {
             var protocolText = text(rendered.text, 500000);
             var protocolHtml = renderProtocolDocument(rendered.data);
             if (!text(protocolHtml, 1000000)) throw new Error("Shared document template returned no styled HTML document.");
-            return renderHtmlPdf(protocolHtml).then(function (pdf) {
+            return renderHtmlPdf(protocolHtml, { logoPath: branding.protocolLogoPath }).then(function (pdf) {
             if (!Buffer.isBuffer(pdf) || pdf.length < 100 || pdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) {
                 throw new Error("PDF renderer returned an invalid artifact.");
             }

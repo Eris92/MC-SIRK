@@ -4,6 +4,7 @@ var fs = require("fs");
 var path = require("path");
 var shared = require("./server/core/shared.js");
 var artifactFactory = require("./server/core/artifact-service.js");
+var brandingFactory = require("./server/core/branding-service.js");
 
 module.exports.admin = function (plugin) {
     var root = __dirname;
@@ -62,6 +63,31 @@ module.exports.admin = function (plugin) {
         var context = plugin.runtime && plugin.runtime.context;
         if (!context || !context.dataRoot || !context.approval) return null;
         return artifactFactory.createArtifactService({ fs: fs, path: path, dataRoot: context.dataRoot });
+    }
+
+    function brandingService() {
+        var context = plugin.runtime && plugin.runtime.context;
+        if (!context || !context.dataRoot) return null;
+        return brandingFactory.createBrandingService({ fs: fs, path: path, dataRoot: context.dataRoot });
+    }
+
+    function serveProtocolLogo(res, user) {
+        var service = brandingService();
+        if (!shared.isSiteAdmin(user) || !service) {
+            shared.send(res, 403, "text/plain; charset=utf-8", "Forbidden");
+            return;
+        }
+        try {
+            var data = service.readProtocolLogo();
+            res.statusCode = 200;
+            setHeader(res, "Content-Type", "image/png");
+            setHeader(res, "Content-Length", String(data.length));
+            setHeader(res, "Cache-Control", "no-store");
+            setHeader(res, "X-Content-Type-Options", "nosniff");
+            res.end(data);
+        } catch (error) {
+            shared.send(res, 404, "text/plain; charset=utf-8", "Protocol logo not found");
+        }
     }
 
     function serveTypedArtifact(req, res, user, requestId, artifactId) {
@@ -178,6 +204,7 @@ module.exports.admin = function (plugin) {
         var moduleName = String(req && req.query && req.query.module || "");
 
         if (asset === "download") { serveDownload(req, res, user); return; }
+        if (asset === "protocol-logo") { serveProtocolLogo(res, user); return; }
         if (assets[asset]) { sendAsset(res, asset); return; }
         if (asset === "bootstrap") {
             plugin.runtime.request("GET", "_runtime", "bootstrap", req, res, user);
@@ -249,6 +276,23 @@ module.exports.admin = function (plugin) {
             Promise.resolve(integrations.save(user, integrationPayload))
                 .then(function (value) { shared.sendJson(res, 200, { ok: true, integrations: value }); })
                 .catch(function (error) { shared.sendJson(res, 400, { ok: false, error: errorText(error) }); });
+            return;
+        }
+
+        if (action === "upload-protocol-logo") {
+            if (!shared.isSiteAdmin(user)) {
+                shared.sendJson(res, 403, { ok: false, error: "Permission denied." });
+                return;
+            }
+            try {
+                var encoded = String(req && req.body && req.body.logoData || "");
+                if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error("Select a PNG logo file.");
+                var logo = Buffer.from(encoded, "base64");
+                var saved = brandingService().saveProtocolLogo(logo);
+                shared.sendJson(res, 200, { ok: true, size: saved.size, version: Date.now() });
+            } catch (error) {
+                shared.sendJson(res, 400, { ok: false, error: errorText(error) });
+            }
             return;
         }
 
