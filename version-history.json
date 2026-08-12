@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.55",
+    "date": "2026-08-12",
+    "summary": "Corrective shared parameter-dialog list-mode control ownership after real Jira Protocol HTMLSelectElement crash.",
+    "notes": "docs/releases/0.1.1-dev.55.md"
+  },
+  {
     "version": "0.1.1-dev.54",
     "date": "2026-08-11",
     "summary": "Jira protocol searchable user list, all-equipment multi-select, exclusive transfer mode, Mesh IT identity and styled logo PDF.",
@@ -104,7 +110,7 @@
       "Bump the pre-1.0 development revision after real dev.38 Network Settings and Admin theme regressions while Results/View passes.",
       "Execute Network Settings as direct type-2 PowerShell through the single canonical logged-on-user runner instead of detaching powershell.exe via CMD start; preserve the proven route/adapter and real Shell Properties verb body.",
       "Prefer explicit parent data-bs-theme over stale legacy nightMode in the existing Admin host theme owner while retaining Classic fallbacks and copied host surface; add functional stale-signal regression.",
-      "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke; no automatic tag or GitHub Release."
+      "Runtime Test #540 is green before bump; #128/#123 remain open for real dev.39 smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release."
     ]
   },
   {
@@ -415,7 +421,7 @@
       "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
       "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
-      "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
+      "Keep stable execution IDs, authorization and the revision below 1.0.0; this is not a product release and does not create a tag or GitHub Release."
     ]
   },
   {
