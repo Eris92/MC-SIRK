@@ -34,16 +34,31 @@ function user(index) {
     };
 }
 
-function asset(id, label, type, owner) {
+function asset(id, label, type, values, attributeName) {
     return {
         id: id,
         objectKey: "KEY-" + id,
         label: label,
         objectType: { id: "type-" + type.toLowerCase(), name: type },
         attributes: [{
-            objectTypeAttribute: { name: "Owner" },
-            objectAttributeValues: [{ value: owner, displayValue: owner }]
+            objectTypeAttribute: { name: attributeName || "Owner" },
+            objectAttributeValues: values
         }]
+    };
+}
+
+function directUserReference(accountId, displayName) {
+    return {
+        user: { accountId: accountId, displayName: displayName },
+        displayValue: displayName
+    };
+}
+
+function objectUserReference(id, displayName) {
+    return {
+        referencedType: true,
+        referencedObject: { id: id, objectKey: "USR-" + id, label: displayName, name: displayName },
+        displayValue: displayName
     };
 }
 
@@ -105,14 +120,16 @@ function asset(id, label, type, owner) {
             dataRoot: assetTemp,
             integrations: integration(),
             requestJson: function (options) {
-                if (options.url.indexOf("/rest/api/3/users/search") >= 0) return Promise.resolve([user(1)]);
+                if (options.url.indexOf("/rest/api/3/users/search") >= 0) return Promise.resolve([user(1), user(2)]);
                 if (options.url.indexOf("/object/aql") >= 0) {
                     aql = options.json && options.json.qlQuery || "";
                     return Promise.resolve({
                         values: [
-                            asset("1", "Laptop-01", "Komputer", "acc-1"),
-                            asset("2", "Phone-01", "Telefon", "acc-1"),
-                            asset("3", "Monitor-Other", "Monitor", "acc-2")
+                            asset("1", "Laptop-01", "Komputer", [directUserReference("acc-1", "User 1")]),
+                            asset("2", "Phone-01", "Telefon", [objectUserReference("1", "User 1")]),
+                            asset("3", "Monitor-Other", "Monitor", [directUserReference("acc-2", "User 2")]),
+                            asset("4", "User 1", "Users", [directUserReference("acc-1", "User 1")], "Jira User"),
+                            asset("5", "Document-With-Identity-Text", "Document", [{ value: "acc-1", displayValue: "acc-1" }], "Notes")
                         ],
                         hasMoreResults: false,
                         isLast: true
@@ -135,14 +152,14 @@ function asset(id, label, type, owner) {
         assert.strictEqual(aql, "Key is not EMPTY",
             "The backend must execute the script-owned workspace-wide AQL unchanged.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
-            "User-bound Assets must include different Jira object types and exclude another user's asset.");
+            "User-bound Assets must include different referenced object types without returning the selected Users identity object.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
-            "Assets without the preferred hostname attribute must retain the Jira object label fallback.");
+            "Only explicit references or assignment attributes may bind an asset; unrelated plain identity text must not match.");
     } finally {
         fs.rmSync(assetTemp, { recursive: true, force: true });
     }
 
-    console.log("Jira legacy 1000-user cache invalidation and workspace-wide user-bound Assets: OK");
+    console.log("Jira legacy user cache and reference-only workspace-wide assigned Assets: OK");
 }()).catch(function (error) {
     console.error(error && error.stack || error);
     process.exit(1);

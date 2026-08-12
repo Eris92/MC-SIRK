@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.65`
+Current version: `0.1.1-dev.66`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,8 +49,8 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; cache schema jest wersjonowana, a protokół może używać workspace-wide snapshotu z bounded scan i server-side user binding; token nie trafia do cache;
-- `server/core/html-pdf-renderer.js` — jeden owner styled HTML -> PDF przez lokalny Chrome/Edge; każdy render używa osobnego zapisywalnego browser profile w bounded temp directory i usuwa cały katalog po zakończeniu;
+- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; workspace-wide snapshot zachowuje bounded scan, ale user binding opiera się na jawnych Jira user/object references albo assignment-semantic attributes i nie zwraca samego wybranego identity object; token nie trafia do cache;
+- `server/core/html-pdf-renderer.js` — jeden owner styled HTML -> PDF przez lokalny Chrome/Edge; każdy render używa osobnego zapisywalnego browser profile w bounded temp directory, a Edge używa bounded compatibility retry (`--headless` -> `--headless=new`) z portable paths bez wyłączania sandboxa;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
 - `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu; brakujący menu node jest tworzony dopiero po zakończeniu bieżącego natywnego `goPageEnd`, a późniejsza rekonsyliacja nie przepisuje niezmienionego widocznego stanu;
 - `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
@@ -129,15 +129,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.65
-config.json  -> 0.1.1-dev.65
+package.json -> 0.1.1-dev.66
+config.json  -> 0.1.1-dev.66
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.65.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.66.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

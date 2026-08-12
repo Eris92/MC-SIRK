@@ -1,3 +1,11 @@
+## 0.1.1-dev.66 - 2026-08-12
+
+- Narrow workspace-wide Jira user binding to explicit user/object references and assignment-semantic attributes so the selected `Users` identity object and unrelated identity text are not returned as equipment.
+- Keep heterogeneous assigned Jira object types and existing cache/pagination bounds while preserving compatibility with plain assignment values from Jira Assets.
+- Make Edge styled PDF generation prefer generic `--headless` with portable profile/output paths and retry exactly once with `--headless=new`, retaining isolated profile, sandbox, cleanup and bounded diagnostics.
+
+Current development notes: `docs/releases/0.1.1-dev.66.md`.
+
 ## 0.1.1-dev.65 - 2026-08-12
 
 - Invalidate the legacy Jira users cache schema once so a still-fresh historical 1000-account snapshot is repopulated through the existing bounded pagination path.

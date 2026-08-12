@@ -334,10 +334,44 @@ module.exports.createJiraAssetService = function (options) {
         });
     }
 
+    function assignmentAttribute(attribute) {
+        var name = lower(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name);
+        return /(owner|user|assigned|employee|pracownik|uzytk|użytk|przypis|wlasciciel|właściciel)/i.test(name);
+    }
+
+    function referenceStrings(value, allowPlain) {
+        value = object(value);
+        var result = [];
+        if (value.user) collectStrings(value.user, result, 0);
+        if (value.referencedObject) {
+            var referenced = object(value.referencedObject);
+            collectStrings({
+                id: referenced.id,
+                label: referenced.label,
+                objectKey: referenced.objectKey,
+                name: referenced.name,
+                attributes: referenced.attributes
+            }, result, 0);
+        }
+        if (value.referencedType === true || allowPlain === true) {
+            collectStrings(value.value, result, 0);
+            collectStrings(value.searchValue, result, 0);
+            collectStrings(value.displayValue, result, 0);
+        }
+        return result.map(lower);
+    }
+
     function entryMatchesUser(entry, identities) {
         if (!identities.length) return true;
-        var strings = collectStrings(array(entry && entry.attributes), [], 0).map(lower);
-        return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
+        var ownLabel = lower(entry && (entry.label || entry.name));
+        if (ownLabel && identities.indexOf(ownLabel) >= 0) return false;
+        return array(entry && entry.attributes).some(function (attribute) {
+            var allowPlain = assignmentAttribute(attribute);
+            return array(attribute && attribute.objectAttributeValues).some(function (value) {
+                var strings = referenceStrings(value, allowPlain);
+                return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
+            });
+        });
     }
 
     function normalizeAsset(entry, policy) {
