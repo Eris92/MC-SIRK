@@ -14,14 +14,20 @@ Nazwy kanoniczne:
 
 MC-SIRK jest odrębny od wielorepozytoryjnego SIRK Agent/Portal/Central/Updater.
 
+## Zasada nadrzedna
+
+Optimize for the shortest evidence-based path to a correct implementation, not exhaustive investigation.
+
+Agent zachowuje autonomie: sam implementuje, testuje i konczy zadanie. Zakres rozszerza tylko wtedy, gdy konkretne evidence pokazuje, ze aktualny scope nie wystarcza dla correctness, security albo acceptance criteria.
+
 ## Start - minimalny kontekst
 
-Dla każdego zadania:
-1. przeczytaj ten plik;
-2. przeczytaj `docs/INDEX.md`;
-3. jeżeli podano Issue, przeczytaj Issue przed kodem;
-4. wybierz dokładnie jeden indeks warstwy;
-5. odczytaj entrypoint/ownera, bezpośrednie zależności i targeted tests;
+Dla kazdego zadania:
+1. przeczytaj ten plik raz;
+2. przeczytaj `docs/INDEX.md` raz;
+3. jezeli podano Issue, przeczytaj Issue przed kodem i nie pobieraj go ponownie bez evidence zmiany;
+4. wybierz dokladnie jeden indeks warstwy;
+5. odczytaj entrypoint/ownera, bezposrednie zaleznosci i targeted tests;
 6. rozszerz zakres tylko po konkretnym braku evidence.
 
 Routing warstw:
@@ -31,19 +37,56 @@ Routing warstw:
 - walidatory/build/struktura: `scripts/INDEX.md`;
 - test/regresja: `test/INDEX.md`.
 
-Nie czytaj automatycznie wszystkich `docs/agent/*`, całego repo, historii Git ani pełnych testów.
+Nie czytaj automatycznie wszystkich `docs/agent/*`, calego repo, historii Git ani pelnych testow.
 
-Domyślny first pass:
+Domyslny first pass:
 - task/Issue;
 - `AGENTS.md` + `docs/INDEX.md`;
 - 1 indeks warstwy;
-- do 5 plików implementacji/testów.
+- do 5 plikow implementacji/testow.
 
-## Moduły instrukcji - tylko gdy dotyczą zadania
+## FAST_PATH - domyslny tryb
 
-| Zakres | Moduł |
+Bugfix, mala funkcja, UI fix, configuration change, targeted refactor i proste Issue realizuj domyslnie przez FAST_PATH:
+
+1. task/Issue;
+2. dwa routery + jeden indeks warstwy;
+3. maksymalnie 3 targeted searches;
+4. minimalna implementacja w ownerze i bezposrednich zaleznosciach;
+5. targeted validation, zwykle maksymalnie 2 komendy;
+6. kontrola finalnego diffu;
+7. jeden commit/push po zakonczeniu lokalnej iteracji.
+
+Guardrails dla malego zadania:
+- odczyty instrukcji/indexow: <= 3 poza samym Issue;
+- targeted code searches: <= 3;
+- Web Search: 0 domyslnie;
+- clone/checkout: maksymalnie 1 na repo i tylko gdy lokalny checkout jest potrzebny;
+- targeted test/build commands: zwykle <= 2;
+- ponowny odczyt tego samego niezmienionego zasobu: 0;
+- cross-repo inspection: 0, chyba ze task lub evidence wskazuje rzeczywisty contract/dependency;
+- documentation update: tylko gdy istniejaca dokumentacja stalaby sie bledna albo acceptance criteria tego wymagaja.
+
+To sa guardrails, nie twarde limity. Mozesz je przekroczyc tylko z konkretnym powodem zwiazanym z correctness, security, acceptance criteria albo potwierdzona zaleznoscia. Po rozwiazaniu blockera wroc do FAST_PATH.
+
+## Context reuse i narzedzia
+
+Informacja uzyskana podczas zadania pozostaje evidence. Nie wykonuj ponownie tego samego odczytu/search/fetch/clone/check bez dowodu, ze wynik mogl sie zmienic.
+
+W szczegolnosci nie powtarzaj:
+- `AGENTS.md`, `docs/INDEX.md`, indeksu warstwy ani tego samego Issue;
+- wyszukiwania tego samego symbolu/patternu w tym samym scope;
+- clone/checkout tego samego repo;
+- tej samej dokumentacji zewnetrznej;
+- walidacji, ktora juz potwierdzila niezmieniony zakres.
+
+Web Search uzywaj tylko gdy potrzebna jest aktualna dokumentacja zewnetrzna, informacji nie ma w repo, trzeba potwierdzic zachowanie zewnetrznego API/systemu albo uzytkownik jawnie wymaga researchu. Nie uzywaj Web do informacji dostepnych juz w repo.
+
+## Moduly instrukcji - tylko gdy dotycza zadania
+
+| Zakres | Modul |
 |---|---|
-| tryb wykonania / złożone zadanie | `docs/agent/01-Agent-Tryby.md` |
+| tryb wykonania / zlozone zadanie | `docs/agent/01-Agent-Tryby.md` |
 | automation/skrypty | `docs/agent/02-Agent-Automation.md` |
 | security/risky change | `docs/agent/03-Agent-Jakosc-Bezpieczenstwo.md` |
 | testy | `docs/agent/04-Agent-Testy-Weryfikacja.md` |
@@ -61,34 +104,52 @@ Domyślny first pass:
 | Windows/Linux | `docs/agent/30-Agent-Windows.md`, `31-Agent-Linux.md` |
 | Infrastructure/Security | `docs/agent/40-Agent-Infrastructure.md`, `41-Agent-Security.md` |
 
-`docs/agent/00-Agent-Core.md` jest dokumentem referencyjnym; nie trzeba go ponownie czytać, jeżeli ten router i `docs/INDEX.md` wystarczają.
+`docs/agent/00-Agent-Core.md` jest dokumentem referencyjnym; nie trzeba go ponownie czytac, jezeli ten router i `docs/INDEX.md` wystarczaja.
 
 ## Context/output budget
 
-Tool output pozostaje w aktywnym kontekście. Minimalizuj go tak samo jak liczbę odczytywanych plików.
+Tool output pozostaje w aktywnym kontekscie. Minimalizuj go tak samo jak liczbe odczytywanych plikow.
 
 Preferuj:
-- `rg`/search z wąskim patternem i katalogiem;
-- range reads zamiast pełnych dużych plików;
-- `git diff --stat` przed pełnym diffem;
-- `git diff -- <targeted paths>` zamiast całego repo;
+- `rg`/search z waskim patternem i katalogiem;
+- range reads zamiast pelnych duzych plikow;
+- `git diff --stat` przed pelnym diffem;
+- `git diff -- <targeted paths>` zamiast calego repo;
 - filtrowane API/JSON z tylko potrzebnymi polami;
-- targeted test i krótki failure excerpt;
-- jeden odczyt niezmienionego pliku na sesję.
+- targeted test i krotki failure excerpt;
+- jeden odczyt niezmienionego pliku na sesje.
 
 Nie wykonuj bez potrzeby:
-- `cat` dużych plików;
-- pełnych dumpów logów/JSON;
-- pełnego `git log` lub historii Issue;
+- `cat` duzych plikow;
+- pelnych dumpow logow/JSON;
+- pelnego `git log` lub historii Issue;
 - ponownego odczytu niezmienionych instrukcji;
 - full test suite przed targeted tests;
-- szerokiego recursive search, jeśli indeks wskazuje scope.
+- szerokiego recursive search, jesli indeks wskazuje scope.
 
-Gdy output jest duży, najpierw zawęź go po nazwie, statusie, błędzie, symbolu albo ścieżce. Zachowuj tylko evidence potrzebne do decyzji i handoffu.
+Gdy output jest duzy, najpierw zawez go po nazwie, statusie, bledzie, symbolu albo sciezce. Zachowuj tylko evidence potrzebne do decyzji i handoffu.
+
+## Testing
+
+Preferuj: changed component -> targeted tests -> targeted lint/typecheck/build.
+
+Full `npm test` albo pelny build wykonuj tylko gdy zmiana dotyka shared runtime/dependency/public contract/loader/security, targeted validation nie daje wystarczajacego confidence, acceptance criteria tego wymagaja albo istnieje realne ryzyko regresji cross-component.
+
+Nie rerunuj testu dla niezmienionego zakresu tylko po to, aby ponownie potwierdzic ten sam wynik.
+
+## Dokumentacja
+
+Nie aktualizuj dokumentacji mechanicznie przy kazdym fixie. Aktualizacja jest wymagana tylko gdy zmienia sie public behavior, architecture/contract, konfiguracja/procedura opisana w docs, istniejaca dokumentacja staje sie bledna albo Issue/acceptance criteria tego wymagaja.
+
+## UI completeness
+
+Jesli feature ma byc dostepny dla operatora/uzytkownika, implementacja nie jest kompletna dopoki odpowiednia akcja, widok, menu, formularz albo stan UI nie jest podlaczony do istniejacego workflow. Sam backend/service bez wymaganego entrypointu UI nie spelnia feature acceptance.
+
+Dla backend-only taska nie dodawaj UI bez evidence, ze jest wymagane.
 
 ## Issues i handoff
 
-Issue jest bieżącym task packetem, nie archiwum całej sesji. Przechowuj krótko:
+Issue jest biezacym task packetem, nie archiwum calej sesji. Przechowuj krotko:
 - Goal / acceptance;
 - root cause / decision;
 - changed files/contract;
@@ -97,18 +158,16 @@ Issue jest bieżącym task packetem, nie archiwum całej sesji. Przechowuj krót
 - blocker/risk;
 - exact next step.
 
-Nie kopiuj całych logów ani kolejnych pełnych podsumowań. Preferuj jeden aktualny `CURRENT STATE` zamiast rosnącej historii handoffów. Git/PR zachowują historię techniczną.
+Nie kopiuj calych logow ani kolejnych pelnych podsumowan. Preferuj jeden aktualny `CURRENT STATE` zamiast rosnacej historii handoffow. Git/PR zachowuja historie techniczna.
 
 ## Runtime i reuse
 
-Przed dodaniem klasy/modułu/helpera/renderera/CSS/event handlera/timera/observera/request loop sprawdź istniejącego ownera w odpowiednim indeksie i preferuj reuse. Nie twórz monolitu tylko dla mniejszej liczby plików.
+Przed dodaniem klasy/modulu/helpera/renderera/CSS/event handlera/timera/observera/request loop sprawdz istniejacego ownera w odpowiednim indeksie i preferuj reuse. Nie tworz monolitu tylko dla mniejszej liczby plikow.
 
-Dla runtime najpierw potwierdź realny loader/route/require, potem ownera i bezpośrednich konsumentów. Nie przywracaj historycznych aliasów, shimów, `MyCompany`, starych loaderów ani `mycompany-data`, chyba że użytkownik zleci audyt historyczny.
+Dla runtime najpierw potwierdz realny loader/route/require, potem ownera i bezposrednich konsumentow. Nie przywracaj historycznych aliasow, shimow, `MyCompany`, starych loaderow ani `mycompany-data`, chyba ze uzytkownik zleci audyt historyczny.
 
 ## Git, wersja i weryfikacja
 
-Zmiany techniczne przeznaczone do integracji/testu używają linii `0.1.1-dev.X`; `package.json` i `config.json` muszą być zgodne. Każda nowa zmiana techniczna przeznaczona do testów użytkownika musi zwiększyć rewizję development, aby zainstalowana wersja była jednoznacznie rozpoznawalna; nie pozostawiaj tej samej rewizji po kolejnym runtime fixie. `1.0.0` pozostaje zablokowane bez jawnej decyzji użytkownika. Sama dokumentacja nie wymaga bumpu.
+Zmiany techniczne przeznaczone do integracji/testu uzywaja linii `0.1.1-dev.X`; `package.json` i `config.json` musza byc zgodne. Kazda nowa zmiana techniczna przeznaczona do testow uzytkownika musi zwiekszyc rewizje development, aby zainstalowana wersja byla jednoznacznie rozpoznawalna; nie pozostawiaj tej samej rewizji po kolejnym runtime fixie. `1.0.0` pozostaje zablokowane bez jawnej decyzji uzytkownika. Sama dokumentacja nie wymaga bumpu.
 
-Po zmianie wykonaj najmniejszą adekwatną weryfikację: syntax/targeted test/direct result + kontrola diffu. Full `npm test` tylko dla shared runtime/loader/public contract/security albo gdy targeted test nie wystarcza.
-
-Zakończone, zweryfikowane zmiany commituj i pushuj zgodnie z projektem. Nie używaj force push, nie publikuj tagu/GitHub Release i nie osłabiaj zabezpieczeń bez jawnego polecenia.
+Po zmianie wykonaj najmniejsza adekwatna weryfikacje: syntax/targeted test/direct result + kontrole diffu. Zakonczone, zweryfikowane zmiany commituj i pushuj zgodnie z projektem. Nie uzywaj force push, nie publikuj tagu/GitHub Release i nie oslabiaj zabezpieczen bez jawnego polecenia.
