@@ -12,6 +12,12 @@ var scriptLibraryFactory = require(path.join(root, "server/core/script-confirmat
 var automationServer = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 var automationClient = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
 var adminIntegrations = fs.readFileSync(path.join(root, "web/admin/integrations.js"), "utf8");
+var cacheAssetsSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Assets.ps1"), "utf8");
+var cacheUsersSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Users.ps1"), "utf8");
+assert.ok([cacheAssetsSeed, cacheUsersSeed].every(function (source) {
+    return /^# VariableSwitch: \$Force, false, Wymuś odświeżenie\|$/m.test(source) &&
+        !/Używa świeżego cache|Pobierz ponownie także wtedy|Uses the fresh cache/.test(source);
+}), "Both Jira cache dialogs must show only the Force checkbox label without explanatory copy.");
 
 function integration(overrides) {
     return {
@@ -55,8 +61,12 @@ function asset(id, hostname, owner, model) {
                 objectAttributeValues: [{ value: model, displayValue: model }]
             },
             {
-                objectTypeAttribute: { name: "Serial Number" },
+                objectTypeAttribute: { name: "SN" },
                 objectAttributeValues: [{ value: "SN-" + id, displayValue: "SN-" + id }]
+            },
+            {
+                objectTypeAttribute: { name: "Numer_inwentarzowy" },
+                objectAttributeValues: [{ value: "INV-" + id, displayValue: "INV-" + id }]
             }
         ]
     };
@@ -156,6 +166,29 @@ function asset(id, hostname, owner, model) {
         assert.strictEqual(second.items.length, 2);
         assert.strictEqual(calls.length, 1, "Fresh 24h cache must suppress duplicate Jira calls.");
 
+        var completeTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-complete-users-"));
+        try {
+            var completeCalls = 0;
+            var completeService = factory.createJiraAssetService({
+                fs: fs, path: path, dataRoot: completeTemp, integrations: integration(),
+                requestJson: function (options) {
+                    if (options.url.indexOf("/rest/api/3/users/search") < 0) return Promise.reject(new Error("unexpected endpoint"));
+                    completeCalls++;
+                    var startAt = Number(new URL(options.url).searchParams.get("startAt"));
+                    if (startAt < 1000) return Promise.resolve(Array.from({ length: 100 }, function (_, index) {
+                        return user("bulk-" + (startAt + index), "Bulk " + (startAt + index), "");
+                    }));
+                    return Promise.resolve([user("target-user", "Krzysztof Lechmyc", "")]);
+                }
+            });
+            var completeUsers = await completeService.listUsers(true, true);
+            assert.ok(completeUsers.items.some(function (item) { return item.displayName === "Krzysztof Lechmyc"; }),
+                "The shared Jira directory must paginate beyond 1000 accounts instead of silently omitting valid users.");
+            assert.strictEqual(completeCalls, 11);
+        } finally {
+            fs.rmSync(completeTemp, { recursive: true, force: true });
+        }
+
         var fallbackCalls = [];
         var fallbackTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-fallback-"));
         try {
@@ -195,12 +228,18 @@ function asset(id, hostname, owner, model) {
         var assetTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-assets-"));
         try {
             var assetCalls = [];
+            var assetCacheReads = 0;
+            var assetFs = Object.create(fs);
+            assetFs.readFileSync = function (filePath) {
+                if (path.resolve(filePath) === path.resolve(path.join(assetTemp, "jira-assets-cache.json"))) assetCacheReads++;
+                return fs.readFileSync.apply(fs, arguments);
+            };
             var firstPage = [asset("1", "PC-ALPHA", "acc-1", "ThinkPad")];
             for (var assetIndex = 2; assetIndex <= 500; assetIndex++) {
                 firstPage.push(asset(String(assetIndex), "PC-OTHER-" + assetIndex, "acc-2", "Other"));
             }
             var assetService = factory.createJiraAssetService({
-                fs: fs,
+                fs: assetFs,
                 path: path,
                 dataRoot: assetTemp,
                 integrations: integration(),
@@ -210,9 +249,9 @@ function asset(id, hostname, owner, model) {
                         return Promise.resolve([user("acc-1", "Alpha User", "alpha@example.invalid")]);
                     }
                     if (options.url.indexOf("/object/aql") >= 0) {
-                        if (options.url.indexOf("startAt=0") >= 0) return Promise.resolve({ values: firstPage, total: 501 });
+                        if (options.url.indexOf("startAt=0") >= 0) return Promise.resolve({ values: firstPage, total: 1000, isLast: true, hasMoreResults: true });
                         if (options.url.indexOf("startAt=500") >= 0) {
-                            return Promise.resolve({ values: [asset("501", "PC-OMEGA", "acc-1", "Latitude")], total: 501 });
+                            return Promise.resolve({ values: [asset("501", "PC-OMEGA", "acc-1", "Latitude")], total: 1000, isLast: true, hasMoreResults: false });
                         }
                     }
                     return Promise.reject(new Error("Unexpected request: " + options.url));
@@ -230,8 +269,12 @@ function asset(id, hostname, owner, model) {
             var assets = await assetService.optionsFor(assetVariable, { JiraUser: "acc-1" }, false);
             assert.deepStrictEqual(assets.items.map(function (item) { return item.value; }), ["PC-ALPHA", "PC-OMEGA"],
                 "Asset options must paginate the script AQL and filter every page by the script-bound Jira user identity.");
+            assert.strictEqual(assets.items[0].serialNumber, "SN-1", "Original-script SN attribute must reach the protocol row.");
+            assert.strictEqual(assets.items[0].inventoryNumber, "INV-1", "Original-script Numer_inwentarzowy attribute must reach the protocol row.");
             var aqlCalls = assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; });
             assert.strictEqual(aqlCalls.length, 2, "Asset provider must paginate beyond the first Atlassian page when required.");
+            assert.strictEqual(aqlCalls[1].url.indexOf("startAt=500") >= 0, true,
+                "Atlassian hasMoreResults must override its capped total/isLast metadata and advance the daily snapshot.");
             assert.strictEqual(aqlCalls[0].method, "POST");
             assert.strictEqual(aqlCalls[0].json.qlQuery, "objectType = Computer",
                 "Asset provider must use script-owned AQL instead of legacy global Jira AQL.");
@@ -243,6 +286,8 @@ function asset(id, hostname, owner, model) {
             assert.ok(cachedOtherUser.items.length > 0, "One daily asset snapshot must serve a different user's equipment.");
             assert.strictEqual(assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; }).length, 2,
                 "Fresh 24h Jira Assets cache must suppress a repeated full scan for every protocol.");
+            assert.strictEqual(assetCacheReads, 1,
+                "The shared service must keep the parsed daily Assets snapshot hot instead of reparsing the large JSON file per protocol.");
             assert.ok(fs.existsSync(assetService.assetCachePath), "Jira Assets must be persisted in a separate shared cache file.");
             var beforeMissingUser = assetCalls.length;
             var noUserYet = await assetService.optionsFor(assetVariable, {}, false);

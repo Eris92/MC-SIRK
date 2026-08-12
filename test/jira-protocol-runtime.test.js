@@ -63,8 +63,10 @@ function jiraAsset(value, model, serial, inventory) {
                     ] });
                 }
             },
-            renderHtmlPdf: function (html) {
+            renderHtmlPdf: function (html, renderOptions) {
                 assert.ok(html.indexOf("<html") >= 0, "Styled HTML must be the authoritative PDF input.");
+                assert.strictEqual(renderOptions.logoPath, path.join(temp, "branding", "protocol-logo.png"),
+                    "PDF rendering must use the persistent shared protocol logo.");
                 assert.ok(html.indexOf("Łukasz Żółć") >= 0 && html.indexOf("ThinkPad T14") >= 0,
                     "Shared document template must render protocol data returned by PowerShell.");
                 assert.ok(html.indexOf("Protokół zdawczo-odbiorczy") >= 0 && html.indexOf("odbiór sprzętu przez pracownika") >= 0,

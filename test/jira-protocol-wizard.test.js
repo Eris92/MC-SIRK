@@ -25,7 +25,7 @@ var tools = {
                 return { JiraUserActiveOnly: true, JiraUserSearch: "admin", JiraUser: "acc-1" };
             });
         }
-        if (label === "Sprzęt") {
+        if (label === "Sprzęt do protokołu") {
             return Promise.resolve(options.resolveOptions({ name: "PcName", control: "assetmulti" }, {}, options.item)).then(function () {
                 return { PcName: "PC-01;PHONE-02" };
             });
@@ -80,17 +80,23 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.deepStrictEqual(Array.prototype.map.call(calls[0].item.variables, function (item) { return item.name; }), ["JiraUserActiveOnly", "JiraUserSearch", "JiraUser"]);
     assert.strictEqual(calls[0].item.variables[0].control, "switch");
     assert.strictEqual(calls[0].item.variables[0].defaultValue, "true");
+    assert.strictEqual(calls[0].item.variables[0].inlineControl, true);
+    assert.strictEqual(calls[0].item.variables[1].inlineLabel, true);
     assert.strictEqual(calls[0].item.variables[2].searchVariable, "JiraUserSearch");
     assert.strictEqual(calls[0].item.variables[2].label, "Użytkownicy");
     assert.strictEqual(calls[0].item.variables[2].listMode, true);
+    assert.strictEqual(calls[0].item.variables[2].hideLabel, true);
     assert.strictEqual(calls[0].item.variables[2].submitOnDoubleClick, true);
     assert.strictEqual(calls[0].item.description, "");
     assert.deepStrictEqual(Array.prototype.map.call(calls[1].item.variables, function (item) { return item.name; }), ["PcName"]);
+    assert.strictEqual(calls[1].item.fitOptionWidth, true);
     assert.strictEqual(calls[1].item.variables[0].control, "assetmulti");
     assert.strictEqual(calls[1].item.variables[0].label, "Sprzęt");
+    assert.strictEqual(calls[1].item.variables[0].hideLabel, true);
     assert.deepStrictEqual(Array.prototype.map.call(calls[2].item.variables, function (item) { return item.name; }), ["IsTransferProtocol", "ItPerson"]);
     assert.strictEqual(calls[2].item.variables[0].control, "select");
     assert.strictEqual(calls[2].item.variables[0].listMode, true);
+    assert.strictEqual(calls[2].item.variables[0].defaultValue, "true");
     assert.strictEqual(calls[2].item.variables[0].options[0].label, "Przekazanie sprzętu");
     assert.strictEqual(calls[2].item.variables[0].options[1].label, "Odbiór sprzętu");
     assert.strictEqual(calls[2].item.variables[1].optionSource, "mesh-users");

@@ -4,7 +4,15 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective shared parameter-dialog control ownership after real dev.54 Jira Protocol list-mode crash;
+- [`0.1.1-dev.63`](0.1.1-dev.63.md) — concise Force-only Jira cache dialogs;
+- [`0.1.1-dev.62`](0.1.1-dev.62.md) — stable workflow credential assignment across script folder moves;
+- [`0.1.1-dev.61`](0.1.1-dev.61.md) — native-modal-safe equipment width marker;
+- [`0.1.1-dev.60`](0.1.1-dev.60.md) — intrinsic-width Jira equipment modal with unwrapped option labels;
+- [`0.1.1-dev.59`](0.1.1-dev.59.md) — native-modal persistence for the default Jira protocol radio selection;
+- [`0.1.1-dev.58`](0.1.1-dev.58.md) — restored SN/inventory aliases, bounded active-only rendering and corrected protocol defaults;
+- [`0.1.1-dev.57`](0.1.1-dev.57.md) — complete Jira Assets pagination plus corrected active-only and full-width Jira protocol lists;
+- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native field borders for Jira user/equipment lists;
+- [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective Jira transfer/return list control after real Modern smoke exposed a read-only `HTMLSelectElement.type` assignment;
 - [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
 - [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
 - [`0.1.1-dev.52`](0.1.1-dev.52.md) — corrective Modern parameter-dialog lifecycle: successful submit resolves only after host `hidden.bs.modal`, preventing the next Jira wizard step from racing a still-closing modal;

@@ -1,7 +1,7 @@
-# Jira Cache Users|Odświeża współdzielony 24-godzinny cache użytkowników Jira.
-# PL: Cache Jira - użytkownicy|Używa świeżego cache albo wymusza ponowne pobranie wszystkich użytkowników Jira.
-# EN: Jira cache - users|Uses the fresh cache or forces all Jira users to be downloaded again.
-# VariableSwitch: $Force, false, Wymuś odświeżenie|Pobierz ponownie także wtedy, gdy cache ma mniej niż 24 godziny.
+# Jira Cache Users|
+# PL: Cache Jira - użytkownicy|
+# EN: Jira cache - users|
+# VariableSwitch: $Force, false, Wymuś odświeżenie|
 # SirkWorkflow: JiraUsersCache
 # SirkSystemCredential: Jira
 # MultiHost: false
