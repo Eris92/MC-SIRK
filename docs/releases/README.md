@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective shared parameter-dialog control ownership after real dev.54 Jira Protocol list-mode crash;
 - [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
 - [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
 - [`0.1.1-dev.52`](0.1.1-dev.52.md) — corrective Modern parameter-dialog lifecycle: successful submit resolves only after host `hidden.bs.modal`, preventing the next Jira wizard step from racing a still-closing modal;
