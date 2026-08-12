@@ -95,7 +95,7 @@ function page(startAt, count, total) {
 
         var persisted = JSON.parse(fs.readFileSync(service.assetCachePath, "utf8"));
         var entries = persisted.queries["Key is not EMPTY"].entries;
-        assert.strictEqual(persisted.version, 3);
+        assert.strictEqual(persisted.version, 4);
         assert.strictEqual(entries.length, 2000);
         assert.strictEqual(Object.prototype.hasOwnProperty.call(entries[0].attributes[0], "objectAttributeValues"), false,
             "Fetched Jira pages must be compacted before the shared snapshot is retained.");
