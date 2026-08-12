@@ -12,7 +12,7 @@ var ASSET_PAGE_SIZE = 500;
 var DEFAULT_ASSET_OPTION_LIMIT = 1000;
 var MAX_ASSET_OPTION_LIMIT = 5000;
 var MAX_ASSET_SCAN_PAGES = 100;
-var ASSET_CACHE_VERSION = 2;
+var ASSET_CACHE_VERSION = 3;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -88,7 +88,8 @@ function attributeMap(entry) {
             300
         );
         if (!name) return;
-        var values = array(attribute && attribute.objectAttributeValues).map(function (value) {
+        var compactValues = array(attribute && attribute.values).map(function (value) { return text(value, 2000); }).filter(Boolean);
+        var values = compactValues.length ? compactValues : array(attribute && attribute.objectAttributeValues).map(function (value) {
             return text(value && (value.displayValue || value.value || value.searchValue) || value, 2000);
         }).filter(Boolean);
         if (values.length) result[lower(name)] = values;
@@ -111,6 +112,20 @@ module.exports.createJiraAssetService = function (options) {
     var userCacheMemory = null;
     var assetCacheLoaded = false;
     var assetCacheMemory = null;
+
+    function assetCacheFileHasCurrentVersion() {
+        var descriptor = null;
+        try {
+            descriptor = fs.openSync(assetCachePath, "r");
+            var buffer = Buffer.alloc(64);
+            var length = fs.readSync(descriptor, buffer, 0, buffer.length, 0);
+            return new RegExp('^\\s*\\{\\s*"version"\\s*:\\s*' + ASSET_CACHE_VERSION + '(?:\\D|$)').test(buffer.toString("utf8", 0, length));
+        } catch (error) {
+            return false;
+        } finally {
+            if (descriptor !== null) try { fs.closeSync(descriptor); } catch (ignore) {}
+        }
+    }
 
     function jiraConfig() {
         var value = integrations.get("jira") || {};
@@ -194,6 +209,7 @@ module.exports.createJiraAssetService = function (options) {
         try {
             if (!assetCacheLoaded) {
                 assetCacheLoaded = true;
+                if (!assetCacheFileHasCurrentVersion()) return null;
                 assetCacheMemory = JSON.parse(fs.readFileSync(assetCachePath, "utf8"));
             }
             var parsed = assetCacheMemory;
@@ -202,18 +218,48 @@ module.exports.createJiraAssetService = function (options) {
             return { fetchedAt: Number(entry.fetchedAt) || 0, entries: entry.entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
         } catch (error) { return null; }
     }
+    function compactAssetEntry(entry) {
+        entry = object(entry);
+        return {
+            id: text(entry.id, 200),
+            objectKey: text(entry.objectKey, 200),
+            label: text(entry.label || entry.name, 500),
+            objectType: {
+                id: text(entry.objectType && entry.objectType.id, 100),
+                name: text(entry.objectType && entry.objectType.name || entry.objectTypeName, 300)
+            },
+            attributes: array(entry.attributes).map(function (attribute) {
+                var name = text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name, 300);
+                if (!name) return null;
+                var rawValues = array(attribute && attribute.objectAttributeValues);
+                var values = array(attribute && attribute.values).map(function (value) { return text(value, 2000); }).filter(Boolean);
+                if (!values.length) values = rawValues.map(function (value) {
+                    return text(value && (value.displayValue || value.value || value.searchValue) || value, 2000);
+                }).filter(Boolean);
+                var matchValues = array(attribute && attribute.matchValues).map(lower).filter(Boolean);
+                if (!matchValues.length && assignmentAttribute({ name: name })) {
+                    rawValues.forEach(function (value) {
+                        matchValues = matchValues.concat(referenceStrings(value, true));
+                    });
+                }
+                return { name: name, values: values, matchValues: Array.from(new Set(matchValues)) };
+            }).filter(Boolean)
+        };
+    }
     function writeAssetCache(aql, entries) {
         var value = { version: ASSET_CACHE_VERSION, queries: {} };
         if (!assetCacheLoaded) readAssetCache(aql);
         var current = assetCacheMemory;
         if (current && current.version === ASSET_CACHE_VERSION && current.queries && typeof current.queries === "object") value = current;
-        value.queries[aql] = { fetchedAt: Date.now(), entries: entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
+        var compactEntries = entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES).map(compactAssetEntry);
+        value.queries[aql] = { fetchedAt: Date.now(), entries: compactEntries };
         var temp = assetCachePath + ".tmp-" + process.pid + "-" + Date.now();
         fs.writeFileSync(temp, JSON.stringify(value), { encoding: "utf8", mode: 384 });
         try { fs.renameSync(temp, assetCachePath); }
         catch (error) { try { fs.unlinkSync(assetCachePath); } catch (ignore) {} fs.renameSync(temp, assetCachePath); }
         assetCacheLoaded = true;
         assetCacheMemory = value;
+        return compactEntries;
     }
 
     function fetchUsersFrom(config, endpoint) {
@@ -368,6 +414,10 @@ module.exports.createJiraAssetService = function (options) {
         if (ownLabel && identities.indexOf(ownLabel) >= 0) return false;
         return array(entry && entry.attributes).some(function (attribute) {
             var allowPlain = assignmentAttribute(attribute);
+            var compactMatches = allowPlain ? array(attribute && attribute.matchValues).map(lower) : [];
+            if (compactMatches.length) {
+                return identities.some(function (identity) { return compactMatches.indexOf(identity) >= 0; });
+            }
             return array(attribute && attribute.objectAttributeValues).some(function (value) {
                 var strings = referenceStrings(value, allowPlain);
                 return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
@@ -449,14 +499,14 @@ module.exports.createJiraAssetService = function (options) {
             }
             function missingAttributeNames(entries) {
                 return entries.some(function (entry) { return array(entry && entry.attributes).some(function (attribute) {
-                    return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name, 300);
+                    return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name, 300);
                 }); });
             }
             function enrichAttributeNames(entries) {
                 var typeIds = [], seenTypes = Object.create(null);
                 entries.forEach(function (entry) {
                     var missing = array(entry && entry.attributes).some(function (attribute) {
-                        return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name, 300);
+                        return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name, 300);
                     });
                     var typeId = text(entry && entry.objectType && entry.objectType.id, 100);
                     if (missing && typeId && !seenTypes[typeId]) { seenTypes[typeId] = true; typeIds.push(typeId); }
@@ -490,8 +540,7 @@ module.exports.createJiraAssetService = function (options) {
                 if (!force && cached && cached.fetchedAt > Date.now() - ASSET_CACHE_TTL_MS) {
                     if (!missingAttributeNames(cached.entries)) return Promise.resolve({ entries: cached.entries, stale: false });
                     return enrichAttributeNames(cached.entries).then(function (entries) {
-                        writeAssetCache(policy.aql, entries);
-                        return { entries: entries, stale: false };
+                        return { entries: writeAssetCache(policy.aql, entries), stale: false };
                     });
                 }
                 if (assetsInFlight[policy.aql]) return assetsInFlight[policy.aql];
@@ -516,8 +565,7 @@ module.exports.createJiraAssetService = function (options) {
                 assetsInFlight[policy.aql] = next().then(function () {
                     return enrichAttributeNames(entries);
                 }).then(function (enriched) {
-                    writeAssetCache(policy.aql, enriched);
-                    return { entries: enriched, stale: false, truncated: truncated };
+                    return { entries: writeAssetCache(policy.aql, enriched), stale: false, truncated: truncated };
                 }).catch(function (error) {
                     if (cached && cached.entries.length) return { entries: cached.entries, stale: true, warning: text(error.message || error, 1000) };
                     throw error;

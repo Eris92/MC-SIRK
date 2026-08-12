@@ -286,8 +286,8 @@ function asset(id, hostname, owner, model) {
             assert.ok(cachedOtherUser.items.length > 0, "One daily asset snapshot must serve a different user's equipment.");
             assert.strictEqual(assetCalls.filter(function (call) { return call.url.indexOf("/object/aql") >= 0; }).length, 2,
                 "Fresh 24h Jira Assets cache must suppress a repeated full scan for every protocol.");
-            assert.strictEqual(assetCacheReads, 1,
-                "The shared service must keep the parsed daily Assets snapshot hot instead of reparsing the large JSON file per protocol.");
+            assert.strictEqual(assetCacheReads, 0,
+                "A missing or legacy Assets cache must be rejected from its header without parsing a potentially huge JSON payload.");
             assert.ok(fs.existsSync(assetService.assetCachePath), "Jira Assets must be persisted in a separate shared cache file.");
             var beforeMissingUser = assetCalls.length;
             var noUserYet = await assetService.optionsFor(assetVariable, {}, false);

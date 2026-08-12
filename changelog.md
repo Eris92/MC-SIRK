@@ -1,3 +1,11 @@
+## 0.1.1-dev.71 - 2026-08-12
+
+- Replace the raw Jira Assets cache payload with a compact schema that retains only object identity, display fields and assignment-match values required by the selector and protocol.
+- Reject legacy 269 MB cache snapshots from their small header without parsing them into the MeshCentral process.
+- Keep the daily workspace-wide snapshot reusable for every Jira user while sharply reducing persisted size and runtime memory pressure.
+
+Current development notes: `docs/releases/0.1.1-dev.71.md`.
+
 ## 0.1.1-dev.70 - 2026-08-12
 
 - Consume the canonical top-level `objectTypeAttributes` returned by Jira Assets `/object/aql` and bind each entry's `objectTypeAttributeId` before user assignment filtering.
