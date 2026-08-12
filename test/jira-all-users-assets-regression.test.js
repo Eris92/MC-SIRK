@@ -177,7 +177,7 @@ function objectUserReference(id, displayName) {
         assert.strictEqual(aql, "Key is not EMPTY",
             "The backend must execute the script-owned workspace-wide AQL unchanged.");
         assert.strictEqual(attributeDefinitionCalls, 0,
-            "Top-level AQL objectTypeAttributes must bind entry attribute IDs without slow per-type discovery requests.");
+            "Top-level AQL objectTypeAttributes must bind entry attribute IDs without slow per-type attribute requests.");
         assert.strictEqual(legacyAssetPayloadReads, 0,
             "A legacy Assets cache must be rejected from its bounded header without parsing the full payload.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
@@ -185,8 +185,8 @@ function objectUserReference(id, displayName) {
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
             "Only explicit references or assignment attributes may bind an asset; unrelated plain identity text must not match.");
         var persistedAssets = JSON.parse(fs.readFileSync(assetService.assetCachePath, "utf8"));
-        assert.strictEqual(persistedAssets.version, 3,
-            "The compact cache schema must invalidate snapshots that were persisted without AQL attribute names.");
+        assert.strictEqual(persistedAssets.version, 4,
+            "The compact cache schema must invalidate snapshots that cannot preserve explicit reference identities.");
         assert.strictEqual(Object.prototype.hasOwnProperty.call(persistedAssets.queries["Key is not EMPTY"].entries[0].attributes[0], "objectAttributeValues"), false,
             "The daily cache must not retain the raw, deeply nested Jira attribute payload.");
         assert.ok(fs.statSync(assetService.assetCachePath).size < 10000,

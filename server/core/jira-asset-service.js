@@ -14,7 +14,7 @@ var MAX_ASSET_OPTION_LIMIT = 5000;
 var MAX_ASSET_SCAN_PAGES = 100;
 var ASSET_PAGE_CONCURRENCY = 3;
 var ASSET_REFRESH_MAX_MS = 180000;
-var ASSET_CACHE_VERSION = 3;
+var ASSET_CACHE_VERSION = 4;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -239,9 +239,10 @@ module.exports.createJiraAssetService = function (options) {
                     return text(value && (value.displayValue || value.value || value.searchValue) || value, 2000);
                 }).filter(Boolean);
                 var matchValues = array(attribute && attribute.matchValues).map(lower).filter(Boolean);
-                if (!matchValues.length && assignmentAttribute({ name: name })) {
+                if (!matchValues.length) {
+                    var allowPlain = assignmentAttribute({ name: name });
                     rawValues.forEach(function (value) {
-                        matchValues = matchValues.concat(referenceStrings(value, true));
+                        matchValues = matchValues.concat(referenceStrings(value, allowPlain));
                     });
                 }
                 return { name: name, values: values, matchValues: Array.from(new Set(matchValues)) };
@@ -416,7 +417,7 @@ module.exports.createJiraAssetService = function (options) {
         if (ownLabel && identities.indexOf(ownLabel) >= 0) return false;
         return array(entry && entry.attributes).some(function (attribute) {
             var allowPlain = assignmentAttribute(attribute);
-            var compactMatches = allowPlain ? array(attribute && attribute.matchValues).map(lower) : [];
+            var compactMatches = array(attribute && attribute.matchValues).map(lower);
             if (compactMatches.length) {
                 return identities.some(function (identity) { return compactMatches.indexOf(identity) >= 0; });
             }
