@@ -63,14 +63,12 @@ function objectUserReference(id, displayName) {
 }
 
 (async function () {
-    assert.ok(/^# SirkJiraAssetAql: Key is not EMPTY$/m.test(protocolSeed),
-        "Jira Asset Protocol must query the whole Assets workspace before user binding.");
-    assert.ok(/^# SirkJiraAssetMaxResults: 5000$/m.test(protocolSeed),
-        "Jira Asset Protocol must use the existing bounded maximum selector limit.");
-    assert.ok(/^# SirkJiraAssetAql: Key is not EMPTY$/m.test(assetCacheSeed),
-        "Jira Assets cache must populate the same workspace-wide snapshot.");
-    assert.strictEqual(protocolSeed.indexOf('objectTypeAndChildren("Sprzęt użytkownika")'), -1,
-        "Jira Asset Protocol must not restrict assigned assets to one object-type hierarchy.");
+    assert.ok(/^# SirkJiraAssetAql: objectType in objectTypeAndChildren\("Sprzęt użytkownika"\)$/m.test(protocolSeed),
+        "Jira Asset Protocol must use the last real-smoke-working dev64 equipment hierarchy scope.");
+    assert.strictEqual(protocolSeed.indexOf("SirkJiraAssetMaxResults: 5000"), -1,
+        "Restored dev64 protocol scope must retain its original default bounded selector limit.");
+    assert.ok(/^# SirkJiraAssetAql: objectType in objectTypeAndChildren\("Sprzęt użytkownika"\)$/m.test(assetCacheSeed),
+        "Jira Assets cache must use the same last-known-working dev64 equipment hierarchy scope.");
 
     var userTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-users-v2-"));
     try {
@@ -175,13 +173,13 @@ function objectUserReference(id, displayName) {
         }, { JiraUser: "acc-1" }, false);
 
         assert.strictEqual(aql, "Key is not EMPTY",
-            "The backend must execute the script-owned workspace-wide AQL unchanged.");
+            "The generic backend must still execute any script-owned AQL unchanged.");
         assert.strictEqual(attributeDefinitionCalls, 0,
             "Top-level AQL objectTypeAttributes must bind entry attribute IDs without slow per-type attribute requests.");
         assert.strictEqual(legacyAssetPayloadReads, 0,
             "A legacy Assets cache must be rejected from its bounded header without parsing the full payload.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
-            "User-bound Assets must include different referenced object types without returning the selected Users identity object.");
+            "Generic user-bound Assets service must retain heterogeneous referenced object support for other scripts.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
             "Only explicit references or assignment attributes may bind an asset; unrelated plain identity text must not match.");
         var persistedAssets = JSON.parse(fs.readFileSync(assetService.assetCachePath, "utf8"));
@@ -195,7 +193,7 @@ function objectUserReference(id, displayName) {
         fs.rmSync(assetTemp, { recursive: true, force: true });
     }
 
-    console.log("Jira legacy user cache and reference-only workspace-wide assigned Assets: OK");
+    console.log("Jira user cache, restored dev64 protocol scope and generic reference matching: OK");
 }()).catch(function (error) {
     console.error(error && error.stack || error);
     process.exit(1);
