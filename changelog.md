@@ -1,3 +1,11 @@
+## 0.1.1-dev.74 - 2026-08-12
+
+- Real `0.1.1-dev.73` smoke still returned an empty `Sprzęt do protokołu` list because the user-like identity-object classifier matched Polish singular tokens but not common plural object type names such as `Pracownicy` and `Osoby`.
+- Extend the existing Jira identity bridge with stable Polish `pracowni`/`osob` stems so selected Jira accounts can resolve through localized singular/plural workspace identity objects to their object id/key aliases.
+- Keep schema-v4 compact cache, direct Jira references, bounded snapshot reuse, assignment-semantic plain-text restrictions and identity-object exclusion unchanged; add a `Pracownicy` fresh/cache regression.
+
+Current development notes: `docs/releases/0.1.1-dev.74.md`.
+
 ## 0.1.1-dev.73 - 2026-08-12
 
 - Resolve Jira equipment assigned through workspace Users/person identity objects by deriving the selected user's object id/key/label aliases from the existing bounded Assets snapshot.
@@ -336,7 +344,7 @@ Current development notes: `docs/releases/0.1.1-dev.35.md`.
 - Move Results viewer presentation from the plugin-owned overlay to the native MeshCentral Modern `setModalContent`/`showModal` or Classic `setDialogMode` dialog surface while keeping the canonical live result/CSV renderer.
 - Replace the ineffective `shell:ConnectionsFolder` NameSpace input with the Network Connections CSIDL value `49`, and make the existing interactive launcher honor explicit `-WindowStyle Hidden` without changing visible PowerShell/CMD behavior.
 - Add negative regressions that reject the dev.33 namespace and transparent custom viewer path; keep Issues #128 and #237 open for real dev.34 re-smoke and #125 open for its remaining button-theme matrix.
-- Keep the revision below `1.0.0`; no tag or GitHub Release.
+- Keep the revision below `1.0.0`; no tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.34.md`.
 
