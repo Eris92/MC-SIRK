@@ -207,6 +207,7 @@ module.exports.createJiraAssetService = function (options) {
         userCacheLoaded = true;
         userCacheMemory = { fetchedAt: Date.now(), users: users.slice(0, MAX_USERS).map(normalizeUser).filter(Boolean) };
     }
+
     function readAssetCache(aql) {
         try {
             if (!assetCacheLoaded) {
@@ -220,6 +221,7 @@ module.exports.createJiraAssetService = function (options) {
             return { fetchedAt: Number(entry.fetchedAt) || 0, entries: entry.entries.slice(0, ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES) };
         } catch (error) { return null; }
     }
+
     function compactAssetEntry(entry) {
         entry = object(entry);
         return {
@@ -249,6 +251,7 @@ module.exports.createJiraAssetService = function (options) {
             }).filter(Boolean)
         };
     }
+
     function writeAssetCache(aql, entries) {
         var value = { version: ASSET_CACHE_VERSION, queries: {} };
         if (!assetCacheLoaded) readAssetCache(aql);
@@ -411,6 +414,41 @@ module.exports.createJiraAssetService = function (options) {
         return result.map(lower);
     }
 
+    function identityObjectType(entry) {
+        var typeName = lower(entry && entry.objectType && entry.objectType.name || entry && entry.objectTypeName);
+        return /(user|users|person|people|employee|pracownik|uzytk|użytk|osoba)/i.test(typeName);
+    }
+
+    function identityObjectMatchesUser(entry, identities) {
+        if (!identityObjectType(entry) || !identities.length) return false;
+        var ownValues = [entry && entry.label, entry && entry.name].map(lower).filter(Boolean);
+        if (identities.some(function (identity) { return ownValues.indexOf(identity) >= 0; })) return true;
+        return array(entry && entry.attributes).some(function (attribute) {
+            var candidates = array(attribute && attribute.matchValues).concat(array(attribute && attribute.values)).map(lower).filter(Boolean);
+            if (!candidates.length) {
+                array(attribute && attribute.objectAttributeValues).forEach(function (value) {
+                    candidates = candidates.concat(referenceStrings(value, true));
+                });
+            }
+            return identities.some(function (identity) { return candidates.indexOf(identity) >= 0; });
+        });
+    }
+
+    function expandUserIdentityAliases(entries, identities) {
+        var seen = Object.create(null);
+        var result = identities.slice();
+        result.forEach(function (identity) { seen[identity] = true; });
+        entries.forEach(function (entry) {
+            if (!identityObjectMatchesUser(entry, identities)) return;
+            [entry && entry.id, entry && entry.objectKey, entry && entry.label, entry && entry.name].map(lower).filter(Boolean).forEach(function (value) {
+                if (seen[value]) return;
+                seen[value] = true;
+                result.push(value);
+            });
+        });
+        return result;
+    }
+
     function entryMatchesUser(entry, identities) {
         if (!identities.length) return true;
         var ownLabel = lower(entry && (entry.label || entry.name));
@@ -486,6 +524,7 @@ module.exports.createJiraAssetService = function (options) {
             var baseUrl = workspaceBase + "/object/aql";
             var cached = readAssetCache(policy.aql);
             var responseAttributeNames = Object.create(null);
+
             function applyResponseAttributeNames(response, entries) {
                 response = object(response);
                 var definitions = array(response.objectTypeAttributes);
@@ -506,11 +545,13 @@ module.exports.createJiraAssetService = function (options) {
                 });
                 return entries;
             }
+
             function missingAttributeNames(entries) {
                 return entries.some(function (entry) { return array(entry && entry.attributes).some(function (attribute) {
                     return !text(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name, 300);
                 }); });
             }
+
             function enrichAttributeNames(entries) {
                 var typeIds = [], seenTypes = Object.create(null);
                 entries.forEach(function (entry) {
@@ -549,6 +590,7 @@ module.exports.createJiraAssetService = function (options) {
                 for (var index = 0; index < workerCount; index++) workers.push(worker());
                 return Promise.all(workers).then(function () { return entries; });
             }
+
             function fetchEntries() {
                 if (!force && cached && cached.fetchedAt > Date.now() - ASSET_CACHE_TTL_MS) {
                     if (!missingAttributeNames(cached.entries)) return Promise.resolve({ entries: cached.entries, stale: false });
@@ -655,9 +697,13 @@ module.exports.createJiraAssetService = function (options) {
                 });
                 return assetsInFlight[policy.aql];
             }
+
             return fetchEntries().then(function (source) {
+                var resolvedIdentities = expandUserIdentityAliases(source.entries, identities);
                 var seen = Object.create(null), items = [];
-                source.entries.filter(function (entry) { return entryMatchesUser(entry, identities); }).map(function (entry) {
+                source.entries.filter(function (entry) {
+                    return !identityObjectMatchesUser(entry, identities) && entryMatchesUser(entry, resolvedIdentities);
+                }).map(function (entry) {
                     return normalizeAsset(entry, policy);
                 }).filter(Boolean).forEach(function (item) {
                     var key = lower(item.value);
