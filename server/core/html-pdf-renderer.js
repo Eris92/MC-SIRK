@@ -59,7 +59,7 @@ function failureMessage(failures) {
 }
 
 function validPdf(value) {
-    return Buffer.isBuffer(value) && value.length >= 100 && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
+    return Buffer.isBuffer(value) && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
 }
 
 function directFallback(options, browserError) {
