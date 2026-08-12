@@ -4,7 +4,7 @@
 # VariableSwitch: $Force, false, Wymuś odświeżenie|
 # SirkWorkflow: JiraAssetsCache
 # SirkSystemCredential: Jira
-# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")
+# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika") OR object HAVING outboundReferences() OR object HAVING inboundReferences()
 # SirkJiraAssetLabelAttribute: Nazwa_sieciowa
 # MultiHost: false
 # runAsUser: 0
