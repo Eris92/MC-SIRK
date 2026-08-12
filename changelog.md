@@ -1,3 +1,12 @@
+## 0.1.1-dev.67 - 2026-08-12
+
+- Real `0.1.1-dev.66` smoke confirmed both Edge CLI headless print paths still fail in the MeshCentral Windows service context and do not yield a usable `protocol.pdf`.
+- Keep styled Chrome/Edge HTML rendering as the preferred Jira protocol path, then reuse the existing dependency-free `pdf-text-renderer.js` exactly once when browser rendering fails or returns invalid PDF bytes.
+- Preserve `%PDF-1.` validation, protected artifact ownership and combined bounded diagnostics without `--no-sandbox`, a new dependency, polling or a second lifecycle owner.
+- Review the user-supplied Jira PowerShell workflow bodies while retaining the current workspace-wide Jira metadata to avoid reintroducing the prior assigned-Assets scope regression.
+
+Current development notes: `docs/releases/0.1.1-dev.67.md`.
+
 ## 0.1.1-dev.66 - 2026-08-12
 
 - Narrow workspace-wide Jira user binding to explicit user/object references and assignment-semantic attributes so the selected `Users` identity object and unrelated identity text are not returned as equipment.
@@ -230,7 +239,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
 - Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
-- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.39.md`.
 
@@ -567,7 +576,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from current `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
