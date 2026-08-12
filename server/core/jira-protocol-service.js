@@ -3,6 +3,7 @@
 var artifactFactory = require("./artifact-service.js");
 var documentTemplateRenderer = require("./document-template-renderer.js");
 var htmlPdfRenderer = require("./html-pdf-renderer.js");
+var pdfTextRenderer = require("./pdf-text-renderer.js");
 var brandingFactory = require("./branding-service.js");
 var shared = require("./shared.js");
 
@@ -20,6 +21,10 @@ function object(value) {
 
 function lower(value) {
     return text(value, 4000).toLowerCase();
+}
+
+function validPdf(value) {
+    return Buffer.isBuffer(value) && value.length >= 100 && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
 }
 
 function protocolScript(script) {
@@ -66,6 +71,7 @@ function findAsset(assets, value) {
             .some(function (candidate) { return lower(candidate) === wanted; });
     })[0] || null;
 }
+
 function findMeshUser(parent, value) {
     var wanted = lower(value), web = shared.getWebServer(parent), users = web && web.users || {};
     if (!wanted) return null;
@@ -85,6 +91,7 @@ module.exports.createJiraProtocolService = function (options) {
     var executor = options.executor;
     var renderProtocolDocument = options.renderProtocolDocument || documentTemplateRenderer.renderJiraAssetProtocol;
     var renderHtmlPdf = options.renderHtmlPdf || htmlPdfRenderer.renderHtmlPdf;
+    var renderFallbackPdf = options.renderFallbackPdf || pdfTextRenderer.renderTextPdf;
     var branding = brandingFactory.createBrandingService({
         fs: context.fs,
         path: context.nativePath || context.path,
@@ -156,6 +163,28 @@ module.exports.createJiraProtocolService = function (options) {
         };
     }
 
+    function renderPdf(protocolHtml, protocolText, logoPath) {
+        return Promise.resolve().then(function () {
+            return renderHtmlPdf(protocolHtml, { logoPath: logoPath });
+        }).then(function (pdf) {
+            if (!validPdf(pdf)) throw new Error("Browser PDF renderer returned an invalid artifact.");
+            return pdf;
+        }).catch(function (browserError) {
+            var fallback;
+            try {
+                fallback = renderFallbackPdf(protocolText);
+            } catch (fallbackError) {
+                throw new Error("PDF renderers failed: browser=" + text(browserError && browserError.message || browserError, 1200) +
+                    "; fallback=" + text(fallbackError && fallbackError.message || fallbackError, 800));
+            }
+            if (!validPdf(fallback)) {
+                throw new Error("PDF renderers failed: browser=" + text(browserError && browserError.message || browserError, 1200) +
+                    "; fallback returned an invalid artifact.");
+            }
+            return fallback;
+        });
+    }
+
     function execute(script, payload, request) {
         if (!protocolScript(script)) return Promise.reject(new Error("Invalid Jira protocol workflow."));
         var requestId = text(request && request.id, 128);
@@ -168,13 +197,12 @@ module.exports.createJiraProtocolService = function (options) {
         catch (error) { return Promise.reject(error); }
 
         updateProgress(requestId, 5, "Validating protocol inputs", "running");
-        var usersResult;
         var selectedUser;
         var selectedItPerson;
         var selectedAssets;
 
         return jiraAssets.listUsers(false).then(function (users) {
-            usersResult = users || { items: [] };
+            var usersResult = users || { items: [] };
             selectedUser = findUser(usersResult.items, inputs.userValue);
             if (!selectedUser) throw new Error("Selected Jira user is no longer available.");
             var meshItPerson = findMeshUser(context.parent, inputs.itPersonValue);
@@ -221,29 +249,26 @@ module.exports.createJiraProtocolService = function (options) {
             var protocolText = text(rendered.text, 500000);
             var protocolHtml = renderProtocolDocument(rendered.data);
             if (!text(protocolHtml, 1000000)) throw new Error("Shared document template returned no styled HTML document.");
-            return renderHtmlPdf(protocolHtml, { logoPath: branding.protocolLogoPath }).then(function (pdf) {
-            if (!Buffer.isBuffer(pdf) || pdf.length < 100 || pdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) {
-                throw new Error("PDF renderer returned an invalid artifact.");
-            }
-            updateProgress(requestId, 90, "Saving protected PDF", "running");
-            var artifact = artifactService.create(requestId, {
-                type: "pdf",
-                data: pdf,
-                fileName: "jira-protocol-" + requestId + ".pdf",
-                label: "Open PDF",
-                autoOpen: true
-            });
-            updateProgress(requestId, 100, "Ready", "ready");
-            return {
-                message: text(rendered.message, 2000) || "Jira Asset Protocol is ready.",
-                output: protocolText,
-                rawOutput: protocolText,
-                data: rendered.data && typeof rendered.data === "object" ? rendered.data : rendered,
-                artifacts: [artifact],
-                exitCode: executionResult && executionResult.exitCode == null ? 0 : executionResult.exitCode,
-                scriptPath: script.path,
-                label: script.label || script.name || "Jira Asset Protocol"
-            };
+            return renderPdf(protocolHtml, protocolText, branding.protocolLogoPath).then(function (pdf) {
+                updateProgress(requestId, 90, "Saving protected PDF", "running");
+                var artifact = artifactService.create(requestId, {
+                    type: "pdf",
+                    data: pdf,
+                    fileName: "jira-protocol-" + requestId + ".pdf",
+                    label: "Open PDF",
+                    autoOpen: true
+                });
+                updateProgress(requestId, 100, "Ready", "ready");
+                return {
+                    message: text(rendered.message, 2000) || "Jira Asset Protocol is ready.",
+                    output: protocolText,
+                    rawOutput: protocolText,
+                    data: rendered.data && typeof rendered.data === "object" ? rendered.data : rendered,
+                    artifacts: [artifact],
+                    exitCode: executionResult && executionResult.exitCode == null ? 0 : executionResult.exitCode,
+                    scriptPath: script.path,
+                    label: script.label || script.name || "Jira Asset Protocol"
+                };
             });
         }).catch(function (error) {
             var previous = progressByRequest[requestId];
