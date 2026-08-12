@@ -313,7 +313,7 @@ module.exports.createJiraAssetService = function (options) {
         return siteRequest(config, "/rest/servicedeskapi/assets/workspace?start=0&limit=50", { errorPrefix: "Jira Assets workspace discovery" }).then(function (response) {
             var values = responseItems(response);
             var workspaceId = values.length ? text(values[0] && values[0].workspaceId, 200) : "";
-            if (!workspaceId) throw new Error("Jira Assets workspaceId discovery returned no workspaceId.");
+            if (!workspaceId) throw new Error("Jira Assets workspace discovery returned no workspaceId.");
             return workspaceId;
         });
     }
@@ -334,7 +334,12 @@ module.exports.createJiraAssetService = function (options) {
         });
     }
 
-    function referenceStrings(value) {
+    function assignmentAttribute(attribute) {
+        var name = lower(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name);
+        return /(owner|user|assigned|employee|pracownik|uzytk|użytk|przypis|wlasciciel|właściciel)/i.test(name);
+    }
+
+    function referenceStrings(value, allowPlain) {
         value = object(value);
         var result = [];
         if (value.user) collectStrings(value.user, result, 0);
@@ -348,7 +353,7 @@ module.exports.createJiraAssetService = function (options) {
                 attributes: referenced.attributes
             }, result, 0);
         }
-        if (value.referencedType === true) {
+        if (value.referencedType === true || allowPlain === true) {
             collectStrings(value.value, result, 0);
             collectStrings(value.searchValue, result, 0);
             collectStrings(value.displayValue, result, 0);
@@ -361,8 +366,9 @@ module.exports.createJiraAssetService = function (options) {
         var ownLabel = lower(entry && (entry.label || entry.name));
         if (ownLabel && identities.indexOf(ownLabel) >= 0) return false;
         return array(entry && entry.attributes).some(function (attribute) {
+            var allowPlain = assignmentAttribute(attribute);
             return array(attribute && attribute.objectAttributeValues).some(function (value) {
-                var strings = referenceStrings(value);
+                var strings = referenceStrings(value, allowPlain);
                 return identities.some(function (identity) { return strings.indexOf(identity) >= 0; });
             });
         });
