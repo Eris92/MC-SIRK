@@ -61,20 +61,34 @@ var renderer = require(path.join(root, "server/core/html-pdf-renderer.js"));
         assert.strictEqual(calls, 2, "Edge renderer retry must be bounded to one alternate headless mode.");
         assert.ok(Buffer.isBuffer(retryPdf));
 
+        calls = 0;
         childProcess.execFile = function (executable, args, options, callback) {
-            if (args.indexOf("--headless") >= 0 && args.indexOf("--headless=new") < 0) {
-                return callback(new Error("exit 1"), "", "profile initialization failed");
-            }
+            calls++;
+            if (calls === 1) return callback(new Error("exit 1"), "", "profile initialization failed");
             callback(new Error("exit 2"), "", "alternate headless failed");
+        };
+        var fallbackPdf = await renderer.renderHtmlPdf("<html><body>fail</body></html>", {
+            browserPath: "C:\\Test\\msedge.exe",
+            fallbackText: "PROTOKOL\nUzytkownik: Test\nSprzet: PC-01"
+        });
+        assert.strictEqual(calls, 2, "Both bounded Edge modes must run before the direct fallback.");
+        assert.ok(Buffer.isBuffer(fallbackPdf) && fallbackPdf.length >= 100);
+        assert.strictEqual(fallbackPdf.slice(0, 8).toString("ascii").indexOf("%PDF-1."), 0,
+            "Edge failure with fallbackText must return direct PDF bytes instead of bubbling the Edge command error.");
+
+        calls = 0;
+        childProcess.execFile = function (executable, args, options, callback) {
+            calls++;
+            callback(new Error("exit"), "", calls === 1 ? "profile initialization failed" : "alternate headless failed");
         };
         await assert.rejects(function () {
             return renderer.renderHtmlPdf("<html><body>fail</body></html>", {
                 browserPath: "C:\\Test\\msedge.exe"
             });
         }, /Browser PDF renderer failed: edge-headless: profile initialization failed \| edge-headless-new: alternate headless failed/,
-        "Both bounded Edge attempts must retain useful stderr instead of only returning the command line.");
+        "Callers without fallbackText must retain both bounded Edge diagnostics.");
 
-        console.log("HTML PDF renderer isolated Edge profile, portable paths, bounded retry and diagnostics: OK");
+        console.log("HTML PDF renderer isolated Edge profile, portable paths, bounded retry, diagnostics and renderer-owned direct fallback: OK");
     } finally {
         childProcess.execFile = originalExecFile;
     }

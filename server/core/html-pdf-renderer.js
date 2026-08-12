@@ -5,6 +5,7 @@ var os = require("os");
 var path = require("path");
 var fs = require("fs");
 var pathToFileURL = require("url").pathToFileURL;
+var pdfTextRenderer = require("./pdf-text-renderer.js");
 
 function browserPath() {
     var candidates = process.platform === "win32" ? [
@@ -57,10 +58,29 @@ function failureMessage(failures) {
     return "Browser PDF renderer failed: " + failures.join(" | ").slice(0, 2000);
 }
 
+function validPdf(value) {
+    return Buffer.isBuffer(value) && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
+}
+
+function directFallback(options, browserError) {
+    var fallbackText = String(options && options.fallbackText || "").trim();
+    if (!fallbackText) throw browserError;
+    try {
+        var pdf = pdfTextRenderer.renderTextPdf(fallbackText);
+        if (!validPdf(pdf)) throw new Error("Direct PDF fallback returned invalid bytes.");
+        return pdf;
+    } catch (fallbackError) {
+        throw new Error("PDF renderers failed: browser=" + failureDetail(browserError) + "; fallback=" + failureDetail(fallbackError));
+    }
+}
+
 function renderHtmlPdf(html, options) {
     options = options || {};
     var executable = options.browserPath || browserPath();
-    if (!executable) return Promise.reject(new Error("Chrome or Edge is required for styled protocol PDF rendering."));
+    if (!executable) {
+        try { return Promise.resolve(directFallback(options, new Error("Chrome or Edge is required for styled protocol PDF rendering."))); }
+        catch (error) { return Promise.reject(error); }
+    }
     var directory = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-protocol-pdf-"));
     var htmlPath = path.join(directory, "protocol.html");
     var pdfPath = path.join(directory, "protocol.pdf");
@@ -92,7 +112,7 @@ function renderHtmlPdf(html, options) {
                 if (error) return reject(new Error(failureDetail(error, stdout, stderr)));
                 try {
                     var result = fs.readFileSync(pdfPath);
-                    if (result.slice(0, 8).toString("ascii").indexOf("%PDF-1.") !== 0) throw new Error("Browser returned invalid PDF bytes.");
+                    if (!validPdf(result)) throw new Error("Browser returned invalid PDF bytes.");
                     resolve(result);
                 } catch (failure) {
                     reject(failure);
@@ -105,7 +125,9 @@ function renderHtmlPdf(html, options) {
         });
     }
 
-    return runAttempt(0).finally(function () { removeTree(directory); });
+    return runAttempt(0).catch(function (browserError) {
+        return directFallback(options, browserError);
+    }).finally(function () { removeTree(directory); });
 }
 
 module.exports = {

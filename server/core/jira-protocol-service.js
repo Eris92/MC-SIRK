@@ -3,7 +3,6 @@
 var artifactFactory = require("./artifact-service.js");
 var documentTemplateRenderer = require("./document-template-renderer.js");
 var htmlPdfRenderer = require("./html-pdf-renderer.js");
-var pdfTextRenderer = require("./pdf-text-renderer.js");
 var brandingFactory = require("./branding-service.js");
 var shared = require("./shared.js");
 
@@ -91,7 +90,6 @@ module.exports.createJiraProtocolService = function (options) {
     var executor = options.executor;
     var renderProtocolDocument = options.renderProtocolDocument || documentTemplateRenderer.renderJiraAssetProtocol;
     var renderHtmlPdf = options.renderHtmlPdf || htmlPdfRenderer.renderHtmlPdf;
-    var renderFallbackPdf = options.renderFallbackPdf || pdfTextRenderer.renderTextPdf;
     var branding = brandingFactory.createBrandingService({
         fs: context.fs,
         path: context.nativePath || context.path,
@@ -165,23 +163,10 @@ module.exports.createJiraProtocolService = function (options) {
 
     function renderPdf(protocolHtml, protocolText, logoPath) {
         return Promise.resolve().then(function () {
-            return renderHtmlPdf(protocolHtml, { logoPath: logoPath });
+            return renderHtmlPdf(protocolHtml, { logoPath: logoPath, fallbackText: protocolText });
         }).then(function (pdf) {
-            if (!validPdf(pdf)) throw new Error("Browser PDF renderer returned an invalid artifact.");
+            if (!validPdf(pdf)) throw new Error("PDF renderer returned an invalid artifact.");
             return pdf;
-        }).catch(function (browserError) {
-            var fallback;
-            try {
-                fallback = renderFallbackPdf(protocolText);
-            } catch (fallbackError) {
-                throw new Error("PDF renderers failed: browser=" + text(browserError && browserError.message || browserError, 1200) +
-                    "; fallback=" + text(fallbackError && fallbackError.message || fallbackError, 800));
-            }
-            if (!validPdf(fallback)) {
-                throw new Error("PDF renderers failed: browser=" + text(browserError && browserError.message || browserError, 1200) +
-                    "; fallback returned an invalid artifact.");
-            }
-            return fallback;
         });
     }
 
