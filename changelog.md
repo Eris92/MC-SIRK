@@ -1,3 +1,11 @@
+## 0.1.1-dev.75 - 2026-08-12
+
+- Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.
+- Remove the protocol-only 5000-result override and retain the dev.64 default bounded selector behavior.
+- Keep later independent Jira improvements (users cache v2, compact Assets cache v4, bounded refresh concurrency, response metadata handling, generic script-owned workspace-wide support and PDF fixes) unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.75.md`.
+
 ## 0.1.1-dev.74 - 2026-08-12
 
 - Real `0.1.1-dev.73` smoke still returned an empty `Sprzęt do protokołu` list because the user-like identity-object classifier matched Polish singular tokens but not common plural object type names such as `Pracownicy` and `Osoby`.
@@ -275,7 +283,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
-- Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
+- Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted surface; reuse the existing observer/signals and preserve F5/form state.
 - Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
@@ -576,7 +584,7 @@ Current development notes: `docs/releases/0.1.1-dev.10.md`.
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
 - Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.
-- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell` and `CMD` while genuine custom labels remain valid.
+- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell`, `CMD` while genuine custom labels remain valid.
 - Contain long unbroken Results text tokens inside their semantic cells and present Move Request source/target groups with visible human-readable names when available.
 - Keep stable execution IDs, authorization and the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
