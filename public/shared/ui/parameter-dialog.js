@@ -20,6 +20,10 @@
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
         return ["select", "switch", "user", "asset", "assetmulti"].indexOf(kind) >= 0 ? kind : "text";
     }
+    function controlElementTag(kind, customUser, listMode) {
+        if (kind === "assetmulti" || listMode) return "input";
+        return kind === "select" || kind === "asset" || (kind === "user" && !customUser) ? "select" : "input";
+    }
     function allowCustom(item, variable) {
         var name = text(variable && variable.name).trim().toLowerCase();
         if (!name) return false;
@@ -195,8 +199,7 @@
             caption.className = "mc-script-form-label";
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
             if (variable.hideLabel !== true) row.appendChild(caption);
-            var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
-            var control = document.createElement(useSelect ? "select" : "input");
+            var control = document.createElement(controlElementTag(kind, customUser, listMode));
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
@@ -596,6 +599,7 @@
         allowCustom: allowCustom,
         assetDependsOnUser: assetDependsOnUser,
         assetUserDependency: assetUserDependency,
+        controlElementTag: controlElementTag,
         controlKind: controlKind,
         currentValues: currentValues,
         optionProvider: function () { return sharedOptionProvider; },
