@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.75",
+    "date": "2026-08-12",
+    "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
+    "notes": "docs/releases/0.1.1-dev.75.md"
+  },
+  {
     "version": "0.1.1-dev.74",
     "date": "2026-08-12",
     "summary": "Recognize localized plural Jira identity object types when resolving selected users to assigned equipment.",
@@ -509,7 +515,7 @@
     "version": "0.1.1-dev.11",
     "date": "2026-08-08",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
       "Keep first-column selected indicator distance, row origin and icon center stable across expanded/collapsed states, including Quick and Approval Center.",
       "Make Approval Center reuse the shared list geometry contract instead of separate provider/status row styling.",
       "Center View and Actions headers and controls while preserving the 72 px / 120 px Results width contract and horizontal scrolling.",
@@ -533,7 +539,7 @@
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
       "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
-      "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
+      "Normalize persisted historical built-in default labels while preserving genuine command overrides and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
