@@ -12,7 +12,7 @@ var web = { users: {}, userGroups: {} };
 web.userGroups[groupId] = { _id: groupId, name: "Level 1" };
 var parent = { fs: fs, path: path, pluginPath: root, parent: { datapath: temporary, webserver: web } };
 var runtimeFactory = require(path.join(root, "server/core/runtime.js"));
-var runtime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {} });
+var runtime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {}, fallbackDataRoot: "" });
 var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
 var adminHandler = require(path.join(root, "admin.js")).admin({ shortName: "SIRKPortal", runtime: runtime });
 
@@ -54,7 +54,12 @@ runtime.saveAdminSettings(admin, {
                     var persisted = JSON.parse(fs.readFileSync(path.join(temporary, "sirk-platform-data", "settings.json"), "utf8"));
                     assert.strictEqual(persisted.ui.iconMode, "modern", "General icon mode must persist in settings.json.");
 
-                    var restartedRuntime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {} });
+                    var restartedRuntime = runtimeFactory.createRuntime({
+                        parent: parent,
+                        pluginRoot: root,
+                        source: {},
+                        fallbackDataRoot: ""
+                    });
                     var restartedSnapshot = restartedRuntime.adminSnapshot(admin);
                     assert.strictEqual(restartedSnapshot.uiSettings.iconMode, "modern",
                         "A fresh runtime must reload the saved icon mode from disk after restart.");

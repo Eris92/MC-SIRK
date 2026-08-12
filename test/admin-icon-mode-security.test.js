@@ -14,7 +14,7 @@ var parent = {
     parent: { datapath: temporary, webserver: { users: {}, userGroups: {} } }
 };
 var runtimeFactory = require(path.join(root, "server/core/runtime.js"));
-var runtime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {} });
+var runtime = runtimeFactory.createRuntime({ parent: parent, pluginRoot: root, source: {}, fallbackDataRoot: "" });
 var admin = { _id: "user/domain/admin", name: "admin", siteadmin: 0xFFFFFFFF };
 var user = { _id: "user/domain/user", name: "user", siteadmin: 0 };
 

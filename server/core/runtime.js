@@ -74,6 +74,9 @@ module.exports.createRuntime = function (options) {
     var fs = parent.fs || require("fs");
     var nativePath = parent.path || require("path");
     var meshServer = parent.parent;
+    var fallbackDataRoot = Object.prototype.hasOwnProperty.call(options, "fallbackDataRoot")
+        ? options.fallbackDataRoot
+        : process.env.PROGRAMDATA;
     var dataBase = meshServer && meshServer.datapath
         ? meshServer.datapath
         : nativePath.dirname(parent.pluginPath || pluginRoot);
@@ -89,8 +92,8 @@ module.exports.createRuntime = function (options) {
         fs: fs,
         path: nativePath,
         filePath: nativePath.join(dataRoot, "settings.json"),
-        fallbackPath: process.env.PROGRAMDATA
-            ? nativePath.join(process.env.PROGRAMDATA, "SIRK Management Platform", "settings.json")
+        fallbackPath: fallbackDataRoot
+            ? nativePath.join(fallbackDataRoot, "SIRK Management Platform", "settings.json")
             : "",
         defaults: DEFAULTS
     });
@@ -128,8 +131,8 @@ module.exports.createRuntime = function (options) {
         source: options.source,
         settings: settings,
         databasePath: nativePath.join(dataRoot, "requests.json"),
-        fallbackDatabasePath: process.env.PROGRAMDATA
-            ? nativePath.join(process.env.PROGRAMDATA, "SIRK Management Platform", "approval-requests.json")
+        fallbackDatabasePath: fallbackDataRoot
+            ? nativePath.join(fallbackDataRoot, "SIRK Management Platform", "approval-requests.json")
             : nativePath.join(dataRoot, "approval-requests.json")
     });
     context.isModuleEnabled = settings.isModuleEnabled;

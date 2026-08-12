@@ -1,3 +1,11 @@
+## 0.1.1-dev.69 - 2026-08-12
+
+- Isolate runtime-backed admin tests from an existing machine-wide `%PROGRAMDATA%` fallback store while preserving the production fallback contract by default.
+- Add an explicit `fallbackDataRoot` runtime injection seam and disable the legacy fallback only in tests that own a temporary MeshCentral `datapath`.
+- Prevent Windows test runs from reading or mutating unrelated persisted SIRK settings; keep icon-mode normalization, permissions and restart persistence coverage intact.
+
+Current development notes: `docs/releases/0.1.1-dev.69.md`.
+
 ## 0.1.1-dev.68 - 2026-08-12
 
 - Real `0.1.1-dev.67` smoke still exposed the raw Edge headless failure in Results, proving the protocol-service fallback did not protect the real runtime path.
