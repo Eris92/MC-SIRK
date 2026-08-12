@@ -24,6 +24,13 @@ Dla każdego zadania:
 5. odczytaj entrypoint/ownera, bezpośrednie zależności i targeted tests;
 6. rozszerz zakres tylko po konkretnym braku evidence.
 
+Routing warstw:
+- backend, storage, API, integracje, permissions: `server/INDEX.md`;
+- native UI MeshCentral, shared UI, renderery: `public/INDEX.md`;
+- panel administracyjny: `web/INDEX.md`;
+- walidatory/build/struktura: `scripts/INDEX.md`;
+- test/regresja: `test/INDEX.md`.
+
 Nie czytaj automatycznie wszystkich `docs/agent/*`, całego repo, historii Git ani pełnych testów.
 
 Domyślny first pass:
