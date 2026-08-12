@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.77",
+    "date": "2026-08-12",
+    "summary": "Keep the proven Jira equipment hierarchy and scope heterogeneous reference traversal to the real Users object type so unrelated reference graphs cannot displace assigned equipment.",
+    "notes": "docs/releases/0.1.1-dev.77.md"
+  },
+  {
     "version": "0.1.1-dev.76",
     "date": "2026-08-12",
     "summary": "Keep the working Jira equipment hierarchy and include both sides of the Assets reference graph so heterogeneous assigned equipment can resolve to the selected user.",
