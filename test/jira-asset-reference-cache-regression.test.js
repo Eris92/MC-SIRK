@@ -32,14 +32,14 @@ function user() {
     };
 }
 
-function asset(id, label, value) {
+function asset(id, label, value, objectType, attributeId) {
     return {
         id: id,
         objectKey: "KEY-" + id,
         label: label,
-        objectType: { id: "type-device", name: "Device" },
+        objectType: { id: "type-" + (objectType || "device").toLowerCase(), name: objectType || "Device" },
         attributes: [{
-            objectTypeAttributeId: "contact",
+            objectTypeAttributeId: attributeId || "contact",
             objectAttributeValues: [value]
         }]
     };
@@ -65,9 +65,22 @@ function asset(id, label, value) {
                             asset("2", "Unrelated-Text", {
                                 value: "acc-1",
                                 displayValue: "acc-1"
-                            })
+                            }),
+                            asset("user-1", "User One", {
+                                value: "acc-1",
+                                displayValue: "acc-1"
+                            }, "Users", "jira-account"),
+                            asset("3", "Assigned-via-Users-object", {
+                                referencedType: true,
+                                referencedObject: { id: "user-1", objectKey: "KEY-user-1" },
+                                displayValue: "KEY-user-1"
+                            }, "Device", "holder")
                         ],
-                        objectTypeAttributes: [{ id: "contact", name: "Kontakt" }],
+                        objectTypeAttributes: [
+                            { id: "contact", name: "Kontakt" },
+                            { id: "jira-account", name: "Konto Jira" },
+                            { id: "holder", name: "Posiadacz" }
+                        ],
                         hasMoreResults: false,
                         isLast: true
                     });
@@ -87,16 +100,18 @@ function asset(id, label, value) {
         };
 
         var result = await service.optionsFor(variable, { JiraUser: "acc-1" }, true);
-        assert.deepStrictEqual(result.items.map(function (item) { return item.value; }), ["Assigned-Device"],
-            "Explicit Jira user references must survive compact caching even when the attribute name is not assignment-semantic.");
+        assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Assigned-Device", "Assigned-via-Users-object"],
+            "User-bound Assets must support both direct Jira-user references and references through a Jira Users identity object.");
 
         var persisted = JSON.parse(fs.readFileSync(service.assetCachePath, "utf8"));
         assert.strictEqual(persisted.version, 4,
-            "Assets cache schema v4 must invalidate v3 snapshots that lost non-semantic explicit reference identities.");
+            "Assets cache schema v4 must retain explicit reference identities required by user-object bridging.");
         assert.ok(persisted.queries["Key is not EMPTY"].entries[0].attributes[0].matchValues.indexOf("acc-1") >= 0,
             "Compact cache must retain explicit Jira user reference identities.");
         assert.strictEqual(persisted.queries["Key is not EMPTY"].entries[1].attributes[0].matchValues.length, 0,
             "Plain unrelated text on a non-assignment attribute must not become a user-binding match value.");
+        assert.ok(persisted.queries["Key is not EMPTY"].entries[3].attributes[0].matchValues.indexOf("user-1") >= 0,
+            "Compact cache must retain referenced Users object identity even when its display label is not returned.");
 
         var cachedService = factory.createJiraAssetService({
             fs: fs,
@@ -108,10 +123,10 @@ function asset(id, label, value) {
             }
         });
         var cached = await cachedService.optionsFor(variable, { JiraUser: "acc-1" }, false);
-        assert.deepStrictEqual(cached.items.map(function (item) { return item.value; }), ["Assigned-Device"],
-            "Persisted compact cache must reproduce explicit-reference user binding without Jira access.");
+        assert.deepStrictEqual(cached.items.map(function (item) { return item.value; }).sort(), ["Assigned-Device", "Assigned-via-Users-object"],
+            "Persisted compact cache must reproduce direct and Users-object user binding without Jira access.");
 
-        console.log("Jira compact cache preserves explicit user references: OK");
+        console.log("Jira compact cache preserves direct and Users-object user references: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
