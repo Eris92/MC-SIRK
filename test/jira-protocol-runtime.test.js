@@ -192,13 +192,12 @@ function jiraAsset(value, model, serial, inventory) {
         assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0);
         assert.strictEqual(seedSource.indexOf("SirkAllowCustom: ItPerson"), -1,
             "IT person must be selected from authoritative MeshCentral users, not a custom Jira-style datalist.");
-        assert.ok(seedSource.indexOf("SirkJiraAssetAql: Key is not EMPTY") >= 0 &&
+        assert.ok(seedSource.indexOf('SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")') >= 0 &&
             seedSource.indexOf("SirkJiraAssetLabelAttribute: Nazwa_sieciowa") >= 0 &&
-            seedSource.indexOf("SirkJiraAssetMaxResults: 5000") >= 0 &&
             seedSource.indexOf("SirkJiraAssetUserVariable: JiraUser") >= 0,
-            "Canonical Jira protocol must own a workspace-wide Assets query, bounded selector limit, display attribute and Jira user binding in script metadata.");
-        assert.strictEqual(seedSource.indexOf('objectTypeAndChildren("Sprzęt użytkownika")'), -1,
-            "Canonical protocol must not limit assigned equipment to one Jira object-type hierarchy.");
+            "Canonical Jira protocol must restore the last real-smoke-working dev64 equipment scope and Jira user binding.");
+        assert.strictEqual(seedSource.indexOf("SirkJiraAssetMaxResults: 5000"), -1,
+            "Restored dev64 protocol scope must retain its original default bounded selector limit.");
         ["USER_ID", "USER_NAME", "USER_EMAIL", "IT_ID", "IT_NAME", "IT_EMAIL"].forEach(function (name) {
             assert.ok(seedSource.indexOf("(Get-ProtocolValue $env:SIRK_PROTOCOL_" + name + ")") >= 0,
                 "PowerShell hashtable values must parenthesize protocol helper calls: " + name);
