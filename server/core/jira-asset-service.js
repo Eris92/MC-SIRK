@@ -7,10 +7,11 @@ var USER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var ASSET_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 var USER_PAGE_SIZE = 100;
 var MAX_USERS = 10000;
+var USER_CACHE_VERSION = 2;
 var ASSET_PAGE_SIZE = 500;
 var DEFAULT_ASSET_OPTION_LIMIT = 1000;
 var MAX_ASSET_OPTION_LIMIT = 5000;
-var MAX_ASSET_SCAN_PAGES = 20;
+var MAX_ASSET_SCAN_PAGES = 100;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
@@ -161,7 +162,7 @@ module.exports.createJiraAssetService = function (options) {
         userCacheLoaded = true;
         try {
             var parsed = JSON.parse(fs.readFileSync(cachePath, "utf8"));
-            if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.users)) return null;
+            if (!parsed || parsed.version !== USER_CACHE_VERSION || !Array.isArray(parsed.users)) return null;
             userCacheMemory = {
                 fetchedAt: Number(parsed.fetchedAt) || 0,
                 users: parsed.users.slice(0, MAX_USERS).map(normalizeUser).filter(Boolean)
@@ -175,7 +176,7 @@ module.exports.createJiraAssetService = function (options) {
     function writeCache(users) {
         var temp = cachePath + ".tmp-" + process.pid + "-" + Date.now();
         fs.writeFileSync(temp, JSON.stringify({
-            version: 1,
+            version: USER_CACHE_VERSION,
             fetchedAt: Date.now(),
             users: users.slice(0, MAX_USERS)
         }, null, 2), { encoding: "utf8", mode: 384 });
@@ -245,7 +246,7 @@ module.exports.createJiraAssetService = function (options) {
     }
 
     function fetchUsers(config) {
-        var endpoints = ["/rest/api/3/users/search", "/rest/api/2/users/search", "/rest/api/2/users"];
+        var endpoints = ["/rest/api/3/users", "/rest/api/3/users/search", "/rest/api/2/users", "/rest/api/2/users/search"];
         var lastError = null;
         function attempt(index) {
             if (index >= endpoints.length) return Promise.reject(lastError || new Error("Jira users are unavailable."));
