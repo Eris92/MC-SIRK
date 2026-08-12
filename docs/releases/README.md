@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.68`](0.1.1-dev.68.md) — renderer-owned direct PDF fallback after real dev.67 Edge failure still escaped the protocol lifecycle;
 - [`0.1.1-dev.67`](0.1.1-dev.67.md) — keep styled Jira protocol PDF first, then reuse the existing direct PDF renderer as a bounded browser-failure fallback;
 - [`0.1.1-dev.66`](0.1.1-dev.66.md) — exclude Jira identity objects from assigned Assets and add bounded Edge PDF compatibility retry;
 - [`0.1.1-dev.65`](0.1.1-dev.65.md) — invalidate the legacy 1000-user cache snapshot and expose workspace-wide user-bound Jira Assets;
