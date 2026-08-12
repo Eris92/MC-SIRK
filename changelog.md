@@ -1,3 +1,11 @@
+## 0.1.1-dev.77 - 2026-08-12
+
+- Real `0.1.1-dev.76` smoke regressed to an empty `Sprzęt do protokołu` list because the unqualified `outboundReferences()` / `inboundReferences()` source admitted the entire Assets reference graph into the bounded snapshot.
+- Keep the real-smoke-proven `objectTypeAndChildren("Sprzęt użytkownika")` anchor, include the observed `Users` identity objects, and traverse only inbound/outbound references whose other side is `objectType = "Users"`.
+- Preserve server-side Jira user binding, compact cache v4, pagination/concurrency bounds, identity-object exclusion and PDF lifecycle; do not restore `Key is not EMPTY`.
+
+Current development notes: `docs/releases/0.1.1-dev.77.md`.
+
 ## 0.1.1-dev.76 - 2026-08-12
 
 - Real `0.1.1-dev.75` smoke confirms equipment selection and PDF generation work again, but the restored dev.64 hierarchy still exposes PC-class equipment only.
@@ -497,7 +505,6 @@ Current development notes: `docs/releases/0.1.1-dev.20.md`.
 - Reuse the host `idx_dlgOkButton`, `idx_dlgCancelButton` and close control so modal surface, hover and footer button styling are exactly host-native.
 - Keep guarded asynchronous Submit feedback in the same native dialog by intercepting the host OK click before `dialogclose(1)`, while preserving source/target group names and backend semantics.
 - No new background/opacity workaround, observer, timer, polling loop, modal framework, tag or GitHub Release.
-
 # Changelog
 
 ## 0.1.1-dev.18 — 2026-08-08
