@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.80`](0.1.1-dev.80.md) — surface the swallowed PDF browser-fallback failure reason; equipment scope beyond `Komputer` remains open pending real tenant Assets data;
 - [`0.1.1-dev.79`](0.1.1-dev.79.md) — recognize the tenant's plain-value `Osoba_odpowiedzialna` assignment attribute on every equipment type, not only `Komputer`;
 - [`0.1.1-dev.75`](0.1.1-dev.75.md) — restore the last real-smoke-working dev64 Jira equipment scope while retaining later cache/performance fixes;
 - [`0.1.1-dev.74`](0.1.1-dev.74.md) — recognize localized plural Jira identity object types when bridging selected users to assigned equipment;

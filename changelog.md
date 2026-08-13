@@ -1,3 +1,11 @@
+## 0.1.1-dev.80 - 2026-08-13
+
+- Real `0.1.1-dev.79` smoke confirmed `Sprzęt do protokołu` still returned only `Komputer`; a broader permissive-matching attempt (matching any attribute text regardless of name) was tried and reverted after it broke the existing `0.1.1-dev.66` false-positive regression (unrelated plain text such as a `Notes` field matching by coincidence).
+- Confirmed with the user that real `0.1.1-dev.63` (2026-08-11) is the last version where every equipment type appeared; matching that behavior safely requires the real tenant's raw Jira Assets attribute payload for a non-`Komputer` object, which is still outstanding.
+- Stop silently discarding the Edge/Chrome failure reason when the protocol PDF falls back to the dependency-free plain-text renderer: `html-pdf-renderer.js` stamps `pdf.sirkFallbackReason`, and `jira-protocol-service.js` appends it to the result message so the actual browser failure is visible instead of only producing an unstyled PDF with no diagnostic.
+
+Current development notes: `docs/releases/0.1.1-dev.80.md`.
+
 ## 0.1.1-dev.79 - 2026-08-13
 
 - Real `0.1.1-dev.75` smoke with the tenant's actual Jira Assets schema confirmed `Sprzęt do protokołu` still returned only `Komputer` objects, even though `Monitor`, `Drukarka`, `Tablet` and other equipment types are children of the same `Sprzęt użytkownika` type and share the same `Osoba_odpowiedzialna` assignment attribute.

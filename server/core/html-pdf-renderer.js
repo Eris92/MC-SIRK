@@ -68,6 +68,7 @@ function directFallback(options, browserError) {
     try {
         var pdf = pdfTextRenderer.renderTextPdf(fallbackText);
         if (!validPdf(pdf)) throw new Error("Direct PDF fallback returned invalid bytes.");
+        pdf.sirkFallbackReason = failureDetail(browserError);
         return pdf;
     } catch (fallbackError) {
         throw new Error("PDF renderers failed: browser=" + failureDetail(browserError) + "; fallback=" + failureDetail(fallbackError));
