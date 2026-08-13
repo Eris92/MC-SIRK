@@ -1,9 +1,14 @@
+## 0.1.1-dev.90 - 2026-08-13
+
+- Always build the visible Jira protocol equipment table from normalized `result.data.assets`.
+- Keep historical or stale printable-text output only in `Debug / raw output`.
+
+Current development notes: `docs/releases/0.1.1-dev.90.md`.
+
 ## 0.1.1-dev.89 - 2026-08-13
 
 - Place the `Wymuś odświeżenie` checkbox before its label in both Jira cache dialogs.
 - Keep every non-cache script parameter layout unchanged.
-
-Current development notes: `docs/releases/0.1.1-dev.89.md`.
 
 ## 0.1.1-dev.88 - 2026-08-13
 

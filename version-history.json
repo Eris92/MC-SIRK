@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.90",
+    "date": "2026-08-13",
+    "summary": "Always render Jira protocol equipment from normalized result data, including stale text outputs.",
+    "notes": "docs/releases/0.1.1-dev.90.md"
+  },
+  {
     "version": "0.1.1-dev.89",
     "date": "2026-08-13",
     "summary": "Place the Force checkbox before its label in both Jira cache dialogs.",

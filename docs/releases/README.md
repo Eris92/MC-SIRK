@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.90`](0.1.1-dev.90.md) — frontend-enforced equipment-only Jira protocol table for stale and historical text outputs;
 - [`0.1.1-dev.89`](0.1.1-dev.89.md) — left-side Force checkbox in both Jira cache dialogs without changing other script forms;
 - [`0.1.1-dev.88`](0.1.1-dev.88.md) — Jira protocol equipment-only JSON table, operation heading and one shared Copy/PDF action row;
 - [`0.1.1-dev.87`](0.1.1-dev.87.md) — stable square checkbox geometry in shared native parameter dialogs across browser, theme and DPI differences;

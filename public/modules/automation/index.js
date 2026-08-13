@@ -127,6 +127,27 @@
         return data.mode === "return" ? "PROTOKÓŁ ZWROTU SPRZĘTU" : "PROTOKÓŁ PRZEKAZANIA SPRZĘTU";
     }
 
+    function protocolEquipmentOutput(request) {
+        var data = request && request.result && request.result.data || {};
+        var assets = Array.isArray(data.assets) ? data.assets : [];
+        return JSON.stringify({
+            meshTable: true,
+            title: "Sprzęt",
+            columns: ["Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
+            rows: assets.map(function (asset) {
+                asset = asset || {};
+                return {
+                    "Hostname": String(asset.hostname || ""),
+                    "Producent": String(asset.manufacturer || ""),
+                    "Model": String(asset.model || ""),
+                    "Numer seryjny": String(asset.serialNumber || ""),
+                    "Numer inwentarzowy": String(asset.inventoryNumber || ""),
+                    "Asset ID": String(asset.assetIdentifier || "")
+                };
+            })
+        });
+    }
+
     function renderResult(host, request) {
         request = request || {};
         host.innerHTML = "";
@@ -140,10 +161,11 @@
         if (request.status === "failed" || request.status === "rejected") host.classList.add("mc-shared-error");
         else host.classList.remove("mc-shared-error");
         var heading = protocolHeading(request);
-        window.SharedResultsView.mountResult(host, requestOutput(request), {
+        var originalOutput = requestOutput(request);
+        window.SharedResultsView.mountResult(host, heading ? protocolEquipmentOutput(request) : originalOutput, {
             title: request.title || "Result",
             heading: heading,
-            debugValue: heading && request.result && request.result.rawOutput != null ? request.result.rawOutput : null
+            debugValue: heading ? (request.result && request.result.rawOutput != null ? request.result.rawOutput : originalOutput) : null
         });
         appendArtifactActions(host, request);
     }

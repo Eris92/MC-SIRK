@@ -197,6 +197,13 @@ function jiraAsset(value, model, serial, inventory) {
         assert.ok(clientSource.indexOf('"PROTOKÓŁ PRZEKAZANIA SPRZĘTU"') >= 0 &&
             clientSource.indexOf("debugValue: heading") >= 0,
             "Protocol results must show the operation heading above actions while preserving full text only in Debug/raw output.");
+        assert.ok(clientSource.indexOf("function protocolEquipmentOutput(request)") >= 0 &&
+            clientSource.indexOf("heading ? protocolEquipmentOutput(request) : originalOutput") >= 0,
+            "Protocol UI must build the equipment table from result.data.assets even when a historical or stale backend output still contains printable protocol text.");
+        assert.ok(clientSource.indexOf('meshTable: true') >= 0 &&
+            clientSource.indexOf('title: "Sprzęt"') >= 0 &&
+            clientSource.indexOf('"Numer seryjny": String(asset.serialNumber || "")') >= 0,
+            "Client fallback must preserve the canonical equipment-only table schema.");
 
         assert.ok(dialogSource.indexOf("SirkAllowCustom") >= 0 && dialogSource.indexOf("datalist") >= 0,
             "Shared parameter dialog must support generic opt-in custom user values without a Jira-only form.");
