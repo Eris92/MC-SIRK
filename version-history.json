@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.103",
+    "date": "2026-08-13",
+    "summary": "Move the Settings gear center approximately one rendered pixel lower.",
+    "notes": "docs/releases/0.1.1-dev.103.md"
+  },
+  {
     "version": "0.1.1-dev.102",
     "date": "2026-08-13",
     "summary": "Use neutral Active Directory UPN and OU placeholder examples.",
