@@ -1,3 +1,12 @@
+## 0.1.1-dev.78 - 2026-08-13
+
+- Real `0.1.1-dev.77` smoke still returned an empty `Sprzęt do protokołu` list, so the static Users-scoped reference expansion is recorded as ineffective.
+- Restore the real-smoke-working `objectTypeAndChildren("Sprzęt użytkownika")` static anchor and keep its result independently.
+- Add one selected-user-only bounded AQL expansion through the existing Jira service using resolved accountId/email/displayName, `anyAttribute`/`Label`, and inbound/outbound references; merge/dedupe it with the anchor and fail soft so expansion errors cannot erase working PC results.
+- Keep unbound Assets cache refresh on one static query and preserve compact cache v4, pagination/concurrency, server-side matching, authoritative protocol recheck and PDF lifecycle.
+
+Current development notes: `docs/releases/0.1.1-dev.78.md`.
+
 ## 0.1.1-dev.77 - 2026-08-12
 
 - Real `0.1.1-dev.76` smoke regressed to an empty `Sprzęt do protokołu` list because the unqualified `outboundReferences()` / `inboundReferences()` source admitted the entire Assets reference graph into the bounded snapshot.
