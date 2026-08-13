@@ -9,8 +9,8 @@ var source = fs.readFileSync(path.join(root, "public/shared/ui/parameter-dialog.
 
 assert.ok(source.indexOf('var listMode = variable.listMode === true && (kind === "user" || kind === "select");') >= 0,
     "Shared parameter dialog must recognize listMode only for user/select controls.");
-assert.ok(source.indexOf('var control = document.createElement(listMode ? "input" : useSelect ? "select" : "input");') >= 0,
-    "listMode must choose INPUT before checklist code assigns type=hidden.");
+assert.ok(source.indexOf('var control = document.createElement(multiline ? "textarea" : listMode ? "input" : useSelect ? "select" : "input");') >= 0,
+    "Multiline must choose TEXTAREA while listMode still chooses INPUT before checklist code assigns type=hidden.");
 assert.ok(source.indexOf('if (kind === "assetmulti" || listMode) {') >= 0,
     "assetmulti and listMode must share the hidden-input checklist path.");
 assert.ok(source.indexOf('(kind === "assetmulti" && Array.isArray(variable.options))') >= 0,
