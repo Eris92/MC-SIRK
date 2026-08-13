@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.88",
+    "date": "2026-08-13",
+    "summary": "Show Jira protocol equipment as a JSON-backed table with one shared Copy/PDF action row.",
+    "notes": "docs/releases/0.1.1-dev.88.md"
+  },
+  {
     "version": "0.1.1-dev.87",
     "date": "2026-08-13",
     "summary": "Keep shared native parameter-dialog checkboxes square across browser, theme and DPI differences.",

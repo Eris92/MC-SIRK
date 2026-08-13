@@ -98,8 +98,12 @@
     function appendArtifactActions(host, request) {
         var artifacts = pdfArtifacts(request);
         if (!artifacts.length) return;
-        var actions = document.createElement("div");
-        actions.className = "mc-results-viewer-actions mc-results-inline-actions";
+        var actions = host.querySelector(".mc-results-inline-actions");
+        if (!actions) {
+            actions = document.createElement("div");
+            actions.className = "mc-results-viewer-actions mc-results-inline-actions";
+            host.appendChild(actions);
+        }
         artifacts.forEach(function (artifact) {
             var open = document.createElement("button");
             open.type = "button";
@@ -115,7 +119,12 @@
             download.onclick = function () { window.location.href = artifactUrl(artifact, "download"); };
             actions.appendChild(download);
         });
-        host.appendChild(actions);
+    }
+
+    function protocolHeading(request) {
+        var data = request && request.result && request.result.data;
+        if (!data || !Array.isArray(data.assets)) return "";
+        return data.mode === "return" ? "PROTOKÓŁ ZWROTU SPRZĘTU" : "PROTOKÓŁ PRZEKAZANIA SPRZĘTU";
     }
 
     function renderResult(host, request) {
@@ -130,8 +139,11 @@
         }
         if (request.status === "failed" || request.status === "rejected") host.classList.add("mc-shared-error");
         else host.classList.remove("mc-shared-error");
+        var heading = protocolHeading(request);
         window.SharedResultsView.mountResult(host, requestOutput(request), {
-            title: request.title || "Result"
+            title: request.title || "Result",
+            heading: heading,
+            debugValue: heading && request.result && request.result.rawOutput != null ? request.result.rawOutput : null
         });
         appendArtifactActions(host, request);
     }

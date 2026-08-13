@@ -18,6 +18,27 @@ function object(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 
+function equipmentTable(data) {
+    data = object(data);
+    var assets = Array.isArray(data.assets) ? data.assets : [];
+    return {
+        meshTable: true,
+        title: "Sprzęt",
+        columns: ["Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
+        rows: assets.map(function (asset) {
+            asset = object(asset);
+            return {
+                "Hostname": text(asset.hostname, 500),
+                "Producent": text(asset.manufacturer, 500),
+                "Model": text(asset.model, 500),
+                "Numer seryjny": text(asset.serialNumber, 500),
+                "Numer inwentarzowy": text(asset.inventoryNumber, 500),
+                "Asset ID": text(asset.assetIdentifier, 500)
+            };
+        })
+    };
+}
+
 function lower(value) {
     return text(value, 4000).toLowerCase();
 }
@@ -251,7 +272,7 @@ module.exports.createJiraProtocolService = function (options) {
                 }
                 return {
                     message: message,
-                    output: protocolText,
+                    output: JSON.stringify(equipmentTable(rendered.data)),
                     rawOutput: protocolText,
                     data: rendered.data && typeof rendered.data === "object" ? rendered.data : rendered,
                     artifacts: [artifact],
