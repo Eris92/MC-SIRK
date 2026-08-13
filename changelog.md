@@ -1,3 +1,11 @@
+## 0.1.1-dev.83 - 2026-08-13
+
+- Keep the user-directed `0.1.1-dev.82` Jira equipment matching, pagination and cache behavior unchanged while correcting only the protocol PDF execution path.
+- Run Edge with an isolated writable per-render profile and portable output paths, prefer compatibility `--headless`, then retry once with `--headless=new`.
+- Always produce a valid protected protocol PDF through the dependency-free text fallback when the Windows service context blocks both Edge attempts, surfacing a bounded fallback reason in Results.
+
+Current development notes: `docs/releases/0.1.1-dev.83.md`.
+
 ## 0.1.1-dev.82 - 2026-08-13
 
 - User-directed rollback: full-tree restore of the real-smoke-confirmed `0.1.1-dev.63` Jira equipment matching, cache and PDF rendering behavior on top of current `main`, after every targeted correction attempted in `0.1.1-dev.66`-`0.1.1-dev.81` still left equipment scope incomplete or unverifiable in the user's real tenant.
