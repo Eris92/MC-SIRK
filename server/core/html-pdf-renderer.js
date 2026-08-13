@@ -37,7 +37,7 @@ function browserArguments(directory, htmlPath, pdfPath, options) {
     options = options || {};
     var headless = options.headless === "default" ? "--headless" : "--headless=" + (options.headless || "new");
     var portable = options.portablePaths === true;
-    return [
+    var args = [
         headless,
         "--disable-gpu",
         "--no-first-run",
@@ -47,6 +47,8 @@ function browserArguments(directory, htmlPath, pdfPath, options) {
         "--print-to-pdf=" + browserFilePath(pdfPath, portable),
         fileUrl(htmlPath)
     ];
+    if (options.allowRunAsSystem === true) args.splice(1, 0, "--allow-run-as-system");
+    return args;
 }
 
 function failureDetail(error, stdout, stderr) {
@@ -93,8 +95,8 @@ function renderHtmlPdf(html, options) {
     fs.writeFileSync(htmlPath, html, "utf8");
 
     var attempts = edgeExecutable(executable) ? [
-        { headless: "default", portablePaths: true, label: "edge-headless" },
-        { headless: "new", portablePaths: true, label: "edge-headless-new" }
+        { headless: "default", portablePaths: true, allowRunAsSystem: true, label: "edge-headless" },
+        { headless: "new", portablePaths: true, allowRunAsSystem: true, label: "edge-headless-new" }
     ] : [
         { headless: "new", portablePaths: false, label: "headless-new" }
     ];
