@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.86`](0.1.1-dev.86.md) — atomic prefetched Jira equipment modal without an empty first paint or duplicate request;
 - [`0.1.1-dev.85`](0.1.1-dev.85.md) — neutral protocol `LOGO` fallback without company-specific branding;
 - [`0.1.1-dev.84`](0.1.1-dev.84.md) — sandboxed Edge LocalSystem startup preserving the canonical styled Jira protocol template;
 - [`0.1.1-dev.83`](0.1.1-dev.83.md) — isolated Edge PDF invocation with bounded retry and guaranteed direct fallback, preserving dev.82 Jira equipment behavior;
