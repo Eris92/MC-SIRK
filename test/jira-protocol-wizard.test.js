@@ -80,6 +80,12 @@ var protocol = {
         { name: "ItPerson", label: "IT person", required: true, control: "user" }
     ]
 };
+var cache = {
+    path: "Jira/Jira Cache Assets.ps1",
+    label: "Cache Jira - sprzęt",
+    extraHeaders: ["SirkWorkflow: JiraAssetsCache"],
+    variables: [{ name: "Force", label: "Wymuś odświeżenie", control: "switch", defaultValue: "false" }]
+};
 
 sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLabel: "Run" }).then(function (values) {
     assert.strictEqual(calls.length, 3, "Jira protocol must use three sequential native shared dialogs before execution.");
@@ -120,6 +126,15 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
         "Synthetic wizard-only filter must never be sent as a script variable.");
     assert.strictEqual(source.indexOf("afterModernHidden"), -1,
         "Wizard must chain from the shared dialog promise and must not wait for an extra hidden.bs.modal event that MeshCentral may not emit.");
+
+    calls.length = 0;
+    return sandbox.window.SharedScriptTools.openParameterDialog({ item: cache });
+}).then(function () {
+    assert.strictEqual(calls.length, 1, "Jira cache must remain one shared native dialog.");
+    assert.strictEqual(calls[0].item.variables[0].inlineControl, true,
+        "Jira cache checkbox must render before its label on the left.");
+    assert.strictEqual(cache.variables[0].inlineControl, undefined,
+        "Jira cache UI preparation must not mutate the canonical script definition.");
 
     calls.length = 0;
     return sandbox.window.SharedScriptTools.openParameterDialog({
