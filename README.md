@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.96
+# SIRK Management Platform 0.1.1-dev.97
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -35,7 +35,7 @@ Najważniejsze dokumenty:
 - [Frontend index](public/INDEX.md)
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.96.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.97.md)
 
 ## Warstwy
 
@@ -109,6 +109,18 @@ SIRK nie utrzymuje własnego systemu audit logów. `server/core/mesh-events.js` 
 - persistence, filtrowanie i prezentacja zdarzeń należą do MeshCentral Events;
 - eventy SIRK zawierają użytkownika i, gdy dotyczy, urządzenie;
 - hasła, sekrety, tokeny, payloady i output poleceń nie są kopiowane do eventów.
+
+## Harmonogram cache Jira
+
+Wewnętrzny katalog `seed/MyScripts/_Scheduler` zawiera instalator zadania Windows oraz runner odświeżający cache użytkowników i sprzętu Jira. Segment `_Scheduler` nie jest publikowany w My Scripts.
+
+Uruchom jako Administrator:
+
+```bat
+"Install Jira Cache Scheduler.bat" "C:\path\to\sirk-platform-data" "C:\path\to\MC-SIRK-plugin"
+```
+
+Instalator zapisuje bezwzględne ścieżki w zadaniu `MC-SIRK Jira Cache Refresh`, uruchamia je jako `SYSTEM` co godzinę i zleca pierwszy refresh od razu. Token Jira jest odczytywany z istniejącego zaszyfrowanego magazynu SIRK; nie jest kopiowany do BAT-a ani definicji zadania.
 
 ## Atomic render
 
