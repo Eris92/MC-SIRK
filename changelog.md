@@ -1,3 +1,11 @@
+## 0.1.1-dev.105 - 2026-08-13
+
+- Make the SMTP Relay sender optional in both the script and global integration readiness contract.
+- Resolve the sender from the script override, configured default or neutral `sirk@localhost` fallback.
+- Use SMTP port `25` when no port reaches the PowerShell environment and report a dedicated missing-server error.
+
+Current development notes: `docs/releases/0.1.1-dev.105.md`.
+
 ## 0.1.1-dev.104 - 2026-08-13
 
 - Verify that the running backend confirms each submitted integration secret before showing a successful save.

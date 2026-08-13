@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.105",
+    "date": "2026-08-13",
+    "summary": "Make the SMTP Relay sender optional and default an omitted port to 25.",
+    "notes": "docs/releases/0.1.1-dev.105.md"
+  },
+  {
     "version": "0.1.1-dev.104",
     "date": "2026-08-13",
     "summary": "Confirm integration secret saves and detect stale plugin backends.",

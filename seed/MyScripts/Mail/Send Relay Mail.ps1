@@ -33,8 +33,13 @@ function ConvertTo-SirkMailAddresses {
 }
 
 try {
-    $sender = if ([string]::IsNullOrWhiteSpace([string]$From)) { [string]$env:MYSCRIPTS_SMTP_FROM } else { [string]$From }
-    if ([string]::IsNullOrWhiteSpace($sender)) { throw 'Sender address is required.' }
+    $sender = if (-not [string]::IsNullOrWhiteSpace([string]$From)) {
+        [string]$From
+    } elseif (-not [string]::IsNullOrWhiteSpace([string]$env:MYSCRIPTS_SMTP_FROM)) {
+        [string]$env:MYSCRIPTS_SMTP_FROM
+    } else {
+        'sirk@localhost'
+    }
     $toAddresses = ConvertTo-SirkMailAddresses $To
     $ccAddresses = ConvertTo-SirkMailAddresses $Cc
     $bccAddresses = ConvertTo-SirkMailAddresses $Bcc
@@ -77,8 +82,11 @@ try {
     }
 
     $port = [int]$env:MYSCRIPTS_SMTP_PORT
+    if ($port -eq 0) { $port = 25 }
     if ($port -lt 1 -or $port -gt 65535) { throw 'SMTP port is invalid.' }
-    $smtp = [System.Net.Mail.SmtpClient]::new([string]$env:MYSCRIPTS_SMTP_SERVER, $port)
+    $smtpServer = [string]$env:MYSCRIPTS_SMTP_SERVER
+    if ([string]::IsNullOrWhiteSpace($smtpServer)) { throw 'SMTP server is not configured.' }
+    $smtp = [System.Net.Mail.SmtpClient]::new($smtpServer, $port)
     $smtp.UseDefaultCredentials = $false
     $smtp.Credentials = $null
     $smtp.EnableSsl = [string]$env:MYSCRIPTS_SMTP_ENABLE_SSL -match '^(1|true|yes|tak|on)$'
