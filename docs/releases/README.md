@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.93`](0.1.1-dev.93.md) — radio/checkbox dots aligned on one axis with option text in every shared checklist;
 - [`0.1.1-dev.92`](0.1.1-dev.92.md) — Debug/raw output sharing the standard Results surface instead of a nested card;
 - [`0.1.1-dev.91`](0.1.1-dev.91.md) — explicit-only Jira protocol PDF opening and downloading without automatic popup;
 - [`0.1.1-dev.90`](0.1.1-dev.90.md) — frontend-enforced equipment-only Jira protocol table for stale and historical text outputs;

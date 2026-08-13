@@ -10,6 +10,7 @@ function source(relative) { return fs.readFileSync(path.join(root, relative), "u
 
 var dialog = source("public/shared/ui/parameter-dialog.js");
 var toolbar = source("public/shared/ui/toolbar.css");
+var sharedUi = source("public/shared/ui/shared-ui.css");
 var commands = source("public/modules/commands/index.js");
 var scripts = source("public/modules/automation/index.js");
 var quick = source("public/native/desktop-commands.js");
@@ -184,5 +185,8 @@ assert.ok(dialog.indexOf('row.classList.add("mc-parameter-dialog-fit-options")')
     "The intrinsic-width marker must survive MeshCentral's innerHTML-only native modal transfer.");
 assert.ok(toolbar.indexOf('.mc-script-form-row>input.mc-definition-input[type=checkbox]{width:1rem;min-width:1rem;max-width:1rem;height:1rem;min-height:1rem;padding:0;box-sizing:border-box;flex:0 0 1rem;justify-self:start}') >= 0,
     "Shared switch controls must keep square geometry instead of inheriting the full-width text-input box on browser-specific themes or DPI settings.");
+assert.ok(sharedUi.indexOf('.mc-parameter-checklist-item{display:grid;grid-template-columns:20px minmax(0,1fr);gap:7px;align-items:center;padding:6px;cursor:pointer}') >= 0 &&
+    sharedUi.indexOf('.mc-parameter-checklist-item input{margin:0;align-self:center}') >= 0,
+    "Every checklist radio/checkbox dot must remain vertically aligned with its option text across browser and DPI differences.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");
