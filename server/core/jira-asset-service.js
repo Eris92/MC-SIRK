@@ -640,6 +640,8 @@ module.exports.createJiraAssetService = function (options) {
                     var cursor = 0;
                     var stopped = false;
                     var firstError = null;
+                    var lastStartAt = -1;
+                    var lastPage = null;
                     function worker() {
                         if (stopped || cursor >= starts.length) return Promise.resolve();
                         if (Date.now() >= refreshDeadline) {
@@ -650,6 +652,7 @@ module.exports.createJiraAssetService = function (options) {
                         var startAt = starts[cursor++];
                         return requestPage(startAt).then(function (page) {
                             entries = entries.concat(page.entries);
+                            if (startAt > lastStartAt) { lastStartAt = startAt; lastPage = page; }
                         }, function (error) {
                             stopped = true;
                             if (!firstError) firstError = error;
@@ -660,6 +663,7 @@ module.exports.createJiraAssetService = function (options) {
                     for (var index = 0; index < workerCount; index++) workers.push(worker());
                     return Promise.all(workers).then(function () {
                         if (firstError) throw firstError;
+                        return { lastStartAt: lastStartAt, lastPage: lastPage };
                     });
                 }
 
@@ -683,8 +687,21 @@ module.exports.createJiraAssetService = function (options) {
                         var upperBound = Math.min(firstPage.total, maxEntries);
                         var starts = [];
                         for (var startAt = ASSET_PAGE_SIZE; startAt < upperBound; startAt += ASSET_PAGE_SIZE) starts.push(startAt);
-                        if (firstPage.total > maxEntries) truncated = true;
-                        return fetchConcurrent(starts);
+                        return fetchConcurrent(starts).then(function (tail) {
+                            // Jira can report a totalFilterCount/total that is capped well
+                            // below the real result count. Trusting it to bound pagination
+                            // silently drops every object beyond the cap (e.g. most non-
+                            // Komputer equipment types). Keep paging sequentially past the
+                            // reported total as long as the last page we actually fetched
+                            // still signals more results are available.
+                            if (!tail || !tail.lastPage || !tail.lastPage.more || !tail.lastPage.count) {
+                                if (firstPage.total > maxEntries) truncated = true;
+                                return null;
+                            }
+                            var nextStartAt = tail.lastStartAt + tail.lastPage.count;
+                            if (nextStartAt >= maxEntries) { truncated = true; return null; }
+                            return fetchSequential(nextStartAt, Math.ceil(nextStartAt / ASSET_PAGE_SIZE));
+                        });
                     }
                     return fetchSequential(firstPage.count, 1);
                 }).then(function () {

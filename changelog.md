@@ -1,3 +1,11 @@
+## 0.1.1-dev.81 - 2026-08-13
+
+- The user's real `jira-assets-cache.json` (from `Jira Cache Assets`) showed the actual root cause: the cached snapshot was truncated to exactly 1000 raw objects (540 `Komputer`, only 1 `Monitor` out of 181 in the real schema), and the one cached `Monitor` already matched its selected user correctly, confirming the `0.1.1-dev.79` attribute fix works.
+- Fix `server/core/jira-asset-service.js` bounded-concurrency Assets pagination: it previously stopped once it reached Jira's reported `totalFilterCount`, which this tenant's Jira caps at 1000 regardless of the real result count, silently dropping almost all non-`Komputer` equipment. Pagination now keeps paging past that reported total while the last page actually fetched still reports `hasMoreResults: true`.
+- Add a regression reproducing a Jira response with `totalFilterCount: 1000` and a real result set of 1200 objects, asserting the full set is fetched.
+
+Current development notes: `docs/releases/0.1.1-dev.81.md`.
+
 ## 0.1.1-dev.80 - 2026-08-13
 
 - Real `0.1.1-dev.79` smoke confirmed `Sprzęt do protokołu` still returned only `Komputer`; a broader permissive-matching attempt (matching any attribute text regardless of name) was tried and reverted after it broke the existing `0.1.1-dev.66` false-positive regression (unrelated plain text such as a `Notes` field matching by coincidence).

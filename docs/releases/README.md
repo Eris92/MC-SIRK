@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.81`](0.1.1-dev.81.md) — fix Jira Assets pagination to keep paging past a Jira-capped `totalFilterCount` while `hasMoreResults` still reports true, fixing the real root cause of `Sprzęt do protokołu` returning only `Komputer`;
 - [`0.1.1-dev.80`](0.1.1-dev.80.md) — surface the swallowed PDF browser-fallback failure reason; equipment scope beyond `Komputer` remains open pending real tenant Assets data;
 - [`0.1.1-dev.79`](0.1.1-dev.79.md) — recognize responsible-person Jira assignment attributes without widening the proven dev75 equipment scope;
 - [`0.1.1-dev.75`](0.1.1-dev.75.md) — restore the last real-smoke-working dev64 Jira equipment scope while retaining later cache/performance fixes;

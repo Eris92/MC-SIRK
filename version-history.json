@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.81",
+    "date": "2026-08-13",
+    "summary": "Fix Jira Assets pagination to keep paging past a Jira-capped totalFilterCount, fixing the real root cause of Sprzet do protokolu returning only Komputer.",
+    "notes": "docs/releases/0.1.1-dev.81.md"
+  },
+  {
     "version": "0.1.1-dev.80",
     "date": "2026-08-13",
     "summary": "Surface the swallowed PDF browser-fallback failure reason; equipment scope beyond Komputer remains open pending real tenant Jira Assets data.",
