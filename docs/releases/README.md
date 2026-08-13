@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.88`](0.1.1-dev.88.md) — Jira protocol equipment-only JSON table, operation heading and one shared Copy/PDF action row;
 - [`0.1.1-dev.87`](0.1.1-dev.87.md) — stable square checkbox geometry in shared native parameter dialogs across browser, theme and DPI differences;
 - [`0.1.1-dev.86`](0.1.1-dev.86.md) — atomic prefetched Jira equipment modal without an empty first paint or duplicate request;
 - [`0.1.1-dev.85`](0.1.1-dev.85.md) — neutral protocol `LOGO` fallback without company-specific branding;

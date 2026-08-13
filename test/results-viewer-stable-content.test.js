@@ -83,15 +83,14 @@ var window = {
         var host = nodes.SirkResultsViewerNativeHost;
         assert.ok(find(host, function (node) { return node.tagName === "TABLE"; }),
             "The parsed result table must already exist before the native Modern modal is shown.");
+        var heading = find(host, function (node) { return node.tagName === "H3" && node.className === "mc-results-title"; });
+        assert.ok(heading && heading.textContent === "PROTOKÓŁ PRZEKAZANIA SPRZĘTU",
+            "Optional workflow heading must exist above the shared action row before first paint.");
         var debug = find(host, function (node) { return node.tagName === "DETAILS" && node.className === "mc-results-debug"; });
         assert.ok(debug, "Expandable Debug/raw output must already exist before first paint.");
         var raw = find(debug, function (node) { return node.tagName === "PRE"; });
-        assert.ok(raw && raw.textContent.indexOf("CSV_DOWNLOAD:C:\\Temp\\asset.csv") >= 0,
-            "Debug must preserve the untouched generated-download marker.");
-        assert.ok(raw.textContent.indexOf("__MYCOMMANDS_PROGRESS__working") >= 0,
-            "Debug must preserve the untouched progress marker.");
-        assert.ok(raw.textContent.indexOf("Run as: SYSTEM") >= 0,
-            "Debug must preserve the untouched run-as line.");
+        assert.strictEqual(raw && raw.textContent, "Full protocol diagnostic text",
+            "A workflow-specific raw value must replace the visible structured JSON only inside Debug/raw output.");
     },
     MeshThemeAdapter: {
         refresh: function (host) {
@@ -127,7 +126,11 @@ var row = { title: "Local asset report", status: "completed", result: { output: 
 assert.strictEqual(window.SharedResultsView.rawResult(row),
     '{"title":"Local asset report","rows":[{"Value":"DELL K","Property":"Host name"}]}',
     "Normal Results cells must keep the cleaned user-facing output instead of exposing diagnostic markers.");
-window.SharedResultsView.openViewer(row, { dialogTitle: "Local asset report" });
+window.SharedResultsView.openViewer(row, {
+    dialogTitle: "Local asset report",
+    heading: "PROTOKÓŁ PRZEKAZANIA SPRZĘTU",
+    debugValue: "Full protocol diagnostic text"
+});
 assert.deepStrictEqual(sequence, ["setContent", "refresh", "show"],
     "Modern Results must build and theme one final content tree before the native modal first paint.");
 

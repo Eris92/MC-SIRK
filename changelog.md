@@ -1,9 +1,15 @@
+## 0.1.1-dev.88 - 2026-08-13
+
+- Render Jira protocol Output as an equipment-only JSON table instead of the complete printable protocol text.
+- Place the operation heading above one shared `Copy`, `Open PDF`, `Download PDF` action row.
+- Preserve the complete protocol text in `Debug / raw output` and the PDF fallback path.
+
+Current development notes: `docs/releases/0.1.1-dev.88.md`.
+
 ## 0.1.1-dev.87 - 2026-08-13
 
 - Keep shared native-dialog checkbox controls square on browser/theme/DPI combinations that otherwise stretch the text-input class to the full row width.
 - Cover both regular Jira cache switches and inline Jira protocol switches with one scoped geometry contract.
-
-Current development notes: `docs/releases/0.1.1-dev.87.md`.
 
 ## 0.1.1-dev.86 - 2026-08-13
 

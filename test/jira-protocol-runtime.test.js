@@ -124,6 +124,17 @@ function jiraAsset(value, model, serial, inventory) {
             }
         };
         var result = await service.execute(script, payload, request);
+        var equipmentOutput = JSON.parse(result.output);
+        assert.strictEqual(equipmentOutput.meshTable, true);
+        assert.strictEqual(equipmentOutput.title, "Sprzęt");
+        assert.deepStrictEqual(equipmentOutput.columns, ["Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"]);
+        assert.strictEqual(equipmentOutput.rows.length, 2);
+        assert.strictEqual(equipmentOutput.rows[0].Hostname, "PC-01");
+        assert.strictEqual(equipmentOutput.rows[0]["Numer seryjny"], "SN-01");
+        assert.strictEqual(Object.prototype.hasOwnProperty.call(equipmentOutput.rows[0], "Użytkownik"), false,
+            "Visible protocol output must contain equipment rows only, without protocol people metadata.");
+        assert.ok(result.rawOutput.indexOf("PROTOKÓŁ PRZEKAZANIA SPRZĘTU") === 0,
+            "Full protocol text must remain available only as raw diagnostic output and PDF fallback input.");
         assert.strictEqual(result.artifacts.length, 1);
         assert.strictEqual(result.artifacts[0].type, "pdf");
         assert.strictEqual(result.artifacts[0].autoOpen, true);
@@ -181,6 +192,11 @@ function jiraAsset(value, model, serial, inventory) {
             "Successful protocol PDF must auto-open at most once per live run.");
         assert.ok(clientSource.indexOf("Download PDF") >= 0 && clientSource.indexOf("artifactId") >= 0,
             "Live and historical results must retain manual protected PDF actions.");
+        assert.ok(clientSource.indexOf('host.querySelector(".mc-results-inline-actions")') >= 0,
+            "Protocol PDF actions must reuse the Copy action row instead of rendering below the output.");
+        assert.ok(clientSource.indexOf('"PROTOKÓŁ PRZEKAZANIA SPRZĘTU"') >= 0 &&
+            clientSource.indexOf("debugValue: heading") >= 0,
+            "Protocol results must show the operation heading above actions while preserving full text only in Debug/raw output.");
 
         assert.ok(dialogSource.indexOf("SirkAllowCustom") >= 0 && dialogSource.indexOf("datalist") >= 0,
             "Shared parameter dialog must support generic opt-in custom user values without a Jira-only form.");

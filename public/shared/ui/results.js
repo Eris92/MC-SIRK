@@ -252,6 +252,12 @@
         var parsedOutput = parseDownloadResult(raw);
         var data = parseStructured(parsedOutput.visible);
         data.downloadPath = parsedOutput.downloadPath;
+        if (options.heading) {
+            var heading = document.createElement("h3");
+            heading.className = "mc-results-title";
+            heading.textContent = options.heading;
+            host.appendChild(heading);
+        }
         var actions = document.createElement("div");
         actions.className = "mc-results-viewer-actions mc-results-inline-actions";
         var copy = document.createElement("button");
@@ -283,7 +289,7 @@
         summary.textContent = "Debug / raw output";
         details.appendChild(summary);
         var debug = document.createElement("pre");
-        debug.textContent = parsedOutput.raw;
+        debug.textContent = options.debugValue == null ? parsedOutput.raw : String(options.debugValue);
         details.appendChild(debug);
         content.appendChild(details);
         host.appendChild(content);
