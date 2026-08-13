@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.87",
+    "date": "2026-08-13",
+    "summary": "Keep shared native parameter-dialog checkboxes square across browser, theme and DPI differences.",
+    "notes": "docs/releases/0.1.1-dev.87.md"
+  },
+  {
     "version": "0.1.1-dev.86",
     "date": "2026-08-13",
     "summary": "Prefetch Jira equipment and show the protocol checklist atomically without an empty modal paint or duplicate request.",

@@ -1,9 +1,14 @@
+## 0.1.1-dev.87 - 2026-08-13
+
+- Keep shared native-dialog checkbox controls square on browser/theme/DPI combinations that otherwise stretch the text-input class to the full row width.
+- Cover both regular Jira cache switches and inline Jira protocol switches with one scoped geometry contract.
+
+Current development notes: `docs/releases/0.1.1-dev.87.md`.
+
 ## 0.1.1-dev.86 - 2026-08-13
 
 - Prefetch the selected Jira user's equipment before opening `Sprzęt do protokołu`, then mount the native checklist atomically with its complete option set.
 - Reuse the prefetched options as static dialog input so the visible step performs no duplicate provider request and never paints the empty checkbox shell.
-
-Current development notes: `docs/releases/0.1.1-dev.86.md`.
 
 ## 0.1.1-dev.85 - 2026-08-13
 
