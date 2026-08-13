@@ -88,6 +88,10 @@ new Promise(function (resolve, reject) {
                 assert.ok(String(body).indexOf("if (smsToken.value) secrets.smsApiToken = smsToken.value") >= 0 &&
                     String(body).indexOf("smsExternalToken.minLength = 32") >= 0,
                     "SMSAPI secrets must remain write-only and external tokens must enforce their minimum strength.");
+                assert.ok(String(body).indexOf("The running SIRKPortal backend is outdated. Reload the plugin") >= 0 &&
+                    String(body).indexOf('smsToken.placeholder = configured.smsApiToken ? "Configured - leave blank to keep" : "Required"') >= 0 &&
+                    String(body).indexOf("savedConfigured[name] !== true") >= 0,
+                    "The integration editor must reject stale backend saves and immediately reflect confirmed secret state.");
                 assert.ok(String(body).indexOf('field(adBox, "UPN suffix", ad.upnSuffix || "", { placeholder: "domena.local" })') >= 0 &&
                     String(body).indexOf("DC=domena,DC=local") >= 0 &&
                     !/investa\.pl/i.test(String(body)),
