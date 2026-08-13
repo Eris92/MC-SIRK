@@ -1,122 +1,10 @@
-## 0.1.1-dev.81 - 2026-08-13
+## 0.1.1-dev.82 - 2026-08-13
 
-- The user's real `jira-assets-cache.json` (from `Jira Cache Assets`) showed the actual root cause: the cached snapshot was truncated to exactly 1000 raw objects (540 `Komputer`, only 1 `Monitor` out of 181 in the real schema), and the one cached `Monitor` already matched its selected user correctly, confirming the `0.1.1-dev.79` attribute fix works.
-- Fix `server/core/jira-asset-service.js` bounded-concurrency Assets pagination: it previously stopped once it reached Jira's reported `totalFilterCount`, which this tenant's Jira caps at 1000 regardless of the real result count, silently dropping almost all non-`Komputer` equipment. Pagination now keeps paging past that reported total while the last page actually fetched still reports `hasMoreResults: true`.
-- Add a regression reproducing a Jira response with `totalFilterCount: 1000` and a real result set of 1200 objects, asserting the full set is fetched.
+- User-directed rollback: full-tree restore of the real-smoke-confirmed `0.1.1-dev.63` Jira equipment matching, cache and PDF rendering behavior on top of current `main`, after every targeted correction attempted in `0.1.1-dev.66`-`0.1.1-dev.81` still left equipment scope incomplete or unverifiable in the user's real tenant.
+- Reintroduces dev.63's permissive equipment matching (any attribute text, no name/structure gating), its raw (non-compact) Assets cache, its 1,000-account users cache cutoff, and its single-attempt PDF renderer with no fallback — see `docs/releases/0.1.1-dev.82.md` for the accepted trade-offs.
+- Remove the now-inapplicable `0.1.1-dev.64`-`0.1.1-dev.75`, `0.1.1-dev.79`-`0.1.1-dev.81` release notes and their regression tests.
 
-Current development notes: `docs/releases/0.1.1-dev.81.md`.
-
-## 0.1.1-dev.80 - 2026-08-13
-
-- Real `0.1.1-dev.79` smoke confirmed `Sprzęt do protokołu` still returned only `Komputer`; a broader permissive-matching attempt (matching any attribute text regardless of name) was tried and reverted after it broke the existing `0.1.1-dev.66` false-positive regression (unrelated plain text such as a `Notes` field matching by coincidence).
-- Confirmed with the user that real `0.1.1-dev.63` (2026-08-11) is the last version where every equipment type appeared; matching that behavior safely requires the real tenant's raw Jira Assets attribute payload for a non-`Komputer` object, which is still outstanding.
-- Stop silently discarding the Edge/Chrome failure reason when the protocol PDF falls back to the dependency-free plain-text renderer: `html-pdf-renderer.js` stamps `pdf.sirkFallbackReason`, and `jira-protocol-service.js` appends it to the result message so the actual browser failure is visible instead of only producing an unstyled PDF with no diagnostic.
-
-Current development notes: `docs/releases/0.1.1-dev.80.md`.
-
-## 0.1.1-dev.79 - 2026-08-13
-
-- Recognize Jira responsible-person assignment attributes such as `Osoba_odpowiedzialna` when Jira returns the selected-user relationship as plain values instead of structured references.
-- Preserve the proven dev.75 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope, compact cache v4, bounded pagination/concurrency, identity-object exclusion and PDF lifecycle unchanged.
-- Add a focused regression proving `Komputer` and `Monitor` assigned to the selected user are returned while another user's `Tablet` remains excluded.
-
-Current development notes: `docs/releases/0.1.1-dev.79.md`.
-
-## 0.1.1-dev.75 - 2026-08-12
-
-- Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.
-- Remove the protocol-only 5000-result override and retain the dev.64 default bounded selector behavior.
-- Keep later independent Jira improvements (users cache v2, compact Assets cache v4, bounded refresh concurrency, response metadata handling, generic script-owned workspace-wide support and PDF fixes) unchanged.
-
-Current development notes: `docs/releases/0.1.1-dev.75.md`.
-
-## 0.1.1-dev.74 - 2026-08-12
-
-- Real `0.1.1-dev.73` smoke still returned an empty `Sprzęt do protokołu` list because the user-like identity-object classifier matched Polish singular tokens but not common plural object type names such as `Pracownicy` and `Osoby`.
-- Extend the existing Jira identity bridge with stable Polish `pracowni`/`osob` stems so selected Jira accounts can resolve through localized singular/plural workspace identity objects to their object id/key aliases.
-- Keep schema-v4 compact cache, direct Jira references, bounded snapshot reuse, assignment-semantic plain-text restrictions and identity-object exclusion unchanged; add a `Pracownicy` fresh/cache regression.
-
-Current development notes: `docs/releases/0.1.1-dev.74.md`.
-
-## 0.1.1-dev.73 - 2026-08-12
-
-- Resolve Jira equipment assigned through workspace Users/person identity objects by deriving the selected user's object id/key/label aliases from the existing bounded Assets snapshot.
-- Preserve direct Jira user references, exclude the identity object itself, and keep unrelated plain-text matching constrained.
-
-Current development notes: `docs/releases/0.1.1-dev.73.md`.
-
-## 0.1.1-dev.72 - 2026-08-12
-
-- Preserve explicit Jira user/object reference identities in compact Assets cache schema v4 regardless of localized or non-semantic attribute names.
-- Keep plain-string user matching restricted to assignment-semantic attributes and invalidate v3 snapshots that could lose authoritative reference identities.
-- Require every subsequent technical build intended for user installation/testing to increment the `0.1.1-dev.X` revision so installed code is unambiguous.
-
-Current development notes: `docs/releases/0.1.1-dev.72.md`.
-
-## 0.1.1-dev.71 - 2026-08-12
-
-- Replace the raw Jira Assets cache payload with a compact schema that retains only object identity, display fields and assignment-match values required by the selector and protocol.
-- Reject legacy 269 MB cache snapshots from their small header without parsing them into the MeshCentral process.
-- Keep the daily workspace-wide snapshot reusable for every Jira user while sharply reducing persisted size and runtime memory pressure.
-
-Current development notes: `docs/releases/0.1.1-dev.71.md`.
-
-## 0.1.1-dev.70 - 2026-08-12
-
-- Consume the canonical top-level `objectTypeAttributes` returned by Jira Assets `/object/aql` and bind each entry's `objectTypeAttributeId` before user assignment filtering.
-- Avoid slow per-object-type attribute discovery when the AQL page already contains authoritative definitions.
-- Invalidate legacy Assets cache snapshots that lack attribute names so assigned equipment is repopulated and user-bound protocol selection no longer returns an empty list.
-
-Current development notes: `docs/releases/0.1.1-dev.70.md`.
-
-## 0.1.1-dev.69 - 2026-08-12
-
-- Isolate runtime-backed admin tests from an existing machine-wide `%PROGRAMDATA%` fallback store while preserving the production fallback contract by default.
-- Add an explicit `fallbackDataRoot` runtime injection seam and disable the legacy fallback only in tests that own a temporary MeshCentral `datapath`.
-- Prevent Windows test runs from reading or mutating unrelated persisted SIRK settings; keep icon-mode normalization, permissions and restart persistence coverage intact.
-
-Current development notes: `docs/releases/0.1.1-dev.69.md`.
-
-## 0.1.1-dev.68 - 2026-08-12
-
-- Real `0.1.1-dev.67` smoke still exposed the raw Edge headless failure in Results, proving the protocol-service fallback did not protect the real runtime path.
-- Move the dependency-free direct PDF fallback into `server/core/html-pdf-renderer.js`, the same owner that emits browser failures, and make Jira protocol pass canonical `fallbackText` during its single render delegation.
-- Preserve the two bounded Edge modes, isolated profile, sandbox, `%PDF-1.` artifact validation, protected artifact lifecycle and combined diagnostics without a new dependency, polling loop or second protocol lifecycle owner.
-
-Current development notes: `docs/releases/0.1.1-dev.68.md`.
-
-## 0.1.1-dev.67 - 2026-08-12
-
-- Real `0.1.1-dev.66` smoke confirmed both Edge CLI headless print paths still fail in the MeshCentral Windows service context and do not yield a usable `protocol.pdf`.
-- Keep styled Chrome/Edge HTML rendering as the preferred Jira protocol path, then reuse the existing dependency-free `pdf-text-renderer.js` exactly once when browser rendering fails or returns invalid PDF bytes.
-- Preserve `%PDF-1.` validation, protected artifact ownership and combined bounded diagnostics without `--no-sandbox`, a new dependency, polling or a second protocol lifecycle owner.
-- Review the user-supplied Jira PowerShell workflow bodies while retaining the current workspace-wide Jira metadata to avoid reintroducing the prior assigned-Assets scope regression.
-
-Current development notes: `docs/releases/0.1.1-dev.67.md`.
-
-## 0.1.1-dev.66 - 2026-08-12
-
-- Narrow workspace-wide Jira user binding to explicit user/object references and assignment-semantic attributes so the selected `Users` identity object and unrelated identity text are not returned as equipment.
-- Keep heterogeneous assigned Jira object types and existing cache/pagination bounds while preserving compatibility with plain assignment values from Jira Assets.
-- Make Edge styled PDF generation prefer generic `--headless` with portable profile/output paths and retry exactly once with `--headless=new`, retaining isolated profile, sandbox, cleanup and bounded diagnostics.
-
-Current development notes: `docs/releases/0.1.1-dev.66.md`.
-
-## 0.1.1-dev.65 - 2026-08-12
-
-- Invalidate the legacy Jira users cache schema once so a still-fresh historical 1000-account snapshot is repopulated through the existing bounded pagination path.
-- Expand the canonical Jira Asset Protocol and explicit Jira Assets cache from the `Sprzęt użytkownika` object-type hierarchy to workspace-wide `Key is not EMPTY`, while retaining authoritative server-side Jira-user identity binding.
-- Raise the protocol selector only to the existing 5000-option ceiling and keep the shared workspace snapshot bounded to 100 pages / 50,000 objects; add mixed-object-type and legacy-cache regressions.
-
-Current development notes: `docs/releases/0.1.1-dev.65.md`.
-
-## 0.1.1-dev.64 - 2026-08-12
-
-- Give every styled protocol PDF render an isolated writable Chrome/Edge `--user-data-dir` inside the existing bounded temporary render directory so MeshCentral Windows service execution does not depend on or collide with a default browser profile.
-- Run the browser from that same writable directory, suppress first-run/default-browser startup paths, retain bounded cleanup, and expose bounded browser stderr/stdout when rendering fails.
-- Add a focused regression covering the service-safe browser profile, output path, cleanup and diagnostics after real Jira Asset Protocol smoke reached Edge and failed before creating `protocol.pdf`.
-
-Current development notes: `docs/releases/0.1.1-dev.64.md`.
+Current development notes: `docs/releases/0.1.1-dev.82.md`.
 
 ## 0.1.1-dev.63 - 2026-08-11
 
@@ -209,7 +97,7 @@ Current development notes: `docs/releases/0.1.1-dev.53.md`.
 - Real `0.1.1-dev.51` Jira + MeshCentral re-smoke still failed after the first User scope OK: the Modern modal closed and the wizard did not advance, proving the dev.50 wizard-only lifecycle correction ineffective.
 - Move the correction to the actual shared owner: successful Modern `openParameterDialog()` submissions now retain validated values and resolve only from the already-attached `hidden.bs.modal` event after MeshCentral finishes hiding the host modal.
 - Keep Classic completion immediate and preserve cancel/null, duplicate-submit guard, dynamic option provider and Jira four-step wizard semantics without a timer, polling loop, MutationObserver, custom modal or wizard-local hidden listener.
-- Pre-bump PR #298 Actions `31498772028`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Pre-bump PR #298 Actions `31498772028` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral re-smoke remains required for #296/#290. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.52.md`.
 
@@ -218,7 +106,7 @@ Current development notes: `docs/releases/0.1.1-dev.52.md`.
 - Keep `server/core/jira-asset-service.js` as the single Jira user-cache owner: 24h-fresh data is reused, an expired cache refreshes before user-bound Assets resolution, stale data is fallback-only, and Jira tokens are never cached.
 - Reserve underscore-prefixed My Scripts paths such as `_shared` for internal reusable content; omit them from the public tree and reject direct public script/API execution paths.
 - Keep the My Scripts Credentials key visible in Edit mode for all editable scripts: enabled for local or declared system-credential consumers and disabled/grey when unused, with Jira Asset Protocol declaring `SirkSystemCredential: Jira`.
-- Pre-bump PR #295 Actions `31493372964`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Pre-bump PR #295 Actions `31493372964` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral smoke remains required for #294/#290. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.51.md`.
 
@@ -236,13 +124,13 @@ Current development notes: `docs/releases/0.1.1-dev.50.md`.
 - Jira #290: reduce global Jira Admin configuration to reusable connection/discovery credentials and remove the global project/AQL/asset-type/result-limit policy from integration readiness and UI.
 - Keep Jira users instance-wide, move dynamic Assets AQL/display/UI-limit/user-binding policy into server-owned script metadata, and paginate Atlassian Assets pages with bounded interactive-provider safety limits.
 - Keep the Jira Asset Protocol `Computer`/`Hostname`/`JiraUser` scope in its own script while allowing other scripts to own different or unbound Assets scopes; full audit scripts can page Jira directly through their assigned system credential without a global Assets cap.
-- Pre-bump PR #291 Actions `31461688515`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Pre-bump PR #291 Actions `31461688515` GREEN on Linux `npm test` and Windows interactive-shell smoke. Final exact-version CI and real Jira/MeshCentral smoke are required before closing #290. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.49.md`.
 
 ## 0.1.1-dev.48 - 2026-08-11
 
-- Complete the shared credentials/native-dialog/UI follow-up for #280/#281/#284-#288 without adding a second secret store, modal framework, polling loop or per-row credentials request.
+- Complete the shared credentials/native-dialog follow-up for #280/#281 and corrective task packets #284-#288 without adding a second secret store, modal framework, polling loop or per-row credentials request.
 - Gate standalone Script credentials on persisted local `SaveSecret*` metadata while keeping System credentials in Definition Editor, and allow known System credential assignments before global readiness with fail-closed runtime checks.
 - Keep Definition Editor geometry stable on hover/focus, use one gold active-icon contract for Favorites/Edit/Multi without persistent selected button surfaces, and move Quick `ConfirmExecution` from browser `window.confirm()` to the existing native MeshCentral confirmation lifecycle with exactly-one submit semantics.
 - PR #289 exact-head Linux `npm test` and Windows interactive-shell smoke are the merge gate. #128 and #252 remain open for their required real Windows / Jira+MeshCentral acceptance evidence. No tag/GitHub Release.
@@ -254,7 +142,7 @@ Current development notes: `docs/releases/0.1.1-dev.48.md`.
 - Jira #252: restore SiteAdmin-only Jira integration configuration through the existing integration/secret owner, keeping the token write-only and out of browser responses.
 - Add the native multi-step Jira Asset Protocol wizard on top of the shared parameter dialog: Active/All Jira user scope -> user -> assigned asset -> transfer/return + IT person -> existing Run/Request lifecycle.
 - Preserve 24h Jira user cache, bounded pagination/stale fallback, backend Jira assignment/authorization and existing progress/PDF artifact flow; no browser prompt, custom modal framework or second secret store.
-- Pre-bump PR #279 Test #667 / Actions `31416961396`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Pre-bump PR #279 Test #667 / Actions `31416961396` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira/MeshCentral wizard smoke remains required before closing #252. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.47.md`.
 
@@ -262,7 +150,7 @@ Current development notes: `docs/releases/0.1.1-dev.47.md`.
 
 - Move Requests #265: replace the assumed `MoveNodeToMesh` false-success path with the current MeshCentral `changeDeviceMesh` persistence/session/event semantics in the shared device owner.
 - Execute as the original requester with same-domain/source-target edit-right/type checks, exactly one node write plus one bounded DB verification read; already-current target is a zero-write success and all missing/error/mismatch paths fail closed.
-- Preserve #224 single-pending/idempotency and human-readable summary contracts; pre-bump PR #267 Test #637 / Actions `31403516643`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Preserve #224 single-pending/idempotency and human-readable summary contracts; pre-bump PR #267 Test #637 / Actions `31403516643` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real MeshCentral move smoke remains required before closing #265. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.46.md`.
 
@@ -271,7 +159,7 @@ Current development notes: `docs/releases/0.1.1-dev.46.md`.
 - Jira #252: complete native My Scripts Asset Protocol on top of the existing Jira user/asset provider and request-bound typed PDF artifact owner.
 - Revalidate the selected Jira user and current assigned assets server-side, support bounded multi-host input and generic opt-in custom IT person input without a Jira-only form or legacy DirectoryTools runtime.
 - Add real milestone progress tied to the Approval request, dependency-free actual PDF generation, exactly-once live auto-open and manual protected Open/Download actions while preserving CSV behavior and withholding Jira credentials from the protocol renderer.
-- Pre-bump PR #264 Test #627 / Actions `31401109532`: Linux `npm test` GREEN, Windows interactive-shell smoke GREEN.
+- Pre-bump PR #264 Test #627 / Actions `31401109532` GREEN on Linux `npm test` and Windows interactive-shell smoke. Real Jira + MeshCentral smoke remains required before closing #252. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.45.md`.
 
@@ -280,7 +168,7 @@ Current development notes: `docs/releases/0.1.1-dev.45.md`.
 - Shared UI #253: move parameterized execution for Quick, My Commands and My Scripts to one native MeshCentral dialog while preserving existing Output/Results ownership and payload semantics.
 - Support text/select/switch/user/asset controls, shared required validation, one bounded option-provider hook, Multi values collected once, and the real `script-tools -> parameter-dialog -> Quick` loader dependency without serializing independent deferred assets.
 - Windows #238: carry forward the integrated read-only Windows PowerShell 5.1 `NameSpace(49)` smoke in the maintained workflow; no Shell verb or network mutation.
-- Pre-bump #253 Test #607 / Actions `31394561056`: Linux `npm test` GREEN, Windows smoke GREEN; #238 original run `31390869438` GREEN.
+- Pre-bump #253 Test #607 / Actions `31394561056` GREEN on Linux `npm test` and Windows smoke; #238 original run `31390869438` GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.44.md`.
 
@@ -289,7 +177,7 @@ Current development notes: `docs/releases/0.1.1-dev.44.md`.
 - Commands #247: expand Multi-device execution from selection-only input to the permission-filtered MeshCentral host catalog using stable `nodeId` identity.
 - Add All hosts, visible device groups, visible tags, case-insensitive local name/hostname search, one deduplicated selection `Set`, selected count and bootstrap `maxMultiHostNodes` UI guard without silent truncation.
 - Preserve native `checkedNodeids`/current host as initial selection only, existing Commands consumer/payload/approval/confirmation semantics and backend oversized-payload authorization guard.
-- Add targeted selector regression coverage; pre-bump full PR Test run `31388059310` GREEN.
+- Add targeted selector regression coverage; pre-bump full PR Test run `31388059310` GREEN. Final exact-version CI and real MeshCentral smoke are required before closing #247. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.43.md`.
 
@@ -299,7 +187,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
@@ -307,8 +195,8 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
-- Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump.
+- Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
@@ -317,7 +205,7 @@ Current development notes: `docs/releases/0.1.1-dev.41.md`.
 - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
 - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
 - Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
-- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN.
+- Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN. Final exact-version CI required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.40.md`.
 
@@ -326,7 +214,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
 - Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
-- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.39.md`.
 
@@ -336,7 +224,7 @@ Current development notes: `docs/releases/0.1.1-dev.39.md`.
 - Fix the Network invocation root cause: built-in `runAsUser: 2` commands no longer get pre-wrapped by the Commands module into the legacy `SIRK-Desktop-*` interactive-SYSTEM launcher; the existing `server/core/logged-on-user-command-policy.js` is now the single owner of logged-on-user execution.
 - Remove the obsolete module-local `desktopLaunch()` / `interactiveDesktopCommand()` implementation instead of layering another launcher, while preserving the Network command body, stable IDs, route/adapter selection and real `Properties/Właściwości` verb.
 - Fix the Results geometry owner identified in the native MeshCentral contract: stop passing `extra-large` to `setModalContent()`, so MC-SIRK no longer forces `modal-xl` on `#xxAddAgentModalConf`; result rendering, Copy, CSV, Debug and native close lifecycle remain unchanged.
-- Full runtime/shared regression Test #528 is green before the version bump.
+- Full runtime/shared regression Test #528 is green before the version bump. Keep #128 and #237 open for real `0.1.1-dev.38` re-smoke; no tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.38.md`.
 
@@ -376,7 +264,7 @@ Current development notes: `docs/releases/0.1.1-dev.35.md`.
 - Move Results viewer presentation from the plugin-owned overlay to the native MeshCentral Modern `setModalContent`/`showModal` or Classic `setDialogMode` dialog surface while keeping the canonical live result/CSV renderer.
 - Replace the ineffective `shell:ConnectionsFolder` NameSpace input with the Network Connections CSIDL value `49`, and make the existing interactive launcher honor explicit `-WindowStyle Hidden` without changing visible PowerShell/CMD behavior.
 - Add negative regressions that reject the dev.33 namespace and transparent custom viewer path; keep Issues #128 and #237 open for real dev.34 re-smoke and #125 open for its remaining button-theme matrix.
-- Keep the revision below `1.0.0`; no tag/GitHub Release.
+- Keep the revision below `1.0.0`; no tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.34.md`.
 
@@ -386,7 +274,7 @@ Current development notes: `docs/releases/0.1.1-dev.34.md`.
 - Reuse the existing native secondary button surface for Results `View`, applied synchronously at creation and kept under `MeshThemeAdapter` refresh, without a hardcoded CSS palette.
 - Eliminate the `go(19) -> setTimeout(0)` selected-state gap so Commands/Plugins become mutually exclusive in the same transition; keep bounded reconcile only as recovery.
 - Target the Windows `shell:ConnectionsFolder` instead of Shell namespace `3` before invoking the active default-route adapter properties.
-- Keep Issues #125, #232 and #128 open for real dev.33 re-smoke; no tag/GitHub Release.
+- Keep Issues #125, #232 and #128 open for real dev.33 re-smoke; no tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.33.md`.
 
@@ -608,7 +496,7 @@ Current development notes: `docs/releases/0.1.1-dev.10.md`.
 
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
 - Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.
-- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell`, `CMD` while genuine custom labels remain valid.
+- Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell` and `CMD` while genuine custom labels remain valid.
 - Contain long unbroken Results text tokens inside their semantic cells and present Move Request source/target groups with visible human-readable names when available.
 - Keep stable execution IDs, authorization and the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
@@ -663,7 +551,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from current `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 

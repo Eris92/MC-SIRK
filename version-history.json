@@ -1,93 +1,9 @@
 [
   {
-    "version": "0.1.1-dev.81",
+    "version": "0.1.1-dev.82",
     "date": "2026-08-13",
-    "summary": "Fix Jira Assets pagination to keep paging past a Jira-capped totalFilterCount, fixing the real root cause of Sprzet do protokolu returning only Komputer.",
-    "notes": "docs/releases/0.1.1-dev.81.md"
-  },
-  {
-    "version": "0.1.1-dev.80",
-    "date": "2026-08-13",
-    "summary": "Surface the swallowed PDF browser-fallback failure reason; equipment scope beyond Komputer remains open pending real tenant Jira Assets data.",
-    "notes": "docs/releases/0.1.1-dev.80.md"
-  },
-  {
-    "version": "0.1.1-dev.79",
-    "date": "2026-08-13",
-    "summary": "Recognize responsible-person Jira assignment attributes so heterogeneous equipment remains bound to the selected user without widening the proven dev75 source scope.",
-    "notes": "docs/releases/0.1.1-dev.79.md"
-  },
-  {
-    "version": "0.1.1-dev.75",
-    "date": "2026-08-12",
-    "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
-    "notes": "docs/releases/0.1.1-dev.75.md"
-  },
-  {
-    "version": "0.1.1-dev.74",
-    "date": "2026-08-12",
-    "summary": "Recognize localized plural Jira identity object types when resolving selected users to assigned equipment.",
-    "notes": "docs/releases/0.1.1-dev.74.md"
-  },
-  {
-    "version": "0.1.1-dev.73",
-    "date": "2026-08-12",
-    "summary": "Resolve Jira equipment through workspace Users/person identity objects while preserving bounded user binding.",
-    "notes": "docs/releases/0.1.1-dev.73.md"
-  },
-  {
-    "version": "0.1.1-dev.72",
-    "date": "2026-08-12",
-    "summary": "Preserve explicit Jira reference identities in the compact Assets cache and make technical test builds use distinct development revisions.",
-    "notes": "docs/releases/0.1.1-dev.72.md"
-  },
-  {
-    "version": "0.1.1-dev.71",
-    "date": "2026-08-12",
-    "summary": "Compact the workspace-wide Jira Assets cache and reject huge legacy snapshots without parsing them.",
-    "notes": "docs/releases/0.1.1-dev.71.md"
-  },
-  {
-    "version": "0.1.1-dev.70",
-    "date": "2026-08-12",
-    "summary": "Use Jira AQL response attribute metadata directly so Assets cache completes faster and user-bound equipment remains matchable.",
-    "notes": "docs/releases/0.1.1-dev.70.md"
-  },
-  {
-    "version": "0.1.1-dev.69",
-    "date": "2026-08-12",
-    "summary": "Isolate runtime-backed admin tests from machine-wide PROGRAMDATA settings without changing the production fallback default.",
-    "notes": "docs/releases/0.1.1-dev.69.md"
-  },
-  {
-    "version": "0.1.1-dev.68",
-    "date": "2026-08-12",
-    "summary": "Move Jira protocol direct PDF fallback into the HTML renderer owner so Edge failures cannot bypass fallback handling.",
-    "notes": "docs/releases/0.1.1-dev.68.md"
-  },
-  {
-    "version": "0.1.1-dev.67",
-    "date": "2026-08-12",
-    "summary": "Keep styled Jira protocol PDF rendering first and fall back to the existing dependency-free direct PDF renderer when Edge fails.",
-    "notes": "docs/releases/0.1.1-dev.67.md"
-  },
-  {
-    "version": "0.1.1-dev.66",
-    "date": "2026-08-12",
-    "summary": "Exclude Jira identity objects from assigned Assets and add bounded Edge PDF headless compatibility.",
-    "notes": "docs/releases/0.1.1-dev.66.md"
-  },
-  {
-    "version": "0.1.1-dev.65",
-    "date": "2026-08-12",
-    "summary": "Invalidate the legacy 1000-user Jira cache snapshot and expose workspace-wide Assets assigned to the selected Jira user.",
-    "notes": "docs/releases/0.1.1-dev.65.md"
-  },
-  {
-    "version": "0.1.1-dev.64",
-    "date": "2026-08-12",
-    "summary": "Make styled protocol PDF rendering safe for Windows service execution with an isolated per-render Chrome/Edge profile.",
-    "notes": "docs/releases/0.1.1-dev.64.md"
+    "summary": "User-directed full-tree restore of the real-smoke-confirmed dev.63 equipment-matching/PDF behavior, reverting dev.64-dev.81.",
+    "notes": "docs/releases/0.1.1-dev.82.md"
   },
   {
     "version": "0.1.1-dev.63",
@@ -238,7 +154,7 @@
       "Bump the pre-1.0 development revision after real dev.39 Network Settings and Admin theme failures.",
       "Let only the trusted Network Settings built-in reach MeshAgent as native type-2 UserOnly instead of the shared script-oriented Scheduled Task wrapper, preserving route and Shell Properties semantics.",
       "Observe the real Modern MeshCentral theme stylesheet href/load signal in the existing Admin theme owner while retaining Classic fallback, form state and F5 recovery.",
-      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no automatic tag or GitHub Release."
+      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release."
     ]
   },
   {
@@ -533,7 +449,7 @@
     "version": "0.1.1-dev.11",
     "date": "2026-08-08",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current main.",
       "Keep first-column selected indicator distance, row origin and icon center stable across expanded/collapsed states, including Quick and Approval Center.",
       "Make Approval Center reuse the shared list geometry contract instead of separate provider/status row styling.",
       "Center View and Actions headers and controls while preserving the 72 px / 120 px Results width contract and horizontal scrolling.",
@@ -557,7 +473,7 @@
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current main.",
       "Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.",
-      "Normalize persisted historical built-in default labels while preserving genuine command overrides and stable command IDs/execution.",
+      "Normalize persisted historical built-in default labels while preserving genuine custom labels and stable command IDs/execution.",
       "Contain long Results tokens and present Move Request group names from current visible mesh metadata with safe ID fallback.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
@@ -618,7 +534,7 @@
     "date": "2026-08-07",
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from main.",
-      "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the Quick toolbar row height.",
+      "Keep the Quick Search wrapper and input at the same 32 px height as toolbar buttons so native form-control styling cannot change the toolbar row height.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
   },

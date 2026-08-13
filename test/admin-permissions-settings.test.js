@@ -23,12 +23,7 @@ web.users[operator._id] = operator;
 web.users[other._id] = other;
 
 var parent = { fs: fs, path: path, pluginPath: root, parent: { datapath: temporary, webserver: web } };
-var runtime = require(path.join(root, "server/core/runtime.js")).createRuntime({
-    parent: parent,
-    pluginRoot: root,
-    source: {},
-    fallbackDataRoot: ""
-});
+var runtime = require(path.join(root, "server/core/runtime.js")).createRuntime({ parent: parent, pluginRoot: root, source: {} });
 var initial = runtime.adminSnapshot(admin);
 
 function rules(items) {

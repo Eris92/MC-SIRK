@@ -1,173 +1,177 @@
-# AGENTS.md - router instrukcji MC-SIRK
+# AGENTS.md — router instrukcji MC-SIRK
 
-## Cel i scope
+## Cel
 
-`Eris92/MC-SIRK` jest source of truth dla MC-SIRK / SIRK Management Platform jako natywnego pluginu MeshCentral. Kanoniczna gałąź: `main`.
+To repozytorium jest jedynym źródłem kodu, instrukcji agentów, indeksów technicznych i GitHub Issues dla projektu MC-SIRK / SIRK Management Platform jako natywnego pluginu MeshCentral.
 
-Nazwy kanoniczne:
-- repo: `MC-SIRK`;
-- plugin: `SIRKPortal`;
-- produkt: `SIRK Management Platform`;
-- entrypoint: `SIRKPortal.js`;
-- runtime data: `meshcentral-data/sirk-platform-data`;
-- stan projektu: `docs/PROJECT-STATE.md`.
+Kanoniczna gałąź: `main`.
 
-MC-SIRK jest odrębny od wielorepozytoryjnego SIRK Agent/Portal/Central/Updater.
+Nie zakładaj istnienia `develop`, `beta` ani innej linii roboczej. Nowe zadania rozpoczynaj od aktualnego `main`, chyba że użytkownik jawnie poleci inaczej.
 
-## Zasada nadrzedna
+## Język
 
-Optimize for the shortest evidence-based path to a correct implementation, not exhaustive investigation.
+- Komunikuj się z użytkownikiem po polsku.
+- Kod i standardową nomenklaturę techniczną zapisuj zgodnie z konwencją projektu.
 
-Agent zachowuje autonomie: sam implementuje, testuje i konczy zadanie. Zakres rozszerza tylko wtedy, gdy konkretne evidence pokazuje, ze aktualny scope nie wystarcza dla correctness, security albo acceptance criteria.
+## Obowiązkowy start — index first
 
-## Start - minimalny kontekst
+Nie skanuj całego repozytorium na początku zadania.
 
-Dla kazdego zadania:
-1. przeczytaj ten plik raz;
-2. przeczytaj `docs/INDEX.md` raz;
-3. jezeli podano Issue, przeczytaj Issue przed kodem i nie pobieraj go ponownie bez evidence zmiany;
-4. wybierz dokladnie jeden indeks warstwy;
-5. odczytaj entrypoint/ownera, bezposrednie zaleznosci i targeted tests;
-6. rozszerz zakres tylko po konkretnym braku evidence.
+1. Potwierdź repo `Eris92/MC-SIRK`, branch `main` i bieżący stan Git.
+2. Przeczytaj ten plik.
+3. Przeczytaj `docs/INDEX.md`.
+4. Jeśli zadanie pochodzi z GitHub Issue, przeczytaj Issue jako aktualny task packet.
+5. Otwórz dokładnie jeden indeks warstwy związanej z zadaniem:
+   - backend/API/storage/integracje: `server/INDEX.md`;
+   - native UI/shared UI/renderery: `public/INDEX.md`;
+   - panel administracyjny: `web/INDEX.md`;
+   - build/walidatory: `scripts/INDEX.md`;
+   - testy/regresje: `test/INDEX.md`.
+6. Czytaj tylko wskazany entrypoint, jego bezpośrednie zależności i targeted tests.
+7. Rozszerz zakres dopiero, gdy indeks lub bezpośrednia analiza nie wystarcza.
 
-Routing warstw:
-- backend, storage, API, integracje, permissions: `server/INDEX.md`;
-- native UI MeshCentral, shared UI, renderery: `public/INDEX.md`;
-- panel administracyjny: `web/INDEX.md`;
-- walidatory/build/struktura: `scripts/INDEX.md`;
-- test/regresja: `test/INDEX.md`.
+Nie pobieraj całego drzewa, całej historii Git, wszystkich docs ani wszystkich testów „na zapas”.
 
-Nie czytaj automatycznie wszystkich `docs/agent/*`, calego repo, historii Git ani pelnych testow.
+## Moduły instrukcji
 
-Domyslny first pass:
-- task/Issue;
-- `AGENTS.md` + `docs/INDEX.md`;
-- 1 indeks warstwy;
-- do 5 plikow implementacji/testow.
+Zawsze stosuj:
 
-## FAST_PATH - domyslny tryb
+- `docs/agent/00-Agent-Core.md`
+- `docs/agent/01-Agent-Tryby.md`
+- `docs/agent/03-Agent-Jakosc-Bezpieczenstwo.md`
+- `docs/agent/12-Agent-Wydajnosc-Reuse.md`
+- `docs/agent/13-Agent-Kontekst-Issues.md`
+- `docs/agent/14-Agent-Wersjonowanie-Pre1.md`
 
-Bugfix, mala funkcja, UI fix, configuration change, targeted refactor i proste Issue realizuj domyslnie przez FAST_PATH:
+Dobieraj tylko potrzebne moduły:
 
-1. task/Issue;
-2. dwa routery + jeden indeks warstwy;
-3. maksymalnie 3 targeted searches;
-4. minimalna implementacja w ownerze i bezposrednich zaleznosciach;
-5. targeted validation, zwykle maksymalnie 2 komendy;
-6. kontrola finalnego diffu;
-7. jeden commit/push po zakonczeniu lokalnej iteracji.
-
-Guardrails dla malego zadania:
-- odczyty instrukcji/indexow: <= 3 poza samym Issue;
-- targeted code searches: <= 3;
-- Web Search: 0 domyslnie;
-- clone/checkout: maksymalnie 1 na repo i tylko gdy lokalny checkout jest potrzebny;
-- targeted test/build commands: zwykle <= 2;
-- ponowny odczyt tego samego niezmienionego zasobu: 0;
-- cross-repo inspection: 0, chyba ze task lub evidence wskazuje rzeczywisty contract/dependency;
-- documentation update: tylko gdy istniejaca dokumentacja stalaby sie bledna albo acceptance criteria tego wymagaja.
-
-To sa guardrails, nie twarde limity. Mozesz je przekroczyc tylko z konkretnym powodem zwiazanym z correctness, security, acceptance criteria albo potwierdzona zaleznoscia. Po rozwiazaniu blockera wroc do FAST_PATH.
-
-## Context reuse i narzedzia
-
-Informacja uzyskana podczas zadania pozostaje evidence. Nie wykonuj ponownie tego samego odczytu/search/fetch/clone/check bez dowodu, ze wynik mogl sie zmienic.
-
-W szczegolnosci nie powtarzaj:
-- `AGENTS.md`, `docs/INDEX.md`, indeksu warstwy ani tego samego Issue;
-- wyszukiwania tego samego symbolu/patternu w tym samym scope;
-- clone/checkout tego samego repo;
-- tej samej dokumentacji zewnetrznej;
-- walidacji, ktora juz potwierdzila niezmieniony zakres.
-
-Web Search uzywaj tylko gdy potrzebna jest aktualna dokumentacja zewnetrzna, informacji nie ma w repo, trzeba potwierdzic zachowanie zewnetrznego API/systemu albo uzytkownik jawnie wymaga researchu. Nie uzywaj Web do informacji dostepnych juz w repo.
-
-## Moduly instrukcji - tylko gdy dotycza zadania
-
-| Zakres | Modul |
+| Zakres | Moduł |
 |---|---|
-| tryb wykonania / zlozone zadanie | `docs/agent/01-Agent-Tryby.md` |
-| automation/skrypty | `docs/agent/02-Agent-Automation.md` |
-| security/risky change | `docs/agent/03-Agent-Jakosc-Bezpieczenstwo.md` |
-| testy | `docs/agent/04-Agent-Testy-Weryfikacja.md` |
-| Git/commit/push/release | `docs/agent/05-Agent-Git-Release.md` |
-| dokumentacja/stany | `docs/agent/06-Agent-Dokumentacja-Stanu.md` |
-| config/secrets | `docs/agent/07-Agent-Konfiguracja-Sekrety.md` |
-| dependencies | `docs/agent/08-Agent-Zaleznosci-Aktualizacje.md` |
-| logi/diagnostyka | `docs/agent/09-Agent-Logi-Diagnostyka.md` |
+| automatyzacja, wersjonowanie, skrypty | `docs/agent/02-Agent-Automation.md` |
+| testy i weryfikacja | `docs/agent/04-Agent-Testy-Weryfikacja.md` |
+| Git, commit, push, release | `docs/agent/05-Agent-Git-Release.md` |
+| dokumentacja i stan | `docs/agent/06-Agent-Dokumentacja-Stanu.md` |
+| konfiguracja i sekrety | `docs/agent/07-Agent-Konfiguracja-Sekrety.md` |
+| zależności | `docs/agent/08-Agent-Zaleznosci-Aktualizacje.md` |
+| logi i diagnostyka | `docs/agent/09-Agent-Logi-Diagnostyka.md` |
 | plugin MeshCentral | `docs/agent/10-Agent-MeshCentral-Plugin.md` |
-| runtime MC-SIRK | `docs/agent/11-Agent-SIRK-Portal.md` |
-| performance/reuse/refactor | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |
-| Issue/handoff | `docs/agent/13-Agent-Kontekst-Issues.md` |
-| version/release | `docs/agent/14-Agent-Wersjonowanie-Pre1.md` |
-| PowerShell/JavaScript/Python | `docs/agent/20-Agent-PowerShell.md`, `21-Agent-JavaScript.md`, `22-Agent-Python.md` |
-| Windows/Linux | `docs/agent/30-Agent-Windows.md`, `31-Agent-Linux.md` |
-| Infrastructure/Security | `docs/agent/40-Agent-Infrastructure.md`, `41-Agent-Security.md` |
+| każda zmiana runtime MC-SIRK | `docs/agent/11-Agent-SIRK-Portal.md` |
+| PowerShell | `docs/agent/20-Agent-PowerShell.md` |
+| JavaScript | `docs/agent/21-Agent-JavaScript.md` |
+| Python | `docs/agent/22-Agent-Python.md` |
+| Windows | `docs/agent/30-Agent-Windows.md` |
+| Linux | `docs/agent/31-Agent-Linux.md` |
+| Infrastructure/CI/CD | `docs/agent/40-Agent-Infrastructure.md` |
+| Security | `docs/agent/41-Agent-Security.md` |
 
-`docs/agent/00-Agent-Core.md` jest dokumentem referencyjnym; nie trzeba go ponownie czytac, jezeli ten router i `docs/INDEX.md` wystarczaja.
+## Kanoniczne nazwy i granice
 
-## Context/output budget
+- repozytorium: `MC-SIRK`;
+- techniczna nazwa pluginu: `SIRKPortal`;
+- produkt: `SIRK Management Platform`;
+- skrót: `SIRK Platform`;
+- entrypoint pluginu: `SIRKPortal.js`;
+- dane runtime: `meshcentral-data/sirk-platform-data`;
+- owner stanu projektu: `docs/PROJECT-STATE.md`.
 
-Tool output pozostaje w aktywnym kontekscie. Minimalizuj go tak samo jak liczbe odczytywanych plikow.
+MC-SIRK jest odrębnym projektem od wielorepozytoryjnego SIRK Agent/Portal/Central/Updater. Architektury nie kopiuj automatycznie między projektami. Oba projekty pozostają jednak przed pierwszym pełnym wydaniem i `1.0.0` jest w MC-SIRK zablokowane zgodnie z lokalną polityką `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
+
+Nie przywracaj historycznych aliasów, shimów, `MyCompany`, starych loaderów ani `mycompany-data`, chyba że użytkownik jawnie zleci audyt historyczny.
+
+## Wersjonowanie — twarda reguła
+
+MC-SIRK nie ma jeszcze pierwszego product release.
+
+- aktualna linia development: `0.1.1-dev.X`;
+- odpowiada ona preferowanej konwencji użytkownika `0.1.1.X`;
+- `package.json` i `config.json` muszą mieć identyczną wersję;
+- każda zakończona i zweryfikowana zmiana techniczna przeznaczona do integracji/testu na `main` podnosi rewizję `dev.X` przed merge; kilka zmian w jednym jeszcze niezintegrowanym kandydacie może współdzielić jeden bump;
+- historyczne `1.8.x` są wewnętrznymi snapshotami developmentu i nie są źródłem kolejnego numeru;
+- nie twórz nowych `1.x`, `2.x`, `3.x` ani `1.0.0` bez jawnego otwarcia release gate przez użytkownika;
+- nie twórz automatycznie tagu/GitHub Release przy zwykłym bumpie development revision.
+
+## GitHub Issues jako stan zadania
+
+Issues w `Eris92/MC-SIRK` są kanonicznym backlogiem i task packetami.
+
+Przy pracy z Issue:
+
+- wykonuj acceptance criteria, a nie historię poprzedniego czatu;
+- zapisuj w Issue istotny handoff: root cause/decision, zmienione pliki, commit/PR, testy, nierozwiązane problemy i dokładny next step;
+- jeśli poprawka nie działa, nie zamykaj Issue; zapisz nieudaną próbę i kontynuuj diagnostykę;
+- niezależny problem odkryty podczas pracy nie powinien bez potrzeby rozszerzać scope — zaproponuj osobne Issue;
+- nowy czat ma móc kontynuować zadanie po samym numerze Issue.
+
+## Commit, push, bump i merge — stała reguła użytkownika
+
+- Zakończone i zweryfikowane zmiany należące do bieżącego zadania commituj i wypychaj automatycznie; nie czekaj na osobne polecenie `commit` ani `push`.
+- Dla zmiany technicznej przeznaczonej do instalacji lub realnego smoke zawsze przygotuj kolejną rewizję `0.1.1-dev.X`, zsynchronizuj aktywne źródła wersji i development notes przed integracją. Nie twórz drugiego pustego bumpu tylko dlatego, że do tego samego jeszcze niezmergowanego kandydata doszła zmiana instrukcji/dokumentacji.
+- Przed integracją potwierdź zakres diffu, targeted tests, wymagany pełny `npm test`, spójność wersji i docelową gałąź; stosuj zwykły projektowy workflow branch/PR.
+- Gdy wymagane testy są zielone, diff jest oczekiwany, PR jest mergeable i nie ma blockerów bezpieczeństwa/struktury, scal PR automatycznie do kanonicznego `main` bez czekania na osobne polecenie `merge`. Dotyczy to także buildów przeznaczonych do realnego smoke; powiązane Issue może pozostać otwarte do potwierdzenia acceptance criteria.
+- Jeśli CI jest czerwone, diff zawiera nieoczekiwany zakres, PR nie jest mergeable albo acceptance wymaga najpierw dodatkowej weryfikacji przed integracją, nie scalaj; napraw problem i kontynuuj autonomicznie.
+- Automatyczna integracja nie zezwala na force push, tag, GitHub Release, publikację `1.0.0`, bezpośrednie destrukcyjne wyrównanie gałęzi ani publikację sekretów — te operacje nadal wymagają jawnego polecenia użytkownika.
+
+## Wydajność i reuse
+
+MC-SIRK ma być szybki i mały.
+
+Przed dodaniem nowej klasy/modułu/helpera/renderera/CSS class/event handlera/timera/observera/request loop sprawdź, czy istniejący owner może zostać użyty lub rozszerzony.
 
 Preferuj:
-- `rg`/search z waskim patternem i katalogiem;
-- range reads zamiast pelnych duzych plikow;
-- `git diff --stat` przed pelnym diffem;
-- `git diff -- <targeted paths>` zamiast calego repo;
-- filtrowane API/JSON z tylko potrzebnymi polami;
-- targeted test i krotki failure excerpt;
-- jeden odczyt niezmienionego pliku na sesje.
 
-Nie wykonuj bez potrzeby:
-- `cat` duzych plikow;
-- pelnych dumpow logow/JSON;
-- pelnego `git log` lub historii Issue;
-- ponownego odczytu niezmienionych instrukcji;
-- full test suite przed targeted tests;
-- szerokiego recursive search, jesli indeks wskazuje scope.
+- jeden owner stanu dla jednej odpowiedzialności;
+- współdzielone `public/shared/*` zamiast prawie identycznych implementacji per moduł;
+- wspólny renderer/toolbar/layout/list contract tam, gdzie semantyka jest ta sama;
+- CSS pluginu głównie dla geometrii, a natywne klasy MeshCentral dla standardowego wyglądu/interakcji;
+- minimalny DOM churn, brak zbędnego remount/reinit;
+- bounded requesty, brak niekontrolowanego polling i timeoutów;
+- targeted loading i targeted tests.
 
-Gdy output jest duzy, najpierw zawez go po nazwie, statusie, bledzie, symbolu albo sciezce. Zachowuj tylko evidence potrzebne do decyzji i handoffu.
+Nie twórz monolitów tylko po to, aby zmniejszyć liczbę plików lub klas. Celem jest minimalna duplikacja przy jasnym ownership i niskim koszcie runtime.
 
-## Testing
+## Obowiązkowa kontrola runtime
 
-Preferuj: changed component -> targeted tests -> targeted lint/typecheck/build.
+Przed zmianą runtime:
 
-Full `npm test` albo pelny build wykonuj tylko gdy zmiana dotyka shared runtime/dependency/public contract/loader/security, targeted validation nie daje wystarczajacego confidence, acceptance criteria tego wymagaja albo istnieje realne ryzyko regresji cross-component.
+1. znajdź rzeczywisty entrypoint/loader przez właściwy `INDEX.md`;
+2. potwierdź mapę assetu, route albo `require()`;
+3. odczytaj bieżący owner implementacji;
+4. odczytaj tylko bezpośrednich konsumentów potrzebnych do zmiany;
+5. po zmianie sprawdź diff, targeted test i źródła wersji.
 
-Nie rerunuj testu dla niezmienionego zakresu tylko po to, aby ponownie potwierdzic ten sam wynik.
+Nie zakładaj, że plik o podobnej nazwie jest używany przez runtime.
 
-## Dokumentacja
+## Kontrakty runtime/UI
 
-Nie aktualizuj dokumentacji mechanicznie przy kazdym fixie. Aktualizacja jest wymagana tylko gdy zmienia sie public behavior, architecture/contract, konfiguracja/procedura opisana w docs, istniejaca dokumentacja staje sie bledna albo Issue/acceptance criteria tego wymagaja.
+Jeśli aktualny kod ich używa, zachowaj:
 
-## UI completeness
+- brak długich timeoutów jako podstawowego mechanizmu gotowości;
+- wyłączone elementy menu niewidoczne przed zastosowaniem permissions;
+- właściwy widok pokazywany jednokrotnie;
+- ciężkie/aktywne widoki nie są bez potrzeby niszczone i inicjalizowane ponownie;
+- iframe aktywnej sesji hosta pozostaje podłączony do DOM, gdy dany moduł używa iframe;
+- aktywny host i podzakładka są przechowywane osobno;
+- PL/EN i light/dark synchronizują się bez zbędnego reloadu workspace;
+- shared state ma jednego właściciela, a observery są fallbackiem, nie podstawowym mechanizmem synchronizacji.
 
-Jesli feature ma byc dostepny dla operatora/uzytkownika, implementacja nie jest kompletna dopoki odpowiednia akcja, widok, menu, formularz albo stan UI nie jest podlaczony do istniejacego workflow. Sam backend/service bez wymaganego entrypointu UI nie spelnia feature acceptance.
+Jeśli bieżąca architektura nie używa już któregoś mechanizmu, nie implementuj go ponownie z powodu starej instrukcji — potwierdź kod i zaktualizuj dokumentację.
 
-Dla backend-only taska nie dodawaj UI bez evidence, ze jest wymagane.
+## Weryfikacja
 
-## Issues i handoff
+Po zmianie kodu:
 
-Issue jest biezacym task packetem, nie archiwum calej sesji. Przechowuj krotko:
-- Goal / acceptance;
-- root cause / decision;
-- changed files/contract;
-- commit/PR;
-- tests/result;
-- blocker/risk;
-- exact next step.
+1. uruchom targeted test dla zmienionej funkcji;
+2. dla security/state/lifecycle dodaj test negatywny lub regresyjny;
+3. uruchom `npm test`, gdy zmiana dotyczy runtime, loadera, wspólnego UI, struktury lub publicznego contractu;
+4. sprawdź `package.json`, `config.json`, `README.md`, `changelog.md` i `version-history.json`, jeśli zmiana obejmuje release/version;
+5. sprawdź diff i zakres zmienionych plików;
+6. nie deklaruj rozwiązania Issue bez spełnienia acceptance criteria.
 
-Nie kopiuj calych logow ani kolejnych pelnych podsumowan. Preferuj jeden aktualny `CURRENT STATE` zamiast rosnacej historii handoffow. Git/PR zachowuja historie techniczna.
+Zmiana wyłącznie dokumentacji nie wymaga bumpu wersji, chyba że użytkownik jawnie go zleci albo dokumentacja wchodzi do już przygotowanego, jeszcze niezintegrowanego kandydata development.
 
-## Runtime i reuse
+## Prompty jednorazowe
 
-Przed dodaniem klasy/modulu/helpera/renderera/CSS/event handlera/timera/observera/request loop sprawdz istniejacego ownera w odpowiednim indeksie i preferuj reuse. Nie tworz monolitu tylko dla mniejszej liczby plikow.
+- `docs/agent/Prompt-Bootstrap-Automation.md`
+- `docs/agent/Prompt-Bootstrap-MeshCentral-Architecture.md`
 
-Dla runtime najpierw potwierdz realny loader/route/require, potem ownera i bezposrednich konsumentow. Nie przywracaj historycznych aliasow, shimow, `MyCompany`, starych loaderow ani `mycompany-data`, chyba ze uzytkownik zleci audyt historyczny.
-
-## Git, wersja i weryfikacja
-
-Zmiany techniczne przeznaczone do integracji/testu uzywaja linii `0.1.1-dev.X`; `package.json` i `config.json` musza byc zgodne. Kazda nowa zmiana techniczna przeznaczona do testow uzytkownika musi zwiekszyc rewizje development, aby zainstalowana wersja byla jednoznacznie rozpoznawalna; nie pozostawiaj tej samej rewizji po kolejnym runtime fixie. `1.0.0` pozostaje zablokowane bez jawnej decyzji uzytkownika. Sama dokumentacja nie wymaga bumpu.
-
-Po zmianie wykonaj najmniejsza adekwatna weryfikacje: syntax/targeted test/direct result + kontrole diffu. Zakonczone, zweryfikowane zmiany commituj i pushuj zgodnie z projektem. Nie uzywaj force push, nie publikuj tagu/GitHub Release i nie oslabiaj zabezpieczen bez jawnego polecenia.
+Nie stosuj ich automatycznie przy każdym zadaniu.

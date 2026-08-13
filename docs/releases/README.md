@@ -4,21 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.1-dev.81`](0.1.1-dev.81.md) — fix Jira Assets pagination to keep paging past a Jira-capped `totalFilterCount` while `hasMoreResults` still reports true, fixing the real root cause of `Sprzęt do protokołu` returning only `Komputer`;
-- [`0.1.1-dev.80`](0.1.1-dev.80.md) — surface the swallowed PDF browser-fallback failure reason; equipment scope beyond `Komputer` remains open pending real tenant Assets data;
-- [`0.1.1-dev.79`](0.1.1-dev.79.md) — recognize responsible-person Jira assignment attributes without widening the proven dev75 equipment scope;
-- [`0.1.1-dev.75`](0.1.1-dev.75.md) — restore the last real-smoke-working dev64 Jira equipment scope while retaining later cache/performance fixes;
-- [`0.1.1-dev.74`](0.1.1-dev.74.md) — recognize localized plural Jira identity object types when bridging selected users to assigned equipment;
-- [`0.1.1-dev.73`](0.1.1-dev.73.md) — resolve Jira equipment through workspace Users/person identity objects;
-- [`0.1.1-dev.72`](0.1.1-dev.72.md) — preserve explicit Jira reference identities in compact Assets cache and require distinct technical test-build revisions;
-- [`0.1.1-dev.71`](0.1.1-dev.71.md) — compact the Jira Assets cache and reject huge legacy snapshots without parsing them;
-- [`0.1.1-dev.70`](0.1.1-dev.70.md) — consume Jira AQL attribute metadata directly and invalidate unmatchable Assets cache snapshots;
-- [`0.1.1-dev.69`](0.1.1-dev.69.md) — isolate Windows admin tests from machine-wide fallback settings while preserving the production default;
-- [`0.1.1-dev.68`](0.1.1-dev.68.md) — renderer-owned direct PDF fallback after real dev.67 Edge failure still escaped the protocol lifecycle;
-- [`0.1.1-dev.67`](0.1.1-dev.67.md) — keep styled Jira protocol PDF first, then reuse the existing direct PDF renderer as a bounded browser-failure fallback;
-- [`0.1.1-dev.66`](0.1.1-dev.66.md) — exclude Jira identity objects from assigned Assets and add bounded Edge PDF compatibility retry;
-- [`0.1.1-dev.65`](0.1.1-dev.65.md) — invalidate the legacy 1000-user cache snapshot and expose workspace-wide user-bound Jira Assets;
-- [`0.1.1-dev.64`](0.1.1-dev.64.md) — Windows service-safe styled protocol PDF rendering with an isolated per-render Chrome/Edge profile;
+- [`0.1.1-dev.82`](0.1.1-dev.82.md) — user-directed full-tree restore of the real-smoke-confirmed dev.63 equipment-matching/PDF behavior, reverting dev.64-dev.81;
 - [`0.1.1-dev.63`](0.1.1-dev.63.md) — concise Force-only Jira cache dialogs;
 - [`0.1.1-dev.62`](0.1.1-dev.62.md) — stable workflow credential assignment across script folder moves;
 - [`0.1.1-dev.61`](0.1.1-dev.61.md) — native-modal-safe equipment width marker;
@@ -37,7 +23,7 @@ Aktualna linia development:
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
 - [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
-- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
+- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
 - [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;
@@ -95,7 +81,7 @@ Nie rekonstruuj, nie kontynuuj ani nie promuj numeracji `1.8.x` jako aktualnej l
 ## Przy zmianie wersji
 
 1. odczytaj `docs/agent/14-Agent-Wersjonowanie-Pre1.md`;
-2. zwiększ tylko rewizję `0.1.1-dev.X` dla każdej kolejnej zmiany technicznej przeznaczonej do instalacji/testu użytkownika;
+2. zwiększ tylko rewizję `0.1.1-dev.X`, jeśli bump jest wymagany;
 3. utrzymaj identyczną wersję w `package.json` i `config.json`;
 4. zaktualizuj bieżące development notes, `changelog.md` i `version-history.json` jeśli zadanie obejmuje wersję;
 5. uruchom wymagane targeted tests, a przed świadomym release pełne `npm test` i real MeshCentral smoke test;
