@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.93",
+    "date": "2026-08-13",
+    "summary": "Align shared checklist controls on one axis with their option text.",
+    "notes": "docs/releases/0.1.1-dev.93.md"
+  },
+  {
     "version": "0.1.1-dev.92",
     "date": "2026-08-13",
     "summary": "Unify Debug/raw output with the standard Results surface.",

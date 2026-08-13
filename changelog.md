@@ -1,9 +1,14 @@
+## 0.1.1-dev.93 - 2026-08-13
+
+- Vertically align every shared checklist radio/checkbox dot with its option text.
+- Remove browser-dependent input margins that shifted labels below their controls.
+
+Current development notes: `docs/releases/0.1.1-dev.93.md`.
+
 ## 0.1.1-dev.92 - 2026-08-13
 
 - Keep `Debug / raw output` on the same Results surface instead of styling it as a nested card.
 - Preserve the expandable raw output behavior in both Modern and Classic modes.
-
-Current development notes: `docs/releases/0.1.1-dev.92.md`.
 
 ## 0.1.1-dev.91 - 2026-08-13
 
