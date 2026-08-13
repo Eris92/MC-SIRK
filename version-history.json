@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.107",
+    "date": "2026-08-13",
+    "summary": "Restore bounded Jira Assets pagination, compact cache and explicit heterogeneous equipment user binding.",
+    "notes": "docs/releases/0.1.1-dev.107.md"
+  },
+  {
     "version": "0.1.1-dev.106",
     "date": "2026-08-13",
     "summary": "Propagate workflow-key system credentials to PowerShell executions.",
