@@ -1,3 +1,11 @@
+## 0.1.1-dev.100 - 2026-08-13
+
+- Rename the cache administration scripts to `Cache Assets.ps1` and `Cache Users.ps1`.
+- Remove Jira from their visible labels while preserving workflow identities and existing consumer compatibility.
+- Update the hourly Jira scheduler to read the renamed Assets cache policy script.
+
+Current development notes: `docs/releases/0.1.1-dev.100.md`.
+
 ## 0.1.1-dev.99 - 2026-08-13
 
 - Prefetch Jira protocol equipment while the user-selection modal remains visible.

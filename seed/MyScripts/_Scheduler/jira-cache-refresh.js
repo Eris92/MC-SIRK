@@ -55,7 +55,7 @@ function refresh(options) {
         integrations: integrations,
         requestJson: options.requestJson
     });
-    var assetScriptPath = path.join(path.resolve(__dirname, ".."), "settings", "Jira", "Jira Cache Assets.ps1");
+    var assetScriptPath = path.join(path.resolve(__dirname, ".."), "settings", "Jira", "Cache Assets.ps1");
     var assetScript = fs.readFileSync(assetScriptPath, "utf8");
     var aql = headerValue(assetScript, "SirkJiraAssetAql");
     var labelAttribute = headerValue(assetScript, "SirkJiraAssetLabelAttribute") || "Nazwa_sieciowa";

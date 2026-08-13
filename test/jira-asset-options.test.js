@@ -12,12 +12,15 @@ var scriptLibraryFactory = require(path.join(root, "server/core/script-confirmat
 var automationServer = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 var automationClient = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
 var adminIntegrations = fs.readFileSync(path.join(root, "web/admin/integrations.js"), "utf8");
-var cacheAssetsSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Jira Cache Assets.ps1"), "utf8");
-var cacheUsersSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Jira Cache Users.ps1"), "utf8");
+var cacheAssetsSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Cache Assets.ps1"), "utf8");
+var cacheUsersSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Cache Users.ps1"), "utf8");
 assert.ok([cacheAssetsSeed, cacheUsersSeed].every(function (source) {
     return /^# VariableSwitch: \$Force, false, Wymuś odświeżenie\|$/m.test(source) &&
         !/Używa świeżego cache|Pobierz ponownie także wtedy|Uses the fresh cache/.test(source);
-}), "Both Jira cache dialogs must show only the Force checkbox label without explanatory copy.");
+}), "Both cache dialogs must show only the Force checkbox label without explanatory copy.");
+assert.ok(/^# Cache Assets\|$/m.test(cacheAssetsSeed) && /^# PL: Cache - sprzęt\|$/m.test(cacheAssetsSeed) &&
+    /^# Cache Users\|$/m.test(cacheUsersSeed) && /^# PL: Cache - użytkownicy\|$/m.test(cacheUsersSeed),
+    "Cache filenames and visible names must remain neutral so another integration can reuse them.");
 
 function integration(overrides) {
     return {
