@@ -389,7 +389,7 @@ module.exports.createJiraAssetService = function (options) {
 
     function assignmentAttribute(attribute) {
         var name = lower(attribute && attribute.objectTypeAttribute && attribute.objectTypeAttribute.name || attribute && attribute.name);
-        return /(owner|user|assigned|employee|pracownik|uzytk|użytk|przypis|wlasciciel|właściciel)/i.test(name);
+        return /(owner|user|assigned|employee|responsible|pracownik|uzytk|użytk|przypis|wlasciciel|właściciel|odpowiedzialn)/i.test(name);
     }
 
     function referenceStrings(value, allowPlain) {

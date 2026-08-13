@@ -1,3 +1,11 @@
+## 0.1.1-dev.79 - 2026-08-13
+
+- Real `0.1.1-dev.75` smoke with the tenant's actual Jira Assets schema confirmed `Sprzęt do protokołu` still returned only `Komputer` objects, even though `Monitor`, `Drukarka`, `Tablet` and other equipment types are children of the same `Sprzęt użytkownika` type and share the same `Osoba_odpowiedzialna` assignment attribute.
+- Widen `assignmentAttribute()` in `server/core/jira-asset-service.js` to also recognize `responsible`/`odpowiedzialn`, so a plain-value `Osoba_odpowiedzialna` attribute binds equipment of every type to the selected Jira user instead of only the types whose response happened to include a structured reference.
+- Add a focused regression covering a `Komputer` and a `Monitor` sharing a plain-value `Osoba_odpowiedzialna` attribute.
+
+Current development notes: `docs/releases/0.1.1-dev.79.md`.
+
 ## 0.1.1-dev.75 - 2026-08-12
 
 - Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.

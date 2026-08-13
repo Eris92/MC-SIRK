@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.79",
+    "date": "2026-08-13",
+    "summary": "Recognize the tenant's plain-value 'Osoba_odpowiedzialna' assignment attribute on every equipment type so Sprzet do protokolu is no longer limited to Komputer.",
+    "notes": "docs/releases/0.1.1-dev.79.md"
+  },
+  {
     "version": "0.1.1-dev.75",
     "date": "2026-08-12",
     "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
