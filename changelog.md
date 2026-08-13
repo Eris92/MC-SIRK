@@ -1,3 +1,11 @@
+## 0.1.1-dev.79 - 2026-08-13
+
+- Recognize Jira responsible-person assignment attributes such as `Osoba_odpowiedzialna` when Jira returns the selected-user relationship as plain values instead of structured references.
+- Preserve the proven dev.75 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope, compact cache v4, bounded pagination/concurrency, identity-object exclusion and PDF lifecycle unchanged.
+- Add a focused regression proving `Komputer` and `Monitor` assigned to the selected user are returned while another user's `Tablet` remains excluded.
+
+Current development notes: `docs/releases/0.1.1-dev.79.md`.
+
 ## 0.1.1-dev.75 - 2026-08-12
 
 - Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.
@@ -292,7 +300,7 @@ Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
 - Real `0.1.1-dev.39` smoke: Network Settings and Admin theme/color switching both still FAIL; record dev.39 as ineffective for #128/#123 and keep both Issues open.
 - Network root cause: shared `logged-on-user-command-policy` still rewrote every `runAsUser: 2` command to SYSTEM -> Scheduled Task -> WScript -> hidden PowerShell, so dev.39 never reached native MeshAgent UserOnly semantics. Mark only trusted built-in `network-adapter-properties` as `nativeUserSession` and let the existing policy bypass its script wrapper for that strict catalog-owned path; preserve type 2, route/Up-adapter selection and the proven FolderItem Properties verb.
-- Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`, parent surface copy, F5 recovery and form state without polling/request/rerender.
+- Admin root cause: Modern MeshCentral changes the active theme through `#theme-stylesheet.href`; the existing Admin observer did not watch that writer. Reuse the same observer for stylesheet `href` and `load`, then resync after CSS application; retain Classic `body.night`/`nightMode`, parent surface copy, F5 recovery and form state without polling/request/rerender.
 - Clean pre-bump full `npm test` GREEN in Actions `31375783695`; canonical runtime PR Test #546 GREEN.
 
 Current development notes: `docs/releases/0.1.1-dev.40.md`.
@@ -300,7 +308,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 ## 0.1.1-dev.39 - 2026-08-10
 
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
-- Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
+- Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/Up-adapter selection, Namespace(49) and the proven `Properties/Właściwości` `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
 - Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
 
@@ -342,7 +350,7 @@ Current development notes: `docs/releases/0.1.1-dev.36.md`.
 - Complete the real MeshCentral Modern `showModal(modalId, okButtonId, ...)` contract with `idx_dlgOkButton` so the host setup returns and the existing canonical result renderer can mount Copy, structured output, CSV Download and Debug content.
 - Keep deterministic default-route/InterfaceIndex adapter selection, but replace the ineffective locale-sensitive `FolderItem.InvokeVerb('properties')` path with the Windows-verified `SHGetIDListFromObject` PIDL plus `ShellExecuteEx` canonical `properties` verb using `SEE_MASK_INVOKEIDLIST`.
 - Preserve the single logged-on-user desktop launcher, hidden Network Settings helper behavior and Network Control semantics; keep Issues #237 and #128 open for real dev.35 re-smoke.
-- Keep the revision below `1.0.0`; no tag or GitHub Release.
+- Keep the revision below `1.0.0`; no tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.35.md`.
 
@@ -358,7 +366,7 @@ Current development notes: `docs/releases/0.1.1-dev.34.md`.
 
 ## 0.1.1-dev.33 - 2026-08-09
 
-- Follow up real `0.1.1-dev.32` smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.
+- Follow up the real `0.1.1-dev.32` smoke failures for Results View surface, transient Commands/Plugins double selection and Network Settings execution.
 - Reuse the existing native secondary button surface for Results `View`, applied synchronously at creation and kept under `MeshThemeAdapter` refresh, without a hardcoded CSS palette.
 - Eliminate the `go(19) -> setTimeout(0)` selected-state gap so Commands/Plugins become mutually exclusive in the same transition; keep bounded reconcile only as recovery.
 - Target the Windows `shell:ConnectionsFolder` instead of Shell namespace `3` before invoking the active default-route adapter properties.
@@ -476,7 +484,7 @@ Current development notes: `docs/releases/0.1.1-dev.21.md`.
 
 ## 0.1.1-dev.20 - 2026-08-08
 
-- Deliver the Move Request #173 correction after real dev.19 smoke exposed `Cannot set properties of null (setting 'innerHTML')` in Modern MeshCentral.
+- Deliver the Move Request #173 correction after real `0.1.1-dev.19` smoke exposed `Cannot set properties of null (setting 'innerHTML')` in Modern MeshCentral.
 - Route Modern to the host-native `setModalContent("xxAddAgent", ...)` + `showModal("xxAddAgentModal", ...)` lifecycle and retain `setDialogMode(2, ...)` only for Classic.
 - Keep guarded asynchronous Submit feedback visible by returning `false` from the Modern host callback; preserve Classic capture interception and backend semantics.
 - No parallel plugin modal tree, background workaround, observer, timer, polling loop, tag or GitHub Release.
@@ -562,7 +570,7 @@ Current development notes: `docs/releases/0.1.1-dev.12.md`.
 
 ## 0.1.1-dev.11 — 2026-08-08
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective UI smoke follow-up from current `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
 - Keep selected first-column indicator distance and icon position stable across Collapse/Expand by using one 9 px primary inset and 44 px collapsed row geometry, including Quick and Approval Center.
 - Make Approval Center consume the same shared list row/icon/label geometry as My Scripts/My Commands instead of separate provider/status spacing rules.
 - Center shared Results `View` and `Actions` headers and controls while preserving their compact 72 px / 120 px width contract and local horizontal scrolling.
@@ -608,7 +616,7 @@ Current development notes: `docs/releases/0.1.1-dev.8.md`.
 - Keep shared Results tables readable with semantic column roles and horizontal scrolling instead of fixed-layout compression.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
-Development notes: `docs/releases/0.1.1-dev.7.md`.
+Current development notes: `docs/releases/0.1.1-dev.7.md`.
 
 ## 0.1.1-dev.6 — 2026-08-08
 
@@ -639,7 +647,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from current `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 
