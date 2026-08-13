@@ -1,3 +1,10 @@
+## 0.1.1-dev.103 - 2026-08-13
+
+- Move the inner Settings gear circle approximately one rendered pixel lower for a visually centered cog shape.
+- Preserve the outer gear geometry and shared folder-icon alignment.
+
+Current development notes: `docs/releases/0.1.1-dev.103.md`.
+
 ## 0.1.1-dev.102 - 2026-08-13
 
 - Replace company-specific Active Directory UPN and OU examples with `domena.local` and `DC=domena,DC=local`.
