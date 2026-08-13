@@ -244,8 +244,13 @@ module.exports.createJiraProtocolService = function (options) {
                     autoOpen: true
                 });
                 updateProgress(requestId, 100, "Ready", "ready");
+                var fallbackReason = text(pdf && pdf.sirkFallbackReason, 1200);
+                var message = text(rendered.message, 2000) || "Jira Asset Protocol is ready.";
+                if (fallbackReason) {
+                    message += " Uwaga: wygenerowano uproszczony (niesformatowany) PDF, ponieważ renderer stylizowanego dokumentu zawiódł: " + fallbackReason;
+                }
                 return {
-                    message: text(rendered.message, 2000) || "Jira Asset Protocol is ready.",
+                    message: message,
                     output: protocolText,
                     rawOutput: protocolText,
                     data: rendered.data && typeof rendered.data === "object" ? rendered.data : rendered,

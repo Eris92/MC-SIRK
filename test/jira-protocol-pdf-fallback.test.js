@@ -29,7 +29,9 @@ var pdfTextRenderer = require(path.join(root, "server/core/pdf-text-renderer.js"
                 assert.ok(html.indexOf("styled protocol") >= 0);
                 assert.ok(options && options.fallbackText.indexOf("PROTOKOL PRZEKAZANIA SPRZETU") >= 0,
                     "Protocol service must pass canonical protocol text to the single PDF renderer owner.");
-                return Promise.resolve(pdfTextRenderer.renderTextPdf(options.fallbackText));
+                var pdf = pdfTextRenderer.renderTextPdf(options.fallbackText);
+                pdf.sirkFallbackReason = "edge-headless: no usable browser executable found";
+                return Promise.resolve(pdf);
             },
             executor: {
                 execute: function () {
@@ -73,6 +75,8 @@ var pdfTextRenderer = require(path.join(root, "server/core/pdf-text-renderer.js"
         var pdf = fs.readFileSync(artifactPath);
         assert.ok(pdf.length >= 100 && pdf.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0,
             "Renderer-owned fallback must persist valid PDF bytes.");
+        assert.ok(result.message.indexOf("edge-headless: no usable browser executable found") >= 0,
+            "A renderer-owned fallback reason must surface in the result message instead of being silently swallowed.");
 
         console.log("Jira protocol delegates one renderer-owned PDF fallback contract: OK");
     } finally {
