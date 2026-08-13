@@ -1,3 +1,10 @@
+## 0.1.1-dev.96 - 2026-08-13
+
+- Move the Jira cache administration scripts from `Jira` to `settings/Jira`.
+- Keep the persisted Jira JSON cache files in their existing runtime location.
+
+Current development notes: `docs/releases/0.1.1-dev.96.md`.
+
 ## 0.1.1-dev.95 - 2026-08-13
 
 - Complete the Jira user cache freshness check before opening the protocol wizard.

@@ -84,7 +84,7 @@ var protocol = {
     ]
 };
 var cache = {
-    path: "Jira/Jira Cache Assets.ps1",
+    path: "settings/Jira/Jira Cache Assets.ps1",
     label: "Cache Jira - sprzęt",
     extraHeaders: ["SirkWorkflow: JiraAssetsCache"],
     variables: [{ name: "Force", label: "Wymuś odświeżenie", control: "switch", defaultValue: "false" }]
