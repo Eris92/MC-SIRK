@@ -1,3 +1,11 @@
+## 0.1.1-dev.79 - 2026-08-13
+
+- Recognize Jira responsible-person assignment attributes such as `Osoba_odpowiedzialna` when Jira returns the selected-user relationship as plain values instead of structured references.
+- Preserve the proven dev.75 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope, compact cache v4, bounded pagination/concurrency, identity-object exclusion and PDF lifecycle unchanged.
+- Add a focused regression proving `Komputer` and `Monitor` assigned to the selected user are returned while another user's `Tablet` remains excluded.
+
+Current development notes: `docs/releases/0.1.1-dev.79.md`.
+
 ## 0.1.1-dev.75 - 2026-08-12
 
 - Restore the canonical Jira Asset Protocol and Jira Assets cache AQL to the last real-smoke-working dev.64 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` scope after dev.65-dev.74 workspace-wide matching attempts still left `Sprzęt do protokołu` empty.

@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.79",
+    "date": "2026-08-13",
+    "summary": "Recognize responsible-person Jira assignment attributes so heterogeneous equipment remains bound to the selected user without widening the proven dev75 source scope.",
+    "notes": "docs/releases/0.1.1-dev.79.md"
+  },
+  {
     "version": "0.1.1-dev.75",
     "date": "2026-08-12",
     "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
@@ -220,7 +226,7 @@
       "Bump the pre-1.0 development revision after real dev.39 Network Settings and Admin theme failures.",
       "Let only the trusted Network Settings built-in reach MeshAgent as native type-2 UserOnly instead of the shared script-oriented Scheduled Task wrapper, preserving route and Shell Properties semantics.",
       "Observe the real Modern MeshCentral theme stylesheet href/load signal in the existing Admin theme owner while retaining Classic fallback, form state and F5 recovery.",
-      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release."
+      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no automatic tag or GitHub Release."
     ]
   },
   {
