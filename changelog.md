@@ -1,9 +1,14 @@
+## 0.1.1-dev.91 - 2026-08-13
+
+- Stop automatically opening Jira protocol PDFs after generation.
+- Keep PDF access exclusively behind explicit `Open PDF` and `Download PDF` actions, including for historical artifacts with the old flag.
+
+Current development notes: `docs/releases/0.1.1-dev.91.md`.
+
 ## 0.1.1-dev.90 - 2026-08-13
 
 - Always build the visible Jira protocol equipment table from normalized `result.data.assets`.
 - Keep historical or stale printable-text output only in `Debug / raw output`.
-
-Current development notes: `docs/releases/0.1.1-dev.90.md`.
 
 ## 0.1.1-dev.89 - 2026-08-13
 

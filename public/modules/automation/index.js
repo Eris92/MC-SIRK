@@ -7,7 +7,6 @@
     var treeState = { selectedRoot: "", selectedScript: "", expanded: {} };
     var outputs = Object.create(null);
     var progressSequence = 0;
-    var openedArtifacts = new Set();
     var tools = window.SharedScriptTools.create({
         storageKey: "sirkPlatform.myscripts.preferences",
         deepLinkParameter: "myscript"
@@ -188,15 +187,6 @@
         resultHost.firstChild.textContent = message;
     }
 
-    function openArtifactOnce(request) {
-        var artifact = pdfArtifacts(request).filter(function (item) { return item.autoOpen === true; })[0];
-        if (!artifact) return;
-        var key = String(artifact.requestId) + ":" + String(artifact.id);
-        if (openedArtifacts.has(key)) return;
-        openedArtifacts.add(key);
-        window.open(artifactUrl(artifact, "open"), "_blank", "noopener");
-    }
-
     function renderProtocolProgress(resultHost, request, progress) {
         resultHost.innerHTML = "";
         resultHost.classList.remove("mc-shared-error");
@@ -227,7 +217,6 @@
             outputs[script.path] = current;
             if (["completed", "failed", "rejected", "superseded"].indexOf(String(current.status || "")) >= 0) {
                 renderResult(resultHost, current);
-                if (current.status === "completed") openArtifactOnce(current);
                 if (button) button.disabled = false;
                 sync(shell);
                 return;

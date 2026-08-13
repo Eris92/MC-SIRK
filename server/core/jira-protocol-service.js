@@ -262,7 +262,7 @@ module.exports.createJiraProtocolService = function (options) {
                     data: pdf,
                     fileName: "jira-protocol-" + requestId + ".pdf",
                     label: "Open PDF",
-                    autoOpen: true
+                    autoOpen: false
                 });
                 updateProgress(requestId, 100, "Ready", "ready");
                 var fallbackReason = text(pdf && pdf.sirkFallbackReason, 1200);
