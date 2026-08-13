@@ -186,7 +186,7 @@ assert.ok(dialog.indexOf('row.classList.add("mc-parameter-dialog-fit-options")')
 assert.ok(toolbar.indexOf('.mc-script-form-row>input.mc-definition-input[type=checkbox]{width:1rem;min-width:1rem;max-width:1rem;height:1rem;min-height:1rem;padding:0;box-sizing:border-box;flex:0 0 1rem;justify-self:start}') >= 0,
     "Shared switch controls must keep square geometry instead of inheriting the full-width text-input box on browser-specific themes or DPI settings.");
 assert.ok(sharedUi.indexOf('.mc-parameter-checklist-item{display:grid;grid-template-columns:20px minmax(0,1fr);gap:7px;align-items:center;padding:6px;cursor:pointer}') >= 0 &&
-    sharedUi.indexOf('.mc-parameter-checklist-item input{margin:0;align-self:center}') >= 0,
-    "Every checklist radio/checkbox dot must remain vertically aligned with its option text across browser and DPI differences.");
+    sharedUi.indexOf('.mc-parameter-checklist-item input{position:relative;top:-1px;margin:0;align-self:center}') >= 0,
+    "Every checklist radio/checkbox dot must remain vertically aligned and optically raised with its option text across browser and DPI differences.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");

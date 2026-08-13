@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.94",
+    "date": "2026-08-13",
+    "summary": "Raise shared checklist controls by one pixel for optical text alignment.",
+    "notes": "docs/releases/0.1.1-dev.94.md"
+  },
+  {
     "version": "0.1.1-dev.93",
     "date": "2026-08-13",
     "summary": "Align shared checklist controls on one axis with their option text.",
