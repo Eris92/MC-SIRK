@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.86",
+    "date": "2026-08-13",
+    "summary": "Prefetch Jira equipment and show the protocol checklist atomically without an empty modal paint or duplicate request.",
+    "notes": "docs/releases/0.1.1-dev.86.md"
+  },
+  {
     "version": "0.1.1-dev.85",
     "date": "2026-08-13",
     "summary": "Use neutral LOGO fallback branding when no custom protocol logo is configured.",

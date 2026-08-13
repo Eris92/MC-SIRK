@@ -44,12 +44,13 @@
             return provider(dynamicVariable, merged, item);
         };
     }
-    function runStep(options, item, baseValues, primaryLabel) {
+    function runStep(options, item, baseValues, primaryLabel, providerOverride) {
+        var provider = arguments.length >= 5 ? providerOverride : providerFor(baseValues, options.resolveOptions);
         return originalOpen({
             item: item,
             trigger: options.trigger,
             primaryLabel: primaryLabel,
-            resolveOptions: providerFor(baseValues, options.resolveOptions)
+            resolveOptions: provider
         });
     }
     function runWizard(options) {
@@ -112,7 +113,14 @@
         return runStep(options, userStep, {}, "Next").then(function (userValues) {
                 if (userValues == null) return null;
                 var selectedUser = Object.assign({}, userValues);
-                return runStep(options, assetStep, selectedUser, "Next").then(function (assetValues) {
+                var assetProvider = providerFor(selectedUser, options.resolveOptions);
+                var readyOptions = typeof assetProvider === "function" ?
+                    Promise.resolve(assetProvider(assetStep.variables[0], {}, assetStep)) :
+                    Promise.resolve(assetStep.variables[0].options || []);
+                return readyOptions.then(function (optionsValue) {
+                    assetStep.variables[0].options = Array.isArray(optionsValue) ? optionsValue.slice() : [];
+                    return runStep(options, assetStep, selectedUser, "Next", null);
+                }).then(function (assetValues) {
                     if (assetValues == null) return null;
                     var accumulated = Object.assign({}, selectedUser, assetValues);
                     return runStep(options, protocolStep, accumulated, options.primaryLabel || (item.requiresApproval ? "Request" : "Run")).then(function (protocolValues) {

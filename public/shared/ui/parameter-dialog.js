@@ -218,7 +218,9 @@
                 optionHost.id = optionHostId;
                 optionHost.className = "mc-parameter-checklist";
                 row.appendChild(optionHost);
-                if (listMode && kind === "select") setChecklistOptions(optionHost, control, variable.options || [], true);
+                if ((kind === "assetmulti" && Array.isArray(variable.options)) || (listMode && kind === "select")) {
+                    setChecklistOptions(optionHost, control, variable.options || [], listMode);
+                }
             } else if (kind === "switch") {
                 control.type = "checkbox";
                 control.checked = checkedDefault(variable);
@@ -304,7 +306,8 @@
             if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") window.MeshThemeAdapter.control(record.control);
         });
 
-        var provider = typeof options.resolveOptions === "function" ? options.resolveOptions : sharedOptionProvider;
+        var provider = options.resolveOptions === null ? null :
+            (typeof options.resolveOptions === "function" ? options.resolveOptions : sharedOptionProvider);
         var trigger = options.trigger || document.activeElement;
         var primaryLabel = text(options.primaryLabel || (item.requiresApproval ? "Request" : "Run"));
         var originalSubmitText = readButtonText(submit);

@@ -13,6 +13,10 @@ var calls = [];
 var providerCalls = [];
 var provider = function (variable, values) {
     providerCalls.push({ name: variable.name, values: Object.assign({}, values) });
+    if (variable.name === "PcName") return Promise.resolve([
+        { value: "PC-01", label: "PC-01" },
+        { value: "PHONE-02", label: "PHONE-02" }
+    ]);
     return Promise.resolve([]);
 };
 var tools = {
@@ -26,9 +30,11 @@ var tools = {
             });
         }
         if (label === "Sprzęt do protokołu") {
-            return Promise.resolve(options.resolveOptions({ name: "PcName", control: "assetmulti" }, {}, options.item)).then(function () {
-                return { PcName: "PC-01;PHONE-02" };
-            });
+            assert.strictEqual(options.resolveOptions, null,
+                "Asset options must be prefetched before the native modal is shown.");
+            assert.strictEqual(options.item.variables[0].options.length, 2,
+                "The asset modal must receive its complete static checklist atomically.");
+            return Promise.resolve({ PcName: "PC-01;PHONE-02" });
         }
         if (/ - Protocol$/.test(label)) {
             return Promise.resolve(options.resolveOptions({ name: "ItPerson", control: "user" }, {}, options.item)).then(function () {
@@ -93,6 +99,8 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.strictEqual(calls[1].item.variables[0].control, "assetmulti");
     assert.strictEqual(calls[1].item.variables[0].label, "Sprzęt");
     assert.strictEqual(calls[1].item.variables[0].hideLabel, true);
+    assert.strictEqual(calls[1].item.variables[0].options.length, 2,
+        "The visible equipment step must already contain prefetched options.");
     assert.deepStrictEqual(Array.prototype.map.call(calls[2].item.variables, function (item) { return item.name; }), ["IsTransferProtocol", "ItPerson"]);
     assert.strictEqual(calls[2].item.variables[0].control, "select");
     assert.strictEqual(calls[2].item.variables[0].listMode, true);

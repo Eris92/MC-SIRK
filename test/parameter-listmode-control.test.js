@@ -13,6 +13,10 @@ assert.ok(source.indexOf('var control = document.createElement(listMode ? "input
     "listMode must choose INPUT before checklist code assigns type=hidden.");
 assert.ok(source.indexOf('if (kind === "assetmulti" || listMode) {') >= 0,
     "assetmulti and listMode must share the hidden-input checklist path.");
+assert.ok(source.indexOf('(kind === "assetmulti" && Array.isArray(variable.options))') >= 0,
+    "A prefetched assetmulti list must render into the detached dialog before the modal is shown.");
+assert.ok(source.indexOf('var provider = options.resolveOptions === null ? null :') >= 0,
+    "A wizard step with prefetched options must be able to disable the shared dynamic provider explicitly.");
 assert.ok(source.indexOf('control.type = "hidden";') >= 0,
     "Checklist state owner must remain a hidden input.");
 assert.ok(source.indexOf('var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);') >= 0,
