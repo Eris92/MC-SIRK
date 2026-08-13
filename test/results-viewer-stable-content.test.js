@@ -149,6 +149,8 @@ assert.strictEqual(source.indexOf('"extra-large"'), -1,
 var applyCardLine = themeSource.split('\n').filter(function (line) { return line.indexOf('applyCard);') >= 0 && line.indexOf('.mc-move-dialog') >= 0; })[0] || '';
 assert.strictEqual(applyCardLine.indexOf('.mc-results-viewer'), -1,
     "MeshThemeAdapter must not turn the Results content root into a second card/surface inside the native modal.");
+assert.strictEqual(applyCardLine.indexOf('.mc-results-debug'), -1,
+    "Debug/raw output must share the Results surface instead of receiving a visually different nested card.");
 assert.ok(themeSource.indexOf('PLUGIN_ROOT_SELECTOR') >= 0 && themeSource.indexOf('.mc-results-viewer') >= 0,
     "Results must remain a plugin root so native controls/tables inside it still receive shared theme ownership.");
 

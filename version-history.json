@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.92",
+    "date": "2026-08-13",
+    "summary": "Unify Debug/raw output with the standard Results surface.",
+    "notes": "docs/releases/0.1.1-dev.92.md"
+  },
+  {
     "version": "0.1.1-dev.91",
     "date": "2026-08-13",
     "summary": "Stop automatically opening generated Jira protocol PDFs.",
