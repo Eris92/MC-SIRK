@@ -1,3 +1,11 @@
+## 0.1.1-dev.104 - 2026-08-13
+
+- Verify that the running backend confirms each submitted integration secret before showing a successful save.
+- Detect an outdated runtime that does not understand SMSAPI and SMTP Relay settings.
+- Immediately update `Required`/`Configured` placeholders after a confirmed save.
+
+Current development notes: `docs/releases/0.1.1-dev.104.md`.
+
 ## 0.1.1-dev.103 - 2026-08-13
 
 - Move the inner Settings gear circle approximately one rendered pixel lower for a visually centered cog shape.

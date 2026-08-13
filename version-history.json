@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.104",
+    "date": "2026-08-13",
+    "summary": "Confirm integration secret saves and detect stale plugin backends.",
+    "notes": "docs/releases/0.1.1-dev.104.md"
+  },
+  {
     "version": "0.1.1-dev.103",
     "date": "2026-08-13",
     "summary": "Move the Settings gear center approximately one rendered pixel lower.",

@@ -163,6 +163,14 @@
             status.className = "mc-admin-save-status";
             status.textContent = "Saving...";
 
+            var requestedSecrets = {
+                jiraToken: jiraToken.value !== "",
+                smsApiToken: smsToken.value !== "",
+                smsExternalToken: smsExternalToken.value !== "",
+                adPassword: adPassword.value !== "",
+                entraClientSecret: clientSecret.value !== ""
+            };
+
             var integrations = clone(values);
             integrations.jira = Object.assign({}, jira, {
                 url: jiraUrl.value,
@@ -213,12 +221,37 @@
                     return result;
                 });
             }).then(function (result) {
-                window.SirkPlatformAdminData.integrations = result.integrations;
+                var saved = result.integrations || {};
+                var savedValues = saved.values || {};
+                var savedConfigured = saved.configured || {};
+                if (!savedValues.sms || !savedValues.smtp) {
+                    throw new Error("The running SIRKPortal backend is outdated. Reload the plugin and save integrations again.");
+                }
+                var secretLabels = {
+                    jiraToken: "Jira API token",
+                    smsApiToken: "SMSAPI OAuth token",
+                    smsExternalToken: "External send API token",
+                    adPassword: "AD password",
+                    entraClientSecret: "Entra client secret"
+                };
+                var missingConfirmation = Object.keys(requestedSecrets).filter(function (name) {
+                    return requestedSecrets[name] && savedConfigured[name] !== true;
+                });
+                if (missingConfirmation.length) {
+                    throw new Error(secretLabels[missingConfirmation[0]] + " was not confirmed as saved by the server.");
+                }
+                window.SirkPlatformAdminData.integrations = saved;
+                configured = savedConfigured;
                 jiraToken.value = "";
                 smsToken.value = "";
                 smsExternalToken.value = "";
                 adPassword.value = "";
                 clientSecret.value = "";
+                jiraToken.placeholder = configured.jiraToken ? "Configured - leave blank to keep" : "Required";
+                smsToken.placeholder = configured.smsApiToken ? "Configured - leave blank to keep" : "Required";
+                smsExternalToken.placeholder = configured.smsExternalToken ? "Configured - leave blank to keep" : "Optional, minimum 32 characters";
+                adPassword.placeholder = configured.adPassword ? "Configured - leave blank to keep" : "Required";
+                clientSecret.placeholder = configured.entraClientSecret ? "Configured - leave blank to keep" : "Required";
                 status.className = "mc-admin-save-status";
                 status.textContent = "Saved";
             }).catch(function (error) {
