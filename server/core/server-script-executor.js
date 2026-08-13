@@ -88,6 +88,8 @@ module.exports.createServerScriptExecutor = function (options) {
             environment.MYSCRIPTS_AD_DOMAIN = String(ad.domain || "");
             environment.MYSCRIPTS_AD_LOGIN = String(ad.login || "");
             environment.MYSCRIPTS_AD_PASSWORD = String(ad.password || "");
+            environment.MYSCRIPTS_AD_UPN_SUFFIX = String(ad.upnSuffix || ad.domain || "");
+            environment.MYSCRIPTS_AD_USER_LOCATIONS_JSON = JSON.stringify(Array.isArray(ad.userLocations) ? ad.userLocations : []);
         }
         if (enabled("entra")) {
             var entra = context.integrations.get("entra");
@@ -104,6 +106,13 @@ module.exports.createServerScriptExecutor = function (options) {
             environment.MYSCRIPTS_JIRA_PROJECT_KEY = String(jira.projectKey || "");
             environment.MYSCRIPTS_JIRA_WORKSPACE_ID = String(jira.workspaceId || "");
             environment.MYSCRIPTS_JIRA_CLOUD_ID = String(jira.cloudId || "");
+        }
+        if (enabled("sms")) {
+            var sms = context.integrations.get("sms");
+            environment.MYSCRIPTS_SMS_API_URL = String(sms.url || "");
+            environment.MYSCRIPTS_SMS_API_TOKEN = String(sms.token || "");
+            environment.MYSCRIPTS_SMS_SENDER = String(sms.sender || "");
+            environment.MYSCRIPTS_SMS_VMS_LECTOR = String(sms.vmsLector || "ewa");
         }
         if (enabled("defender")) {
             var defender = context.integrations.get("defender");

@@ -24,7 +24,7 @@ function array(value) {
 }
 
 var HEALTH_STATES = ["ok", "warning", "critical"];
-var HEALTH_NAMES = ["ad", "entra", "jira", "defender", "zabbix"];
+var HEALTH_NAMES = ["ad", "entra", "jira", "sms", "defender", "zabbix"];
 
 function normalizeHealth(value) {
     value = object(value);
@@ -59,6 +59,8 @@ module.exports.createIntegrationService = function (options) {
         if (name === "ad") result.password = secretValue.adPassword || "";
         if (name === "entra") result.clientSecret = secretValue.entraClientSecret || "";
         if (name === "jira") result.token = secretValue.jiraToken || "";
+        if (name === "sms") result.token = secretValue.smsApiToken || "";
+        if (name === "sms") result.externalToken = secretValue.smsExternalToken || "";
         if (name === "defender") result.clientSecret = secretValue.defenderClientSecret || "";
         if (name === "zabbix") {
             result.password = secretValue.zabbixPassword || "";
@@ -75,6 +77,8 @@ module.exports.createIntegrationService = function (options) {
             adPassword: !!secretValue.adPassword,
             entraClientSecret: !!secretValue.entraClientSecret,
             jiraToken: !!secretValue.jiraToken,
+            smsApiToken: !!secretValue.smsApiToken,
+            smsExternalToken: !!secretValue.smsExternalToken,
             defenderClientSecret: !!secretValue.defenderClientSecret,
             zabbixPassword: !!secretValue.zabbixPassword,
             zabbixToken: !!secretValue.zabbixToken,
@@ -87,6 +91,7 @@ module.exports.createIntegrationService = function (options) {
             jira: !!(
                 current.jira && current.jira.url && current.jira.email && secretValue.jiraToken
             ),
+            sms: !!(current.sms && current.sms.url && secretValue.smsApiToken),
             defender: !!(
                 current.defender && current.defender.tenantId &&
                 current.defender.clientId && secretValue.defenderClientSecret
@@ -146,12 +151,18 @@ module.exports.createIntegrationService = function (options) {
         var ad = object(payload.ad);
         var entra = object(payload.entra);
         var jira = object(payload.jira);
+        var sms = object(payload.sms);
         var defender = object(payload.defender);
         var zabbix = object(payload.zabbix);
 
         result.ad = {
             domain: text(ad.domain, 300),
             login: text(ad.login, 500),
+            upnSuffix: text(ad.upnSuffix, 300),
+            userLocations: array(ad.userLocations).slice(0, 100).map(function (item) {
+                item = object(item);
+                return { name: text(item.name, 100), dn: text(item.dn, 1000) };
+            }).filter(function (item) { return item.name && /^OU=.+,DC=.+/i.test(item.dn); }),
             health: normalizeHealth(ad.health)
         };
         result.entra = {
@@ -174,6 +185,13 @@ module.exports.createIntegrationService = function (options) {
             approvalTransitionId: text(jira.approvalTransitionId, 100),
             closeTransitionId: text(jira.closeTransitionId, 100),
             health: normalizeHealth(jira.health)
+        };
+        result.sms = {
+            url: text(sms.url, 1000).replace(/\/+$/, "") || "https://api.smsapi.pl",
+            sender: text(sms.sender, 11),
+            vmsLector: ["agnieszka", "ewa", "jacek", "jan", "maja"].indexOf(String(sms.vmsLector || "").toLowerCase()) >= 0 ? String(sms.vmsLector).toLowerCase() : "ewa",
+            verifyTls: asBoolean(sms.verifyTls, true),
+            health: normalizeHealth(sms.health)
         };
         result.defender = {
             tenantId: text(defender.tenantId, 200),
@@ -204,6 +222,7 @@ module.exports.createIntegrationService = function (options) {
         if (result.jira.url && !/^https:\/\//i.test(result.jira.url)) {
             throw new Error("Jira URL must use HTTPS.");
         }
+        if (!/^https:\/\//i.test(result.sms.url)) throw new Error("SMSAPI URL must use HTTPS.");
         if (result.zabbix.url && !/^https?:\/\//i.test(result.zabbix.url)) {
             throw new Error("Zabbix URL must use HTTP or HTTPS.");
         }
@@ -219,6 +238,9 @@ module.exports.createIntegrationService = function (options) {
         var knownGroups = shared.getUserGroups(parent).map(function (group) { return group.id; });
         var normalized = normalizePublic(payload.integrations, knownGroups);
         var secretInput = object(payload.secrets);
+        if (secretInput.smsExternalToken && String(secretInput.smsExternalToken).trim().length < 32) {
+            return Promise.reject(new Error("External SMS API token must contain at least 32 characters."));
+        }
 
         return settings.update(function (current) {
             current.integrations = normalized;
@@ -229,6 +251,8 @@ module.exports.createIntegrationService = function (options) {
                 "adPassword",
                 "entraClientSecret",
                 "jiraToken",
+                "smsApiToken",
+                "smsExternalToken",
                 "defenderClientSecret",
                 "zabbixPassword",
                 "zabbixToken"

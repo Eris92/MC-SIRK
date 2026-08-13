@@ -14,6 +14,7 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | architektura katalogów i loaderów | `docs/REPOSITORY-LAYOUT.md` |
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
 | release/development notes | `docs/releases/README.md` |
+| SMSAPI, Voice SMS i operacje kont Active Directory | `docs/SMSAPI-AD.md` |
 | wersja, bump, tag, release | `docs/agent/14-Agent-Wersjonowanie-Pre1.md` |
 | reguły runtime/pluginu | `docs/agent/10-Agent-MeshCentral-Plugin.md`, `docs/agent/11-Agent-SIRK-Portal.md` |
 | wydajność, reuse, duplikacja | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |

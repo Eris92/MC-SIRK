@@ -74,6 +74,15 @@ function jiraAssetPolicy(headers) {
     return policy;
 }
 
+function variableOptionSources(headers) {
+    var result = Object.create(null);
+    (Array.isArray(headers) ? headers : []).forEach(function (header) {
+        var match = String(header || "").match(/^SirkVariableOptionSource\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([a-z0-9-]+)\s*$/i);
+        if (match) result[match[1].toLowerCase()] = match[2].toLowerCase();
+    });
+    return result;
+}
+
 function splitHeader(sourceText) {
     var newline = String(sourceText || "").indexOf("\r\n") >= 0 ? "\r\n" : "\n";
     var lines = String(sourceText || "").replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -155,11 +164,21 @@ function decorateScript(base, script) {
     result.extraHeaders = sirkHeaders(source);
 
     var policy = jiraAssetPolicy(result.extraHeaders);
+    var optionSources = variableOptionSources(result.extraHeaders);
     if (policy.aql || policy.labelAttribute || policy.maxResults || policy.userVariable) {
         result.variables = (result.variables || []).map(function (variable) {
             if (!variable || variable.control !== "asset") return variable;
             var decorated = shared.copy(variable);
             decorated.jiraAsset = shared.copy(policy);
+            return decorated;
+        });
+    }
+    if (Object.keys(optionSources).length) {
+        result.variables = (result.variables || []).map(function (variable) {
+            var source = variable && optionSources[String(variable.name || "").toLowerCase()];
+            if (!source) return variable;
+            var decorated = shared.copy(variable);
+            decorated.optionSource = source;
             return decorated;
         });
     }

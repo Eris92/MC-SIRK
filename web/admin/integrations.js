@@ -77,6 +77,7 @@
         var values = snapshot.values || {};
         var configured = snapshot.configured || {};
         var jira = values.jira || {};
+        var sms = values.sms || {};
         var ad = values.ad || {};
         var entra = values.entra || {};
 
@@ -95,11 +96,41 @@
         var adBox = disclosure(card, "Active Directory");
         var adDomain = field(adBox, "AD domain", ad.domain || "");
         var adLogin = field(adBox, "AD login", ad.login || "");
+        var adUpnSuffix = field(adBox, "UPN suffix", ad.upnSuffix || ad.domain || "", { placeholder: "investa.pl" });
         var adPassword = field(adBox, "AD password", "", {
             type: "password",
             placeholder: configured.adPassword ? "Configured - leave blank to keep" : "Required"
         });
         adPassword.autocomplete = "new-password";
+        var locationsTitle = element("div", "mc-admin-field-label", "Users locations");
+        adBox.appendChild(locationsTitle);
+        var locationsHost = element("div", "mc-admin-locations");
+        adBox.appendChild(locationsHost);
+        var locationRows = [];
+        function addLocation(item) {
+            item = item || {};
+            var row = element("div", "mc-admin-location-row");
+            var name = document.createElement("input"); name.className = "mc-admin-input"; name.placeholder = "New"; name.value = item.name || "";
+            var dn = document.createElement("input"); dn.className = "mc-admin-input"; dn.placeholder = "OU=_NewUsers,OU=Business,DC=investa,DC=pl"; dn.value = item.dn || "";
+            var remove = element("button", "mc-admin-secondary", "Remove"); remove.type = "button";
+            remove.onclick = function () { row.remove(); locationRows = locationRows.filter(function (entry) { return entry.row !== row; }); };
+            row.appendChild(name); row.appendChild(dn); row.appendChild(remove); locationsHost.appendChild(row);
+            locationRows.push({ row: row, name: name, dn: dn });
+        }
+        (ad.userLocations || []).forEach(addLocation);
+        var addLocationButton = element("button", "mc-admin-secondary", "Add location"); addLocationButton.type = "button"; addLocationButton.onclick = function () { addLocation({}); };
+        adBox.appendChild(addLocationButton);
+
+        var smsBox = disclosure(card, "SMS / Voice SMS (SMSAPI.pl)");
+        var smsUrl = field(smsBox, "SMSAPI URL", sms.url || "https://api.smsapi.pl");
+        var smsSender = field(smsBox, "SMS sender", sms.sender || "", { placeholder: "Optional approved sender" });
+        var smsLector = field(smsBox, "Voice SMS lector", sms.vmsLector || "ewa", { placeholder: "ewa, maja, jan, jacek, agnieszka" });
+        var smsToken = field(smsBox, "SMSAPI OAuth token", "", { type: "password", placeholder: configured.smsApiToken ? "Configured - leave blank to keep" : "Required" });
+        smsToken.autocomplete = "new-password";
+        var smsExternalToken = field(smsBox, "External send API token", "", { type: "password", placeholder: configured.smsExternalToken ? "Configured - leave blank to keep" : "Optional, minimum 32 characters" });
+        smsExternalToken.minLength = 32;
+        smsExternalToken.autocomplete = "new-password";
+        var smsVerifyTls = checkbox(smsBox, "Verify SMSAPI TLS certificate", sms.verifyTls !== false);
 
         var entraBox = disclosure(card, "AAD / Entra ID");
         var tenantId = field(entraBox, "Tenant ID", entra.tenantId || "");
@@ -133,8 +164,11 @@
             });
             integrations.ad = Object.assign({}, ad, {
                 domain: adDomain.value,
-                login: adLogin.value
+                login: adLogin.value,
+                upnSuffix: adUpnSuffix.value,
+                userLocations: locationRows.filter(function (row) { return row.row.isConnected; }).map(function (row) { return { name: row.name.value, dn: row.dn.value }; })
             });
+            integrations.sms = Object.assign({}, sms, { url: smsUrl.value, sender: smsSender.value, vmsLector: smsLector.value, verifyTls: smsVerifyTls.checked });
             integrations.entra = Object.assign({}, entra, {
                 tenantId: tenantId.value,
                 clientId: clientId.value
@@ -142,6 +176,8 @@
 
             var secrets = {};
             if (jiraToken.value) secrets.jiraToken = jiraToken.value;
+            if (smsToken.value) secrets.smsApiToken = smsToken.value;
+            if (smsExternalToken.value) secrets.smsExternalToken = smsExternalToken.value;
             if (adPassword.value) secrets.adPassword = adPassword.value;
             if (clientSecret.value) secrets.entraClientSecret = clientSecret.value;
 
@@ -169,6 +205,8 @@
             }).then(function (result) {
                 window.SirkPlatformAdminData.integrations = result.integrations;
                 jiraToken.value = "";
+                smsToken.value = "";
+                smsExternalToken.value = "";
                 adPassword.value = "";
                 clientSecret.value = "";
                 status.className = "mc-admin-save-status";

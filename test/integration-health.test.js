@@ -23,12 +23,13 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
         entra: { health: { status: "warning", messagePl: "Problemy z hostami", messageEn: "Host retrieval problems" } },
         jira: { health: { status: "invalid", messagePl: "\u0000test" } },
         defender: { health: { status: "critical", messagePl: "Awaria", messageEn: "Failure" } },
-        zabbix: { health: { status: "ok" } }
+        zabbix: { health: { status: "ok" } },
+        sms: { health: { status: "ok" } }
     }
 }).then(function () {
     var summary = service.healthSummary();
     assert.strictEqual(summary.status, "critical");
-    assert.strictEqual(summary.items.length, 5);
+    assert.strictEqual(summary.items.length, 6);
     summary.items.forEach(function (item) {
         assert.strictEqual(item.configured, false);
         assert.strictEqual(item.status, "critical");
@@ -40,14 +41,16 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
             entra: { tenantId: "tenant", clientId: "entra-client", health: { status: "warning", messagePl: "Problemy z hostami", messageEn: "Host retrieval problems" } },
             jira: { url: "https://example.atlassian.net", email: "svc@example.test", projectKey: "OPS", health: { status: "invalid", messagePl: "\u0000test" } },
             defender: { tenantId: "tenant", clientId: "defender-client", health: { status: "critical", messagePl: "Awaria", messageEn: "Failure" } },
-            zabbix: { url: "https://zabbix.example.test", username: "svc-zabbix", health: { status: "ok" } }
+            zabbix: { url: "https://zabbix.example.test", username: "svc-zabbix", health: { status: "ok" } },
+            sms: { url: "https://api.smsapi.pl", health: { status: "ok" } }
         },
         secrets: {
             adPassword: "test-ad-password",
             entraClientSecret: "test-entra-secret",
             jiraToken: "test-jira-token",
             defenderClientSecret: "test-defender-secret",
-            zabbixPassword: "test-zabbix-password"
+            zabbixPassword: "test-zabbix-password",
+            smsApiToken: "test-sms-token"
         }
     });
 }).then(function () {

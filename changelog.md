@@ -1,3 +1,11 @@
+## 0.1.1-dev.98 - 2026-08-13
+
+- Add server-side SMSAPI.pl SMS and Voice SMS sending, including multi-recipient delivery and a separately authenticated external endpoint.
+- Add approval-protected AD password reset/unlock/SMS and account creation/SMS workflows with configurable OU locations.
+- Allocate account logins as `i.nazwisko`, then extend the first-name prefix on collisions and finally use a numeric suffix.
+
+Current development notes: `docs/releases/0.1.1-dev.98.md`.
+
 ## 0.1.1-dev.97 - 2026-08-13
 
 - Add an internal `_Scheduler` BAT installer for an hourly Windows Jira cache refresh task.

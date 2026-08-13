@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.97`
+Current version: `0.1.1-dev.98`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -50,6 +50,9 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
+- `server/core/sms-service.js` — server-side owner wysyłki SMS i Voice SMS przez SMSAPI.pl, w tym multi-recipient i maskowanie numerów w output;
+- `server/core/ad-directory-service.js` — neutralne dynamiczne opcje użytkowników AD i dozwolonych lokalizacji OU bez publikowania numerów `mobile`;
+- `server/core/sms-external-api.js` — chroniony oddzielnym tokenem endpoint `POST /sirk-sms/v1/send` z limitem 30 żądań/minutę/adres IP;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
 - `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu; brakujący menu node jest tworzony dopiero po zakończeniu bieżącego natywnego `goPageEnd`, a późniejsza rekonsyliacja nie przepisuje niezmienionego widocznego stanu;
 - `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
