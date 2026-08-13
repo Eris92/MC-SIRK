@@ -11,8 +11,8 @@ W panelu `Settings -> Integrations` skonfiguruj:
 Przykładowe lokalizacje użytkowników:
 
 ```text
-New            OU=_NewUsers,OU=Business,DC=investa,DC=pl
-Testowe konta  OU=Test,OU=Business,DC=investa,DC=pl
+New            OU=_NewUsers,OU=Business,DC=domena,DC=local
+Testowe konta  OU=Test,OU=Business,DC=domena,DC=local
 ```
 
 Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwracane do przeglądarki. Po konfiguracji przypisz profile systemowe `AD` i/lub `SMSAPI` do właściwych skryptów przez akcję Credentials.

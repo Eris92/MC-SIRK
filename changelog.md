@@ -1,3 +1,10 @@
+## 0.1.1-dev.102 - 2026-08-13
+
+- Replace company-specific Active Directory UPN and OU examples with `domena.local` and `DC=domena,DC=local`.
+- Keep existing saved integration values unchanged; only empty-field hints and documentation examples change.
+
+Current development notes: `docs/releases/0.1.1-dev.102.md`.
+
 ## 0.1.1-dev.101 - 2026-08-13
 
 - Add a no-authentication SMTP Relay integration under Settings / Integrations.
