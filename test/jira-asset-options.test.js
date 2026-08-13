@@ -12,8 +12,8 @@ var scriptLibraryFactory = require(path.join(root, "server/core/script-confirmat
 var automationServer = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 var automationClient = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
 var adminIntegrations = fs.readFileSync(path.join(root, "web/admin/integrations.js"), "utf8");
-var cacheAssetsSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Assets.ps1"), "utf8");
-var cacheUsersSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Users.ps1"), "utf8");
+var cacheAssetsSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Jira Cache Assets.ps1"), "utf8");
+var cacheUsersSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Jira Cache Users.ps1"), "utf8");
 assert.ok([cacheAssetsSeed, cacheUsersSeed].every(function (source) {
     return /^# VariableSwitch: \$Force, false, Wymuś odświeżenie\|$/m.test(source) &&
         !/Używa świeżego cache|Pobierz ponownie także wtedy|Uses the fresh cache/.test(source);

@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.96",
+    "date": "2026-08-13",
+    "summary": "Move Jira cache administration scripts under settings/Jira without relocating JSON cache data.",
+    "notes": "docs/releases/0.1.1-dev.96.md"
+  },
+  {
     "version": "0.1.1-dev.95",
     "date": "2026-08-13",
     "summary": "Check and refresh 24-hour Jira protocol caches before displaying their wizard lists.",

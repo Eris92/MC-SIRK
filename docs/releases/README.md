@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.96`](0.1.1-dev.96.md) — Jira cache administration scripts moved under `settings/Jira`; JSON cache storage unchanged;
 - [`0.1.1-dev.95`](0.1.1-dev.95.md) — 24-hour Jira user and equipment cache checks completed before their protocol wizard lists open;
 
 - [`0.1.1-dev.94`](0.1.1-dev.94.md) — one-pixel optical lift for shared checklist radio/checkbox controls;
