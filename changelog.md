@@ -1,3 +1,11 @@
+## 0.1.1-dev.107 - 2026-08-13
+
+- Restore the bounded Jira Assets service that dev.82 reverted to dev.63 while preserving all post-dev.82 main changes.
+- Restore paginated user cache v2, compact Assets cache v4, explicit/`Osoba_odpowiedzialna` user binding and bounded 50k/concurrent refresh.
+- Continue Jira Assets paging while `hasMoreResults` is true even when `totalFilterCount` is capped at 1000.
+
+Current development notes: `docs/releases/0.1.1-dev.107.md`.
+
 ## 0.1.1-dev.106 - 2026-08-13
 
 - Resolve PowerShell system credential assignments by the stable `@workflow:*` key used by the credentials UI.
@@ -356,7 +364,7 @@ Current development notes: `docs/releases/0.1.1-dev.42.md`.
 - Real `0.1.1-dev.40` smoke: Network Settings and Admin theme/color remain FAIL; keep #128/#123 open and record dev.40 as ineffective.
 - Network: match the manually proven elevated Administrator context by reusing the single logged-on-user Scheduled Task owner with `RunLevel Highest` only for trusted built-in `network-adapter-properties`; ordinary user commands remain `Limited`, and the proven FolderItem Properties body is unchanged.
 - Admin: derive effective background/color from the first opaque parent surface around native `#p43iframe` instead of assuming parent `body` is the painted page-43 surface; reuse the existing observer/signals and preserve F5/form state.
-- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag or GitHub Release.
+- Dev41 Patch run `31378927708` and canonical runtime Test #558 (`31379084686`) GREEN before bump; final exact-version suite required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.41.md`.
 
