@@ -182,5 +182,7 @@ assert.ok(dialog.indexOf('item.fitOptionWidth === true') >= 0 && toolbar.indexOf
     "Option-width dialogs must expose one scoped intrinsic-width styling contract.");
 assert.ok(dialog.indexOf('row.classList.add("mc-parameter-dialog-fit-options")') >= 0,
     "The intrinsic-width marker must survive MeshCentral's innerHTML-only native modal transfer.");
+assert.ok(toolbar.indexOf('.mc-script-form-row>input.mc-definition-input[type=checkbox]{width:1rem;min-width:1rem;max-width:1rem;height:1rem;min-height:1rem;padding:0;box-sizing:border-box;flex:0 0 1rem;justify-self:start}') >= 0,
+    "Shared switch controls must keep square geometry instead of inheriting the full-width text-input box on browser-specific themes or DPI settings.");
 
 console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");
