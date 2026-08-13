@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.83",
+    "date": "2026-08-13",
+    "summary": "Correct only the Jira protocol PDF invocation with isolated Edge execution, bounded retry and guaranteed direct fallback.",
+    "notes": "docs/releases/0.1.1-dev.83.md"
+  },
+  {
     "version": "0.1.1-dev.82",
     "date": "2026-08-13",
     "summary": "User-directed full-tree restore of the real-smoke-confirmed dev.63 equipment-matching/PDF behavior, reverting dev.64-dev.81.",

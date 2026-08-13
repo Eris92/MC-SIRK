@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.83`](0.1.1-dev.83.md) — isolated Edge PDF invocation with bounded retry and guaranteed direct fallback, preserving dev.82 Jira equipment behavior;
 - [`0.1.1-dev.82`](0.1.1-dev.82.md) — user-directed full-tree restore of the real-smoke-confirmed dev.63 equipment-matching/PDF behavior, reverting dev.64-dev.81;
 - [`0.1.1-dev.63`](0.1.1-dev.63.md) — concise Force-only Jira cache dialogs;
 - [`0.1.1-dev.62`](0.1.1-dev.62.md) — stable workflow credential assignment across script folder moves;
