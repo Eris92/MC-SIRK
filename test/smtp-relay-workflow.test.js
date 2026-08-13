@@ -40,6 +40,10 @@ var integrations = integrationFactory.createIntegrationService({
     assert.throws(function () { return integrations.save({ siteadmin: 0xFFFFFFFF }, {
         integrations: { smtp: { host: "mail relay", port: 25, defaultFrom: "automation@example.test" } }
     }); }, /host is invalid/);
+    var withoutDefaultSender = await integrations.save({ siteadmin: 0xFFFFFFFF }, {
+        integrations: { smtp: { host: "mailrelay.example.test", port: 25, defaultFrom: "" } }
+    });
+    assert.strictEqual(withoutDefaultSender.configured.smtp, true, "SMTP Relay must not require a configured default sender.");
 
     var scriptsRoot = path.join(root, "seed", "MyScripts");
     var library = libraryFactory.createScriptLibrary({ fs: fs, path: path, root: scriptsRoot, readOnly: true, allowWrite: false });
@@ -55,6 +59,8 @@ var integrations = integrationFactory.createIntegrationService({
     assert.ok(/StartsWith\(\$rootPrefix/.test(source), "Attachments must stay inside the configured server root.");
     assert.ok(/MYSCRIPTS_SMTP_MAX_ATTACHMENT_BYTES/.test(source), "Total attachment size must be bounded.");
     assert.ok(/IsBodyHtml/.test(source) && /MailMessage/.test(source) && /SmtpClient/.test(source));
+    assert.ok(/'sirk@localhost'/.test(source), "An omitted script and integration sender must use the neutral fallback address.");
+    assert.ok(/if \(\$port -eq 0\) \{ \$port = 25 \}/.test(source), "An omitted SMTP port must use port 25.");
     assert.strictEqual(source.indexOf("Write-Host"), -1, "Mail content and addresses must not be copied to console output.");
 
     var assignmentNamespace = "script-secrets.myscripts.system-credentials";

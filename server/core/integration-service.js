@@ -92,7 +92,7 @@ module.exports.createIntegrationService = function (options) {
                 current.jira && current.jira.url && current.jira.email && secretValue.jiraToken
             ),
             sms: !!(current.sms && current.sms.url && secretValue.smsApiToken),
-            smtp: !!(current.smtp && current.smtp.host && current.smtp.port && current.smtp.defaultFrom),
+            smtp: !!(current.smtp && current.smtp.host && current.smtp.port),
             defender: !!(
                 current.defender && current.defender.tenantId &&
                 current.defender.clientId && secretValue.defenderClientSecret
