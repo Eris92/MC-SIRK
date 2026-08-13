@@ -9,6 +9,7 @@ var root = path.join(__dirname, "..");
 var factory = require(path.join(root, "server/core/jira-asset-service.js"));
 var protocolSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Asset Protocol.ps1"), "utf8");
 var assetCacheSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Assets.ps1"), "utf8");
+var ANCHOR_AQL = 'objectType in objectTypeAndChildren("Sprzęt użytkownika")';
 var ASSIGNMENT_GRAPH_AQL = 'objectType in objectTypeAndChildren("Sprzęt użytkownika") OR objectType = "Users" OR object HAVING outboundReferences(objectType = "Users") OR object HAVING inboundReferences(objectType = "Users")';
 
 function integration() {
@@ -64,16 +65,16 @@ function objectUserReference(id, displayName) {
 }
 
 (async function () {
-    assert.ok(protocolSeed.indexOf("# SirkJiraAssetAql: " + ASSIGNMENT_GRAPH_AQL) >= 0,
-        "Jira Asset Protocol must retain the working equipment hierarchy and scope reference traversal to the real Users object type.");
+    assert.ok(protocolSeed.indexOf("# SirkJiraAssetAql: " + ANCHOR_AQL) >= 0,
+        "Jira Asset Protocol must keep the last real-smoke-working equipment hierarchy as its static anchor.");
     assert.strictEqual(protocolSeed.indexOf("SirkJiraAssetMaxResults: 5000"), -1,
         "Protocol must retain the existing default bounded selector limit.");
-    assert.ok(assetCacheSeed.indexOf("# SirkJiraAssetAql: " + ASSIGNMENT_GRAPH_AQL) >= 0,
-        "Jira Assets cache must prewarm the same Users-scoped assignment graph as the protocol.");
-    assert.strictEqual(protocolSeed.indexOf("outboundReferences()"), -1,
-        "Canonical protocol must not use an unbounded all-reference source.");
-    assert.strictEqual(protocolSeed.indexOf("inboundReferences()"), -1,
-        "Canonical protocol must not use an unbounded all-reference source.");
+    assert.ok(assetCacheSeed.indexOf("# SirkJiraAssetAql: " + ANCHOR_AQL) >= 0,
+        "Jira Assets cache must keep the same proven static anchor as the protocol.");
+    assert.strictEqual(protocolSeed.indexOf("outboundReferences("), -1,
+        "Canonical script metadata must not broaden the shared anchor with reference traversal.");
+    assert.strictEqual(protocolSeed.indexOf("inboundReferences("), -1,
+        "Canonical script metadata must not broaden the shared anchor with reference traversal.");
     assert.strictEqual(protocolSeed.indexOf("SirkJiraAssetAql: Key is not EMPTY"), -1,
         "Canonical protocol must not return to the failed workspace-wide Key-is-not-empty source.");
 
@@ -180,13 +181,13 @@ function objectUserReference(id, displayName) {
         }, { JiraUser: "acc-1" }, false);
 
         assert.strictEqual(aql, ASSIGNMENT_GRAPH_AQL,
-            "The backend must execute the script-owned Users-scoped assignment graph unchanged.");
+            "The generic backend must still execute a script-owned reference graph unchanged.");
         assert.strictEqual(attributeDefinitionCalls, 0,
             "Top-level AQL objectTypeAttributes must bind entry attribute IDs without slow per-type attribute requests.");
         assert.strictEqual(legacyAssetPayloadReads, 0,
             "A legacy Assets cache must be rejected from its bounded header without parsing the full payload.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
-            "Users-scoped assignment graph must preserve the working PC and add a different object type referenced to the same user.");
+            "Generic assignment graphs must preserve heterogeneous user-bound Assets support.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
             "Identity objects, another user's equipment and unrelated plain identity text must remain excluded.");
         var persistedAssets = JSON.parse(fs.readFileSync(assetService.assetCachePath, "utf8"));
@@ -200,7 +201,7 @@ function objectUserReference(id, displayName) {
         fs.rmSync(assetTemp, { recursive: true, force: true });
     }
 
-    console.log("Jira user cache and Users-scoped heterogeneous assignment graph: OK");
+    console.log("Jira user cache, proven static anchor and generic heterogeneous assignment graph: OK");
 }()).catch(function (error) {
     console.error(error && error.stack || error);
     process.exit(1);
