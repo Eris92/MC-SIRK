@@ -9,8 +9,6 @@ var root = path.join(__dirname, "..");
 var factory = require(path.join(root, "server/core/jira-asset-service.js"));
 var protocolSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Asset Protocol.ps1"), "utf8");
 var assetCacheSeed = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Cache Assets.ps1"), "utf8");
-var ANCHOR_AQL = 'objectType in objectTypeAndChildren("Sprzęt użytkownika")';
-var ASSIGNMENT_GRAPH_AQL = 'objectType in objectTypeAndChildren("Sprzęt użytkownika") OR objectType = "Users" OR object HAVING outboundReferences(objectType = "Users") OR object HAVING inboundReferences(objectType = "Users")';
 
 function integration() {
     return {
@@ -59,24 +57,18 @@ function directUserReference(accountId, displayName) {
 function objectUserReference(id, displayName) {
     return {
         referencedType: true,
-        referencedObject: { id: id, objectKey: "KEY-" + id, label: displayName, name: displayName },
+        referencedObject: { id: id, objectKey: "USR-" + id, label: displayName, name: displayName },
         displayValue: displayName
     };
 }
 
 (async function () {
-    assert.ok(protocolSeed.indexOf("# SirkJiraAssetAql: " + ANCHOR_AQL) >= 0,
-        "Jira Asset Protocol must keep the last real-smoke-working equipment hierarchy as its static anchor.");
+    assert.ok(/^# SirkJiraAssetAql: objectType in objectTypeAndChildren\("Sprzęt użytkownika"\)$/m.test(protocolSeed),
+        "Jira Asset Protocol must use the last real-smoke-working dev64 equipment hierarchy scope.");
     assert.strictEqual(protocolSeed.indexOf("SirkJiraAssetMaxResults: 5000"), -1,
-        "Protocol must retain the existing default bounded selector limit.");
-    assert.ok(assetCacheSeed.indexOf("# SirkJiraAssetAql: " + ANCHOR_AQL) >= 0,
-        "Jira Assets cache must keep the same proven static anchor as the protocol.");
-    assert.strictEqual(protocolSeed.indexOf("outboundReferences("), -1,
-        "Canonical script metadata must not broaden the shared anchor with reference traversal.");
-    assert.strictEqual(protocolSeed.indexOf("inboundReferences("), -1,
-        "Canonical script metadata must not broaden the shared anchor with reference traversal.");
-    assert.strictEqual(protocolSeed.indexOf("SirkJiraAssetAql: Key is not EMPTY"), -1,
-        "Canonical protocol must not return to the failed workspace-wide Key-is-not-empty source.");
+        "Restored dev64 protocol scope must retain its original default bounded selector limit.");
+    assert.ok(/^# SirkJiraAssetAql: objectType in objectTypeAndChildren\("Sprzęt użytkownika"\)$/m.test(assetCacheSeed),
+        "Jira Assets cache must use the same last-known-working dev64 equipment hierarchy scope.");
 
     var userTemp = fs.mkdtempSync(path.join(os.tmpdir(), "sirk-jira-users-v2-"));
     try {
@@ -151,11 +143,11 @@ function objectUserReference(id, displayName) {
                     aql = options.json && options.json.qlQuery || "";
                     return Promise.resolve({
                         values: [
-                            apiAsset("10", "Laptop-01", "Komputer", [directUserReference("acc-1", "User 1")], "owner"),
-                            apiAsset("20", "Phone-01", "Telefon", [objectUserReference("1", "User 1")], "owner"),
-                            apiAsset("30", "Monitor-Other", "Monitor", [directUserReference("acc-2", "User 2")], "owner"),
-                            apiAsset("1", "User 1", "Users", [directUserReference("acc-1", "User 1")], "jira-user"),
-                            apiAsset("50", "Document-With-Identity-Text", "Document", [{ value: "acc-1", displayValue: "acc-1" }], "notes")
+                            apiAsset("1", "Laptop-01", "Komputer", [directUserReference("acc-1", "User 1")], "owner"),
+                            apiAsset("2", "Phone-01", "Telefon", [objectUserReference("1", "User 1")], "owner"),
+                            apiAsset("3", "Monitor-Other", "Monitor", [directUserReference("acc-2", "User 2")], "owner"),
+                            apiAsset("4", "User 1", "Users", [directUserReference("acc-1", "User 1")], "jira-user"),
+                            apiAsset("5", "Document-With-Identity-Text", "Document", [{ value: "acc-1", displayValue: "acc-1" }], "notes")
                         ],
                         objectTypeAttributes: [
                             { id: "owner", name: "Owner" },
@@ -173,27 +165,27 @@ function objectUserReference(id, displayName) {
         var result = await assetService.optionsFor({
             control: "asset",
             jiraAsset: {
-                aql: ASSIGNMENT_GRAPH_AQL,
+                aql: "Key is not EMPTY",
                 labelAttribute: "Nazwa_sieciowa",
-                maxResults: 1000,
+                maxResults: 5000,
                 userVariable: "JiraUser"
             }
         }, { JiraUser: "acc-1" }, false);
 
-        assert.strictEqual(aql, ASSIGNMENT_GRAPH_AQL,
-            "The generic backend must still execute a script-owned reference graph unchanged.");
+        assert.strictEqual(aql, "Key is not EMPTY",
+            "The generic backend must still execute any script-owned AQL unchanged.");
         assert.strictEqual(attributeDefinitionCalls, 0,
             "Top-level AQL objectTypeAttributes must bind entry attribute IDs without slow per-type attribute requests.");
         assert.strictEqual(legacyAssetPayloadReads, 0,
             "A legacy Assets cache must be rejected from its bounded header without parsing the full payload.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.objectType; }).sort(), ["Komputer", "Telefon"],
-            "Generic assignment graphs must preserve heterogeneous user-bound Assets support.");
+            "Generic user-bound Assets service must retain heterogeneous referenced object support for other scripts.");
         assert.deepStrictEqual(result.items.map(function (item) { return item.value; }).sort(), ["Laptop-01", "Phone-01"],
-            "Identity objects, another user's equipment and unrelated plain identity text must remain excluded.");
+            "Only explicit references or assignment attributes may bind an asset; unrelated plain identity text must not match.");
         var persistedAssets = JSON.parse(fs.readFileSync(assetService.assetCachePath, "utf8"));
         assert.strictEqual(persistedAssets.version, 4,
-            "The compact cache must preserve explicit reference identities required by graph matching.");
-        assert.strictEqual(Object.prototype.hasOwnProperty.call(persistedAssets.queries[ASSIGNMENT_GRAPH_AQL].entries[0].attributes[0], "objectAttributeValues"), false,
+            "The compact cache schema must invalidate snapshots that cannot preserve explicit reference identities.");
+        assert.strictEqual(Object.prototype.hasOwnProperty.call(persistedAssets.queries["Key is not EMPTY"].entries[0].attributes[0], "objectAttributeValues"), false,
             "The daily cache must not retain the raw, deeply nested Jira attribute payload.");
         assert.ok(fs.statSync(assetService.assetCachePath).size < 10000,
             "A small representative Assets response must persist as a compact bounded snapshot.");
@@ -201,7 +193,7 @@ function objectUserReference(id, displayName) {
         fs.rmSync(assetTemp, { recursive: true, force: true });
     }
 
-    console.log("Jira user cache, proven static anchor and generic heterogeneous assignment graph: OK");
+    console.log("Jira user cache, restored dev64 protocol scope and generic reference matching: OK");
 }()).catch(function (error) {
     console.error(error && error.stack || error);
     process.exit(1);
