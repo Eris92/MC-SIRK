@@ -120,7 +120,18 @@
         assetStep.fitOptionWidth = true;
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
 
-        return runStep(options, userStep, {}, "Next").then(function (userValues) {
+        var userProvider = providerFor({}, options.resolveOptions);
+        var readyUsers = typeof userProvider === "function" ?
+            Promise.resolve(userProvider(jiraUser, {}, userStep)) :
+            Promise.resolve(jiraUser.options || []);
+
+        return readyUsers.then(function (optionsValue) {
+            var preparedUsers = Array.isArray(optionsValue) ? optionsValue.slice() : [];
+            jiraUser.options = preparedUsers;
+            return runStep(options, userStep, {}, "Next", function () {
+                return preparedUsers;
+            });
+        }).then(function (userValues) {
                 if (userValues == null) return null;
                 var selectedUser = Object.assign({}, userValues);
                 var assetProvider = providerFor(selectedUser, options.resolveOptions);

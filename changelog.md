@@ -1,3 +1,10 @@
+## 0.1.1-dev.95 - 2026-08-13
+
+- Complete the Jira user cache freshness check before opening the protocol wizard.
+- Keep the user-scoped equipment freshness check before showing the equipment list.
+
+Current development notes: `docs/releases/0.1.1-dev.95.md`.
+
 ## 0.1.1-dev.94 - 2026-08-13
 
 - Raise shared checklist radio/checkbox controls by one pixel for optical alignment with option text.

@@ -25,6 +25,9 @@ var tools = {
         calls.push(options);
         var label = String(options.item && options.item.label || "");
         if (/ - User$/.test(label)) {
+            assert.strictEqual(providerCalls.length, 1,
+                "The 24-hour user cache check must finish before the first protocol dialog opens.");
+            assert.strictEqual(providerCalls[0].name, "JiraUser");
             return Promise.resolve(options.resolveOptions({ name: "JiraUser", control: "user" }, {}, options.item)).then(function () {
                 return { JiraUserActiveOnly: true, JiraUserSearch: "admin", JiraUser: "acc-1" };
             });

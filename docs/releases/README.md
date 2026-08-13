@@ -4,6 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.95`](0.1.1-dev.95.md) — 24-hour Jira user and equipment cache checks completed before their protocol wizard lists open;
+
 - [`0.1.1-dev.94`](0.1.1-dev.94.md) — one-pixel optical lift for shared checklist radio/checkbox controls;
 - [`0.1.1-dev.93`](0.1.1-dev.93.md) — radio/checkbox dots aligned on one axis with option text in every shared checklist;
 - [`0.1.1-dev.92`](0.1.1-dev.92.md) — Debug/raw output sharing the standard Results surface instead of a nested card;
