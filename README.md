@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.98
+# SIRK Management Platform 0.1.1-dev.99
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -36,7 +36,7 @@ Najważniejsze dokumenty:
 - [Backend index](server/INDEX.md)
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.98.md)
+- [Aktualne development notes](docs/releases/0.1.1-dev.99.md)
 
 ## Warstwy
 
