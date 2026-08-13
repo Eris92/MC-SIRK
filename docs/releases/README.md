@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.79`](0.1.1-dev.79.md) — recognize responsible-person Jira assignment attributes without widening the proven dev75 equipment scope;
 - [`0.1.1-dev.75`](0.1.1-dev.75.md) — restore the last real-smoke-working dev64 Jira equipment scope while retaining later cache/performance fixes;
 - [`0.1.1-dev.74`](0.1.1-dev.74.md) — recognize localized plural Jira identity object types when bridging selected users to assigned equipment;
 - [`0.1.1-dev.73`](0.1.1-dev.73.md) — resolve Jira equipment through workspace Users/person identity objects;
