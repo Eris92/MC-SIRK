@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.99",
+    "date": "2026-08-13",
+    "summary": "Prefetch Jira protocol equipment before closing the user-selection step.",
+    "notes": "docs/releases/0.1.1-dev.99.md"
+  },
+  {
     "version": "0.1.1-dev.98",
     "date": "2026-08-13",
     "summary": "Add secure SMSAPI and Voice SMS delivery plus approved Active Directory account workflows.",

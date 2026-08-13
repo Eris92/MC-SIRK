@@ -1,3 +1,10 @@
+## 0.1.1-dev.99 - 2026-08-13
+
+- Prefetch Jira protocol equipment while the user-selection modal remains visible.
+- Keep Next disabled with a loading message until the equipment list is ready, removing the apparent wizard interruption between steps.
+
+Current development notes: `docs/releases/0.1.1-dev.99.md`.
+
 ## 0.1.1-dev.98 - 2026-08-13
 
 - Add server-side SMSAPI.pl SMS and Voice SMS sending, including multi-recipient delivery and a separately authenticated external endpoint.
