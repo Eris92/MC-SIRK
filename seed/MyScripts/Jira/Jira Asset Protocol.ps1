@@ -7,7 +7,7 @@
 # VariableUserRequired: $ItPerson, Osoba IT|Lista użytkowników MeshCentral; domyślnie aktualnie zalogowany operator.
 # SirkWorkflow: JiraAssetProtocol
 # SirkSystemCredential: Jira
-# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika") OR objectType = "Users" OR object HAVING outboundReferences(objectType = "Users") OR object HAVING inboundReferences(objectType = "Users")
+# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")
 # SirkJiraAssetLabelAttribute: Nazwa_sieciowa
 # SirkJiraAssetUserVariable: JiraUser
 # MultiHost: false
