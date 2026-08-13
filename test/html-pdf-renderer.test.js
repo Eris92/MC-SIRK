@@ -21,6 +21,10 @@ var renderer = require(path.join(root, "server/core/html-pdf-renderer.js"));
             assert.ok(args.indexOf("--headless") >= 0,
                 "Edge print-to-PDF must prefer the compatibility headless flag before retrying --headless=new.");
             assert.strictEqual(args.indexOf("--headless=new"), -1);
+            assert.ok(args.indexOf("--allow-run-as-system") >= 0,
+                "Edge must explicitly allow the MeshCentral LocalSystem service context without disabling its sandbox.");
+            assert.strictEqual(args.indexOf("--no-sandbox"), -1,
+                "The LocalSystem compatibility path must retain the Edge sandbox.");
             assert.strictEqual(profileArg.indexOf("\\"), -1,
                 "Edge profile path must use portable forward slashes to avoid Windows headless print path regressions.");
             assert.strictEqual(pdfArg.indexOf("\\"), -1, "Edge PDF output path must use portable forward slashes.");
@@ -44,6 +48,7 @@ var renderer = require(path.join(root, "server/core/html-pdf-renderer.js"));
             var pdfArg = args.filter(function (arg) { return arg.indexOf("--print-to-pdf=") === 0; })[0];
             if (calls === 1) return callback(new Error("exit 1"), "", "edge default headless failed");
             assert.ok(args.indexOf("--headless=new") >= 0);
+            assert.ok(args.indexOf("--allow-run-as-system") >= 0);
             fs.writeFileSync(pdfArg.slice("--print-to-pdf=".length), Buffer.from("%PDF-1.7\nRETRY\n"));
             callback(null, "", "");
         };

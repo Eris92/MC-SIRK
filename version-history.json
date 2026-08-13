@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.84",
+    "date": "2026-08-13",
+    "summary": "Allow sandboxed Edge rendering as the MeshCentral LocalSystem service so protocol PDFs retain the canonical styled template.",
+    "notes": "docs/releases/0.1.1-dev.84.md"
+  },
+  {
     "version": "0.1.1-dev.83",
     "date": "2026-08-13",
     "summary": "Correct only the Jira protocol PDF invocation with isolated Edge execution, bounded retry and guaranteed direct fallback.",

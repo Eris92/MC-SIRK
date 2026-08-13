@@ -1,3 +1,10 @@
+## 0.1.1-dev.84 - 2026-08-13
+
+- Preserve the canonical styled Jira protocol HTML template under the MeshCentral Windows service by explicitly allowing Microsoft Edge to start as `LocalSystem` with `--allow-run-as-system`.
+- Keep the Edge sandbox enabled, the isolated profile, bounded retry and final text fallback unchanged; do not add `--no-sandbox` or a second document template.
+
+Current development notes: `docs/releases/0.1.1-dev.84.md`.
+
 ## 0.1.1-dev.83 - 2026-08-13
 
 - Keep the user-directed `0.1.1-dev.82` Jira equipment matching, pagination and cache behavior unchanged while correcting only the protocol PDF execution path.
