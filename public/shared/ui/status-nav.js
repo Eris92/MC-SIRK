@@ -9,6 +9,8 @@
         { key: "", title: "All", icon: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/>') },
         { key: "pending", title: "Pending", icon: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') },
         { key: "executing", title: "Executing", icon: svg('<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/>') },
+        { key: "awaiting_confirmation", title: "Awaiting confirmation", icon: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/><path d="M12 3v2M12 19v2"/>') },
+        { key: "confirming", title: "Confirming", icon: svg('<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/><path d="m8 12 2 2"/>') },
         { key: "approved", title: "Approved", icon: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/>') },
         { key: "completed", title: "Completed", icon: svg('<path d="M4 5h16v14H4z"/><path d="m8 12 2.5 2.5L16 9"/>') },
         { key: "superseded", title: "Superseded", icon: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12h8M13 9l3 3-3 3"/>') },
@@ -20,7 +22,6 @@
         if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.nav === "function") {
             window.MeshThemeAdapter.nav(button);
         }
-
     }
 
     window.SharedStatusNav = {
@@ -38,7 +39,6 @@
             host.innerHTML = "";
             options = options || {};
             this.list(options.counts).forEach(function (item) {
-                var key = item.key || "all";
                 var button = document.createElement("button");
                 button.type = "button";
                 button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item sirk-shared-list-item";
