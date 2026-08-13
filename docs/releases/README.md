@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.107`](0.1.1-dev.107.md) — restored bounded Jira Assets pagination, compact cache and explicit user binding on current main;
 - [`0.1.1-dev.106`](0.1.1-dev.106.md) — workflow-key system credential propagation to PowerShell;
 - [`0.1.1-dev.105`](0.1.1-dev.105.md) — optional SMTP sender and port 25 fallback;
 - [`0.1.1-dev.104`](0.1.1-dev.104.md) — confirmed integration secret saves and stale backend detection;
@@ -50,7 +51,7 @@ Aktualna linia development:
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
 - [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
-- [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
+- [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes UI guard; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;
 - [`0.1.1-dev.41`](0.1.1-dev.41.md) — follow-up po real dev.40 FAIL: Network Settings używa trusted elevated interactive token w istniejącym shared ownerze; Admin kopiuje rzeczywistą nieprzezroczystą powierzchnię otaczającą `#p43iframe`;
 - [`0.1.1-dev.40`](0.1.1-dev.40.md) — follow-up po real dev.39 FAIL: Network Settings omija script-oriented Scheduled Task wrapper i trafia do native MeshAgent UserOnly; Admin obserwuje rzeczywisty Modern `#theme-stylesheet` writer/load;
