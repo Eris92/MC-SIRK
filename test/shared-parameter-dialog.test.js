@@ -102,6 +102,9 @@ assert.ok(modernHiddenRegistration > modernShow,
 assert.ok(dialog.indexOf('options.onValuesChanged(currentValues(records), record && record.variable, item)') >= 0 &&
     dialog.indexOf('submit.disabled = submitting || valuesChangePending || valuesChangeFailed') >= 0,
     "Dependent async prefetch must keep the current modal visible and disable submit until the next step is ready.");
+assert.ok(dialog.indexOf('document.createElement(multiline ? "textarea"') >= 0 &&
+    dialog.indexOf('if (!multiline) control.type = "text";') >= 0,
+    "Multiline script variables must render as textareas without assigning the read-only textarea type.");
 
 var focused = false;
 var invalid = false;
@@ -172,7 +175,7 @@ assert.ok(dialog.indexOf('record.variable.submitOnDoubleClick === true') >= 0,
     "A list variable may advance the existing shared dialog on an explicit double click.");
 assert.ok(dialog.indexOf('box.type = single ? "radio" : "checkbox"') >= 0,
     "Shared option lists must use radio inputs for exclusive choices and checkboxes for multi-select assets.");
-assert.ok(dialog.indexOf('document.createElement(listMode ? "input" : useSelect ? "select" : "input")') >= 0,
+assert.ok(dialog.indexOf('document.createElement(multiline ? "textarea" : listMode ? "input" : useSelect ? "select" : "input")') >= 0,
     "List-mode selects must create a hidden-capable input instead of mutating the read-only HTMLSelectElement.type property.");
 assert.ok(dialog.indexOf('if (record.kind === "text") record.control.addEventListener("input", onFilterChanged);') >= 0,
     "Text search must filter on input without a duplicate change rebuild.");

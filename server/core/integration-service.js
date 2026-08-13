@@ -24,7 +24,7 @@ function array(value) {
 }
 
 var HEALTH_STATES = ["ok", "warning", "critical"];
-var HEALTH_NAMES = ["ad", "entra", "jira", "sms", "defender", "zabbix"];
+var HEALTH_NAMES = ["ad", "entra", "jira", "sms", "smtp", "defender", "zabbix"];
 
 function normalizeHealth(value) {
     value = object(value);
@@ -92,6 +92,7 @@ module.exports.createIntegrationService = function (options) {
                 current.jira && current.jira.url && current.jira.email && secretValue.jiraToken
             ),
             sms: !!(current.sms && current.sms.url && secretValue.smsApiToken),
+            smtp: !!(current.smtp && current.smtp.host && current.smtp.port && current.smtp.defaultFrom),
             defender: !!(
                 current.defender && current.defender.tenantId &&
                 current.defender.clientId && secretValue.defenderClientSecret
@@ -152,6 +153,7 @@ module.exports.createIntegrationService = function (options) {
         var entra = object(payload.entra);
         var jira = object(payload.jira);
         var sms = object(payload.sms);
+        var smtp = object(payload.smtp);
         var defender = object(payload.defender);
         var zabbix = object(payload.zabbix);
 
@@ -193,6 +195,15 @@ module.exports.createIntegrationService = function (options) {
             verifyTls: asBoolean(sms.verifyTls, true),
             health: normalizeHealth(sms.health)
         };
+        result.smtp = {
+            host: text(smtp.host, 500),
+            port: Math.max(1, Math.min(65535, Number(smtp.port) || 25)),
+            defaultFrom: text(smtp.defaultFrom, 500),
+            enableSsl: asBoolean(smtp.enableSsl, false),
+            attachmentRoot: text(smtp.attachmentRoot, 2000),
+            maxAttachmentMb: Math.max(1, Math.min(100, Number(smtp.maxAttachmentMb) || 25)),
+            health: normalizeHealth(smtp.health)
+        };
         result.defender = {
             tenantId: text(defender.tenantId, 200),
             clientId: text(defender.clientId, 200),
@@ -223,6 +234,8 @@ module.exports.createIntegrationService = function (options) {
             throw new Error("Jira URL must use HTTPS.");
         }
         if (!/^https:\/\//i.test(result.sms.url)) throw new Error("SMSAPI URL must use HTTPS.");
+        if (result.smtp.host && !/^[A-Za-z0-9._:-]+$/.test(result.smtp.host)) throw new Error("SMTP Relay host is invalid.");
+        if (result.smtp.defaultFrom && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.smtp.defaultFrom)) throw new Error("SMTP Relay default sender is invalid.");
         if (result.zabbix.url && !/^https?:\/\//i.test(result.zabbix.url)) {
             throw new Error("Zabbix URL must use HTTP or HTTPS.");
         }

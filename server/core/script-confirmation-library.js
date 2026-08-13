@@ -83,6 +83,19 @@ function variableOptionSources(headers) {
     return result;
 }
 
+function multilineVariables(headers) {
+    var result = Object.create(null);
+    (Array.isArray(headers) ? headers : []).forEach(function (header) {
+        var match = String(header || "").match(/^SirkVariableMultiline\s*:\s*(.+)$/i);
+        if (!match) return;
+        String(match[1] || "").split(",").forEach(function (name) {
+            name = name.trim().replace(/^[\s$%]+/, "");
+            if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) result[name.toLowerCase()] = true;
+        });
+    });
+    return result;
+}
+
 function splitHeader(sourceText) {
     var newline = String(sourceText || "").indexOf("\r\n") >= 0 ? "\r\n" : "\n";
     var lines = String(sourceText || "").replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -165,6 +178,7 @@ function decorateScript(base, script) {
 
     var policy = jiraAssetPolicy(result.extraHeaders);
     var optionSources = variableOptionSources(result.extraHeaders);
+    var multiline = multilineVariables(result.extraHeaders);
     if (policy.aql || policy.labelAttribute || policy.maxResults || policy.userVariable) {
         result.variables = (result.variables || []).map(function (variable) {
             if (!variable || variable.control !== "asset") return variable;
@@ -179,6 +193,14 @@ function decorateScript(base, script) {
             if (!source) return variable;
             var decorated = shared.copy(variable);
             decorated.optionSource = source;
+            return decorated;
+        });
+    }
+    if (Object.keys(multiline).length) {
+        result.variables = (result.variables || []).map(function (variable) {
+            if (!variable || !multiline[String(variable.name || "").toLowerCase()]) return variable;
+            var decorated = shared.copy(variable);
+            decorated.multiline = true;
             return decorated;
         });
     }
