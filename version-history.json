@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.85",
+    "date": "2026-08-13",
+    "summary": "Use neutral LOGO fallback branding when no custom protocol logo is configured.",
+    "notes": "docs/releases/0.1.1-dev.85.md"
+  },
+  {
     "version": "0.1.1-dev.84",
     "date": "2026-08-13",
     "summary": "Allow sandboxed Edge rendering as the MeshCentral LocalSystem service so protocol PDFs retain the canonical styled template.",

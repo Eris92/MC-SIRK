@@ -90,7 +90,7 @@ function renderHtmlPdf(html, options) {
     var logoPath = options.logoPath || path.join(__dirname, "..", "assets", "investa-logo.png");
     var extension = path.extname(logoPath).toLowerCase();
     var mime = extension === ".svg" ? "image/svg+xml" : (extension === ".jpg" || extension === ".jpeg" ? "image/jpeg" : "image/png");
-    var logoMarkup = fs.existsSync(logoPath) ? '<img class="brand-logo" alt="INVESTA" src="data:' + mime + ';base64,' + fs.readFileSync(logoPath).toString("base64") + '" />' : '<div class="brand-fallback">INVESTA</div>';
+    var logoMarkup = fs.existsSync(logoPath) ? '<img class="brand-logo" alt="Logo" src="data:' + mime + ';base64,' + fs.readFileSync(logoPath).toString("base64") + '" />' : '<div class="brand-fallback">LOGO</div>';
     html = String(html || "").replace(/__SIRK_DOCUMENT_LOGO_MARKUP__/g, logoMarkup);
     fs.writeFileSync(htmlPath, html, "utf8");
 

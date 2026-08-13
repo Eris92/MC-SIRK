@@ -32,12 +32,18 @@ var renderer = require(path.join(root, "server/core/html-pdf-renderer.js"));
             assert.strictEqual(options.cwd.replace(/\\/g, "/"), observedDirectory.replace(/\\/g, "/"));
             assert.strictEqual(args.indexOf("--no-first-run") >= 0, true);
             assert.strictEqual(args.indexOf("--no-default-browser-check") >= 0, true);
+            var renderedHtml = fs.readFileSync(path.join(options.cwd, "protocol.html"), "utf8");
+            assert.ok(renderedHtml.indexOf('<div class="brand-fallback">LOGO</div>') >= 0,
+                "A missing custom logo must use a neutral LOGO placeholder.");
+            assert.strictEqual(renderedHtml.indexOf("INVESTA"), -1,
+                "The shared protocol template must not inject company-specific fallback branding.");
             fs.writeFileSync(pdfArg.slice("--print-to-pdf=".length), Buffer.from("%PDF-1.7\nTEST\n"));
             callback(null, "", "");
         };
 
-        var pdf = await renderer.renderHtmlPdf("<html><body>test</body></html>", {
-            browserPath: "C:\\Test\\msedge.exe"
+        var pdf = await renderer.renderHtmlPdf("<html><body>__SIRK_DOCUMENT_LOGO_MARKUP__</body></html>", {
+            browserPath: "C:\\Test\\msedge.exe",
+            logoPath: path.join(root, "test", "missing-protocol-logo.svg")
         });
         assert.ok(Buffer.isBuffer(pdf));
         assert.ok(observedDirectory && !fs.existsSync(observedDirectory));
