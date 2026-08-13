@@ -7,6 +7,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | security | `security.test.js` |
 | lokalizacja skryptów | `script-localization.test.js` |
 | folder permissions | `folder-access.test.js` |
+| SMSAPI, zewnętrzny endpoint i workflow kont AD | `sms-ad-workflows.test.js` |
 | wspólny wygląd wierszy Approval, Commands, My Scripts i Quick | `shared-list-quick-style.test.js` |
 | bezpośrednia struktura pierwszej kolumny Commands i My Scripts | `shared-catalog-direct-columns.test.js` |
 | lekkie wcięcie kolejnych poziomów folderów i skryptów | `tree-indent.test.js` |

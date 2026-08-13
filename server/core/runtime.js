@@ -31,8 +31,9 @@ var DEFAULTS = {
         approvalcenter: { enabled: true, retentionDays: 365, providers: {} }
     },
     integrations: {
-        ad: { domain: "", login: "" },
+        ad: { domain: "", login: "", upnSuffix: "", userLocations: [] },
         entra: { tenantId: "", clientId: "" },
+        sms: { url: "https://api.smsapi.pl", sender: "", vmsLector: "ewa", verifyTls: true },
         zabbix: { url: "", username: "", verifyTls: true }
     }
 };

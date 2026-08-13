@@ -16,5 +16,6 @@ web/admin/admin.css
 | Obszar | Plik |
 |---|---|
 | ustawienia modułów i nawigacja | `admin.js` |
+| konfiguracja Jira, AD, SMSAPI i pozostałych integracji | `integrations.js` |
 
 Przed zmianą assetu potwierdź jego mapowanie w root `admin.js`. Nie przenoś kodu panelu do `public/`.

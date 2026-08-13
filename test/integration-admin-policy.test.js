@@ -77,12 +77,16 @@ new Promise(function (resolve, reject) {
                     "The shared Jira/AD/Entra integration editor must expose one canonical save action.");
                 assert.ok(String(body).indexOf('disclosure(card, "Jira")') >= 0 &&
                     String(body).indexOf('disclosure(card, "Active Directory")') >= 0 &&
+                    String(body).indexOf('disclosure(card, "SMS / Voice SMS (SMSAPI.pl)")') >= 0 &&
                     String(body).indexOf('disclosure(card, "AAD / Entra ID")') >= 0,
-                    "Jira, AD and Entra must share the collapsed integration surface.");
+                    "Jira, AD, SMS and Entra must share the collapsed integration surface.");
                 assert.ok(String(body).indexOf('input.type = options.type || "text"') >= 0);
                 assert.ok(String(body).indexOf('type: "password"') >= 0, "Secret editors must remain password inputs.");
                 assert.ok(String(body).indexOf("if (jiraToken.value) secrets.jiraToken = jiraToken.value") >= 0,
                     "Blank token must preserve the existing server-side secret.");
+                assert.ok(String(body).indexOf("if (smsToken.value) secrets.smsApiToken = smsToken.value") >= 0 &&
+                    String(body).indexOf("smsExternalToken.minLength = 32") >= 0,
+                    "SMSAPI secrets must remain write-only and external tokens must enforce their minimum strength.");
                 resolve();
             } catch (error) { reject(error); }
         }), admin);

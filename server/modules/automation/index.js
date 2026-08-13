@@ -6,6 +6,9 @@ var adminFactory = require("../../core/script-admin-service.js");
 var executorFactory = require("../../core/server-script-executor.js");
 var jiraAssetFactory = require("../../core/jira-asset-service.js");
 var jiraProtocolFactory = require("../../core/jira-protocol-service.js");
+var smsFactory = require("../../core/sms-service.js");
+var adDirectoryFactory = require("../../core/ad-directory-service.js");
+var smsExternalApi = require("../../core/sms-external-api.js");
 var rootResolver = require("../../core/automation-root.js");
 var folderAccess = require("../../core/folder-access.js");
 
@@ -21,6 +24,8 @@ module.exports.createModule = function (context) {
         integrations: context.integrations
     });
     var jiraProtocol = jiraProtocolFactory.createJiraProtocolService({ context: context, jiraAssets: jiraAssets, executor: executor });
+    var sms = smsFactory.createSmsService({ integrations: context.integrations });
+    var adDirectory = adDirectoryFactory.createAdDirectoryService({ context: context });
     var protocolStartSignals = Object.create(null);
     var unregister = null;
 
@@ -113,6 +118,18 @@ module.exports.createModule = function (context) {
         if (workflow(script, "JiraAssetsCache")) return "assets";
         return "";
     }
+    function messageWorkflow(script) {
+        if (workflow(script, "SmsSend")) return "sms";
+        if (workflow(script, "VmsSend")) return "vms";
+        return "";
+    }
+    function executeMessageWorkflow(script, payload) {
+        var kind = messageWorkflow(script), values = payload && payload.variableValues || {};
+        return sms.send(kind, values.PhoneNumbers, values.Message, { lector: values.Lector }).then(function (result) {
+            var message = (kind === "vms" ? "Voice SMS" : "SMS") + " accepted for " + result.count + " recipient(s).";
+            return { message: message, output: message, rawOutput: message, data: result, exitCode: 0, scriptPath: script.path, label: script.label || script.name };
+        });
+    }
     function executeCacheWorkflow(script, payload) {
         var kind = cacheWorkflow(script), values = payload && payload.variableValues || {};
         var force = /^(1|true|yes|tak|on)$/i.test(String(values.Force || ""));
@@ -177,6 +194,10 @@ module.exports.createModule = function (context) {
                 if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
                 return executeCacheWorkflow(script, payload);
             }
+            if (messageWorkflow(script)) {
+                if (!admin.hasSystemCredential(script.path, "sms")) throw new Error("Assign the configured SMSAPI integration to this script first.");
+                return executeMessageWorkflow(script, payload);
+            }
             if (jiraProtocol.isProtocolScript(script)) {
                 if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
                 signalProtocolStart(payload, request);
@@ -203,6 +224,7 @@ module.exports.createModule = function (context) {
         initialize: function () {
             library.ensure();
             if (!unregister) unregister = context.approval.registerProvider(provider);
+            smsExternalApi.register({ context: context, sms: sms });
             return Promise.resolve();
         },
         serveIcon: function (req, res) { shared.send(res, 404, "text/plain; charset=utf-8", "Icons are included in the script tree."); },
@@ -268,6 +290,13 @@ module.exports.createModule = function (context) {
                 if (variable.optionSource === "mesh-users" || (jiraProtocol.isProtocolScript(optionScript) && variable.name === "ItPerson")) {
                     return { ok: true, items: meshUserOptions(user), stale: false, warning: "" };
                 }
+                if (variable.optionSource === "ad-users") {
+                    if (!admin.hasSystemCredential(optionScript.path, "ad")) throw new Error("Assign the configured Active Directory integration to this script first.");
+                    return adDirectory.listUsers().then(function (items) { return { ok: true, items: items, stale: false, warning: "" }; });
+                }
+                if (variable.optionSource === "ad-user-locations") {
+                    return { ok: true, items: adDirectory.locations(), stale: false, warning: "" };
+                }
                 if (!admin.hasSystemCredential(optionScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
                 }
@@ -293,6 +322,7 @@ module.exports.createModule = function (context) {
                 if ((protocol || cacheWorkflow(requestedScript)) && !admin.hasSystemCredential(requestedScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
                 }
+                if (messageWorkflow(requestedScript) && !admin.hasSystemCredential(requestedScript.path, "sms")) throw new Error("Assign the configured SMSAPI integration to this script first.");
                 var payload = {
                     scriptPath: requestedScript.path,
                     scriptHash: requestedScript.hash,

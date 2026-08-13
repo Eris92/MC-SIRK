@@ -33,6 +33,7 @@ module.exports.createScriptAdminService = function (options) {
         ad: "Active Directory",
         entra: "Entra ID",
         jira: "Jira",
+        sms: "SMSAPI",
         defender: "Defender XDR",
         zabbix: "Zabbix"
     };
@@ -94,6 +95,8 @@ module.exports.createScriptAdminService = function (options) {
                 available = !!(values.entra && values.entra.tenantId && values.entra.clientId && configured.entraClientSecret);
             } else if (name === "jira") {
                 available = configured.jira === true;
+            } else if (name === "sms") {
+                available = configured.sms === true;
             } else if (name === "defender") {
                 available = configured.defender === true;
             } else if (name === "zabbix") {

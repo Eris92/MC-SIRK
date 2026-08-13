@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.98",
+    "date": "2026-08-13",
+    "summary": "Add secure SMSAPI and Voice SMS delivery plus approved Active Directory account workflows.",
+    "notes": "docs/releases/0.1.1-dev.98.md"
+  },
+  {
     "version": "0.1.1-dev.97",
     "date": "2026-08-13",
     "summary": "Add a credential-safe hourly Windows Task Scheduler refresh for Jira cache files.",

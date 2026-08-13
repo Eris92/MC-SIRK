@@ -16,7 +16,8 @@ var settings = {
     entra: { tenantId: "", clientId: "" },
     jira: { url: "" },
     defender: { tenantId: "", clientId: "" },
-    zabbix: { url: "" }
+    zabbix: { url: "" },
+    sms: { url: "" }
 };
 var integrationValues = {
     jira: {
@@ -28,7 +29,7 @@ var integrationValues = {
         cloudId: "cloud-1"
     }
 };
-var readiness = { ad: false, entra: false, jira: false, defender: false, zabbix: false };
+var readiness = { ad: false, entra: false, jira: false, defender: false, zabbix: false, sms: false };
 var context = {
     fs: fs,
     nativePath: path,
@@ -72,7 +73,7 @@ var executor = createExecutor({
 });
 
 var before = service.getSystemCredentialState(admin, "folder/test.ps1");
-assert.strictEqual(before.profiles.length, 5, "All canonical system credential profiles must be listed regardless of readiness.");
+assert.strictEqual(before.profiles.length, 6, "All canonical system credential profiles must be listed regardless of readiness.");
 assert.ok(before.profiles.every(function (profile) { return profile.configured === false && profile.selected === false; }),
     "Unconfigured profiles must remain visible and initially unselected.");
 
