@@ -1,6 +1,6 @@
-# Jira Cache Assets|
-# PL: Cache Jira - sprzęt|
-# EN: Jira cache - assets|
+# Cache Assets|
+# PL: Cache - sprzęt|
+# EN: Cache - assets|
 # VariableSwitch: $Force, false, Wymuś odświeżenie|
 # SirkWorkflow: JiraAssetsCache
 # SirkSystemCredential: Jira
@@ -9,5 +9,5 @@
 # MultiHost: false
 # runAsUser: 0
 
-# Wykonanie jest celowo obsługiwane przez wspólny server-side owner Jira cache.
+# Wykonanie jest obsługiwane przez wspólny server-side owner cache.
 $Force | Out-Null
