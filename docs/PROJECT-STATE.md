@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.77`
+Current version: `0.1.1-dev.78`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,7 +49,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
-- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; generic script-owned Assets nadal wspierają bounded scan, compact cache v4, bounded concurrency, response attribute metadata i jawne Jira user/object references. Kanoniczny `Jira Asset Protocol` oraz `Jira Cache Assets` od `0.1.1-dev.77` zachowują działający hierarchy anchor `objectTypeAndChildren("Sprzęt użytkownika")`, ale reference graph jest ograniczony do rzeczywistego object type `Users` obserwowanego w real smoke: sam `Users` plus `outboundReferences(objectType = "Users")` i `inboundReferences(objectType = "Users")`. Dzięki temu źródło zachowuje PC i dołącza telefony/monitory oraz inne obiekty związane z użytkownikiem, bez workspace-wide `Key is not EMPTY` ani dev.76 all-reference fan-out; token nie trafia do cache;
+- `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options, dynamic Jira Assets options, compact cache v4, bounded pagination/concurrency, response attribute metadata oraz Jira user/object matching; token nie trafia do cache. Od `0.1.1-dev.78` kanoniczny `Jira Asset Protocol` i `Jira Cache Assets` ponownie używają wyłącznie real-smoke-working anchor `objectTypeAndChildren("Sprzęt użytkownika")`. `server/core/jira-user-asset-scope.js` nie tworzy drugiego cache/transport ownera: deleguje do `jira-asset-service.js`, a dla wybranego Jira usera wykonuje dodatkowy bounded user-specific AQL oparty o `anyAttribute`/`Label` oraz inbound/outbound references, po czym scala wynik z anchorem. Niepowodzenie targeted expansion nie usuwa działającego anchor result;
 - `server/core/html-pdf-renderer.js` — jeden owner styled HTML -> PDF przez lokalny Chrome/Edge oraz bounded dependency-free direct PDF fallback; każdy render używa osobnego zapisywalnego browser profile w bounded temp directory, Edge używa dwóch bounded trybów headless, a po ich niepowodzeniu `fallbackText` może zostać wyrenderowany przez istniejący `pdf-text-renderer.js` bez wyłączania sandboxa;
 - `server/core/jira-protocol-service.js` — jeden protocol lifecycle owner; deleguje PDF dokładnie raz do `html-pdf-renderer.js`, przekazuje canonical protocol text jako `fallbackText` i zapisuje artefakt dopiero po walidacji `%PDF-1.`;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
@@ -130,8 +130,8 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.77
-config.json  -> 0.1.1-dev.77
+package.json -> 0.1.1-dev.78
+config.json  -> 0.1.1-dev.78
 ```
 
 Każda zmiana techniczna przeznaczona do instalacji/testu użytkownika zwiększa rewizję development, aby panel MeshCentral jednoznacznie identyfikował zainstalowany kod.
@@ -140,7 +140,7 @@ Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible 
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.77.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.78.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
