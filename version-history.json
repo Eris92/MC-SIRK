@@ -1,23 +1,5 @@
 [
   {
-    "version": "0.1.1-dev.78",
-    "date": "2026-08-13",
-    "summary": "Preserve the proven Jira equipment anchor and add fail-soft selected-user AQL expansion for heterogeneous assigned Assets.",
-    "notes": "docs/releases/0.1.1-dev.78.md"
-  },
-  {
-    "version": "0.1.1-dev.77",
-    "date": "2026-08-12",
-    "summary": "Keep the proven Jira equipment hierarchy and scope heterogeneous reference traversal to the real Users object type so unrelated reference graphs cannot displace assigned equipment.",
-    "notes": "docs/releases/0.1.1-dev.77.md"
-  },
-  {
-    "version": "0.1.1-dev.76",
-    "date": "2026-08-12",
-    "summary": "Keep the working Jira equipment hierarchy and include both sides of the Assets reference graph so heterogeneous assigned equipment can resolve to the selected user.",
-    "notes": "docs/releases/0.1.1-dev.76.md"
-  },
-  {
     "version": "0.1.1-dev.75",
     "date": "2026-08-12",
     "summary": "Restore the last real-smoke-working dev64 Jira protocol equipment scope while retaining later cache and performance fixes.",
