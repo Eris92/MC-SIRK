@@ -1,9 +1,13 @@
+## 0.1.1-dev.94 - 2026-08-13
+
+- Raise shared checklist radio/checkbox controls by one pixel for optical alignment with option text.
+
+Current development notes: `docs/releases/0.1.1-dev.94.md`.
+
 ## 0.1.1-dev.93 - 2026-08-13
 
 - Vertically align every shared checklist radio/checkbox dot with its option text.
 - Remove browser-dependent input margins that shifted labels below their controls.
-
-Current development notes: `docs/releases/0.1.1-dev.93.md`.
 
 ## 0.1.1-dev.92 - 2026-08-13
 
