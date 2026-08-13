@@ -64,7 +64,7 @@ var integrations = integrationFactory.createIntegrationService({
     assert.strictEqual(source.indexOf("Write-Host"), -1, "Mail content and addresses must not be copied to console output.");
 
     var assignmentNamespace = "script-secrets.myscripts.system-credentials";
-    var assignments = {}; assignments[scriptPath.toLowerCase()] = ["smtp"];
+    var assignments = { "@workflow:relaymailsend": ["smtp"] };
     var captured = null;
     var originalExecFile = childProcess.execFile;
     childProcess.execFile = function (file, args, options, callback) {
@@ -99,6 +99,7 @@ var integrations = integrationFactory.createIntegrationService({
     assert.strictEqual(captured.options.env.MYSCRIPTS_SMTP_FROM, "automation@example.test");
     assert.strictEqual(captured.options.env.MYSCRIPTS_SMTP_ATTACHMENT_ROOT, "C:\\SIRK\\Attachments");
     assert.strictEqual(captured.options.env.MYSCRIPTS_SMTP_MAX_ATTACHMENT_BYTES, String(20 * 1024 * 1024));
+    assert.strictEqual(assignments[scriptPath.toLowerCase()], undefined, "The regression must exercise the stable workflow assignment, not the legacy path key.");
     console.log("SMTP Relay integration, multiline mail and bounded attachments: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);

@@ -1,3 +1,11 @@
+## 0.1.1-dev.106 - 2026-08-13
+
+- Resolve PowerShell system credential assignments by the stable `@workflow:*` key used by the credentials UI.
+- Preserve legacy path-key assignments as a fallback.
+- Restore SMTP Relay environment propagation for the mail workflow.
+
+Current development notes: `docs/releases/0.1.1-dev.106.md`.
+
 ## 0.1.1-dev.105 - 2026-08-13
 
 - Make the SMTP Relay sender optional in both the script and global integration readiness contract.

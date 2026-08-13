@@ -21,6 +21,16 @@ function assignmentKey(value) {
     return String(value || "").replace(/\\/g, "/").toLowerCase();
 }
 
+function workflowAssignmentKey(script) {
+    var headers = script && Array.isArray(script.extraHeaders) ? script.extraHeaders : [];
+    var match = null;
+    headers.some(function (header) {
+        match = /^SirkWorkflow\s*:\s*([^\s]+)\s*$/i.exec(String(header || "").trim());
+        return !!match;
+    });
+    return match ? "@workflow:" + assignmentKey(match[1]) : "";
+}
+
 module.exports.createServerScriptExecutor = function (options) {
     options = options || {};
     var context = options.context;
@@ -64,15 +74,16 @@ module.exports.createServerScriptExecutor = function (options) {
         return values;
     }
 
-    function assignedProfiles(scriptPath) {
+    function assignedProfiles(script) {
         var assignments = context.secrets.get(assignmentNamespace);
         assignments = assignments && typeof assignments === "object" ? assignments : {};
-        var selected = assignments[assignmentKey(scriptPath)];
+        var workflowKey = workflowAssignmentKey(script);
+        var selected = workflowKey && assignments[workflowKey] || assignments[assignmentKey(script && script.path)];
         return Array.isArray(selected) ? selected.map(String) : [];
     }
 
-    function systemEnvironment(scriptPath) {
-        var selected = assignedProfiles(scriptPath);
+    function systemEnvironment(script) {
+        var selected = assignedProfiles(script);
         var environment = {};
         var readiness = context.integrations.configured();
         function enabled(name) { return selected.indexOf(name) >= 0; }
@@ -252,7 +263,7 @@ module.exports.createServerScriptExecutor = function (options) {
         var environment = Object.assign(
             {},
             process.env,
-            executionOptions.skipSystemEnvironment === true ? {} : systemEnvironment(script.path),
+            executionOptions.skipSystemEnvironment === true ? {} : systemEnvironment(script),
             callerEnvironment(executionOptions.environment),
             {
                 MYSCRIPTS_REQUEST_ID: request && request.id || "",

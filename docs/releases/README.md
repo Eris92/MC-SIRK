@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.106`](0.1.1-dev.106.md) — workflow-key system credential propagation to PowerShell;
 - [`0.1.1-dev.105`](0.1.1-dev.105.md) — optional SMTP sender and port 25 fallback;
 - [`0.1.1-dev.104`](0.1.1-dev.104.md) — confirmed integration secret saves and stale backend detection;
 - [`0.1.1-dev.103`](0.1.1-dev.103.md) — optical correction of the Settings gear center;
