@@ -99,6 +99,9 @@ assert.ok(modernShow >= 0 && dialog.indexOf("refreshSubmitState();", modernShow)
 var modernHiddenRegistration = dialog.indexOf('modernModal.addEventListener("hidden.bs.modal", onHidden);', modernShow);
 assert.ok(modernHiddenRegistration > modernShow,
     "MeshCentral must register its modal-disposal hidden handler before the shared dialog registers next-step resolution.");
+assert.ok(dialog.indexOf('options.onValuesChanged(currentValues(records), record && record.variable, item)') >= 0 &&
+    dialog.indexOf('submit.disabled = submitting || valuesChangePending || valuesChangeFailed') >= 0,
+    "Dependent async prefetch must keep the current modal visible and disable submit until the next step is ready.");
 
 var focused = false;
 var invalid = false;

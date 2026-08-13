@@ -29,7 +29,10 @@ var tools = {
                 "The 24-hour user cache check must finish before the first protocol dialog opens.");
             assert.strictEqual(providerCalls[0].name, "JiraUser");
             return Promise.resolve(options.resolveOptions({ name: "JiraUser", control: "user" }, {}, options.item)).then(function () {
-                return { JiraUserActiveOnly: true, JiraUserSearch: "admin", JiraUser: "acc-1" };
+                var values = { JiraUserActiveOnly: true, JiraUserSearch: "admin", JiraUser: "acc-1" };
+                assert.strictEqual(typeof options.onValuesChanged, "function",
+                    "The user step must start equipment prefetch while its native modal remains visible.");
+                return Promise.resolve(options.onValuesChanged(values, { name: "JiraUser" }, options.item)).then(function () { return values; });
             });
         }
         if (label === "Sprzęt do protokołu") {
@@ -120,6 +123,8 @@ sandbox.window.SharedScriptTools.openParameterDialog({ item: protocol, primaryLa
     assert.strictEqual(providerCalls[0].name, "JiraUser");
     assert.strictEqual(providerCalls[1].name, "PcName");
     assert.strictEqual(providerCalls[1].values.JiraUser, "acc-1", "Asset step must receive the selected Jira user.");
+    assert.strictEqual(calls[0].valuesChangePendingMessage, "Ładowanie sprzętu...",
+        "The user modal must explain why Next is briefly held while equipment is prefetched.");
     assert.strictEqual(providerCalls[2].values.PcName, "PC-01;PHONE-02", "Protocol step provider must receive every selected asset.");
     assert.strictEqual(values.JiraUser, "acc-1");
     assert.strictEqual(values.PcName, "PC-01;PHONE-02");

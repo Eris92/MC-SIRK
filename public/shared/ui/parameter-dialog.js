@@ -315,6 +315,9 @@
         var modernModal = document.getElementById("xxAddAgentModal");
         var submitting = false;
         var submittedValues = null;
+        var valuesChangeSequence = 0;
+        var valuesChangePending = false;
+        var valuesChangeFailed = false;
         var settled = false;
         var cleaned = false;
 
@@ -323,7 +326,7 @@
                 if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
             }
             function refreshSubmitState() {
-                submit.disabled = submitting || records.some(function (record) {
+                submit.disabled = submitting || valuesChangePending || valuesChangeFailed || records.some(function (record) {
                     return !record.customUser && (record.loading || (record.loadFailed && record.variable.required));
                 });
             }
@@ -408,6 +411,32 @@
             function valueRecord(name) {
                 return records.filter(function (record) { return text(record.variable && record.variable.name) === text(name); })[0] || null;
             }
+            function notifyValuesChanged(record) {
+                if (typeof options.onValuesChanged !== "function") return null;
+                var sequence = ++valuesChangeSequence;
+                var operation;
+                try { operation = options.onValuesChanged(currentValues(records), record && record.variable, item); }
+                catch (error) { operation = Promise.reject(error); }
+                if (!operation || typeof operation.then !== "function") return null;
+                valuesChangePending = true;
+                valuesChangeFailed = false;
+                setStatus(status, text(options.valuesChangePendingMessage || "Loading..."), false);
+                refreshSubmitState();
+                return Promise.resolve(operation).then(function (value) {
+                    if (cleaned || sequence !== valuesChangeSequence) return value;
+                    valuesChangePending = false;
+                    valuesChangeFailed = false;
+                    setStatus(status, "", false);
+                    refreshSubmitState();
+                    return value;
+                }).catch(function (error) {
+                    if (cleaned || sequence !== valuesChangeSequence) return;
+                    valuesChangePending = false;
+                    valuesChangeFailed = true;
+                    setStatus(status, error && error.message || String(error), true);
+                    refreshSubmitState();
+                });
+            }
             function applyUserFilter(record) {
                 if (!record || record.kind !== "user" || record.customUser || (!record.variable.searchVariable && !record.variable.activeOnlyVariable)) {
                     if (record && record.kind !== "assetmulti" && !record.listMode) setOptions(record.control, record.allOptions, record.variable, record.variable.required ? "Select…" : "None");
@@ -440,6 +469,7 @@
                     return box.checked;
                 }).map(function (box) { return box.value; }).join(";");
                 setStatus(status, "", false);
+                notifyValuesChanged(record);
             }
             function onOptionDoubleClick(event) {
                 var host = event && event.currentTarget;
@@ -449,13 +479,16 @@
                 if (!record || !box || record.variable.submitOnDoubleClick !== true) return;
                 box.checked = true;
                 record.control.value = box.value;
-                submitRequest();
+                var pending = notifyValuesChanged(record);
+                if (pending) pending.then(function () { if (!cleaned && !valuesChangeFailed) submitRequest(); });
+                else submitRequest();
             }
             function onUserChanged(event) {
                 if (!event || !event.currentTarget) return;
                 var userRecord = records.filter(function (record) {
                     return record.kind === "user" && record.control === event.currentTarget;
                 })[0] || null;
+                notifyValuesChanged(userRecord);
                 records.filter(function (record) {
                     return (record.kind === "asset" || record.kind === "assetmulti") && assetDependsOnUser(records, record, userRecord);
                 }).forEach(function (record) { loadDynamic(record); });

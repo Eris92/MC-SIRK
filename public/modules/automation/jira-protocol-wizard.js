@@ -54,14 +54,14 @@
             return provider(dynamicVariable, merged, item);
         };
     }
-    function runStep(options, item, baseValues, primaryLabel, providerOverride) {
+    function runStep(options, item, baseValues, primaryLabel, providerOverride, stepOptions) {
         var provider = arguments.length >= 5 ? providerOverride : providerFor(baseValues, options.resolveOptions);
-        return originalOpen({
+        return originalOpen(Object.assign({
             item: item,
             trigger: options.trigger,
             primaryLabel: primaryLabel,
             resolveOptions: provider
-        });
+        }, stepOptions || {}));
     }
     function runWizard(options) {
         var item = options.item;
@@ -121,6 +121,23 @@
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
 
         var userProvider = providerFor({}, options.resolveOptions);
+        var assetPrefetch = { user: "", promise: null };
+        function prefetchAssets(values) {
+            var selectedUser = text(values && values.JiraUser);
+            if (!selectedUser) return null;
+            if (assetPrefetch.user === selectedUser && assetPrefetch.promise) return assetPrefetch.promise;
+            var selectedValues = Object.assign({}, values || {});
+            var assetProvider = providerFor(selectedValues, options.resolveOptions);
+            var operation = typeof assetProvider === "function" ?
+                Promise.resolve(assetProvider(assetStep.variables[0], {}, assetStep)) :
+                Promise.resolve(assetStep.variables[0].options || []);
+            var tracked = operation.catch(function (error) {
+                if (assetPrefetch.promise === tracked) assetPrefetch = { user: "", promise: null };
+                throw error;
+            });
+            assetPrefetch = { user: selectedUser, promise: tracked };
+            return tracked;
+        }
         var readyUsers = typeof userProvider === "function" ?
             Promise.resolve(userProvider(jiraUser, {}, userStep)) :
             Promise.resolve(jiraUser.options || []);
@@ -130,14 +147,17 @@
             jiraUser.options = preparedUsers;
             return runStep(options, userStep, {}, "Next", function () {
                 return preparedUsers;
+            }, {
+                valuesChangePendingMessage: "Ładowanie sprzętu...",
+                onValuesChanged: function (values, changedVariable) {
+                    if (!changedVariable || text(changedVariable.name) !== "JiraUser") return null;
+                    return prefetchAssets(values);
+                }
             });
         }).then(function (userValues) {
                 if (userValues == null) return null;
                 var selectedUser = Object.assign({}, userValues);
-                var assetProvider = providerFor(selectedUser, options.resolveOptions);
-                var readyOptions = typeof assetProvider === "function" ?
-                    Promise.resolve(assetProvider(assetStep.variables[0], {}, assetStep)) :
-                    Promise.resolve(assetStep.variables[0].options || []);
+                var readyOptions = prefetchAssets(selectedUser);
                 return readyOptions.then(function (optionsValue) {
                     assetStep.variables[0].options = Array.isArray(optionsValue) ? optionsValue.slice() : [];
                     return runStep(options, assetStep, selectedUser, "Next", null);
