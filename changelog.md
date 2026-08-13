@@ -1,3 +1,12 @@
+## 0.1.1-dev.101 - 2026-08-13
+
+- Add a no-authentication SMTP Relay integration under Settings / Integrations.
+- Add an approval-protected mail script with To, CC, BCC, subject, multiline text/HTML body and attachments.
+- Restrict attachments to an administrator-configured server root and maximum total size.
+- Add reusable multiline My Scripts parameter rendering.
+
+Current development notes: `docs/releases/0.1.1-dev.101.md`.
+
 ## 0.1.1-dev.100 - 2026-08-13
 
 - Rename the cache administration scripts to `Cache Assets.ps1` and `Cache Users.ps1`.

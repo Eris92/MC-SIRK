@@ -78,8 +78,9 @@ new Promise(function (resolve, reject) {
                 assert.ok(String(body).indexOf('disclosure(card, "Jira")') >= 0 &&
                     String(body).indexOf('disclosure(card, "Active Directory")') >= 0 &&
                     String(body).indexOf('disclosure(card, "SMS / Voice SMS (SMSAPI.pl)")') >= 0 &&
+                    String(body).indexOf('disclosure(card, "SMTP Relay")') >= 0 &&
                     String(body).indexOf('disclosure(card, "AAD / Entra ID")') >= 0,
-                    "Jira, AD, SMS and Entra must share the collapsed integration surface.");
+                    "Jira, AD, SMS, SMTP and Entra must share the collapsed integration surface.");
                 assert.ok(String(body).indexOf('input.type = options.type || "text"') >= 0);
                 assert.ok(String(body).indexOf('type: "password"') >= 0, "Secret editors must remain password inputs.");
                 assert.ok(String(body).indexOf("if (jiraToken.value) secrets.jiraToken = jiraToken.value") >= 0,

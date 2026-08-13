@@ -15,6 +15,7 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | bieżący stan i ograniczenia | `docs/PROJECT-STATE.md` |
 | release/development notes | `docs/releases/README.md` |
 | SMSAPI, Voice SMS i operacje kont Active Directory | `docs/SMSAPI-AD.md` |
+| SMTP Relay, treść e-mail i bezpieczne załączniki | `docs/SMTP-RELAY.md` |
 | wersja, bump, tag, release | `docs/agent/14-Agent-Wersjonowanie-Pre1.md` |
 | reguły runtime/pluginu | `docs/agent/10-Agent-MeshCentral-Plugin.md`, `docs/agent/11-Agent-SIRK-Portal.md` |
 | wydajność, reuse, duplikacja | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |

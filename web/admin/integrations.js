@@ -78,6 +78,7 @@
         var configured = snapshot.configured || {};
         var jira = values.jira || {};
         var sms = values.sms || {};
+        var smtp = values.smtp || {};
         var ad = values.ad || {};
         var entra = values.entra || {};
 
@@ -132,6 +133,14 @@
         smsExternalToken.autocomplete = "new-password";
         var smsVerifyTls = checkbox(smsBox, "Verify SMSAPI TLS certificate", sms.verifyTls !== false);
 
+        var smtpBox = disclosure(card, "SMTP Relay");
+        var smtpHost = field(smtpBox, "SMTP server", smtp.host || "", { placeholder: "mailrelay.example.local" });
+        var smtpPort = field(smtpBox, "SMTP port", smtp.port || 25, { type: "number", min: 1, max: 65535 });
+        var smtpFrom = field(smtpBox, "Default sender", smtp.defaultFrom || "", { placeholder: "automation@example.com" });
+        var smtpAttachmentRoot = field(smtpBox, "Allowed attachment root", smtp.attachmentRoot || "", { placeholder: "C:\\SIRK\\Attachments" });
+        var smtpMaxAttachmentMb = field(smtpBox, "Maximum total attachment size (MB)", smtp.maxAttachmentMb || 25, { type: "number", min: 1, max: 100 });
+        var smtpEnableSsl = checkbox(smtpBox, "Enable SMTP TLS/SSL", smtp.enableSsl === true);
+
         var entraBox = disclosure(card, "AAD / Entra ID");
         var tenantId = field(entraBox, "Tenant ID", entra.tenantId || "");
         var clientId = field(entraBox, "Client ID", entra.clientId || "");
@@ -169,6 +178,7 @@
                 userLocations: locationRows.filter(function (row) { return row.row.isConnected; }).map(function (row) { return { name: row.name.value, dn: row.dn.value }; })
             });
             integrations.sms = Object.assign({}, sms, { url: smsUrl.value, sender: smsSender.value, vmsLector: smsLector.value, verifyTls: smsVerifyTls.checked });
+            integrations.smtp = Object.assign({}, smtp, { host: smtpHost.value, port: Number(smtpPort.value), defaultFrom: smtpFrom.value, attachmentRoot: smtpAttachmentRoot.value, maxAttachmentMb: Number(smtpMaxAttachmentMb.value), enableSsl: smtpEnableSsl.checked });
             integrations.entra = Object.assign({}, entra, {
                 tenantId: tenantId.value,
                 clientId: clientId.value

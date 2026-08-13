@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.101`](0.1.1-dev.101.md) — configurable SMTP Relay mail with multiline body, HTML and bounded attachments;
 - [`0.1.1-dev.100`](0.1.1-dev.100.md) — neutral cache script filenames and labels without a Jira prefix;
 - [`0.1.1-dev.99`](0.1.1-dev.99.md) — equipment prefetch while the Jira protocol user modal remains visible;
 - [`0.1.1-dev.98`](0.1.1-dev.98.md) — SMSAPI/Voice SMS, external send API oraz zatwierdzane workflow resetu i tworzenia kont AD;

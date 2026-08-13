@@ -24,12 +24,13 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
         jira: { health: { status: "invalid", messagePl: "\u0000test" } },
         defender: { health: { status: "critical", messagePl: "Awaria", messageEn: "Failure" } },
         zabbix: { health: { status: "ok" } },
-        sms: { health: { status: "ok" } }
+        sms: { health: { status: "ok" } },
+        smtp: { health: { status: "ok" } }
     }
 }).then(function () {
     var summary = service.healthSummary();
     assert.strictEqual(summary.status, "critical");
-    assert.strictEqual(summary.items.length, 6);
+    assert.strictEqual(summary.items.length, 7);
     summary.items.forEach(function (item) {
         assert.strictEqual(item.configured, false);
         assert.strictEqual(item.status, "critical");
@@ -42,7 +43,8 @@ service.save({ siteadmin: 0xFFFFFFFF }, {
             jira: { url: "https://example.atlassian.net", email: "svc@example.test", projectKey: "OPS", health: { status: "invalid", messagePl: "\u0000test" } },
             defender: { tenantId: "tenant", clientId: "defender-client", health: { status: "critical", messagePl: "Awaria", messageEn: "Failure" } },
             zabbix: { url: "https://zabbix.example.test", username: "svc-zabbix", health: { status: "ok" } },
-            sms: { url: "https://api.smsapi.pl", health: { status: "ok" } }
+            sms: { url: "https://api.smsapi.pl", health: { status: "ok" } },
+            smtp: { host: "mailrelay.example.test", port: 25, defaultFrom: "automation@example.test", health: { status: "ok" } }
         },
         secrets: {
             adPassword: "test-ad-password",

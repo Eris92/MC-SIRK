@@ -114,6 +114,15 @@ module.exports.createServerScriptExecutor = function (options) {
             environment.MYSCRIPTS_SMS_SENDER = String(sms.sender || "");
             environment.MYSCRIPTS_SMS_VMS_LECTOR = String(sms.vmsLector || "ewa");
         }
+        if (enabled("smtp")) {
+            var smtp = context.integrations.get("smtp");
+            environment.MYSCRIPTS_SMTP_SERVER = String(smtp.host || "");
+            environment.MYSCRIPTS_SMTP_PORT = String(smtp.port || 25);
+            environment.MYSCRIPTS_SMTP_FROM = String(smtp.defaultFrom || "");
+            environment.MYSCRIPTS_SMTP_ENABLE_SSL = smtp.enableSsl === true ? "true" : "false";
+            environment.MYSCRIPTS_SMTP_ATTACHMENT_ROOT = String(smtp.attachmentRoot || "");
+            environment.MYSCRIPTS_SMTP_MAX_ATTACHMENT_BYTES = String(Math.round((Number(smtp.maxAttachmentMb) || 25) * 1024 * 1024));
+        }
         if (enabled("defender")) {
             var defender = context.integrations.get("defender");
             environment.MYSCRIPTS_DEFENDER_TENANT_ID = String(defender.tenantId || "");

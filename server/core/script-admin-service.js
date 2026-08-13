@@ -34,6 +34,7 @@ module.exports.createScriptAdminService = function (options) {
         entra: "Entra ID",
         jira: "Jira",
         sms: "SMSAPI",
+        smtp: "SMTP Relay",
         defender: "Defender XDR",
         zabbix: "Zabbix"
     };
@@ -97,6 +98,8 @@ module.exports.createScriptAdminService = function (options) {
                 available = configured.jira === true;
             } else if (name === "sms") {
                 available = configured.sms === true;
+            } else if (name === "smtp") {
+                available = configured.smtp === true;
             } else if (name === "defender") {
                 available = configured.defender === true;
             } else if (name === "zabbix") {

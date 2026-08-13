@@ -193,6 +193,7 @@
             var kind = controlKind(variable);
             var customUser = kind === "user" && allowCustom(item, variable);
             var listMode = variable.listMode === true && (kind === "user" || kind === "select");
+            var multiline = variable.multiline === true && kind === "text";
             var row = document.createElement("label");
             row.className = "mc-script-form-row mc-parameter-dialog-field";
             if (item && item.fitOptionWidth === true) row.classList.add("mc-parameter-dialog-fit-options");
@@ -202,7 +203,7 @@
             caption.textContent = (localized(variable, "label") || text(variable.name)) + (variable.required ? " *" : "");
             if (variable.hideLabel !== true && !(kind === "switch" && variable.inlineControl === true)) row.appendChild(caption);
             var useSelect = kind === "select" || kind === "asset" || (kind === "user" && !customUser);
-            var control = document.createElement(listMode ? "input" : useSelect ? "select" : "input");
+            var control = document.createElement(multiline ? "textarea" : listMode ? "input" : useSelect ? "select" : "input");
             control.id = prefix + "Control" + index;
             control.name = text(variable.name);
             control.className = "mc-definition-input";
@@ -231,7 +232,8 @@
                     if (variable.hideLabel !== true) row.appendChild(caption);
                 }
             } else if (kind === "text" || customUser) {
-                control.type = "text";
+                if (!multiline) control.type = "text";
+                else control.rows = Math.max(3, Math.min(12, Number(variable.rows) || 5));
                 control.value = defaultValue(variable);
                 control.autocomplete = "off";
                 if (customUser) {
