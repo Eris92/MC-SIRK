@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.97",
+    "date": "2026-08-13",
+    "summary": "Add a credential-safe hourly Windows Task Scheduler refresh for Jira cache files.",
+    "notes": "docs/releases/0.1.1-dev.97.md"
+  },
+  {
     "version": "0.1.1-dev.96",
     "date": "2026-08-13",
     "summary": "Move Jira cache administration scripts under settings/Jira without relocating JSON cache data.",

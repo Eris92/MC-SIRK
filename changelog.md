@@ -1,3 +1,10 @@
+## 0.1.1-dev.97 - 2026-08-13
+
+- Add an internal `_Scheduler` BAT installer for an hourly Windows Jira cache refresh task.
+- Refresh both existing JSON cache files through the shared Jira service without storing credentials in the task definition.
+
+Current development notes: `docs/releases/0.1.1-dev.97.md`.
+
 ## 0.1.1-dev.96 - 2026-08-13
 
 - Move the Jira cache administration scripts from `Jira` to `settings/Jira`.
