@@ -1,3 +1,10 @@
+## 0.1.1-dev.85 - 2026-08-13
+
+- Replace the company-specific `INVESTA` protocol logo fallback with the neutral `LOGO` placeholder and neutral image alt text.
+- Preserve uploaded/custom logo rendering and the complete styled PDF lifecycle unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.85.md`.
+
 ## 0.1.1-dev.84 - 2026-08-13
 
 - Preserve the canonical styled Jira protocol HTML template under the MeshCentral Windows service by explicitly allowing Microsoft Edge to start as `LocalSystem` with `--allow-run-as-system`.
