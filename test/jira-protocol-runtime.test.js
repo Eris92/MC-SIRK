@@ -137,7 +137,8 @@ function jiraAsset(value, model, serial, inventory) {
             "Full protocol text must remain available only as raw diagnostic output and PDF fallback input.");
         assert.strictEqual(result.artifacts.length, 1);
         assert.strictEqual(result.artifacts[0].type, "pdf");
-        assert.strictEqual(result.artifacts[0].autoOpen, true);
+        assert.strictEqual(result.artifacts[0].autoOpen, false,
+            "Completed protocol PDFs must remain user-opened through explicit Open/Download actions.");
         assert.strictEqual(Object.prototype.hasOwnProperty.call(result.artifacts[0], "path"), false,
             "Public protocol result must never expose filesystem paths.");
         assert.strictEqual(service.progress(request.id, "completed").percent, 100);
@@ -188,8 +189,8 @@ function jiraAsset(value, model, serial, inventory) {
             "Progressbar value must come from backend state.");
         assert.strictEqual(clientSource.indexOf("setInterval"), -1,
             "Client must not add a permanent progress polling loop.");
-        assert.ok(clientSource.indexOf("openedArtifacts = new Set()") >= 0 && clientSource.indexOf("openArtifactOnce") >= 0,
-            "Successful protocol PDF must auto-open at most once per live run.");
+        assert.strictEqual(clientSource.indexOf("openArtifactOnce"), -1,
+            "Successful protocol PDF must never open automatically, including historical artifacts carrying the old autoOpen flag.");
         assert.ok(clientSource.indexOf("Download PDF") >= 0 && clientSource.indexOf("artifactId") >= 0,
             "Live and historical results must retain manual protected PDF actions.");
         assert.ok(clientSource.indexOf('host.querySelector(".mc-results-inline-actions")') >= 0,

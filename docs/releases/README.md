@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.91`](0.1.1-dev.91.md) — explicit-only Jira protocol PDF opening and downloading without automatic popup;
 - [`0.1.1-dev.90`](0.1.1-dev.90.md) — frontend-enforced equipment-only Jira protocol table for stale and historical text outputs;
 - [`0.1.1-dev.89`](0.1.1-dev.89.md) — left-side Force checkbox in both Jira cache dialogs without changing other script forms;
 - [`0.1.1-dev.88`](0.1.1-dev.88.md) — Jira protocol equipment-only JSON table, operation heading and one shared Copy/PDF action row;

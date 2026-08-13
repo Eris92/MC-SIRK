@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.91",
+    "date": "2026-08-13",
+    "summary": "Stop automatically opening generated Jira protocol PDFs.",
+    "notes": "docs/releases/0.1.1-dev.91.md"
+  },
+  {
     "version": "0.1.1-dev.90",
     "date": "2026-08-13",
     "summary": "Always render Jira protocol equipment from normalized result data, including stale text outputs.",
