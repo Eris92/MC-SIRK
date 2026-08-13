@@ -97,7 +97,7 @@
         var adBox = disclosure(card, "Active Directory");
         var adDomain = field(adBox, "AD domain", ad.domain || "");
         var adLogin = field(adBox, "AD login", ad.login || "");
-        var adUpnSuffix = field(adBox, "UPN suffix", ad.upnSuffix || ad.domain || "", { placeholder: "investa.pl" });
+        var adUpnSuffix = field(adBox, "UPN suffix", ad.upnSuffix || "", { placeholder: "domena.local" });
         var adPassword = field(adBox, "AD password", "", {
             type: "password",
             placeholder: configured.adPassword ? "Configured - leave blank to keep" : "Required"
@@ -112,7 +112,7 @@
             item = item || {};
             var row = element("div", "mc-admin-location-row");
             var name = document.createElement("input"); name.className = "mc-admin-input"; name.placeholder = "New"; name.value = item.name || "";
-            var dn = document.createElement("input"); dn.className = "mc-admin-input"; dn.placeholder = "OU=_NewUsers,OU=Business,DC=investa,DC=pl"; dn.value = item.dn || "";
+            var dn = document.createElement("input"); dn.className = "mc-admin-input"; dn.placeholder = "OU=_NewUsers,OU=Business,DC=domena,DC=local"; dn.value = item.dn || "";
             var remove = element("button", "mc-admin-secondary", "Remove"); remove.type = "button";
             remove.onclick = function () { row.remove(); locationRows = locationRows.filter(function (entry) { return entry.row !== row; }); };
             row.appendChild(name); row.appendChild(dn); row.appendChild(remove); locationsHost.appendChild(row);

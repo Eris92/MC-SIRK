@@ -88,6 +88,10 @@ new Promise(function (resolve, reject) {
                 assert.ok(String(body).indexOf("if (smsToken.value) secrets.smsApiToken = smsToken.value") >= 0 &&
                     String(body).indexOf("smsExternalToken.minLength = 32") >= 0,
                     "SMSAPI secrets must remain write-only and external tokens must enforce their minimum strength.");
+                assert.ok(String(body).indexOf('field(adBox, "UPN suffix", ad.upnSuffix || "", { placeholder: "domena.local" })') >= 0 &&
+                    String(body).indexOf("DC=domena,DC=local") >= 0 &&
+                    !/investa\.pl/i.test(String(body)),
+                    "Active Directory hints must use neutral domain.local examples without company-specific values.");
                 resolve();
             } catch (error) { reject(error); }
         }), admin);
