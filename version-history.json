@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.108",
+    "date": "2026-08-14",
+    "summary": "Use authoritative Jira Assets total counts, truthful cache reporting and workspace-wide user-bound scope.",
+    "notes": "docs/releases/0.1.1-dev.108.md"
+  },
+  {
     "version": "0.1.1-dev.107",
     "date": "2026-08-13",
     "summary": "Restore bounded Jira Assets pagination, compact cache and explicit heterogeneous equipment user binding.",
@@ -304,7 +310,7 @@
       "Bump the pre-1.0 development revision after real dev.39 Network Settings and Admin theme failures.",
       "Let only the trusted Network Settings built-in reach MeshAgent as native type-2 UserOnly instead of the shared script-oriented Scheduled Task wrapper, preserving route and Shell Properties semantics.",
       "Observe the real Modern MeshCentral theme stylesheet href/load signal in the existing Admin theme owner while retaining Classic fallback, form state and F5 recovery.",
-      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag or GitHub Release."
+      "Pre-bump full npm test and canonical runtime PR Test #546 are green; #128/#123 remain open for real dev.40 smoke; no tag/GitHub Release."
     ]
   },
   {
@@ -394,7 +400,7 @@
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the Issue #123 F5 startup-recovery correction from PR #230.",
       "Restore an empty SIRK page-43 iframe from the existing onWebUIStartupEnd owner using the exact stored SIRK pin, current viewmode=43, and empty-frame guard instead of depending on goPageEnd timing.",
-      "Keep goPageStart as the ownership recorder/clearer, remove duplicate goPageEnd recovery, and add functional positive/negative startup regressions without timers, observers, polling or backend requests.",
+      "Keep goPageStart as the single ownership recorder/clearer, remove duplicate goPageEnd recovery, and add functional positive/negative startup regressions without timers, observers, polling or backend requests.",
       "Keep Issue #123 open for real MeshCentral F5 re-smoke and keep the change below 1.0.0 with no automatic tag or GitHub Release."
     ]
   },

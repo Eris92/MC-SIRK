@@ -4,7 +4,7 @@
 # VariableSwitch: $Force, false, Wymuś odświeżenie|
 # SirkWorkflow: JiraAssetsCache
 # SirkSystemCredential: Jira
-# SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")
+# SirkJiraAssetAql: Key is not EMPTY
 # SirkJiraAssetLabelAttribute: Nazwa_sieciowa
 # MultiHost: false
 # runAsUser: 0

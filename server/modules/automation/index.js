@@ -143,9 +143,21 @@ module.exports.createModule = function (context) {
             } }, force);
         }
         return operation.then(function (result) {
-            var count = result && Array.isArray(result.items) ? result.items.length : 0;
-            var message = (kind === "users" ? "Jira users cache" : "Jira assets cache") + " is ready: " + count + " items.";
-            return { message: message, output: message, rawOutput: message, data: { cache: kind, count: count, forced: force, stale: result && result.stale === true }, exitCode: 0, scriptPath: script.path, label: script.label || script.name };
+            var itemCount = result && Array.isArray(result.items) ? result.items.length : 0;
+            var sourceCount = Number(result && result.sourceCount);
+            var count = kind === "assets" && isFinite(sourceCount) && sourceCount >= 0 ? sourceCount : itemCount;
+            var bounded = kind === "assets" && result && result.truncated === true && count >= 50000;
+            var message = (kind === "users" ? "Jira users cache" : "Jira assets cache") + " is ready: " +
+                (bounded ? "at least " : "") + count + " items" + (bounded ? " (bounded)." : ".");
+            return {
+                message: message,
+                output: message,
+                rawOutput: message,
+                data: { cache: kind, count: count, forced: force, stale: result && result.stale === true, truncated: bounded },
+                exitCode: 0,
+                scriptPath: script.path,
+                label: script.label || script.name
+            };
         });
     }
     function signalProtocolStart(payload, request) {

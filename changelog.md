@@ -1,3 +1,11 @@
+## 0.1.1-dev.108 - 2026-08-14
+
+- Use Jira Assets `/object/aql/totalcount` when `totalFilterCount` is capped so forced cache refresh stops at the authoritative result size.
+- Report the fetched Assets snapshot count instead of the interactive 5000-option ceiling.
+- Restore Issue #305 workspace-wide `Key is not EMPTY` scope for protocol/cache before server-side user binding.
+
+Current development notes: `docs/releases/0.1.1-dev.108.md`.
+
 ## 0.1.1-dev.107 - 2026-08-13
 
 - Restore the bounded Jira Assets service that dev.82 reverted to dev.63 while preserving all post-dev.82 main changes.
