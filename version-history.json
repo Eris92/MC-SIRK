@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.108",
+    "date": "2026-08-14",
+    "summary": "Use authoritative Jira Assets total counts, truthful cache reporting and workspace-wide user-bound scope.",
+    "notes": "docs/releases/0.1.1-dev.108.md"
+  },
+  {
     "version": "0.1.1-dev.107",
     "date": "2026-08-13",
     "summary": "Restore bounded Jira Assets pagination, compact cache and explicit heterogeneous equipment user binding.",
@@ -334,7 +340,7 @@
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the follow-up to the real dev.36 Results geometry and Network Settings execution failures.",
       "Leave the native MeshCentral modal as the only Results outer surface and geometry owner by removing standalone viewer viewport sizing and second-card ownership while preserving structured output, Copy, CSV and full Debug.",
       "Require an Alive default route to map to an Up adapter before selection, preserving IPv4-first/IPv6 fallback and deterministic metrics so stale routes cannot select a disconnected interface.",
-      "Use the real Network Connections FolderItem Properties/Właściwości verb with FolderItemVerb.DoIt(), proven on the user's Windows host after dev.36 ShellExecuteEx returned false-positive success; keep #237/#128 open for real dev.37 smoke and create no tag/GitHub Release."
+      "Use the real Network Connections FolderItem Properties/Właściwości verb with FolderItemVerb.DoIt(), proven on the user's Windows host after dev.36 ShellExecuteEx returned false-positive success; keep #237/#128 open for real dev.37 smoke and create no tag or GitHub Release."
     ]
   },
   {
@@ -580,7 +586,7 @@
     "date": "2026-08-08",
     "changes": [
       "Bump the pre-1.0 development revision so MeshCentral update detection installs the opacity-safe Move Request dialog follow-up from current main.",
-      "Composite native Move Request card/body surface tokens over an always-opaque Canvas base so transparent or alpha host tokens cannot expose the device page.",
+      "Composite native Move Request card/body surface tokens over an always-opaque Canvas base so transparent or alpha host card tokens cannot expose the device page.",
       "Preserve Move Request submit/backend behavior and the existing guarded status lifecycle.",
       "Keep the change as a development revision below 1.0.0 with no automatic tag or GitHub Release."
     ]
