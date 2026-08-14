@@ -1,3 +1,11 @@
+## 0.1.1-dev.108 - 2026-08-14
+
+- Use Jira Assets `/object/aql/totalcount` when `totalFilterCount` is capped so forced cache refresh stops at the authoritative result size.
+- Report the fetched Assets snapshot count instead of the interactive 5000-option ceiling.
+- Restore Issue #305 workspace-wide `Key is not EMPTY` scope for protocol/cache before server-side user binding.
+
+Current development notes: `docs/releases/0.1.1-dev.108.md`.
+
 ## 0.1.1-dev.107 - 2026-08-13
 
 - Restore the bounded Jira Assets service that dev.82 reverted to dev.63 while preserving all post-dev.82 main changes.
@@ -297,7 +305,6 @@ Current development notes: `docs/releases/0.1.1-dev.50.md`.
 Current development notes: `docs/releases/0.1.1-dev.49.md`.
 
 ## 0.1.1-dev.48 - 2026-08-11
-
 - Complete the shared credentials/native-dialog follow-up for #280/#281 and corrective task packets #284-#288 without adding a second secret store, modal framework, polling loop or per-row credentials request.
 - Gate standalone Script credentials on persisted local `SaveSecret*` metadata while keeping System credentials in Definition Editor, and allow known System credential assignments before global readiness with fail-closed runtime checks.
 - Keep Definition Editor geometry stable on hover/focus, use one gold active-icon contract for Favorites/Edit/Multi without persistent selected button surfaces, and move Quick `ConfirmExecution` from browser `window.confirm()` to the existing native MeshCentral confirmation lifecycle with exactly-one submit semantics.
@@ -355,7 +362,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
