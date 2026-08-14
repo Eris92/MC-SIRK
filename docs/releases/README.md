@@ -63,7 +63,7 @@ Aktualna linia development:
 - [`0.1.1-dev.35`](0.1.1-dev.35.md) — poprzedni follow-up po real `0.1.1-dev.34` smoke: kompletny Modern Results modal contract oraz pierwsza PIDL/ShellExecuteEx próba Network Settings, nadal nieskuteczna w real smoke;
 - [`0.1.1-dev.34`](0.1.1-dev.34.md) — poprzedni follow-up po real `0.1.1-dev.33` smoke: Results viewer na natywnym dialog managerze MeshCentral oraz nieskuteczna próba `InvokeVerb('properties')` dla Windows Network Settings;
 - [`0.1.1-dev.33`](0.1.1-dev.33.md) — poprzedni follow-up po real `0.1.1-dev.32` smoke: Results View na standardowym native secondary surface, natychmiastowa wzajemna wyłączność Commands/Plugins oraz pierwsza nieskuteczna próba Windows ConnectionsFolder dla Network Settings;
-- [`0.1.1-dev.32`](0.1.1-dev.32.md) — poprzednia zintegrowana rewizja smoke po PR #233/#234: single-pending Move Requests per stable nodeId oraz wzajemnie wykluczające się zaznaczenie Commands/Plugins;
+- [`0.1.1-dev.32`](0.1.1-dev.32.md) — poprzednia zintegrowana rewizja smoke po PR #233/#234: single-pending Move Requests per stable host oraz wzajemnie wykluczające się zaznaczenie Commands/Plugins;
 - [`0.1.1-dev.31`](0.1.1-dev.31.md) — poprzednia rewizja development z F5 startup recovery dla SIRK Admin po real dev.30 smoke; light/dark z dev.30 pozostaje zachowane;
 - [`0.1.1-dev.30`](0.1.1-dev.30.md) — poprzednia rewizja development z korektą Admin po real dev.29 smoke: parent-owned light/dark oraz pierwsza, nieskuteczna próba scoped recovery natywnego page-43 iframe po F5;
 - [`0.1.1-dev.29`](0.1.1-dev.29.md) — poprzednia rewizja development z poprawkami po real dev.28 smoke: synchronizacja Admin light/dark, izolacja natywnej geometrii Devices od SIRK form classes oraz stabilna geometria Output na hover;
