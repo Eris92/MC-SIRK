@@ -715,7 +715,7 @@ module.exports.createJiraAssetService = function (options) {
                     if (firstPage.cappedTotal) {
                         return requestAuthoritativeTotal().then(function (total) {
                             return fetchKnownTotal(total, firstPage);
-                        }).catch(function () {
+                        }, function () {
                             return fetchSequential(firstPage.count, 1);
                         });
                     }
