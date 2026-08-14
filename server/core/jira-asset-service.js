@@ -624,15 +624,31 @@ module.exports.createJiraAssetService = function (options) {
                         var count = page.length;
                         var more = pageHasMore(response, startAt, count);
                         var total = responseTotal(response);
+                        var cappedTotal = object(response).totalFilterCount != null && more && total >= 1000;
                         var prepared = missingAttributeNames(page) ? enrichAttributeNames(page) : Promise.resolve(page);
                         return prepared.then(function (enriched) {
                             return {
                                 count: count,
                                 more: more,
                                 total: total,
+                                cappedTotal: cappedTotal,
                                 entries: enriched.map(compactAssetEntry)
                             };
                         });
+                    });
+                }
+
+                function requestAuthoritativeTotal() {
+                    return requestJson({
+                        url: baseUrl + "/totalcount",
+                        method: "POST",
+                        headers: { Authorization: authHeader(config), Accept: "application/json", "Content-Type": "application/json" },
+                        json: { qlQuery: policy.aql }, verifyTls: config.verifyTls,
+                        timeoutMs: 30000, maxBytes: 1024 * 1024, errorPrefix: "Jira Assets total count"
+                    }).then(function (response) {
+                        var total = Number(response && response.totalCount);
+                        if (!isFinite(total) || total < 0) throw new Error("Jira Assets total count returned an invalid value.");
+                        return Math.floor(total);
                     });
                 }
 
@@ -679,21 +695,35 @@ module.exports.createJiraAssetService = function (options) {
                     });
                 }
 
+                function fetchKnownTotal(total, firstPage) {
+                    var maxEntries = ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES;
+                    if (!isFinite(total) || total < firstPage.count || firstPage.count !== ASSET_PAGE_SIZE) {
+                        return fetchSequential(firstPage.count, 1);
+                    }
+                    var upperBound = Math.min(Math.floor(total), maxEntries);
+                    var starts = [];
+                    for (var startAt = ASSET_PAGE_SIZE; startAt < upperBound; startAt += ASSET_PAGE_SIZE) starts.push(startAt);
+                    return fetchConcurrent(starts).then(function () {
+                        if (total > maxEntries) truncated = true;
+                    });
+                }
+
                 assetsInFlight[policy.aql] = requestPage(0).then(function (firstPage) {
                     entries = entries.concat(firstPage.entries);
                     if (!firstPage.more || !firstPage.count) return null;
                     var maxEntries = ASSET_PAGE_SIZE * MAX_ASSET_SCAN_PAGES;
+                    if (firstPage.cappedTotal) {
+                        return requestAuthoritativeTotal().then(function (total) {
+                            return fetchKnownTotal(total, firstPage);
+                        }).catch(function () {
+                            return fetchSequential(firstPage.count, 1);
+                        });
+                    }
                     if (firstPage.total >= 0 && firstPage.count === ASSET_PAGE_SIZE) {
                         var upperBound = Math.min(firstPage.total, maxEntries);
                         var starts = [];
                         for (var startAt = ASSET_PAGE_SIZE; startAt < upperBound; startAt += ASSET_PAGE_SIZE) starts.push(startAt);
                         return fetchConcurrent(starts).then(function (tail) {
-                            // Jira can report a totalFilterCount/total that is capped well
-                            // below the real result count. Trusting it to bound pagination
-                            // silently drops every object beyond the cap (e.g. most non-
-                            // Komputer equipment types). Keep paging sequentially past the
-                            // reported total as long as the last page we actually fetched
-                            // still signals more results are available.
                             if (!tail || !tail.lastPage || !tail.lastPage.more || !tail.lastPage.count) {
                                 if (firstPage.total > maxEntries) truncated = true;
                                 return null;
@@ -728,7 +758,13 @@ module.exports.createJiraAssetService = function (options) {
                     seen[key] = true; items.push(item);
                 });
                 items.sort(function (a, b) { return a.label.localeCompare(b.label); });
-                return { items: items, stale: source.stale === true, truncated: source.truncated === true || items.length >= policy.maxResults, warning: source.warning || "" };
+                return {
+                    items: items,
+                    sourceCount: source.entries.length,
+                    stale: source.stale === true,
+                    truncated: source.truncated === true || items.length >= policy.maxResults,
+                    warning: source.warning || ""
+                };
             });
         });
     }
