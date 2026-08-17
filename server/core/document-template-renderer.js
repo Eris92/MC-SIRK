@@ -77,6 +77,10 @@ function renderConfirmationProtocol(data) {
     var localDate = generatedAt;
     try { localDate = new Date(generatedAt).toLocaleString("sv-SE").replace("T", " "); } catch (error) {}
     var signatures = confirmationSignatures(data);
+    var changedAssets = (Array.isArray(data.assets) ? data.assets : []).filter(function (asset) {
+        return asset && (asset.action === "receive" || asset.action === "return");
+    });
+    var changeRows = changedAssets.length ? protocolRows(changedAssets, true) : '<tr><td colspan="5">Brak zmian na stanie.</td></tr>';
     var title = "PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU";
     var statement = data.hasChanges ?
         "Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu, nie zgłaszam uwag oraz zapoznałem/am się z regulaminem użytkowania sprzętu służbowego." :
@@ -86,10 +90,9 @@ function renderConfirmationProtocol(data) {
         "</div><div><strong>E-mail:</strong> " + escapeHtml(protocolValue(user.email)) +
         "</div><div><strong>Osoba IT:</strong> " + escapeHtml(protocolValue(itPerson.name)) + "</div></div>" +
         "<div class=\"section\"><h2>Zmiany na stanie</h2><table><thead><tr><th>Operacja</th><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
-        "</tr></thead><tbody>" + protocolRows(data.assets, true) + "</tbody></table>" +
-        "<div class=\"note\"><strong>Legenda:</strong><br>* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika po finalnym potwierdzeniu.<br>" +
-        "** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika po finalnym potwierdzeniu.<br>" +
-        "Bez zmian - pozycja służy do uzgodnienia stanu i nie powoduje zmiany CMDB.</div></div>" +
+        "</tr></thead><tbody>" + changeRows + "</tbody></table>" +
+        "<div class=\"note\"><strong>Legenda:</strong><br>* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika<br>" +
+        "** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika</div></div>" +
         "<div class=\"section\"><h2>Stan po zmianie</h2><table><thead><tr><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
         "</tr></thead><tbody>" + protocolRows(data.finalAssets, false) + "</tbody></table></div>" +
         "<div class=\"note\">" + escapeHtml(statement) + "</div>" +
