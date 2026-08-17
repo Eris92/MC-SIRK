@@ -215,6 +215,11 @@ module.exports.createApprovalService = function (options) {
         return level > 0 && shared.isUserInAnyGroup(user, config(request.type).levels[level]);
     }
 
+    function canConfirm(user, request) {
+        if (!user || request.status !== "awaiting_confirmation") return false;
+        return shared.isSiteAdmin(user) || !!(request.requester && request.requester.id === user._id);
+    }
+
     function canSee(user, request) {
         return shared.isSiteAdmin(user) ||
             !!(user && request.requester && request.requester.id === user._id) ||
@@ -230,6 +235,7 @@ module.exports.createApprovalService = function (options) {
         }
         delete result.payload;
         result.canDecide = canDecide(user, request);
+        result.canConfirm = canConfirm(user, request);
         result.currentApprovalLevel = currentLevel(request);
         return result;
     }
@@ -257,11 +263,24 @@ module.exports.createApprovalService = function (options) {
                 execution.request,
                 execution.request.executionId
             )).then(function (result) {
+                var prepared = result || { message: "Operation completed." };
+                var requiresConfirmation = typeof execution.provider.requiresRequesterConfirmation === "function" &&
+                    execution.provider.requiresRequesterConfirmation(prepared, execution.request) === true;
                 return transact(function (rows) {
                     var request = rows.find(function (item) { return item.id === id; });
                     if (!request) return null;
-                    request.status = execution.provider.finalStatusOnSuccess || "completed";
-                    request.result = result || { message: "Operation completed." };
+                    request.result = prepared;
+                    if (requiresConfirmation) {
+                        if (typeof execution.provider.confirmRequester !== "function") {
+                            request.status = "failed";
+                            request.confirmationError = "Approval provider does not support requester confirmation.";
+                        } else {
+                            request.status = "awaiting_confirmation";
+                            delete request.confirmationError;
+                        }
+                    } else {
+                        request.status = execution.provider.finalStatusOnSuccess || "completed";
+                    }
                     request.updatedAt = Date.now();
                     return shared.copy(request);
                 });
@@ -376,6 +395,58 @@ module.exports.createApprovalService = function (options) {
         });
     }
 
+    function confirm(user, id, note) {
+        var confirmation = null;
+        return transact(function (rows) {
+            var request = rows.find(function (item) { return item.id === String(id || ""); });
+            if (!request) throw new Error("Approval request not found.");
+            if (request.confirmation) {
+                if (!canSee(user, request)) throw new Error("Permission denied.");
+                return publicRequest(user, request);
+            }
+            if (!canConfirm(user, request)) throw new Error("Permission denied.");
+            var provider = providers[request.type];
+            if (!provider || typeof provider.confirmRequester !== "function") {
+                throw new Error("Approval provider does not support requester confirmation.");
+            }
+            request.confirmation = {
+                user: { id: user._id, name: shared.userName(user) },
+                note: shared.cleanText(note, 4000),
+                confirmedAt: Date.now()
+            };
+            request.status = "confirming";
+            request.updatedAt = Date.now();
+            delete request.confirmationError;
+            confirmation = { provider: provider, request: shared.copy(request) };
+            return publicRequest(user, request);
+        }).then(function (visible) {
+            if (!confirmation) return visible;
+            return Promise.resolve(confirmation.provider.confirmRequester(
+                confirmation.request.result,
+                confirmation.request
+            )).then(function (result) {
+                return transact(function (rows) {
+                    var request = rows.find(function (item) { return item.id === String(id || ""); });
+                    if (!request) return null;
+                    if (result != null) request.result = result;
+                    request.status = "completed";
+                    request.updatedAt = Date.now();
+                    delete request.confirmationError;
+                    return publicRequest(user, request);
+                });
+            }).catch(function (error) {
+                return transact(function (rows) {
+                    var request = rows.find(function (item) { return item.id === String(id || ""); });
+                    if (!request) return null;
+                    request.status = "failed";
+                    request.confirmationError = shared.cleanText(error && error.message || error, 8000);
+                    request.updatedAt = Date.now();
+                    return publicRequest(user, request);
+                });
+            });
+        });
+    }
+
     function list(user, query) {
         query = query || {};
         var page = Math.max(1, Number(query.page) || 1);
@@ -387,7 +458,9 @@ module.exports.createApprovalService = function (options) {
         var rows = readRows().filter(function (request) {
             if (!canSee(user, request)) return false;
             if (allowedTypes.length && allowedTypes.indexOf(request.type) < 0) return false;
-            if (status && request.status !== status) return false;
+            if (status === "actionable") {
+                if (["pending", "awaiting_confirmation"].indexOf(request.status) < 0) return false;
+            } else if (status && request.status !== status) return false;
             if (type && request.type !== type) return false;
             if (search && [request.title, request.summary, request.requester && request.requester.name]
                 .join(" ").toLowerCase().indexOf(search) < 0) return false;
@@ -423,7 +496,7 @@ module.exports.createApprovalService = function (options) {
         readRows().forEach(function (request) {
             if (cards[request.type] && canSee(user, request)) {
                 cards[request.type].total++;
-                if (request.status === "pending") cards[request.type].pending++;
+                if (["pending", "awaiting_confirmation"].indexOf(request.status) >= 0) cards[request.type].pending++;
             }
         });
         return Promise.resolve(Object.keys(cards).map(function (key) { return cards[key]; }));
@@ -582,6 +655,11 @@ module.exports.createApprovalService = function (options) {
                 request.result = { message: "Execution was interrupted by server restart." };
                 request.updatedAt = Date.now();
                 changed = true;
+            } else if (request.status === "confirming") {
+                request.status = "failed";
+                request.confirmationError = "Requester confirmation finalization was interrupted by server restart.";
+                request.updatedAt = Date.now();
+                changed = true;
             }
         });
         if (changed) writeRows(rows);
@@ -592,6 +670,7 @@ module.exports.createApprovalService = function (options) {
         authenticateApiToken: authenticateApiToken,
         externalContext: externalContext,
         createApiToken: createApiToken,
+        confirm: confirm,
         decide: decide,
         decideExternal: decideExternal,
         getProviderResources: getProviderResources,
