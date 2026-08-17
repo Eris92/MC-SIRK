@@ -1,3 +1,12 @@
+## 0.1.1-dev.113 - 2026-08-17
+
+- Render `Zmiany na stanie` from receive/return assets only; unchanged equipment remains in `Stan po zmianie`.
+- Show `Brak zmian na stanie.` for all-no-change protocols instead of duplicating unchanged rows.
+- Simplify the legend to the requested business-result wording without `po finalnym potwierdzeniu` or a `Bez zmian` legend entry.
+- Preserve requester confirmation, PDF-before-write and Jira CMDB mutation semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.113.md`.
+
 ## 0.1.1-dev.112 - 2026-08-17
 
 - Rename the current Jira protocol document to `PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU`.
@@ -397,7 +406,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
