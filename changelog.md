@@ -1,3 +1,12 @@
+## 0.1.1-dev.113 - 2026-08-17
+
+- Render `Zmiany na stanie` from receive/return assets only; unchanged equipment remains in `Stan po zmianie`.
+- Show `Brak zmian na stanie.` for all-no-change protocols instead of duplicating unchanged rows.
+- Simplify the legend to the requested business-result wording without `po finalnym potwierdzeniu` or a `Bez zmian` legend entry.
+- Preserve requester confirmation, PDF-before-write and Jira CMDB mutation semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.113.md`.
+
 ## 0.1.1-dev.112 - 2026-08-17
 
 - Rename the current Jira protocol document to `PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU`.

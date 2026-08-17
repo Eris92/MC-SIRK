@@ -29,7 +29,21 @@ var html = renderer.renderJiraAssetProtocol({
 });
 assert.ok(html.indexOf("PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU") >= 0);
 assert.ok(html.indexOf("Zmiany na stanie") >= 0 && html.indexOf("Stan po zmianie") >= 0);
-assert.ok(html.indexOf("Przyjęcie sprzętu") >= 0 && html.indexOf("Zdanie sprzętu") >= 0 && html.indexOf("Bez zmian") >= 0);
+var changesStart = html.indexOf("Zmiany na stanie");
+var finalStart = html.indexOf("Stan po zmianie");
+var changesSection = html.slice(changesStart, finalStart);
+var finalSection = html.slice(finalStart);
+assert.ok(changesSection.indexOf("Przyjęcie sprzętu") >= 0 && changesSection.indexOf("Zdanie sprzętu") >= 0);
+assert.strictEqual(changesSection.indexOf("Bez zmian"), -1,
+    "Changes table and legend must not contain unchanged equipment.");
+assert.strictEqual(changesSection.indexOf("INV3"), -1,
+    "Unchanged equipment must not be rendered in the changes table.");
+assert.ok(finalSection.indexOf("INV3") >= 0,
+    "Unchanged current equipment must remain visible in the final inventory table.");
+assert.ok(changesSection.indexOf("* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika") >= 0);
+assert.ok(changesSection.indexOf("** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika") >= 0);
+assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
+    "Business legend must not mention the implementation confirmation phase.");
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
 
 var reconciliation = renderer.renderJiraAssetProtocol({
@@ -42,6 +56,14 @@ var reconciliation = renderer.renderJiraAssetProtocol({
     finalAssets: [{ model: "T14", assetIdentifier: "IT-1" }]
 });
 assert.ok(reconciliation.indexOf("PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU") >= 0);
+assert.ok(reconciliation.indexOf("Brak zmian na stanie.") >= 0);
+var reconciliationChanges = reconciliation.slice(
+    reconciliation.indexOf("Zmiany na stanie"),
+    reconciliation.indexOf("Stan po zmianie")
+);
+assert.strictEqual(reconciliationChanges.indexOf("IT-1"), -1,
+    "No-change reconciliation must not duplicate unchanged equipment in the changes table.");
+assert.ok(reconciliation.slice(reconciliation.indexOf("Stan po zmianie")).indexOf("IT-1") >= 0);
 assert.ok(reconciliation.indexOf("nie zleca żadnej zmiany w Jira Assets") >= 0);
 
 assert.ok(serviceSource.indexOf('require("./jira-asset-confirmation-service.js")') >= 0,
@@ -70,4 +92,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, changed-only table, protected artifact contract and dev109 scoped Jira source: OK");

@@ -99,13 +99,30 @@ function item(id, assigned) {
                 assert.strictEqual(html.indexOf("Zmiany w Jira Assets zostaną wykonane dopiero po podpisaniu protokołu"), -1,
                     "Prepared Jira protocol must not expose the implementation-oriented confirmation wording.");
                 if (renderCount === 1) {
+                    var changesStart = html.indexOf("Zmiany na stanie");
+                    var finalStart = html.indexOf("Stan po zmianie");
+                    var changesSection = html.slice(changesStart, finalStart);
+                    var finalSection = html.slice(finalStart);
                     assert.ok(html.indexOf("Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu") >= 0,
                         "Changed protocol must retain the equipment-state acknowledgement statement.");
+                    assert.ok(changesSection.indexOf("Przyjęcie sprzętu") >= 0 && changesSection.indexOf("Zdanie sprzętu") >= 0,
+                        "Changes table must include both selected business operations.");
+                    assert.strictEqual(changesSection.indexOf("Bez zmian"), -1,
+                        "Changes table and legend must not contain unchanged equipment.");
+                    assert.strictEqual(changesSection.indexOf("INV-1003"), -1,
+                        "Unchanged equipment must not be duplicated in the changes table.");
+                    assert.ok(finalSection.indexOf("INV-1003") >= 0,
+                        "Unchanged current equipment must remain in the final inventory table.");
+                    assert.ok(changesSection.indexOf("* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika") >= 0);
+                    assert.ok(changesSection.indexOf("** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika") >= 0);
+                    assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
+                        "Legend must describe the business result without confirmation-phase wording.");
+                } else {
+                    assert.ok(html.indexOf("Brak zmian na stanie.") >= 0,
+                        "No-change protocol must render an empty changes table truthfully.");
                 }
                 assert.ok(html.indexOf("Zmiany na stanie") >= 0, "PDF must contain the planned changes table.");
                 assert.ok(html.indexOf("Stan po zmianie") >= 0, "PDF must contain expected final inventory.");
-                assert.ok(html.indexOf("Przyjęcie sprzętu") >= 0 && html.indexOf("Zdanie sprzętu") >= 0 && html.indexOf("Bez zmian") >= 0,
-                    "Mixed protocol operations must be visible in the prepared PDF.");
                 return Promise.resolve(pdf.renderTextPdf("protocol"));
             }
         });
@@ -183,7 +200,7 @@ function item(id, assigned) {
         }, /no longer available in the protocol scope/,
         "Browser labels/hostnames must never be accepted as authoritative Jira asset identity.");
 
-        console.log("Jira mixed per-asset protocol prepares protected PDF first, confirms later and skips no-change writes: OK");
+        console.log("Jira mixed per-asset protocol renders changed-only PDF rows, confirms later and skips no-change writes: OK");
     } finally {
         fs.rmSync(temp, { recursive: true, force: true });
     }
