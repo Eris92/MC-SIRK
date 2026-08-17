@@ -347,10 +347,15 @@ module.exports.createJiraProtocolService = function (options) {
                     protocolData.hasChanges ? "Awaiting confirmation" : "Ready",
                     protocolData.hasChanges ? "awaiting_confirmation" : "ready"
                 );
+                var fallbackReason = text(pdf && pdf.sirkFallbackReason, 1200);
+                var message = protocolData.hasChanges ?
+                    "Protocol prepared. Awaiting requester confirmation before Jira Assets is updated." :
+                    "Reconciliation protocol is ready. No Jira Assets update is required.";
+                if (fallbackReason) {
+                    message += " Uwaga: wygenerowano uproszczony (niesformatowany) PDF, ponieważ renderer stylizowanego dokumentu zawiódł: " + fallbackReason;
+                }
                 var result = {
-                    message: protocolData.hasChanges ?
-                        "Protocol prepared. Awaiting requester confirmation before Jira Assets is updated." :
-                        "Reconciliation protocol is ready. No Jira Assets update is required.",
+                    message: message,
                     output: JSON.stringify(equipmentTable(protocolData)),
                     rawOutput: protocolText,
                     data: protocolData,
