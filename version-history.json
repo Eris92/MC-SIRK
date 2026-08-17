@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.113",
+    "date": "2026-08-17",
+    "summary": "Limit the Jira protocol changes table to actual receive/return operations and simplify its business legend.",
+    "notes": "docs/releases/0.1.1-dev.113.md"
+  },
+  {
     "version": "0.1.1-dev.112",
     "date": "2026-08-17",
     "summary": "Restore the accepted Jira protocol title and equipment-state acknowledgement wording without changing confirmation or CMDB behavior.",
