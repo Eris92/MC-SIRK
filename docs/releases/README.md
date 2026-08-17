@@ -20,7 +20,7 @@ Aktualna linia development:
 - [`0.1.1-dev.99`](0.1.1-dev.99.md) — equipment prefetch while the Jira protocol user modal remains visible;
 - [`0.1.1-dev.98`](0.1.1-dev.98.md) — SMSAPI/Voice SMS, external send API oraz zatwierdzane workflow resetu i tworzenia kont AD;
 - [`0.1.1-dev.97`](0.1.1-dev.97.md) — internal hourly Windows Task Scheduler refresh for both Jira cache files without embedded credentials;
-- [`0.1.1-dev.96`](0.1.1-dev.96.md) — Jira cache administration scripts moved under settings/Jira; JSON cache storage unchanged;
+- [`0.1.1-dev.96`](0.1.1-dev.96.md) — Jira cache administration scripts moved under `settings/Jira`; JSON cache storage unchanged;
 - [`0.1.1-dev.95`](0.1.1-dev.95.md) — 24-hour Jira user and equipment cache checks completed before their protocol wizard lists open;
 
 - [`0.1.1-dev.94`](0.1.1-dev.94.md) — one-pixel optical lift for shared checklist radio/checkbox controls;
