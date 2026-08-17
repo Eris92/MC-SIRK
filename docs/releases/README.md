@@ -55,7 +55,7 @@ Aktualna linia development:
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
 - [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
-- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
+- [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
 - [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;
@@ -67,7 +67,7 @@ Aktualna linia development:
 - [`0.1.1-dev.36`](0.1.1-dev.36.md) — follow-up po real `0.1.1-dev.35` smoke: finalny Results first paint z parsed/table + pełnym Debug oraz synchroniczne Shell properties activation dla Network Settings;
 - [`0.1.1-dev.35`](0.1.1-dev.35.md) — poprzedni follow-up po real `0.1.1-dev.34` smoke: kompletny Modern Results modal contract oraz pierwsza PIDL/ShellExecuteEx próba Network Settings, nadal nieskuteczna w real smoke;
 - [`0.1.1-dev.34`](0.1.1-dev.34.md) — poprzedni follow-up po real `0.1.1-dev.33` smoke: Results viewer na natywnym dialog managerze MeshCentral oraz nieskuteczna próba `InvokeVerb('properties')` dla Windows Network Settings;
-- [`0.1.1-dev.33`](0.1.1-dev.33.md) — poprzedni follow-up po real `0.1.1-dev.32` smoke: Results View na standardowym native secondary surface, natychmiastowa wzajemna wyłączność Commands/Plugins oraz pierwsza nieskuteczna próba Windows ConnectionsFolder dla Network Settings;
+- [`0.1.1-dev.33`](0.1.1-dev.33.md) — poprzedni follow-up po real `0.1.1-dev.32` smoke: Results View na standardowym native secondary surface, natychmiastowa wzajemna wyłączność Commands/Plugins oraz pierwsza nieskuteczna próba Windows Network Settings;
 - [`0.1.1-dev.32`](0.1.1-dev.32.md) — poprzednia zintegrowana rewizja smoke po PR #233/#234: single-pending Move Requests per stable host oraz wzajemnie wykluczające się zaznaczenie Commands/Plugins;
 - [`0.1.1-dev.31`](0.1.1-dev.31.md) — poprzednia rewizja development z F5 startup recovery dla SIRK Admin po real dev.30 smoke; light/dark z dev.30 pozostaje zachowane;
 - [`0.1.1-dev.30`](0.1.1-dev.30.md) — poprzednia rewizja development z korektą Admin po real dev.29 smoke: parent-owned light/dark oraz pierwsza, nieskuteczna próba scoped recovery natywnego page-43 iframe po F5;
