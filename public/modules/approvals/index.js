@@ -23,6 +23,13 @@
         return value || "all";
     }
 
+    function statusTitle(value) {
+        value = statusKey(value);
+        if (value === "awaiting_confirmation") return "Awaiting confirmation";
+        if (value === "confirming") return "Confirming";
+        return value === "all" ? "All" : value;
+    }
+
     var icons = {
         overview: svg('<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'),
         moverequests: svg('<path d="M7 7h11l-3-3M18 7l-3 3"/><path d="M17 17H6l3 3M6 17l3-3"/>'),
@@ -32,6 +39,8 @@
         pending: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
         executing: svg('<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/>'),
         approved: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/>'),
+        awaiting_confirmation: svg('<circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/><path d="M12 3v2"/>'),
+        confirming: svg('<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/>'),
         completed: svg('<path d="M4 5h16v14H4z"/><path d="m8 12 2.5 2.5L16 9"/>'),
         failed: svg('<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/>'),
         rejected: svg('<circle cx="12" cy="12" r="9"/><path d="m6 6 12 12"/>')
@@ -179,6 +188,48 @@
         host.appendChild(actions);
     }
 
+    function requesterConfirmation(shell, request, host) {
+        if (!request.canConfirm) return;
+        var actions = document.createElement("div");
+        actions.className = "mc-approval-request-actions";
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn btn-sm btn-primary sirk-action-confirm";
+        button.textContent = "Confirm";
+        button.onclick = function () {
+            var tools = window.SharedScriptTools;
+            if (!tools || typeof tools.openConfirmationDialog !== "function") {
+                shell.error(host, new Error("Native MeshCentral confirmation dialog is unavailable."));
+                return;
+            }
+            tools.openConfirmationDialog({
+                title: request.title || "Confirm request",
+                message: "Confirm that the prepared result is accepted and the final step may proceed.",
+                trigger: button,
+                primaryLabel: "Confirm"
+            }).then(function (confirmed) {
+                if (!confirmed) return;
+                button.disabled = true;
+                return shell.post("confirm", { id: request.id, note: "" })
+                    .then(shell.render)
+                    .catch(function (error) {
+                        button.disabled = false;
+                        shell.error(host, error);
+                    });
+            }).catch(function (error) {
+                button.disabled = false;
+                shell.error(host, error);
+            });
+        };
+        actions.appendChild(button);
+        host.appendChild(actions);
+    }
+
+    function actions(shell, request, host) {
+        decisions(shell, request, host);
+        requesterConfirmation(shell, request, host);
+    }
+
     function cards(shell, title, empty, rows) {
         var host = shell.state.page.details;
         host.innerHTML = "";
@@ -203,7 +254,7 @@
             var requestStatus = shell.element(
                 "span",
                 "mc-approval-request-status mc-approval-request-status-" + statusKey(request.status),
-                request.status || "—"
+                statusTitle(request.status)
             );
             meta.appendChild(requestStatus);
             card.appendChild(meta);
@@ -213,7 +264,7 @@
 
             var provider = shell.element("span", "mc-approval-request-provider", titles[request.type] || request.type);
             card.appendChild(provider);
-            decisions(shell, request, card);
+            actions(shell, request, card);
             grid.appendChild(card);
         });
     }
@@ -250,12 +301,12 @@
                     var progress = request.approvalProgress || {};
                     return progress.text || ((progress.approved || 0) + "/" + (progress.total || 0));
                 } },
-                { title: "Status", value: function (request) { return request.status || "—"; }, className: function (request) {
+                { title: "Status", value: function (request) { return statusTitle(request.status); }, className: function (request) {
                     return "mc-results-status mc-results-status-" + statusKey(request.status);
                 } },
                 { title: "Summary", value: function (request) { return request.summary || "—"; } }
             ],
-            actions: function (cell, request) { decisions(shell, request, cell); },
+            actions: function (cell, request) { actions(shell, request, cell); },
             emptyText: empty
         });
     }
@@ -302,7 +353,7 @@
 
                 if (!selectedProvider) {
                     return load(shell, {
-                        status: "pending",
+                        status: "actionable",
                         after: function (rows) {
                             overviewFilters(shell, rows);
                             var filtered = overviewFilter
@@ -310,8 +361,8 @@
                                 : rows;
                             cards(
                                 shell,
-                                overviewFilter ? (titles[overviewFilter] || overviewFilter) + " awaiting approval" : "Requests awaiting approval",
-                                "There are no pending requests for the selected filter.",
+                                overviewFilter ? (titles[overviewFilter] || overviewFilter) + " requiring action" : "Requests requiring action",
+                                "There are no approval or confirmation requests for the selected filter.",
                                 filtered
                             );
                         }
