@@ -1,3 +1,11 @@
+## 0.1.1-dev.112 - 2026-08-17
+
+- Rename the current Jira protocol document to `PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU`.
+- Restore the prior equipment-state acknowledgement wording for protocols containing changes.
+- Remove the implementation-oriented Jira Assets confirmation sentence from the prepared protocol while preserving confirmation and CMDB behavior unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.112.md`.
+
 ## 0.1.1-dev.111 - 2026-08-17
 
 - Record the real `0.1.1-dev.110` Jira wizard failure caused by post-processing a wrapper that MeshCentral does not keep in the live native modal.
@@ -117,7 +125,6 @@ Current development notes: `docs/releases/0.1.1-dev.98.md`.
 - Refresh both existing JSON cache files through the shared Jira service without storing credentials in the task definition.
 
 Current development notes: `docs/releases/0.1.1-dev.97.md`.
-
 ## 0.1.1-dev.96 - 2026-08-13
 
 - Move the Jira cache administration scripts from `Jira` to `settings/Jira`.
@@ -597,7 +604,6 @@ Current development notes: `docs/releases/0.1.1-dev.21.md`.
 - No parallel plugin modal tree, background workaround, observer, timer, polling loop, tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.20.md`.
-
 ## 0.1.1-dev.19 - 2026-08-08
 
 - Deliver the Move Request #173 follow-up that delegates dialog presentation and lifecycle to MeshCentral's native `setDialogMode(2, ...)` owner instead of constructing a parallel plugin modal tree.
@@ -696,7 +702,6 @@ Current development notes: `docs/releases/0.1.1-dev.11.md`.
 Current development notes: `docs/releases/0.1.1-dev.10.md`.
 
 ## 0.1.1-dev.9 — 2026-08-08
-
 - Bump the pre-1.0 development revision so MeshCentral update detection installs the corrective runtime smoke follow-up from current `main`.
 - Keep first-column icon row position stable across Collapse/Expand by preserving the expanded vertical origin and row step.
 - Normalize only persisted historical built-in command default labels so My Commands and Quick converge on `Network Control`, `Network Settings`, `PowerShell` and `CMD` while genuine custom labels remain valid.
