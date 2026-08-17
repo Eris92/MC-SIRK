@@ -77,9 +77,9 @@ function renderConfirmationProtocol(data) {
     var localDate = generatedAt;
     try { localDate = new Date(generatedAt).toLocaleString("sv-SE").replace("T", " "); } catch (error) {}
     var signatures = confirmationSignatures(data);
-    var title = data.hasChanges ? "Protokół zmian sprzętu" : "Protokół uzgodnienia stanu sprzętu";
+    var title = "PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU";
     var statement = data.hasChanges ?
-        "Zmiany w Jira Assets zostaną wykonane dopiero po podpisaniu protokołu i finalnym potwierdzeniu operacji." :
+        "Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu, nie zgłaszam uwag oraz zapoznałem/am się z regulaminem użytkowania sprzętu służbowego." :
         "Protokół potwierdza uzgodniony stan sprzętu i nie zleca żadnej zmiany w Jira Assets.";
     var body = "<div class=\"meta\"><div><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) +
         "</div><div><strong>Użytkownik:</strong> " + escapeHtml(protocolValue(user.name)) +
