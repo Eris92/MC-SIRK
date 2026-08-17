@@ -1,3 +1,13 @@
+## 0.1.1-dev.110 - 2026-08-17
+
+- Add shared requester-only `awaiting_confirmation` for prepared results without changing ordinary pending approval semantics.
+- Replace Jira Asset Protocol global transfer/return direction with per-asset `Bez zmian`, `Przyjęcie sprzętu` and `Zdanie sprzętu` actions.
+- Prepare the protected PDF before CMDB writes and include `Zmiany na stanie`, a business legend and authoritative `Stan po zmianie`.
+- Use stable Jira asset identities, live ownership/schema discovery, stale/replay guards and explicit partial-failure handling for bounded final writes.
+- Preserve the dev.109 `objectType in objectTypeAndChildren("Sprzęt użytkownika")` Jira Assets source scope and existing cache behavior.
+
+Current development notes: `docs/releases/0.1.1-dev.110.md`.
+
 ## 0.1.1-dev.109 - 2026-08-17
 
 - Restore the previously real-smoke-proven Jira Assets source scope `objectType in objectTypeAndChildren("Sprzęt użytkownika")` for both Jira Asset Protocol and Cache Assets.
