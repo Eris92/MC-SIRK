@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.114`](0.1.1-dev.114.md) — Jira protocol PDF header top-aligns the logo and lowers the title for clearer visual hierarchy;
 - [`0.1.1-dev.113`](0.1.1-dev.113.md) — Jira protocol changes table shows only actual receive/return operations with simplified business legend;
 - [`0.1.1-dev.112`](0.1.1-dev.112.md) — Jira protocol title and equipment-state acknowledgement wording correction after real dev.111 acceptance;
 - [`0.1.1-dev.111`](0.1.1-dev.111.md) — searchable optional warehouse handover and current-user return steps after the dev.110 Jira wizard real-smoke failure;
