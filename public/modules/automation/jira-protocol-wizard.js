@@ -232,7 +232,6 @@
                     ).then(function (protocolValues) {
                         if (protocolValues == null) return null;
                         var result = Object.assign({}, accumulated, protocolValues);
-                        delete result.IsTransferProtocol;
                         delete result.JiraUserActiveOnly;
                         delete result.JiraUserSearch;
                         return result;
