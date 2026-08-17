@@ -27,6 +27,7 @@ var html = renderer.renderJiraAssetProtocol({
         { manufacturer: "HP", model: "840", serialNumber: "SN3", inventoryNumber: "INV3", assetIdentifier: "IT-3" }
     ]
 });
+assert.ok(html.indexOf("PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU") >= 0);
 assert.ok(html.indexOf("Zmiany na stanie") >= 0 && html.indexOf("Stan po zmianie") >= 0);
 assert.ok(html.indexOf("Przyjęcie sprzętu") >= 0 && html.indexOf("Zdanie sprzętu") >= 0 && html.indexOf("Bez zmian") >= 0);
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
@@ -40,7 +41,7 @@ var reconciliation = renderer.renderJiraAssetProtocol({
     assets: [{ action: "none", actionLabel: "Bez zmian", model: "T14", assetIdentifier: "IT-1" }],
     finalAssets: [{ model: "T14", assetIdentifier: "IT-1" }]
 });
-assert.ok(reconciliation.indexOf("Protokół uzgodnienia stanu sprzętu") >= 0);
+assert.ok(reconciliation.indexOf("PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU") >= 0);
 assert.ok(reconciliation.indexOf("nie zleca żadnej zmiany w Jira Assets") >= 0);
 
 assert.ok(serviceSource.indexOf('require("./jira-asset-confirmation-service.js")') >= 0,
