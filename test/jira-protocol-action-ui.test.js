@@ -26,7 +26,7 @@ assert.strictEqual(wizard.indexOf("setTimeout"), -1);
 assert.strictEqual(wizard.indexOf("IsTransferProtocol"), -1,
     "Legacy global transfer/return mode must not remain protocol authority in the wizard.");
 
-assert.ok(dialog.indexOf("assetUserDependency") >= 0 && dialog.indexOf("variable && variable.dependsOn") >= 0,
+assert.ok(dialog.indexOf("assetUserDependency") >= 0 && dialog.indexOf("assetRecord.variable && assetRecord.variable.dependsOn") >= 0,
     "Shared parameter dialog must retain its generic explicit dependsOn contract.");
 assert.strictEqual(dialog.indexOf("JiraAssetActionsJson"), -1,
     "Jira-specific operation collection must stay in the Jira wizard, not the shared dialog owner.");

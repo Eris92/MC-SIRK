@@ -60,7 +60,7 @@ assert.ok(serverSource.indexOf('asset === "progress"') >= 0 && serverSource.inde
 assert.ok(serverSource.indexOf("jiraProtocol.protocolInventory") >= 0,
     "Protocol equipment options must use authoritative ownership metadata without changing the shared Jira cache scope.");
 assert.ok(clientSource.indexOf('"awaiting_confirmation"') >= 0 && clientSource.indexOf("Download PDF") >= 0);
-assert.ok(parameterSource.indexOf("variable && variable.dependsOn") >= 0,
+assert.ok(parameterSource.indexOf("assetRecord.variable && assetRecord.variable.dependsOn") >= 0,
     "Jira changes must not regress the generic explicit dependency contract.");
 assert.strictEqual(seedSource.indexOf("VariableSwitchRequired: $IsTransferProtocol"), -1);
 assert.ok(seedSource.indexOf('SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")') >= 0,
