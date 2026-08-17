@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.113`](0.1.1-dev.113.md) — Jira protocol changes table shows only actual receive/return operations with simplified business legend;
 - [`0.1.1-dev.112`](0.1.1-dev.112.md) — Jira protocol title and equipment-state acknowledgement wording correction after real dev.111 acceptance;
 - [`0.1.1-dev.111`](0.1.1-dev.111.md) — searchable optional warehouse handover and current-user return steps after the dev.110 Jira wizard real-smoke failure;
 - [`0.1.1-dev.110`](0.1.1-dev.110.md) — requester-confirmed mixed per-asset Jira Asset Protocol changes with authoritative final inventory and bounded CMDB writes;
@@ -42,8 +43,8 @@ Aktualna linia development:
 - [`0.1.1-dev.60`](0.1.1-dev.60.md) — intrinsic-width Jira equipment modal with unwrapped option labels;
 - [`0.1.1-dev.59`](0.1.1-dev.59.md) — native-modal persistence for the default Jira protocol radio selection;
 - [`0.1.1-dev.58`](0.1.1-dev.58.md) — restored SN/inventory aliases, bounded active-only rendering and corrected protocol defaults;
-- [`0.1.1-dev.57`](0.1.1-dev.57.md) — complete Jira Assets pagination plus corrected active-only and full-width Jira protocol lists;
-- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native field borders for Jira user/equipment lists;
+- [`0.1.1-dev.57`](0.1.1-dev.57.md) — complete Jira Assets daily pagination plus corrected active-only and full-width Jira protocol lists;
+- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native list-field borders for the Jira protocol workflow;
 - [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective Jira transfer/return list control after real Modern smoke exposed a read-only `HTMLSelectElement.type` assignment;
 - [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
 - [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
@@ -52,7 +53,7 @@ Aktualna linia development:
 - [`0.1.1-dev.50`](0.1.1-dev.50.md) — corrective Jira wizard follow-up po real dev.49 FAIL: next step chains from the shared dialog promise without a second modal-hidden wait; real Jira/MeshCentral re-smoke pending;
 - [`0.1.1-dev.49`](0.1.1-dev.49.md) — Jira #290: global integration connection-only, script-owned Assets scope/user binding i paginated dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
-- [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
+- [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only Jira integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
 - [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
