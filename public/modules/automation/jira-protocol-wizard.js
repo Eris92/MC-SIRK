@@ -63,13 +63,80 @@
             resolveOptions: provider
         }, stepOptions || {}));
     }
+    function optionValue(option) {
+        return text(option && typeof option === "object" ?
+            (option.value == null ? (option.assetId == null ? option.objectId : option.assetId) : option.value) : option);
+    }
+    function actionControls(options) {
+        var host = document.querySelector && document.querySelector(".mc-parameter-dialog-content .mc-parameter-checklist");
+        if (!host) throw new Error("Jira protocol equipment controls are unavailable.");
+        var rows = Array.prototype.slice.call(host.querySelectorAll(".mc-parameter-checklist-item"));
+        var byValue = Object.create(null);
+        (Array.isArray(options) ? options : []).forEach(function (option) {
+            var key = optionValue(option);
+            if (key) byValue[key] = option;
+        });
+        var controls = [];
+        rows.forEach(function (row) {
+            var box = row.querySelector('input[type="checkbox"]');
+            if (!box || !box.value) return;
+            var option = byValue[text(box.value)] || {};
+            var disabled = Array.isArray(option.disabledActions) ? option.disabledActions : [];
+            var wrapper = document.createElement("div");
+            wrapper.className = "mc-parameter-checklist-item mc-parameter-checklist-item-actions";
+            var parent = row.parentNode;
+            parent.insertBefore(wrapper, row);
+            row.className = "mc-parameter-checklist-choice";
+            wrapper.appendChild(row);
+
+            var action = document.createElement("div");
+            action.className = "mc-parameter-checklist-action";
+            var label = document.createElement("span");
+            label.className = "mc-parameter-checklist-action-label";
+            label.textContent = "Operacja";
+            var select = document.createElement("select");
+            select.className = "mc-definition-input mc-parameter-checklist-action-select";
+            [
+                { value: "none", label: "Bez zmian" },
+                { value: "receive", label: "Przyjęcie sprzętu" },
+                { value: "return", label: "Zdanie sprzętu" }
+            ].forEach(function (choice) {
+                var node = document.createElement("option");
+                node.value = choice.value;
+                node.textContent = choice.label;
+                node.disabled = disabled.indexOf(choice.value) >= 0;
+                select.appendChild(node);
+            });
+            select.value = "none";
+            action.appendChild(label);
+            action.appendChild(select);
+            wrapper.appendChild(action);
+            if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") {
+                window.MeshThemeAdapter.control(select);
+            }
+            controls.push({ value: text(box.value), checkbox: box, select: select });
+        });
+        if (controls.length !== Object.keys(byValue).length) {
+            throw new Error("Jira protocol equipment action controls could not be initialized.");
+        }
+        return controls;
+    }
+    function actionValues(controls) {
+        var map = {};
+        (Array.isArray(controls) ? controls : []).forEach(function (control) {
+            if (!control.checkbox || control.checkbox.checked !== true) return;
+            var action = text(control.select && control.select.value).toLowerCase();
+            map[control.value] = action === "receive" || action === "return" ? action : "none";
+        });
+        return JSON.stringify(map);
+    }
+
     function runWizard(options) {
         var item = options.item;
         var jiraUser = variable(item, "JiraUser");
         var asset = variable(item, "PcName");
-        var transfer = variable(item, "IsTransferProtocol");
         var itPerson = variable(item, "ItPerson");
-        if (!jiraUser || !asset || !transfer || !itPerson) return originalOpen(options);
+        if (!jiraUser || !asset || !itPerson) return originalOpen(options);
 
         var activeOnly = {
             name: "JiraUserActiveOnly",
@@ -95,21 +162,13 @@
         jiraUser.submitOnDoubleClick = true;
         jiraUser.searchVariable = "JiraUserSearch";
         jiraUser.activeOnlyVariable = "JiraUserActiveOnly";
+
         asset = copy(asset);
         asset.label = "Sprzęt";
         asset.description = "";
         asset.hideLabel = true;
         asset.control = "assetmulti";
-        transfer = copy(transfer);
-        transfer.description = "";
-        transfer.control = "select";
-        transfer.listMode = true;
-        transfer.hideLabel = true;
-        transfer.defaultValue = "true";
-        transfer.options = [
-            { value: "true", label: "Przekazanie sprzętu" },
-            { value: "false", label: "Odbiór sprzętu" }
-        ];
+
         itPerson = copy(itPerson);
         itPerson.description = "";
         itPerson.optionSource = "mesh-users";
@@ -118,7 +177,7 @@
         var userStep = stepItem(item, "Jira Asset Protocol - User", "", [activeOnly, search, jiraUser]);
         var assetStep = stepItem(item, "Sprzęt do protokołu", "", [asset]);
         assetStep.fitOptionWidth = true;
-        var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [transfer, itPerson]);
+        var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [itPerson]);
 
         var userProvider = providerFor({}, options.resolveOptions);
         var assetPrefetch = { user: "", promise: null };
@@ -155,24 +214,31 @@
                 }
             });
         }).then(function (userValues) {
-                if (userValues == null) return null;
-                var selectedUser = Object.assign({}, userValues);
-                var readyOptions = prefetchAssets(selectedUser);
-                return readyOptions.then(function (optionsValue) {
-                    assetStep.variables[0].options = Array.isArray(optionsValue) ? optionsValue.slice() : [];
-                    return runStep(options, assetStep, selectedUser, "Next", null);
-                }).then(function (assetValues) {
+            if (userValues == null) return null;
+            var selectedUser = Object.assign({}, userValues);
+            return prefetchAssets(selectedUser).then(function (optionsValue) {
+                assetStep.variables[0].options = Array.isArray(optionsValue) ? optionsValue.slice() : [];
+                var dialog = runStep(options, assetStep, selectedUser, "Next", null);
+                var controls = actionControls(assetStep.variables[0].options);
+                return dialog.then(function (assetValues) {
                     if (assetValues == null) return null;
+                    assetValues.JiraAssetActionsJson = actionValues(controls);
                     var accumulated = Object.assign({}, selectedUser, assetValues);
-                    return runStep(options, protocolStep, accumulated, options.primaryLabel || (item.requiresApproval ? "Request" : "Run")).then(function (protocolValues) {
+                    return runStep(
+                        options,
+                        protocolStep,
+                        accumulated,
+                        options.primaryLabel || (item.requiresApproval ? "Request" : "Run")
+                    ).then(function (protocolValues) {
                         if (protocolValues == null) return null;
                         var result = Object.assign({}, accumulated, protocolValues);
-                        result.IsTransferProtocol = text(result.IsTransferProtocol).toLowerCase() === "true";
+                        delete result.IsTransferProtocol;
                         delete result.JiraUserActiveOnly;
                         delete result.JiraUserSearch;
                         return result;
                     });
                 });
+            });
         });
     }
 
@@ -190,6 +256,7 @@
         return originalOpen(options);
     };
     tools.jiraProtocolWizardContract = {
+        actionValues: actionValues,
         isProtocol: isProtocol,
         isCache: isCache,
         cacheItem: cacheItem,

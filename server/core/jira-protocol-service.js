@@ -4,47 +4,23 @@ var artifactFactory = require("./artifact-service.js");
 var documentTemplateRenderer = require("./document-template-renderer.js");
 var htmlPdfRenderer = require("./html-pdf-renderer.js");
 var brandingFactory = require("./branding-service.js");
+var confirmationFactory = require("./jira-asset-confirmation-service.js");
 var shared = require("./shared.js");
 
+var MAX_ASSETS_PER_PROTOCOL = 20;
 var MAX_PROGRESS_ENTRIES = 200;
 var PROGRESS_RETENTION_MS = 24 * 60 * 60 * 1000;
-var MAX_ASSETS_PER_PROTOCOL = 20;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000).trim();
 }
 
+function lower(value) {
+    return text(value, 1000).toLowerCase();
+}
+
 function object(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-}
-
-function equipmentTable(data) {
-    data = object(data);
-    var assets = Array.isArray(data.assets) ? data.assets : [];
-    return {
-        meshTable: true,
-        title: "Sprzęt",
-        columns: ["Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
-        rows: assets.map(function (asset) {
-            asset = object(asset);
-            return {
-                "Hostname": text(asset.hostname, 500),
-                "Producent": text(asset.manufacturer, 500),
-                "Model": text(asset.model, 500),
-                "Numer seryjny": text(asset.serialNumber, 500),
-                "Numer inwentarzowy": text(asset.inventoryNumber, 500),
-                "Asset ID": text(asset.assetIdentifier, 500)
-            };
-        })
-    };
-}
-
-function lower(value) {
-    return text(value, 4000).toLowerCase();
-}
-
-function validPdf(value) {
-    return Buffer.isBuffer(value) && value.length >= 100 && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
 }
 
 function protocolScript(script) {
@@ -74,40 +50,98 @@ function selectedAssetValues(value) {
     }).slice(0, MAX_ASSETS_PER_PROTOCOL);
 }
 
-function findUser(users, value) {
+function actionMap(value) {
+    var parsed = {};
+    try { parsed = JSON.parse(String(value || "{}")); } catch (error) {}
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) parsed = {};
+    var result = Object.create(null);
+    Object.keys(parsed).slice(0, MAX_ASSETS_PER_PROTOCOL).forEach(function (key) {
+        var stableKey = text(key, 200);
+        var action = lower(parsed[key]);
+        if (stableKey) result[stableKey] = action === "receive" || action === "return" ? action : "none";
+    });
+    return result;
+}
+
+function actionLabel(action) {
+    if (action === "receive") return "Przyjęcie sprzętu";
+    if (action === "return") return "Zdanie sprzętu";
+    return "Bez zmian";
+}
+
+function stableAssetId(asset) {
+    return text(asset && (asset.assetId || asset.objectId || asset.objectKey || asset.value), 200);
+}
+
+function findAssetByStableId(items, value) {
+    var wanted = text(value, 200);
+    if (!wanted) return null;
+    return (Array.isArray(items) ? items : []).filter(function (item) {
+        return [item && item.assetId, item && item.objectId, item && item.objectKey]
+            .some(function (candidate) { return text(candidate, 200) === wanted; });
+    })[0] || null;
+}
+
+function findUser(items, value) {
     var wanted = lower(value);
     if (!wanted) return null;
-    return (Array.isArray(users) ? users : []).filter(function (item) {
+    return (Array.isArray(items) ? items : []).filter(function (item) {
         return [item && item.value, item && item.accountId, item && item.emailAddress, item && item.displayName]
             .some(function (candidate) { return lower(candidate) === wanted; });
     })[0] || null;
 }
 
-function findAsset(assets, value) {
-    var wanted = lower(value);
-    if (!wanted) return null;
-    return (Array.isArray(assets) ? assets : []).filter(function (item) {
-        return [item && item.value, item && item.hostname, item && item.objectKey, item && item.objectId]
-            .some(function (candidate) { return lower(candidate) === wanted; });
-    })[0] || null;
+function publicAsset(asset, action) {
+    return {
+        assetId: stableAssetId(asset),
+        objectId: text(asset && asset.objectId, 200),
+        objectKey: text(asset && asset.objectKey, 200),
+        assetIdentifier: text(asset && (asset.objectKey || asset.objectId), 500),
+        hostname: text(asset && (asset.hostname || asset.value), 500),
+        manufacturer: text(asset && asset.manufacturer, 500),
+        model: text(asset && asset.model, 500),
+        serialNumber: text(asset && asset.serialNumber, 500),
+        inventoryNumber: text(asset && asset.inventoryNumber, 500),
+        action: action || "none",
+        actionLabel: actionLabel(action)
+    };
 }
-function findMeshUser(parent, value) {
-    var wanted = lower(value), web = shared.getWebServer(parent), users = web && web.users || {};
-    if (!wanted) return null;
-    var ids = Object.keys(users);
-    for (var index = 0; index < ids.length; index++) {
-        var user = users[ids[index]];
-        if (!user || user.deleted != null) continue;
-        if (lower(shared.userName(user)) === wanted || lower(user._id || ids[index]) === wanted || lower(user.name) === wanted) return user;
-    }
-    return null;
+
+function equipmentTable(data) {
+    data = object(data);
+    var assets = Array.isArray(data.assets) ? data.assets : [];
+    return {
+        meshTable: true,
+        title: "Sprzęt",
+        columns: ["Operacja", "Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
+        rows: assets.map(function (asset) {
+            asset = object(asset);
+            return {
+                "Operacja": text(asset.actionLabel || actionLabel(asset.action), 200),
+                "Hostname": text(asset.hostname, 500),
+                "Producent": text(asset.manufacturer, 500),
+                "Model": text(asset.model, 500),
+                "Numer seryjny": text(asset.serialNumber, 500),
+                "Numer inwentarzowy": text(asset.inventoryNumber, 500),
+                "Asset ID": text(asset.assetIdentifier, 500)
+            };
+        })
+    };
+}
+
+function validPdf(value) {
+    return Buffer.isBuffer(value) && value.length >= 100 && value.slice(0, 8).toString("ascii").indexOf("%PDF-1.") === 0;
 }
 
 module.exports.createJiraProtocolService = function (options) {
     options = options || {};
     var context = options.context;
     var jiraAssets = options.jiraAssets;
-    var executor = options.executor;
+    var mutation = confirmationFactory.createJiraAssetConfirmationService({
+        integrations: context.integrations,
+        jiraAssets: jiraAssets,
+        requestJson: options.requestJson
+    });
     var renderProtocolDocument = options.renderProtocolDocument || documentTemplateRenderer.renderJiraAssetProtocol;
     var renderHtmlPdf = options.renderHtmlPdf || htmlPdfRenderer.renderHtmlPdf;
     var branding = brandingFactory.createBrandingService({
@@ -132,9 +166,7 @@ module.exports.createJiraProtocolService = function (options) {
             if (!item || item.updatedAt < now - PROGRESS_RETENTION_MS) delete progressByRequest[id];
         });
         ids = Object.keys(progressByRequest);
-        while (ids.length > MAX_PROGRESS_ENTRIES) {
-            delete progressByRequest[ids.shift()];
-        }
+        while (ids.length > MAX_PROGRESS_ENTRIES) delete progressByRequest[ids.shift()];
     }
 
     function updateProgress(requestId, percent, stage, state) {
@@ -152,110 +184,155 @@ module.exports.createJiraProtocolService = function (options) {
     function progress(requestId, requestStatus) {
         var item = progressByRequest[text(requestId, 128)];
         if (item) return shared.copy(item);
-        if (requestStatus === "pending" || requestStatus === "approved") {
-            return { percent: 0, stage: "Waiting for approval", state: "pending", updatedAt: 0 };
-        }
-        if (requestStatus === "completed") {
-            return { percent: 100, stage: "Ready", state: "ready", updatedAt: 0 };
-        }
-        if (requestStatus === "failed" || requestStatus === "rejected") {
-            return { percent: 0, stage: "Failed", state: "failed", updatedAt: 0 };
-        }
+        if (requestStatus === "awaiting_confirmation") return { percent: 100, stage: "Awaiting confirmation", state: "awaiting_confirmation", updatedAt: 0 };
+        if (requestStatus === "confirming") return { percent: 100, stage: "Finalizing Jira Assets", state: "confirming", updatedAt: 0 };
+        if (requestStatus === "pending" || requestStatus === "approved") return { percent: 0, stage: "Waiting for approval", state: "pending", updatedAt: 0 };
+        if (requestStatus === "completed") return { percent: 100, stage: "Ready", state: "ready", updatedAt: 0 };
+        if (requestStatus === "failed" || requestStatus === "rejected") return { percent: 0, stage: "Failed", state: "failed", updatedAt: 0 };
         return { percent: 5, stage: "Starting", state: "running", updatedAt: 0 };
     }
 
-    function normalizeProtocolInputs(payload) {
-        var values = object(payload && payload.variableValues);
-        var userValue = text(values.JiraUser, 500);
-        var assetValues = selectedAssetValues(values.PcName);
-        var itPersonValue = text(values.ItPerson, 500);
-        var transfer = /^(1|true|yes|tak|on)$/i.test(String(values.IsTransferProtocol || ""));
-        if (!userValue) throw new Error("Jira user is required.");
-        if (!assetValues.length) throw new Error("Asset is required.");
-        if (!itPersonValue) throw new Error("IT person is required.");
-        return {
-            userValue: userValue,
-            assetValues: assetValues,
-            itPersonValue: itPersonValue,
-            transfer: transfer
-        };
+    function meshUser(value) {
+        var wanted = lower(value);
+        var web = shared.getWebServer(context.parent);
+        var users = web && web.users || {};
+        var ids = Object.keys(users);
+        for (var index = 0; index < ids.length; index++) {
+            var user = users[ids[index]];
+            if (!user || user.deleted != null) continue;
+            if (lower(user._id || ids[index]) === wanted || lower(user.name) === wanted || lower(shared.userName(user)) === wanted) return user;
+        }
+        return null;
     }
 
-    function renderPdf(protocolHtml, protocolText, logoPath) {
-        return Promise.resolve().then(function () {
-            return renderHtmlPdf(protocolHtml, { logoPath: logoPath, fallbackText: protocolText });
-        }).then(function (pdf) {
+    function renderPdf(protocolHtml, protocolText) {
+        return Promise.resolve(renderHtmlPdf(protocolHtml, {
+            logoPath: branding.protocolLogoPath,
+            fallbackText: protocolText
+        })).then(function (pdf) {
             if (!validPdf(pdf)) throw new Error("PDF renderer returned an invalid artifact.");
             return pdf;
         });
     }
 
+    function rawText(data) {
+        var lines = [
+            data.hasChanges ? "PROTOKÓŁ ZMIAN SPRZĘTU" : "PROTOKÓŁ UZGODNIENIA STANU SPRZĘTU",
+            "Użytkownik: " + data.user.name,
+            "Osoba IT: " + data.itPerson.name,
+            "",
+            "Zmiany na stanie:"
+        ];
+        data.assets.forEach(function (asset) {
+            lines.push("- " + asset.actionLabel + ": " + (asset.hostname || asset.assetIdentifier));
+        });
+        lines.push("", "Stan po zmianie:");
+        data.finalAssets.forEach(function (asset) {
+            lines.push("- " + (asset.hostname || asset.assetIdentifier));
+        });
+        return lines.join("\n");
+    }
+
+    function protocolInventory(userValue, variable, force) {
+        return mutation.protocolInventory(userValue, variable, force);
+    }
+
     function execute(script, payload, request) {
         if (!protocolScript(script)) return Promise.reject(new Error("Invalid Jira protocol workflow."));
         var requestId = text(request && request.id, 128);
-        if (!requestId) return Promise.reject(new Error("Protocol request ID is unavailable."));
-        var assetVariable = protocolAssetVariable(script);
-        if (!assetVariable) return Promise.reject(new Error("Jira protocol asset variable is unavailable."));
+        var variable = protocolAssetVariable(script);
+        if (!requestId || !variable) return Promise.reject(new Error("Protocol request context is unavailable."));
 
-        var inputs;
-        try { inputs = normalizeProtocolInputs(payload); }
-        catch (error) { return Promise.reject(error); }
+        var supplied = object(payload && payload.variableValues);
+        var userValue = text(supplied.JiraUser, 500);
+        var selected = selectedAssetValues(supplied.PcName);
+        var itPersonValue = text(supplied.ItPerson, 500);
+        var actions = actionMap(supplied.JiraAssetActionsJson);
+        if (!userValue || !selected.length || !itPersonValue) {
+            return Promise.reject(new Error("Jira user, equipment and IT person are required."));
+        }
 
-        updateProgress(requestId, 5, "Validating protocol inputs", "running");
-        var usersResult;
-        var selectedUser;
-        var selectedItPerson;
+        updateProgress(requestId, 10, "Validating protocol", "running");
+        var jiraUser;
+        var itPerson;
         var selectedAssets;
+        var currentItems;
+        var changes;
+        var snapshot;
+        var protocolData;
 
         return jiraAssets.listUsers(false).then(function (users) {
-            usersResult = users || { items: [] };
-            selectedUser = findUser(usersResult.items, inputs.userValue);
-            if (!selectedUser) throw new Error("Selected Jira user is no longer available.");
-            var meshItPerson = findMeshUser(context.parent, inputs.itPersonValue);
-            if (!meshItPerson && context.parent) throw new Error("Selected IT person is no longer available in MeshCentral.");
-            selectedItPerson = {
-                value: meshItPerson && (meshItPerson._id || meshItPerson.name) || inputs.itPersonValue,
-                accountId: meshItPerson && meshItPerson._id || "",
-                emailAddress: meshItPerson && (meshItPerson.email || meshItPerson.mail) || "",
-                displayName: meshItPerson ? shared.userName(meshItPerson) : inputs.itPersonValue
+            jiraUser = findUser(users && users.items, userValue);
+            if (!jiraUser) throw new Error("Selected Jira user is no longer available.");
+            var mesh = meshUser(itPersonValue);
+            if (!mesh && context.parent) throw new Error("Selected IT person is no longer available in MeshCentral.");
+            itPerson = {
+                id: text(mesh && mesh._id || "", 500),
+                name: mesh ? shared.userName(mesh) : itPersonValue,
+                email: text(mesh && (mesh.email || mesh.mail), 500)
             };
             updateProgress(requestId, 25, "Resolving Jira Assets", "running");
-            return jiraAssets.listAssets(selectedUser.value || inputs.userValue, assetVariable);
-        }).then(function (assets) {
-            var available = assets && Array.isArray(assets.items) ? assets.items : [];
-            selectedAssets = inputs.assetValues.map(function (value) {
-                var asset = findAsset(available, value);
-                if (!asset) throw new Error("Selected asset is no longer assigned to the Jira user: " + value);
-                return asset;
+            return protocolInventory(jiraUser.value || jiraUser.accountId, variable, false);
+        }).then(function (inventory) {
+            currentItems = Array.isArray(inventory.currentItems) ? inventory.currentItems : [];
+            selectedAssets = selected.map(function (value) {
+                var asset = findAssetByStableId(inventory.items || [], value);
+                if (!asset) throw new Error("Selected Jira asset is no longer available in the protocol scope: " + value);
+                var assetId = stableAssetId(asset);
+                if (!assetId || assetId !== text(value, 200)) {
+                    throw new Error("Selected Jira asset identity is invalid.");
+                }
+                var action = actions[assetId] || "none";
+                if (action === "receive" && asset.assignedToUser === true) {
+                    throw new Error("Jira asset is already assigned to the selected user: " + assetId + ".");
+                }
+                if (action === "return" && asset.assignedToUser !== true) {
+                    throw new Error("Jira asset is no longer assigned to the selected user: " + assetId + ".");
+                }
+                return publicAsset(asset, action);
             });
-            updateProgress(requestId, 50, "Building protocol", "running");
-
-            var environment = {
-                SIRK_PROTOCOL_MODE: inputs.transfer ? "transfer" : "return",
-                SIRK_PROTOCOL_USER_NAME: text(selectedUser.displayName || selectedUser.label || selectedUser.value, 500),
-                SIRK_PROTOCOL_USER_ID: text(selectedUser.accountId || selectedUser.value, 500),
-                SIRK_PROTOCOL_USER_EMAIL: text(selectedUser.emailAddress, 500),
-                SIRK_PROTOCOL_IT_NAME: text(selectedItPerson.displayName || selectedItPerson.label || selectedItPerson.value, 500),
-                SIRK_PROTOCOL_IT_ID: text(selectedItPerson.accountId || selectedItPerson.value, 500),
-                SIRK_PROTOCOL_IT_EMAIL: text(selectedItPerson.emailAddress, 500),
-                SIRK_PROTOCOL_ASSETS_JSON: JSON.stringify(selectedAssets),
-                SIRK_PROTOCOL_GENERATED_AT: new Date().toISOString()
+            changes = selectedAssets.filter(function (asset) {
+                return asset.action !== "none";
+            }).map(function (asset) {
+                return { assetId: asset.assetId, action: asset.action };
+            });
+            updateProgress(requestId, 40, changes.length ? "Capturing Jira ownership state" : "Building reconciliation", "running");
+            if (!changes.length) return { version: 1, user: shared.copy(jiraUser), changes: [] };
+            return mutation.snapshot(jiraUser, changes, variable);
+        }).then(function (value) {
+            snapshot = value;
+            var finalMap = Object.create(null);
+            currentItems.forEach(function (asset) {
+                var key = stableAssetId(asset);
+                if (key) finalMap[key] = publicAsset(asset, "none");
+            });
+            selectedAssets.forEach(function (asset) {
+                if (asset.action === "return") delete finalMap[asset.assetId];
+                else if (asset.action === "receive") finalMap[asset.assetId] = publicAsset(asset, "none");
+            });
+            protocolData = {
+                mode: changes.length ? "changes" : "reconciliation",
+                hasChanges: changes.length > 0,
+                generatedAt: new Date().toISOString(),
+                user: {
+                    id: text(jiraUser.accountId || jiraUser.value, 500),
+                    name: text(jiraUser.displayName || jiraUser.label || jiraUser.value, 500),
+                    email: text(jiraUser.emailAddress, 500)
+                },
+                itPerson: itPerson,
+                assets: selectedAssets,
+                finalAssets: Object.keys(finalMap).map(function (key) {
+                    return finalMap[key];
+                }).sort(function (left, right) {
+                    return String(left.hostname || left.assetIdentifier).localeCompare(String(right.hostname || right.assetIdentifier), "pl", { sensitivity: "base" });
+                })
             };
 
-            return executor.execute(payload, request, {
-                environment: environment,
-                skipSystemEnvironment: true
-            });
-        }).then(function (executionResult) {
-            updateProgress(requestId, 72, "Rendering PDF", "running");
-            var rendered = object(executionResult && executionResult.data);
-            if (rendered.protocol !== true || !text(rendered.text, 500000)) {
-                throw new Error("Protocol renderer returned an invalid result.");
-            }
-            var protocolText = text(rendered.text, 500000);
-            var protocolHtml = renderProtocolDocument(rendered.data);
+            updateProgress(requestId, 60, "Preparing protocol PDF", "running");
+            var protocolText = rawText(protocolData);
+            var protocolHtml = renderProtocolDocument(protocolData);
             if (!text(protocolHtml, 1000000)) throw new Error("Shared document template returned no styled HTML document.");
-            return renderPdf(protocolHtml, protocolText, branding.protocolLogoPath).then(function (pdf) {
+            return renderPdf(protocolHtml, protocolText).then(function (pdf) {
                 updateProgress(requestId, 90, "Saving protected PDF", "running");
                 var artifact = artifactService.create(requestId, {
                     type: "pdf",
@@ -264,22 +341,26 @@ module.exports.createJiraProtocolService = function (options) {
                     label: "Open PDF",
                     autoOpen: false
                 });
-                updateProgress(requestId, 100, "Ready", "ready");
-                var fallbackReason = text(pdf && pdf.sirkFallbackReason, 1200);
-                var message = text(rendered.message, 2000) || "Jira Asset Protocol is ready.";
-                if (fallbackReason) {
-                    message += " Uwaga: wygenerowano uproszczony (niesformatowany) PDF, ponieważ renderer stylizowanego dokumentu zawiódł: " + fallbackReason;
-                }
-                return {
-                    message: message,
-                    output: JSON.stringify(equipmentTable(rendered.data)),
+                updateProgress(
+                    requestId,
+                    100,
+                    protocolData.hasChanges ? "Awaiting confirmation" : "Ready",
+                    protocolData.hasChanges ? "awaiting_confirmation" : "ready"
+                );
+                var result = {
+                    message: protocolData.hasChanges ?
+                        "Protocol prepared. Awaiting requester confirmation before Jira Assets is updated." :
+                        "Reconciliation protocol is ready. No Jira Assets update is required.",
+                    output: JSON.stringify(equipmentTable(protocolData)),
                     rawOutput: protocolText,
-                    data: rendered.data && typeof rendered.data === "object" ? rendered.data : rendered,
+                    data: protocolData,
                     artifacts: [artifact],
-                    exitCode: executionResult && executionResult.exitCode == null ? 0 : executionResult.exitCode,
+                    exitCode: 0,
                     scriptPath: script.path,
                     label: script.label || script.name || "Jira Asset Protocol"
                 };
+                if (protocolData.hasChanges) result._jiraConfirmation = snapshot;
+                return result;
             });
         }).catch(function (error) {
             var previous = progressByRequest[requestId];
@@ -288,10 +369,39 @@ module.exports.createJiraProtocolService = function (options) {
         });
     }
 
+    function requiresConfirmation(result) {
+        return !!(result && result._jiraConfirmation &&
+            Array.isArray(result._jiraConfirmation.changes) && result._jiraConfirmation.changes.length);
+    }
+
+    function confirm(result, request) {
+        result = object(result);
+        var snapshot = result._jiraConfirmation;
+        if (!snapshot || !Array.isArray(snapshot.changes) || !snapshot.changes.length) {
+            return Promise.resolve(shared.copy(result));
+        }
+        updateProgress(request && request.id, 100, "Finalizing Jira Assets", "confirming");
+        return mutation.apply(snapshot).then(function (summary) {
+            var completed = shared.copy(result);
+            delete completed._jiraConfirmation;
+            completed.data = object(completed.data);
+            completed.data.cmdb = { updated: summary.updated, assetIds: summary.assetIds };
+            completed.message = "Jira Assets updated after requester confirmation: " + summary.updated + " item(s).";
+            updateProgress(request && request.id, 100, "Ready", "ready");
+            return completed;
+        }).catch(function (error) {
+            updateProgress(request && request.id, 100, "Jira Assets finalization failed", "failed");
+            throw error;
+        });
+    }
+
     return {
+        confirm: confirm,
         execute: execute,
         isProtocolScript: protocolScript,
         progress: progress,
+        protocolInventory: protocolInventory,
+        requiresConfirmation: requiresConfirmation,
         updateProgress: updateProgress
     };
 };
