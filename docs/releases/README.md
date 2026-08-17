@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.111`](0.1.1-dev.111.md) — searchable optional warehouse handover and current-user return steps after the dev.110 Jira wizard real-smoke failure;
 - [`0.1.1-dev.110`](0.1.1-dev.110.md) — requester-confirmed mixed per-asset Jira Asset Protocol changes with authoritative final inventory and bounded CMDB writes;
 - [`0.1.1-dev.109`](0.1.1-dev.109.md) — restored the proven `Sprzęt użytkownika` Jira protocol/cache scope while retaining authoritative total-count pagination and truthful cache reporting;
 - [`0.1.1-dev.108`](0.1.1-dev.108.md) — authoritative Jira Assets total-count pagination, workspace-wide scope and truthful cache completion count;
@@ -56,7 +57,7 @@ Aktualna linia development:
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
 - [`0.1.1-dev.43`](0.1.1-dev.43.md) — Commands #247: multi-device selector z All hosts, device groups, tagami, client-side search, stable nodeId dedupe i bootstrap maxMultiHostNodes; real MeshCentral smoke pending;
 - [`0.1.1-dev.42`](0.1.1-dev.42.md) — Admin backlog: module-local Permissions, Move Request approval levels per target device group i live theme owner rebinding; Network #128 deferred;
-- [`0.1.1-dev.41`](0.1.1-dev.41.md) — follow-up po real dev.40 FAIL: Network Settings używa trusted elevated interactive token w istniejącym shared ownerze; Admin kopiuje rzeczywistą nieprzezroczystą powierzchnię otaczającą `#p43iframe`;
+- [`0.1.1-dev.41`](0.1.1-dev.41.md) — follow-up po real dev.40 FAIL: Network Settings używa trusted elevated Administrator token w istniejącym shared ownerze; Admin kopiuje rzeczywistą nieprzezroczystą powierzchnię otaczającą `#p43iframe`;
 - [`0.1.1-dev.40`](0.1.1-dev.40.md) — follow-up po real dev.39 FAIL: Network Settings omija script-oriented Scheduled Task wrapper i trafia do native MeshAgent UserOnly; Admin obserwuje rzeczywisty Modern `#theme-stylesheet` writer/load;
 - [`0.1.1-dev.39`](0.1.1-dev.39.md) — follow-up po real `0.1.1-dev.38` smoke: Network Settings wykonuje sprawdzony PowerShell bezpośrednio przez shared logged-on-user runner; Admin preferuje jawny parent `data-bs-theme` przed legacy `nightMode` przy zachowaniu Classic fallback;
 - [`0.1.1-dev.38`](0.1.1-dev.38.md) — follow-up po real `0.1.1-dev.37` smoke: Network Settings korzysta z jednego shared logged-on-user launch ownera zamiast modułowego interactive-SYSTEM pre-wrappera; Results nie wymusza już natywnego `modal-xl`;
