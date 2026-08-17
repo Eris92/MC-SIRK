@@ -1,3 +1,12 @@
+## 0.1.1-dev.114 - 2026-08-17
+
+- Top-align the existing protocol logo/fallback block in the shared A4 header.
+- Move the existing document title 12 px lower relative to the logo for clearer visual hierarchy.
+- Reuse the current template and `.title` rule without adding a new CSS class or layout owner.
+- Preserve Jira protocol content, requester confirmation, protected PDF and CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.114.md`.
+
 ## 0.1.1-dev.113 - 2026-08-17
 
 - Render `Zmiany na stanie` from receive/return assets only; unchanged equipment remains in `Stan po zmianie`.
@@ -406,7 +415,7 @@ Current development notes: `docs/releases/0.1.1-dev.43.md`.
 - Admin/Move Requests #248: add target-device-group Level 1/2/3 policy UI using existing `targetMeshApprovalLevels` and module-side normalization; missing mapping shows effective Level 1, explicit empty selection remains `[]`.
 - Admin #123: follow real dev.41 evidence (correct only after F5) by rebinding the same observer to replaced Modern stylesheet and current page-43 surface mutations; no polling/second observer/rerender.
 - Network Settings #128 remains explicitly deferred by user and is not changed in this build.
-- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag or GitHub Release.
+- Dev42 Admin gate `31381645620` and canonical runtime PR Test #563 GREEN; final exact-version gate required before merge. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.42.md`.
 
@@ -768,7 +777,7 @@ Development notes: `docs/releases/0.1.1-dev.4.md`.
 
 ## 0.1.1-dev.3 — 2026-08-07
 
-- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from `main`.
+- Bump the pre-1.0 development revision so MeshCentral update detection installs the latest Quick Search height fix from current `main`.
 - Keep the Quick Search wrapper/input at the same 32 px height as toolbar buttons so native `form-control` styling cannot change the Quick toolbar row height on Search on/off.
 - Keep the revision below `1.0.0`; this is not a product release and does not create a tag or GitHub Release.
 

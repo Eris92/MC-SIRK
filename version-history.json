@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.114",
+    "date": "2026-08-17",
+    "summary": "Top-align the Jira protocol logo and lower the title in the shared A4 header.",
+    "notes": "docs/releases/0.1.1-dev.114.md"
+  },
+  {
     "version": "0.1.1-dev.113",
     "date": "2026-08-17",
     "summary": "Limit the Jira protocol changes table to actual receive/return operations and simplify its business legend.",
@@ -571,7 +577,7 @@
     "version": "0.1.1-dev.17",
     "date": "2026-08-08",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal DOM fix from current main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete Move Request modal DOM fix from current main.",
       "Match the current MeshCentral ModernModal structure with modal -> modal-dialog modal-dialog-centered -> modal-content instead of attaching modal-content directly below the overlay.",
       "Keep the existing Move Request lifecycle and MeshThemeAdapter ownership without adding a new modal framework, background workaround, observer, timer, polling loop or DOM repair layer.",
       "Preserve Classic style10, native primary Submit request and the existing guarded Move Request submit/status lifecycle.",
@@ -582,7 +588,7 @@
     "version": "0.1.1-dev.16",
     "date": "2026-08-08",
     "changes": [
-      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete native Move Request modal variable-owner fix from current main.",
+      "Bump the pre-1.0 development revision so MeshCentral update detection installs the complete Move Request modal variable-owner fix from current main.",
       "Keep modal-content on the Move Request dialog and give its existing Modern overlay the native modal class that owns Bootstrap modal surface variables.",
       "Reuse the existing MeshThemeAdapter refresh path before first paint without adding a background workaround, observer, timer, request loop or new modal framework.",
       "Preserve Classic style10, native primary Submit request and the existing guarded Move Request submit/status lifecycle.",
