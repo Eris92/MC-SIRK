@@ -1,3 +1,11 @@
+## 0.1.1-dev.109 - 2026-08-17
+
+- Restore the previously real-smoke-proven Jira Assets source scope `objectType in objectTypeAndChildren("Sprzęt użytkownika")` for both Jira Asset Protocol and Cache Assets.
+- Keep dev.108 authoritative `/object/aql/totalcount` pagination and truthful fetched snapshot reporting unchanged.
+- Reject the dev.108 workspace-wide `Key is not EMPTY` source that made a forced cache refresh scan/report 26,582 workspace objects.
+
+Current development notes: `docs/releases/0.1.1-dev.109.md`.
+
 ## 0.1.1-dev.108 - 2026-08-14
 
 - Use Jira Assets `/object/aql/totalcount` when `totalFilterCount` is capped so forced cache refresh stops at the authoritative result size.
@@ -390,7 +398,7 @@ Current development notes: `docs/releases/0.1.1-dev.40.md`.
 - Real `0.1.1-dev.38` smoke: Results/View PASS; #237 completed. Network Settings still FAIL from MC-SIRK although its core FolderItemVerb body works manually; Admin Panel theme/color switching regressed after earlier dev.31 PASS.
 - Network root cause: `network-adapter-properties` remained a type-1 CMD preset using `start "" powershell.exe ...`; under the canonical logged-on-user policy that detached the actual UI PowerShell from the runner lifetime. Convert only this preset to direct type-2 PowerShell while preserving `runAsUser: 2`, route/adapter selection, Namespace(49) and the proven Properties/Właściwości `FolderItemVerb.DoIt()` body.
 - Admin root cause: the current parent observer watches `data-bs-theme`, but `hostIsDark()` returned legacy parent `nightMode` first. Prefer explicit same-origin parent html/body `data-bs-theme` when present; retain Classic `body.night`/`nightMode`, localStorage/system/computed fallbacks and the existing copied host surface. No second observer, polling, request or rerender.
-- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag or GitHub Release.
+- Runtime Test #540 GREEN before bump. #128 and #123 remain open for real `0.1.1-dev.39` smoke. #237, #126 and #134 closed from positive real smoke evidence. No tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.39.md`.
 

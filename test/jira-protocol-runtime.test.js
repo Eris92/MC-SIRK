@@ -216,10 +216,10 @@ function jiraAsset(value, model, serial, inventory) {
         assert.ok(seedSource.indexOf("SirkWorkflow: JiraAssetProtocol") >= 0);
         assert.strictEqual(seedSource.indexOf("SirkAllowCustom: ItPerson"), -1,
             "IT person must be selected from authoritative MeshCentral users, not a custom Jira-style datalist.");
-        assert.ok(seedSource.indexOf("SirkJiraAssetAql: Key is not EMPTY") >= 0 &&
+        assert.ok(seedSource.indexOf('SirkJiraAssetAql: objectType in objectTypeAndChildren("Sprzęt użytkownika")') >= 0 &&
             seedSource.indexOf("SirkJiraAssetLabelAttribute: Nazwa_sieciowa") >= 0 &&
             seedSource.indexOf("SirkJiraAssetUserVariable: JiraUser") >= 0,
-            "Canonical Jira protocol must own its workspace-wide Assets query, display attribute and Jira user binding in script metadata.");
+            "Canonical Jira protocol must own its Assets query, display attribute and Jira user binding in script metadata.");
         ["USER_ID", "USER_NAME", "USER_EMAIL", "IT_ID", "IT_NAME", "IT_EMAIL"].forEach(function (name) {
             assert.ok(seedSource.indexOf("(Get-ProtocolValue $env:SIRK_PROTOCOL_" + name + ")") >= 0,
                 "PowerShell hashtable values must parenthesize protocol helper calls: " + name);

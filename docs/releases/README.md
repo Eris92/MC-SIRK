@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.109`](0.1.1-dev.109.md) — restored the proven `Sprzęt użytkownika` Jira protocol/cache scope while retaining authoritative total-count pagination and truthful cache reporting;
 - [`0.1.1-dev.108`](0.1.1-dev.108.md) — authoritative Jira Assets total-count pagination, workspace-wide scope and truthful cache completion count;
 - [`0.1.1-dev.107`](0.1.1-dev.107.md) — restored bounded Jira Assets pagination, compact cache and explicit user binding on current main;
 - [`0.1.1-dev.106`](0.1.1-dev.106.md) — workflow-key system credential propagation to PowerShell;
