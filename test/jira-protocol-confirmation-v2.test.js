@@ -30,6 +30,7 @@ function item(id, assigned) {
         var puts = [];
         var reads = [];
         var forcedRefresh = 0;
+        var renderCount = 0;
         var context = {
             fs: fs,
             path: path,
@@ -92,6 +93,15 @@ function item(id, assigned) {
                 return Promise.reject(new Error("Unexpected request: " + options.method + " " + options.url));
             },
             renderHtmlPdf: function (html) {
+                renderCount++;
+                assert.ok(html.indexOf("PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU") >= 0,
+                    "Prepared Jira protocol must use the requested document title.");
+                assert.strictEqual(html.indexOf("Zmiany w Jira Assets zostaną wykonane dopiero po podpisaniu protokołu"), -1,
+                    "Prepared Jira protocol must not expose the implementation-oriented confirmation wording.");
+                if (renderCount === 1) {
+                    assert.ok(html.indexOf("Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu") >= 0,
+                        "Changed protocol must retain the equipment-state acknowledgement statement.");
+                }
                 assert.ok(html.indexOf("Zmiany na stanie") >= 0, "PDF must contain the planned changes table.");
                 assert.ok(html.indexOf("Stan po zmianie") >= 0, "PDF must contain expected final inventory.");
                 assert.ok(html.indexOf("Przyjęcie sprzętu") >= 0 && html.indexOf("Zdanie sprzętu") >= 0 && html.indexOf("Bez zmian") >= 0,
