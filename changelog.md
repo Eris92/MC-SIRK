@@ -1,3 +1,12 @@
+## 0.1.1-dev.111 - 2026-08-17
+
+- Record the real `0.1.1-dev.110` Jira wizard failure caused by post-processing a wrapper that MeshCentral does not keep in the live native modal.
+- Replace the failed per-row operation injection with two optional native equipment steps: searchable `Sprzęt z magazynu` for handover and searchable `Sprzęt użytkownika` for return.
+- Reuse one prefetched authoritative protocol inventory for both lists and filter it locally without per-row or per-search Jira requests.
+- Preserve the existing stable-ID receive/return action map, requester confirmation, PDF-before-write, stale/replay/partial-failure checks and dev.109 Jira source/cache scope.
+
+Current development notes: `docs/releases/0.1.1-dev.111.md`.
+
 ## 0.1.1-dev.110 - 2026-08-17
 
 - Add shared requester-only `awaiting_confirmation` for prepared results without changing ordinary pending approval semantics.

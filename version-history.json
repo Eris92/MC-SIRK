@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.111",
+    "date": "2026-08-17",
+    "summary": "Split Jira protocol equipment into searchable optional warehouse handover and current-user return steps after the dev.110 real-smoke UI failure.",
+    "notes": "docs/releases/0.1.1-dev.111.md"
+  },
+  {
     "version": "0.1.1-dev.110",
     "date": "2026-08-17",
     "summary": "Add requester-confirmed per-asset Jira Asset Protocol changes with authoritative final inventory and bounded CMDB writes.",

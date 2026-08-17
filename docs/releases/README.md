@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.111`](0.1.1-dev.111.md) — searchable optional warehouse handover and current-user return steps after the dev.110 Jira wizard real-smoke failure;
 - [`0.1.1-dev.110`](0.1.1-dev.110.md) — requester-confirmed mixed per-asset Jira Asset Protocol changes with authoritative final inventory and bounded CMDB writes;
 - [`0.1.1-dev.109`](0.1.1-dev.109.md) — restored the proven `Sprzęt użytkownika` Jira protocol/cache scope while retaining authoritative total-count pagination and truthful cache reporting;
 - [`0.1.1-dev.108`](0.1.1-dev.108.md) — authoritative Jira Assets total-count pagination, workspace-wide scope and truthful cache completion count;
