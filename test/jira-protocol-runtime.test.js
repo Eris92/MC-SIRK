@@ -10,6 +10,7 @@ var serverSource = fs.readFileSync(path.join(root, "server/modules/automation/in
 var clientSource = fs.readFileSync(path.join(root, "public/modules/automation/index.js"), "utf8");
 var seedSource = fs.readFileSync(path.join(root, "seed/MyScripts/Jira/Jira Asset Protocol.ps1"), "utf8");
 var parameterSource = fs.readFileSync(path.join(root, "public/shared/ui/parameter-dialog.js"), "utf8");
+var templateSource = fs.readFileSync(path.join(root, "server/templates/document-a4.html"), "utf8");
 
 var html = renderer.renderJiraAssetProtocol({
     mode: "changes",
@@ -45,6 +46,10 @@ assert.ok(changesSection.indexOf("** Zdanie sprzętu - sprzęt zostaje zdjęty z
 assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
     "Business legend must not mention the implementation confirmation phase.");
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
+assert.ok(/\.header\s*\{[\s\S]*?align-items:\s*flex-start;/.test(templateSource),
+    "Protocol header must top-align the logo instead of vertically centering it with the title.");
+assert.ok(/\.title\s*\{[\s\S]*?margin:\s*12px 0 0;/.test(templateSource),
+    "Protocol title must be offset lower than the top-aligned logo.");
 
 var reconciliation = renderer.renderJiraAssetProtocol({
     mode: "reconciliation",
@@ -92,4 +97,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, changed-only table, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, changed-only table, header geometry, protected artifact contract and dev109 scoped Jira source: OK");
