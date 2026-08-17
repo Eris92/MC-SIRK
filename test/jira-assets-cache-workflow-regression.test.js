@@ -10,10 +10,10 @@ var cacheSeed = fs.readFileSync(path.join(root, "seed/MyScripts/settings/Jira/Ca
 var automationServer = fs.readFileSync(path.join(root, "server/modules/automation/index.js"), "utf8");
 
 [protocolSeed, cacheSeed].forEach(function (source) {
-    assert.ok(/^# SirkJiraAssetAql: Key is not EMPTY$/m.test(source),
-        "Issue #305 requires workspace-wide Jira Assets scope before server-side user binding.");
-    assert.strictEqual(/SirkJiraAssetAql:.*objectTypeAndChildren\("Sprzęt użytkownika"\)/.test(source), false,
-        "Jira protocol/cache scope must not regress to the computer/equipment subtree restriction.");
+    assert.ok(/^# SirkJiraAssetAql: objectType in objectTypeAndChildren\("Sprzęt użytkownika"\)$/m.test(source),
+        "Canonical Jira protocol/cache must use the previously proven Sprzęt użytkownika scope.");
+    assert.strictEqual(/^# SirkJiraAssetAql: Key is not EMPTY$/m.test(source), false,
+        "Canonical Jira protocol/cache must not scan the entire Jira Assets workspace.");
 });
 
 assert.ok(automationServer.indexOf("result.sourceCount") >= 0,
@@ -21,4 +21,4 @@ assert.ok(automationServer.indexOf("result.sourceCount") >= 0,
 assert.ok(automationServer.indexOf('count >= 50000') >= 0,
     "A safety-bounded 50k snapshot must be reported as bounded rather than as an exact false count.");
 
-console.log("Jira Assets cache scope and truthful completion count contract: OK");
+console.log("Jira Assets scoped cache and truthful completion count contract: OK");
