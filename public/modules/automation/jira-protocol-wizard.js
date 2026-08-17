@@ -4,6 +4,7 @@
     var tools = window.SharedScriptTools;
     if (!tools || tools.__sirkJiraProtocolWizard) return;
 
+    var MAX_PROTOCOL_ASSETS = 20;
     var optionProvider = null;
     var originalSetProvider = tools.setParameterOptionProvider;
     var originalOpen = tools.openParameterDialog;
@@ -67,68 +68,86 @@
         return text(option && typeof option === "object" ?
             (option.value == null ? (option.assetId == null ? option.objectId : option.assetId) : option.value) : option);
     }
-    function actionControls(options) {
-        var host = document.querySelector && document.querySelector(".mc-parameter-dialog-content .mc-parameter-checklist");
-        if (!host) throw new Error("Jira protocol equipment controls are unavailable.");
-        var rows = Array.prototype.slice.call(host.querySelectorAll(".mc-parameter-checklist-item"));
-        var byValue = Object.create(null);
-        (Array.isArray(options) ? options : []).forEach(function (option) {
-            var key = optionValue(option);
-            if (key) byValue[key] = option;
+    function selectedValues(value) {
+        var seen = Object.create(null);
+        return text(value).split(/[;,|\r\n]+/).map(function (entry) { return entry.trim(); }).filter(function (entry) {
+            if (!entry || seen[entry]) return false;
+            seen[entry] = true;
+            return true;
         });
-        var controls = [];
-        rows.forEach(function (row) {
-            var box = row.querySelector('input[type="checkbox"]');
-            if (!box || !box.value) return;
-            var option = byValue[text(box.value)] || {};
-            var disabled = Array.isArray(option.disabledActions) ? option.disabledActions : [];
-            var wrapper = document.createElement("div");
-            wrapper.className = "mc-parameter-checklist-item mc-parameter-checklist-item-actions";
-            var parent = row.parentNode;
-            parent.insertBefore(wrapper, row);
-            row.className = "mc-parameter-checklist-choice";
-            wrapper.appendChild(row);
-
-            var action = document.createElement("div");
-            action.className = "mc-parameter-checklist-action";
-            var label = document.createElement("span");
-            label.className = "mc-parameter-checklist-action-label";
-            label.textContent = "Operacja";
-            var select = document.createElement("select");
-            select.className = "mc-definition-input mc-parameter-checklist-action-select";
-            [
-                { value: "none", label: "Bez zmian" },
-                { value: "receive", label: "Przyjęcie sprzętu" },
-                { value: "return", label: "Zdanie sprzętu" }
-            ].forEach(function (choice) {
-                var node = document.createElement("option");
-                node.value = choice.value;
-                node.textContent = choice.label;
-                node.disabled = disabled.indexOf(choice.value) >= 0;
-                select.appendChild(node);
-            });
-            select.value = "none";
-            action.appendChild(label);
-            action.appendChild(select);
-            wrapper.appendChild(action);
-            if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") {
-                window.MeshThemeAdapter.control(select);
-            }
-            controls.push({ value: text(box.value), checkbox: box, select: select });
-        });
-        if (controls.length !== Object.keys(byValue).length) {
-            throw new Error("Jira protocol equipment action controls could not be initialized.");
-        }
-        return controls;
     }
-    function actionValues(controls) {
-        var map = {};
-        (Array.isArray(controls) ? controls : []).forEach(function (control) {
-            if (!control.checkbox || control.checkbox.checked !== true) return;
-            var action = text(control.select && control.select.value).toLowerCase();
-            map[control.value] = action === "receive" || action === "return" ? action : "none";
+    function filterOptions(options, query) {
+        query = text(query).trim().toLowerCase();
+        return (Array.isArray(options) ? options : []).filter(function (option) {
+            if (!query) return true;
+            var value = optionValue(option);
+            var label = text(option && typeof option === "object" ? option.label : option);
+            return (label + " " + value).toLowerCase().indexOf(query) >= 0;
         });
-        return JSON.stringify(map);
+    }
+    function splitInventory(options) {
+        var warehouse = [], user = [];
+        (Array.isArray(options) ? options : []).forEach(function (option) {
+            (option && option.assignedToUser === true ? user : warehouse).push(option);
+        });
+        return { warehouse: warehouse, user: user };
+    }
+    function buildProtocolSelection(receiveValue, returnValue, userOptions) {
+        var receive = selectedValues(receiveValue);
+        var returns = selectedValues(returnValue);
+        if (receive.length + returns.length > MAX_PROTOCOL_ASSETS) {
+            throw new Error("Maksymalnie 20 pozycji może zmieniać stan w jednym protokole.");
+        }
+        var actions = Object.create(null);
+        var selected = [];
+        function add(value, action) {
+            if (actions[value] && actions[value] !== action) throw new Error("Sprzęt nie może być jednocześnie przyjęty i zdany.");
+            if (!actions[value]) selected.push(value);
+            actions[value] = action;
+        }
+        receive.forEach(function (value) { add(value, "receive"); });
+        returns.forEach(function (value) { add(value, "return"); });
+        (Array.isArray(userOptions) ? userOptions : []).some(function (option) {
+            if (selected.length >= MAX_PROTOCOL_ASSETS) return true;
+            var value = optionValue(option);
+            if (value && !actions[value]) add(value, "none");
+            return false;
+        });
+        return {
+            PcName: selected.join(";"),
+            JiraAssetActionsJson: JSON.stringify(actions)
+        };
+    }
+    function searchableAssetStep(item, assetVariable, label, description, searchName, options) {
+        var search = {
+            name: searchName,
+            label: "Szukaj",
+            required: false,
+            control: "user",
+            defaultValue: "",
+            inlineLabel: true
+        };
+        var preparedAsset = copy(assetVariable);
+        preparedAsset.required = false;
+        preparedAsset.control = "assetmulti";
+        preparedAsset.label = "Sprzęt";
+        preparedAsset.description = "";
+        preparedAsset.hideLabel = true;
+        preparedAsset.dependsOn = searchName;
+        preparedAsset.options = Array.isArray(options) ? options.slice() : [];
+        var step = stepItem(item, label, description, [search, preparedAsset]);
+        step.fitOptionWidth = true;
+        step.extraHeaders.push("SirkAllowCustom: " + searchName);
+        return step;
+    }
+    function localSearchProvider(options, searchName, assetName) {
+        return function (dynamicVariable, currentValues) {
+            if (text(dynamicVariable && dynamicVariable.name) === searchName) return [];
+            if (text(dynamicVariable && dynamicVariable.name) === assetName) {
+                return filterOptions(options, currentValues && currentValues[searchName]);
+            }
+            return [];
+        };
     }
 
     function runWizard(options) {
@@ -168,6 +187,7 @@
         asset.description = "";
         asset.hideLabel = true;
         asset.control = "assetmulti";
+        asset.required = false;
 
         itPerson = copy(itPerson);
         itPerson.description = "";
@@ -175,8 +195,6 @@
         delete itPerson.defaultValue;
 
         var userStep = stepItem(item, "Jira Asset Protocol - User", "", [activeOnly, search, jiraUser]);
-        var assetStep = stepItem(item, "Sprzęt do protokołu", "", [asset]);
-        assetStep.fitOptionWidth = true;
         var protocolStep = stepItem(item, "Jira Asset Protocol - Protocol", "", [itPerson]);
 
         var userProvider = providerFor({}, options.resolveOptions);
@@ -188,8 +206,8 @@
             var selectedValues = Object.assign({}, values || {});
             var assetProvider = providerFor(selectedValues, options.resolveOptions);
             var operation = typeof assetProvider === "function" ?
-                Promise.resolve(assetProvider(assetStep.variables[0], {}, assetStep)) :
-                Promise.resolve(assetStep.variables[0].options || []);
+                Promise.resolve(assetProvider(asset, {}, item)) :
+                Promise.resolve(asset.options || []);
             var tracked = operation.catch(function (error) {
                 if (assetPrefetch.promise === tracked) assetPrefetch = { user: "", promise: null };
                 throw error;
@@ -217,24 +235,57 @@
             if (userValues == null) return null;
             var selectedUser = Object.assign({}, userValues);
             return prefetchAssets(selectedUser).then(function (optionsValue) {
-                assetStep.variables[0].options = Array.isArray(optionsValue) ? optionsValue.slice() : [];
-                var dialog = runStep(options, assetStep, selectedUser, "Next", null);
-                var controls = actionControls(assetStep.variables[0].options);
-                return dialog.then(function (assetValues) {
-                    if (assetValues == null) return null;
-                    assetValues.JiraAssetActionsJson = actionValues(controls);
-                    var accumulated = Object.assign({}, selectedUser, assetValues);
+                var inventory = splitInventory(optionsValue);
+                var warehouseStep = searchableAssetStep(
+                    item,
+                    asset,
+                    "Sprzęt z magazynu",
+                    "Wybierz sprzęt do przekazania użytkownikowi (opcjonalnie).",
+                    "WarehouseSearch",
+                    inventory.warehouse
+                );
+                return runStep(
+                    options,
+                    warehouseStep,
+                    selectedUser,
+                    "Next",
+                    localSearchProvider(inventory.warehouse, "WarehouseSearch", asset.name)
+                ).then(function (warehouseValues) {
+                    if (warehouseValues == null) return null;
+                    var userEquipmentStep = searchableAssetStep(
+                        item,
+                        asset,
+                        "Sprzęt użytkownika",
+                        "Wybierz sprzęt do zdania przez użytkownika (opcjonalnie).",
+                        "UserEquipmentSearch",
+                        inventory.user
+                    );
                     return runStep(
                         options,
-                        protocolStep,
-                        accumulated,
-                        options.primaryLabel || (item.requiresApproval ? "Request" : "Run")
-                    ).then(function (protocolValues) {
-                        if (protocolValues == null) return null;
-                        var result = Object.assign({}, accumulated, protocolValues);
-                        delete result.JiraUserActiveOnly;
-                        delete result.JiraUserSearch;
-                        return result;
+                        userEquipmentStep,
+                        selectedUser,
+                        "Next",
+                        localSearchProvider(inventory.user, "UserEquipmentSearch", asset.name)
+                    ).then(function (userEquipmentValues) {
+                        if (userEquipmentValues == null) return null;
+                        var selection = buildProtocolSelection(
+                            warehouseValues.PcName,
+                            userEquipmentValues.PcName,
+                            inventory.user
+                        );
+                        var accumulated = Object.assign({}, selectedUser, selection);
+                        return runStep(
+                            options,
+                            protocolStep,
+                            accumulated,
+                            options.primaryLabel || (item.requiresApproval ? "Request" : "Run")
+                        ).then(function (protocolValues) {
+                            if (protocolValues == null) return null;
+                            var result = Object.assign({}, accumulated, protocolValues);
+                            delete result.JiraUserActiveOnly;
+                            delete result.JiraUserSearch;
+                            return result;
+                        });
                     });
                 });
             });
@@ -255,7 +306,9 @@
         return originalOpen(options);
     };
     tools.jiraProtocolWizardContract = {
-        actionValues: actionValues,
+        buildProtocolSelection: buildProtocolSelection,
+        filterOptions: filterOptions,
+        splitInventory: splitInventory,
         isProtocol: isProtocol,
         isCache: isCache,
         cacheItem: cacheItem,
