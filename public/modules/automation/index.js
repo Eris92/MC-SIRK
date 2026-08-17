@@ -70,6 +70,8 @@
         if (result.rawOutput != null && result.rawOutput !== "") return String(result.rawOutput);
         if (result.message != null && result.message !== "") return String(result.message);
         if (request.status === "pending") return "Waiting for approval.";
+        if (request.status === "awaiting_confirmation") return "Protocol prepared. Awaiting confirmation.";
+        if (request.status === "confirming") return "Finalizing Jira Assets...";
         if (request.status === "executing") return "Executing...";
         if (request.status === "failed") return "Script execution failed.";
         return "No output.";
@@ -123,6 +125,8 @@
     function protocolHeading(request) {
         var data = request && request.result && request.result.data;
         if (!data || !Array.isArray(data.assets)) return "";
+        if (data.hasChanges === false || data.mode === "reconciliation") return "PROTOKÓŁ UZGODNIENIA STANU SPRZĘTU";
+        if (data.hasChanges === true || data.mode === "changes") return "PROTOKÓŁ ZMIAN SPRZĘTU";
         return data.mode === "return" ? "PROTOKÓŁ ZWROTU SPRZĘTU" : "PROTOKÓŁ PRZEKAZANIA SPRZĘTU";
     }
 
@@ -132,10 +136,11 @@
         return JSON.stringify({
             meshTable: true,
             title: "Sprzęt",
-            columns: ["Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
+            columns: ["Operacja", "Hostname", "Producent", "Model", "Numer seryjny", "Numer inwentarzowy", "Asset ID"],
             rows: assets.map(function (asset) {
                 asset = asset || {};
                 return {
+                    "Operacja": String(asset.actionLabel || ""),
                     "Hostname": String(asset.hostname || ""),
                     "Producent": String(asset.manufacturer || ""),
                     "Model": String(asset.model || ""),
@@ -150,7 +155,7 @@
     function renderResult(host, request) {
         request = request || {};
         host.innerHTML = "";
-        if (request.status === "pending" || request.status === "approved" || request.status === "executing") {
+        if (request.status === "pending" || request.status === "approved" || request.status === "executing" || request.status === "confirming") {
             var waiting = document.createElement("pre");
             waiting.className = "mc-shared-output";
             waiting.textContent = requestOutput(request);
@@ -215,7 +220,7 @@
             var current = response.request || request;
             var currentProgress = response.progress || {};
             outputs[script.path] = current;
-            if (["completed", "failed", "rejected", "superseded"].indexOf(String(current.status || "")) >= 0) {
+            if (["awaiting_confirmation", "completed", "failed", "rejected", "superseded"].indexOf(String(current.status || "")) >= 0) {
                 renderResult(resultHost, current);
                 if (button) button.disabled = false;
                 sync(shell);

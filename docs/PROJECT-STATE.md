@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.109`
+Current version: `0.1.1-dev.110`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -49,7 +49,10 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 ## Kanoniczni ownerzy
 
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
+- `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
+- `server/core/jira-protocol-service.js` — kanoniczny Jira Asset Protocol owner: stable asset identity, przygotowanie PDF, expected final inventory i przejście do shared requester confirmation;
+- `server/core/jira-asset-confirmation-service.js` — bounded live ownership/schema snapshot, stale-state verification i finalne Jira Assets writes po confirmation;
 - `server/core/sms-service.js` — server-side owner wysyłki SMS i Voice SMS przez SMSAPI.pl, w tym multi-recipient i maskowanie numerów w output;
 - `server/core/ad-directory-service.js` — neutralne dynamiczne opcje użytkowników AD i dozwolonych lokalizacji OU bez publikowania numerów `mobile`;
 - `server/core/sms-external-api.js` — chroniony oddzielnym tokenem endpoint `POST /sirk-sms/v1/send` z limitem 30 żądań/minutę/adres IP;
@@ -131,15 +134,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.109
-config.json  -> 0.1.1-dev.109
+package.json -> 0.1.1-dev.110
+config.json  -> 0.1.1-dev.110
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.109.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.110.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

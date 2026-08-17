@@ -34,8 +34,72 @@ function renderDocument(options) {
     });
 }
 
-function renderJiraAssetProtocol(data) {
-    data = data && typeof data === "object" ? data : {};
+function protocolValue(value) {
+    return String(value == null || value === "" ? "-" : value);
+}
+
+function assetIdentifier(asset) {
+    asset = asset && typeof asset === "object" ? asset : {};
+    return asset.inventoryNumber || asset.assetIdentifier || asset.objectKey || asset.objectId || "-";
+}
+
+function protocolRows(assets, includeAction) {
+    var rows = (Array.isArray(assets) ? assets : []).map(function (asset) {
+        asset = asset && typeof asset === "object" ? asset : {};
+        var action = includeAction ? "<td>" + escapeHtml(protocolValue(asset.actionLabel || "Bez zmian")) + "</td>" : "";
+        return "<tr>" + action +
+            "<td>" + escapeHtml(protocolValue(asset.manufacturer)) + "</td>" +
+            "<td>" + escapeHtml(protocolValue(asset.model)) + "</td>" +
+            "<td>" + escapeHtml(protocolValue(asset.serialNumber)) + "</td>" +
+            "<td>" + escapeHtml(protocolValue(assetIdentifier(asset))) + "</td></tr>";
+    }).join("");
+    if (!rows) rows = '<tr><td colspan="' + (includeAction ? "5" : "4") + '">Brak danych sprzętu.</td></tr>';
+    return rows;
+}
+
+function confirmationSignatures(data) {
+    var receive = 0;
+    var returned = 0;
+    (Array.isArray(data.assets) ? data.assets : []).forEach(function (asset) {
+        if (asset && asset.action === "receive") receive++;
+        else if (asset && asset.action === "return") returned++;
+    });
+    if (receive && returned) return ["Użytkownik (przekazujący / odbierający)", "Osoba IT (przekazująca / odbierająca)"];
+    if (receive) return ["Osoba przekazująca (IT)", "Osoba odbierająca (użytkownik)"];
+    if (returned) return ["Osoba przekazująca (użytkownik)", "Osoba odbierająca (IT)"];
+    return ["Użytkownik", "Osoba IT"];
+}
+
+function renderConfirmationProtocol(data) {
+    var user = data.user && typeof data.user === "object" ? data.user : {};
+    var itPerson = data.itPerson && typeof data.itPerson === "object" ? data.itPerson : {};
+    var generatedAt = String(data.generatedAt || "");
+    var localDate = generatedAt;
+    try { localDate = new Date(generatedAt).toLocaleString("sv-SE").replace("T", " "); } catch (error) {}
+    var signatures = confirmationSignatures(data);
+    var title = data.hasChanges ? "Protokół zmian sprzętu" : "Protokół uzgodnienia stanu sprzętu";
+    var statement = data.hasChanges ?
+        "Zmiany w Jira Assets zostaną wykonane dopiero po podpisaniu protokołu i finalnym potwierdzeniu operacji." :
+        "Protokół potwierdza uzgodniony stan sprzętu i nie zleca żadnej zmiany w Jira Assets.";
+    var body = "<div class=\"meta\"><div><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) +
+        "</div><div><strong>Użytkownik:</strong> " + escapeHtml(protocolValue(user.name)) +
+        "</div><div><strong>E-mail:</strong> " + escapeHtml(protocolValue(user.email)) +
+        "</div><div><strong>Osoba IT:</strong> " + escapeHtml(protocolValue(itPerson.name)) + "</div></div>" +
+        "<div class=\"section\"><h2>Zmiany na stanie</h2><table><thead><tr><th>Operacja</th><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
+        "</tr></thead><tbody>" + protocolRows(data.assets, true) + "</tbody></table>" +
+        "<div class=\"note\"><strong>Legenda:</strong><br>* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika po finalnym potwierdzeniu.<br>" +
+        "** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika po finalnym potwierdzeniu.<br>" +
+        "Bez zmian - pozycja służy do uzgodnienia stanu i nie powoduje zmiany CMDB.</div></div>" +
+        "<div class=\"section\"><h2>Stan po zmianie</h2><table><thead><tr><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
+        "</tr></thead><tbody>" + protocolRows(data.finalAssets, false) + "</tbody></table></div>" +
+        "<div class=\"note\">" + escapeHtml(statement) + "</div>" +
+        "<div class=\"people\"><div class=\"person\"><span>" + escapeHtml(signatures[0]) + "</span><strong>" + escapeHtml(protocolValue(user.name)) +
+        "</strong></div><div class=\"person\"><span>" + escapeHtml(signatures[1]) + "</span><strong>" + escapeHtml(protocolValue(itPerson.name)) +
+        "</strong></div></div><div class=\"signatures\"><div class=\"signature\">Podpis</div><div class=\"signature\">Podpis</div></div>";
+    return renderDocument({ title: title, documentBody: body, footer: "" });
+}
+
+function renderLegacyProtocol(data) {
     var assets = Array.isArray(data.assets) ? data.assets : [];
     var transfer = String(data.mode || "").toLowerCase() === "transfer";
     var title = "Protokół zdawczo-odbiorczy";
@@ -45,7 +109,6 @@ function renderJiraAssetProtocol(data) {
     var generatedAt = String(data.generatedAt || "");
     var localDate = generatedAt;
     try { localDate = new Date(generatedAt).toLocaleString("sv-SE").replace("T", " "); } catch (error) {}
-    function protocolValue(value) { return String(value == null || value === "" ? "-" : value); }
     var rows = assets.map(function (asset) {
         asset = asset && typeof asset === "object" ? asset : {};
         return "<tr><td>" + escapeHtml(protocolValue(asset.manufacturer)) + "</td><td>" + escapeHtml(protocolValue(asset.model)) +
@@ -64,11 +127,16 @@ function renderJiraAssetProtocol(data) {
         "</strong></div></div><div class=\"note\">" + escapeHtml(statement) + "</div>" +
         "<div class=\"signatures\"><div class=\"signature\">Podpis osoby przekazującej</div>" +
         "<div class=\"signature\">Podpis osoby odbierającej</div></div>";
-    return renderDocument({
-        title: title,
-        documentBody: body,
-        footer: ""
-    });
+    return renderDocument({ title: title, documentBody: body, footer: "" });
+}
+
+function renderJiraAssetProtocol(data) {
+    data = data && typeof data === "object" ? data : {};
+    var mode = String(data.mode || "").toLowerCase();
+    if (typeof data.hasChanges === "boolean" || mode === "changes" || mode === "reconciliation") {
+        return renderConfirmationProtocol(data);
+    }
+    return renderLegacyProtocol(data);
 }
 
 module.exports = {

@@ -191,11 +191,18 @@ module.exports.createModule = function (context) {
         canSubmit: allowed,
         presentRequest: function (user, request) {
             if (request && request.payload && request.payload.scriptPath) request.scriptPath = String(request.payload.scriptPath);
+            if (request && request.result && request.result._jiraConfirmation) delete request.result._jiraConfirmation;
             return request;
         },
         getResources: function (user, query) {
             var script = query && query.scriptPath ? library.getScript(query.scriptPath, true) : null;
             return { tree: visibleTree(user), script: script && (requireScriptAccess(user, script.path), script) || null };
+        },
+        requiresRequesterConfirmation: function (result, request) {
+            return jiraProtocol.requiresConfirmation(result, request);
+        },
+        confirmRequester: function (result, request) {
+            return jiraProtocol.confirm(result, request);
         },
         execute: function (payload, request) {
             var requester = shared.findUser(context.parent, request && request.requester && request.requester.id) || { _id: request && request.requester && request.requester.id };
@@ -311,6 +318,18 @@ module.exports.createModule = function (context) {
                 }
                 if (!admin.hasSystemCredential(optionScript.path, "jira")) {
                     throw new Error("Assign the configured Jira integration to this script first.");
+                }
+                if (jiraProtocol.isProtocolScript(optionScript) && variable.name === "PcName") {
+                    var jiraUser = value.values && value.values.JiraUser;
+                    if (!String(jiraUser || "").trim()) return { ok: true, items: [], stale: false, warning: "" };
+                    return jiraProtocol.protocolInventory(jiraUser, variable, value.force === true).then(function (result) {
+                        return {
+                            ok: true,
+                            items: result.items || [],
+                            stale: result.stale === true,
+                            warning: result.warning || ""
+                        };
+                    });
                 }
                 return jiraAssets.optionsFor(variable, value.values, value.force === true).then(function (result) {
                     return {
