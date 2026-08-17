@@ -49,8 +49,8 @@ service.registerProvider({
     requiresRequesterConfirmation: function () { return true; },
     confirmRequester: function (result, request) {
         confirmCalls++;
-        if (request.payload && request.payload.failConfirmation) throw new Error("final step failed");
-        return Object.assign({}, result, { finalized: true });
+        if (request.payload && request.payload.failConfirmation) return Promise.reject(new Error("final step failed"));
+        return Promise.resolve(Object.assign({}, result, { finalized: true }));
     }
 });
 
@@ -88,8 +88,8 @@ function rows() {
         "Original requester must be able to confirm the prepared final step.");
     assert.strictEqual(service.getRequest(siteAdmin, prepared.id).canConfirm, true,
         "Site Admin must be able to act as confirmation fallback.");
-    assert.strictEqual(service.getRequest(other, prepared.id).canConfirm, false,
-        "Unrelated users must not receive requester-confirmation authority.");
+    assert.throws(function () { service.getRequest(other, prepared.id); }, /Approval request not found/,
+        "Unrelated users must not even see requester-confirmation requests.");
     await assert.rejects(function () { return service.confirm(other, prepared.id, ""); }, /Permission denied/);
 
     var actionable = await service.list(requester, { status: "actionable", page: 1, perPage: 50 });
