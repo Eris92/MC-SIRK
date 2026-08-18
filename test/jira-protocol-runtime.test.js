@@ -54,6 +54,11 @@ var logoMarkupIndex = templateSource.indexOf("{{LOGO_MARKUP}}");
 var titleMarkupIndex = templateSource.indexOf('<div><h1 class="title">{{TITLE}}</h1></div>');
 assert.ok(logoMarkupIndex >= 0 && titleMarkupIndex > logoMarkupIndex,
     "Shared A4 header markup must keep the logo first and the title immediately after it for column layout.");
+assert.ok(/\.signatures\s*\{[^}]*margin-top:\s*72px;[^}]*\}/.test(templateSource),
+    "Shared A4 signature block must reserve 72px above the signature lines.");
+var printMediaSource = templateSource.slice(templateSource.indexOf("@media print"));
+assert.strictEqual(/\.signatures\s*\{[^}]*margin-top:/.test(printMediaSource), false,
+    "Print/PDF output must retain the full shared signature spacing instead of compressing it.");
 
 var reconciliation = renderer.renderJiraAssetProtocol({
     mode: "reconciliation",
@@ -101,4 +106,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, changed-only table, stacked header, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, changed-only table, stacked header, signature spacing, protected artifact contract and dev109 scoped Jira source: OK");
