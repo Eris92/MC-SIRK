@@ -1,3 +1,12 @@
+## 0.1.1-dev.118 - 2026-08-18
+
+- Center `PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU` across the shared A4 header.
+- Keep the existing logo/fallback left-aligned on the first line while the title stretches across the header and centers its text.
+- Remove the shrink-to-content title wrapper and reuse the existing `.title` owner without adding a new CSS class, renderer or lifecycle owner.
+- Preserve the dev.117 `72px` signature area, protocol content, protected PDF, requester confirmation and CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.118.md`.
+
 ## 0.1.1-dev.117 - 2026-08-18
 
 - Increase the Jira Asset Protocol handwritten-signature area in generated PDF/print output.
