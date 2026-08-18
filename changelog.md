@@ -511,7 +511,7 @@ Current development notes: `docs/releases/0.1.1-dev.34.md`.
 - Reuse the existing native secondary button surface for Results `View`, applied synchronously at creation and kept under `MeshThemeAdapter` refresh, without a hardcoded CSS palette.
 - Eliminate the `go(19) -> setTimeout(0)` selected-state gap so Commands/Plugins become mutually exclusive in the same transition; keep bounded reconcile only as recovery.
 - Target the Windows `shell:ConnectionsFolder` instead of Shell namespace `3` before invoking the active default-route adapter properties.
-- Keep Issues #125, #232 and #128 open for real dev.33 re-smoke; no tag/GitHub Release.
+- Keep Issues #125, #232 and #128 open for real dev.33 re-smoke; no tag or GitHub Release.
 
 Current development notes: `docs/releases/0.1.1-dev.33.md`.
 
