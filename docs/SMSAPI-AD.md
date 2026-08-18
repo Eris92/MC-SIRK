@@ -5,6 +5,7 @@
 W panelu `Settings -> Integrations` skonfiguruj:
 
 - `Active Directory`: domenę, login techniczny, hasło, sufiks UPN oraz listę `Users locations` w formie nazwa + pełny DN OU;
+- `Jira`: połączenie używane przez współdzielony cache użytkowników; reset hasła korzysta z tej samej listy użytkowników co Jira i mapuje ją do AD po UPN;
 - `SMS / Voice SMS (SMSAPI.pl)`: URL `https://api.smsapi.pl`, opcjonalnego nadawcę, lektora i token SMSAPI;
 - opcjonalny `External send API token` o długości co najmniej 32 znaków, niezależny od tokenu SMSAPI.
 
@@ -15,18 +16,36 @@ New            OU=_NewUsers,OU=Business,DC=domena,DC=local
 Testowe konta  OU=Test,OU=Business,DC=domena,DC=local
 ```
 
-Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwracane do przeglądarki. Po konfiguracji przypisz profile systemowe `AD` i/lub `SMSAPI` do właściwych skryptów przez akcję Credentials.
+Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwracane do przeglądarki. Po konfiguracji przypisz profile systemowe do właściwych skryptów przez akcję Credentials. `Reset user password and SMS.ps1` wymaga `AD`, `Jira` i `SMSAPI`; konto tworzone w AD wymaga `AD` i `SMSAPI`.
 
 ## Dostępne skrypty
 
 - `SMS/Send SMS.ps1` — SMS do jednego lub wielu numerów;
 - `SMS/Send Voice SMS.ps1` — Voice SMS/TTS do jednego lub wielu numerów;
-- `Active Directory/Reset user password and SMS.ps1` — wybór użytkownika z neutralnej listy AD, 12-znakowe hasło, reset, odblokowanie i SMS na atrybut `mobile`;
-- `Active Directory/Create user and SMS.ps1` — utworzenie konta w dozwolonym OU oraz wysłanie UPN i hasła na podany numer.
+- `Active Directory/Reset user password and SMS.ps1` — wyszukiwalny wybór z istniejącego cache użytkowników Jira, case-insensitive dopasowanie `Jira emailAddress -> AD UserPrincipalName`, 12-znakowe hasło, reset, odblokowanie i SMS na atrybut `mobile`;
+- `Active Directory/Create user and SMS.ps1` — utworzenie konta w dozwolonym OU oraz wysłanie tymczasowego hasła na podany numer.
 
-Operacje są objęte Approval. `ChangePasswordAtLogon` jest domyślnie włączone i można je odznaczyć. Lista użytkowników nie publikuje numerów telefonów; reset pobiera `mobile` ponownie bezpośrednio z AD.
+Operacje AD są objęte Approval. `ChangePasswordAtLogon` jest domyślnie włączone i można je odznaczyć. Lista resetu nie publikuje numerów telefonów i nie wykonuje zapytań Jira/AD przy każdym znaku Search; filtrowanie odbywa się lokalnie po jednorazowym załadowaniu dopasowanej listy. Reset pobiera `mobile` ponownie bezpośrednio z AD przed wysłaniem SMS.
 
 Login i UPN są przydzielane kolejno jako `i.nazwisko`, `im.nazwisko`, `imi.nazwisko` itd. Po wykorzystaniu prefiksów skrypt dodaje sufiks liczbowy. `sAMAccountName` pozostaje w limicie 20 znaków, a unikalność jest sprawdzana dla loginu i UPN.
+
+Treść SMS po utworzeniu konta nie publikuje loginu ani UPN i ma postać:
+
+```text
+Konto w domenie <domena> zostało utworzone. Tymczasowe hasło:
+
+<hasło>
+```
+
+Treść SMS po resecie hasła również nie publikuje loginu:
+
+```text
+Hasło w domenie <domena> zostało zmienione. Tymczasowe hasło:
+
+<hasło>
+```
+
+`<domena>` pochodzi z `MYSCRIPTS_AD_DOMAIN` skonfigurowanego w integracji Active Directory.
 
 ## Wywołanie zewnętrzne
 
