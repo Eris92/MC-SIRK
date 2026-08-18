@@ -1,3 +1,13 @@
+## 0.1.1-dev.121 - 2026-08-18
+
+- Default built-in SMS, Voice SMS and SMTP Relay workflows to no pre-approval while preserving explicit approval levels and the ordinary My Scripts Level 1 fallback.
+- Move accepted requester confirmation immediately to the existing `confirming` UI state so it leaves `Requests requiring action` before Jira CMDB finalization finishes, and show prepared Jira `User` / changed `Assets` context without extra requests.
+- Make AD password reset reuse the Jira users cache, intersect cached `emailAddress` with AD `UserPrincipalName`, and filter the loaded matched list locally with the shared Search/list contract.
+- Preserve Polish AD workflow text with UTF-8 BOM and send create/reset SMS messages with the configured AD domain plus a blank line and temporary password, without login/UPN.
+- Preserve requester/SiteAdmin confirmation/cancel semantics, Jira CMDB exactly-once behavior, AD OU allowlist, cryptographic password generation, mobile re-read, unlock and ChangePasswordAtLogon.
+
+Current development notes: `docs/releases/0.1.1-dev.121.md`.
+
 ## 0.1.1-dev.120 - 2026-08-18
 
 - Move `Data wygenerowania` into the top-right of the shared Jira Asset Protocol header beside the logo.
