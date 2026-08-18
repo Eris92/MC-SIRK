@@ -1,6 +1,6 @@
 #PL Wyślij Voice SMS | Wysyła głosową wiadomość TTS do jednego lub wielu numerów.
 #EN Send Voice SMS | Sends a TTS voice message to one or many phone numbers.
-# Approval: true
+# Approval: false
 # VariableRequiredPL: $PhoneNumbers, Numery telefonu | Rozdziel numery przecinkiem, średnikiem lub spacją
 # VariableRequiredEN: $PhoneNumbers, Phone numbers | Separate numbers with comma, semicolon or space
 # VariableRequiredPL: $Message, Wiadomość głosowa
