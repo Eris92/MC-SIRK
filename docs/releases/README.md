@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.119`](0.1.1-dev.119.md) — Jira Asset Protocol uses fixed `Użytkownik` / `Przedstawiciel IT` participant labels while the equipment table remains the receive/return direction owner;
 - [`0.1.1-dev.118`](0.1.1-dev.118.md) — Jira protocol PDF keeps the logo left-aligned while centering the protocol title across the shared A4 header;
 - [`0.1.1-dev.117`](0.1.1-dev.117.md) — Jira protocol PDF preserves the full 72 px signature area in print/PDF output instead of compressing it to 32 px;
 - [`0.1.1-dev.116`](0.1.1-dev.116.md) — Jira protocol PDF title is stacked on a separate line below the existing logo after real generated-PDF feedback;
@@ -58,7 +59,7 @@ Aktualna linia development:
 - [`0.1.1-dev.50`](0.1.1-dev.50.md) — corrective Jira wizard follow-up po real dev.49 FAIL: next step chains from the shared dialog promise without a second modal-hidden wait; real Jira/MeshCentral re-smoke pending;
 - [`0.1.1-dev.49`](0.1.1-dev.49.md) — Jira #290: global integration connection-only, script-owned Assets scope/user binding i paginated dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.48`](0.1.1-dev.48.md) — shared credentials/native-dialog/UI follow-up dla #280/#281/#284-#288; real MeshCentral smoke pending;
-- [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
+- [`0.1.1-dev.47`](0.1.1-dev.47.md) — Jira #252: secure SiteAdmin-only Jira integration setup plus native multi-step Jira Asset Protocol wizard with Active/All user scope and cached dynamic options; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.46`](0.1.1-dev.46.md) — Move Requests #265: verified current MeshCentral changeDeviceMesh execution, fail-closed persistence verification i zachowane #224 single-pending; real move smoke pending;
 - [`0.1.1-dev.45`](0.1.1-dev.45.md) — Jira Asset Protocol #252: canonical workflow, authoritative Jira asset recheck, real milestone progress, dependency-free PDF i protected exactly-once Open/Download; real Jira/MeshCentral smoke pending;
 - [`0.1.1-dev.44`](0.1.1-dev.44.md) — shared native execution parameter dialog (#253) plus real Windows Shell smoke infrastructure (#238); real MeshCentral parameter-dialog smoke pending;
