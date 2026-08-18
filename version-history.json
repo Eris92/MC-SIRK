@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.117",
+    "date": "2026-08-18",
+    "summary": "Preserve the full Jira Asset Protocol signature area in print/PDF output by removing the print-only 32px compression.",
+    "notes": "docs/releases/0.1.1-dev.117.md"
+  },
+  {
     "version": "0.1.1-dev.116",
     "date": "2026-08-18",
     "summary": "Place the Jira Asset Protocol title on a separate line below the existing logo in the shared A4 header.",
