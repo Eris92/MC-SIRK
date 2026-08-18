@@ -46,10 +46,14 @@ assert.ok(changesSection.indexOf("** Zdanie sprzętu - sprzęt zostaje zdjęty z
 assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
     "Business legend must not mention the implementation confirmation phase.");
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
-assert.ok(/\.header\s*\{[\s\S]*?align-items:\s*flex-start;/.test(templateSource),
-    "Protocol header must top-align the logo instead of vertically centering it with the title.");
-assert.ok(/\.title\s*\{[\s\S]*?margin:\s*12px 0 0;/.test(templateSource),
-    "Protocol title must be offset lower than the top-aligned logo.");
+assert.ok(/\.header\s*\{[\s\S]*?flex-direction:\s*column;/.test(templateSource),
+    "Protocol header must stack the title on a separate line below the logo.");
+assert.ok(/\.title\s*\{[\s\S]*?margin:\s*0;/.test(templateSource),
+    "Protocol title must use the stacked header gap instead of a same-row offset.");
+var logoMarkupIndex = templateSource.indexOf("{{LOGO_MARKUP}}");
+var titleMarkupIndex = templateSource.indexOf('<div><h1 class="title">{{TITLE}}</h1></div>');
+assert.ok(logoMarkupIndex >= 0 && titleMarkupIndex > logoMarkupIndex,
+    "Shared A4 header markup must keep the logo first and the title immediately after it for column layout.");
 
 var reconciliation = renderer.renderJiraAssetProtocol({
     mode: "reconciliation",
@@ -97,4 +101,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, changed-only table, header geometry, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, changed-only table, stacked header, protected artifact contract and dev109 scoped Jira source: OK");

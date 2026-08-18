@@ -1,3 +1,12 @@
+## 0.1.1-dev.116 - 2026-08-18
+
+- Stack the Jira Asset Protocol title on a separate line below the existing logo in the shared A4 header.
+- Correct the ineffective dev.114 geometry, which only top-aligned/lowered elements inside the same horizontal flex row.
+- Reuse the existing header/logo/title markup with `flex-direction: column` and no new renderer or layout owner.
+- Preserve Jira protocol content, protected PDF, requester confirmation and CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.116.md`.
+
 ## 0.1.1-dev.115 - 2026-08-18
 
 - Make Jira protocol equipment Search react to every typed character in both warehouse and current-user steps.
