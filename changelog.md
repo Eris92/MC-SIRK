@@ -1,3 +1,12 @@
+## 0.1.1-dev.120 - 2026-08-18
+
+- Move `Data wygenerowania` into the top-right of the shared Jira Asset Protocol header beside the logo.
+- Remove duplicated top `Użytkownik`, `E-mail` and `Przedstawiciel IT` cards from the current protocol.
+- Keep `Użytkownik` and `Przedstawiciel IT` in the participant/signature area and keep the title centered across the full second header row.
+- Preserve the dev.117 `72px` signature area, protected PDF, requester confirmation and Jira CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.120.md`.
+
 ## 0.1.1-dev.119 - 2026-08-18
 
 - Replace current Jira Asset Protocol `Osoba IT` terminology with `Przedstawiciel IT`.

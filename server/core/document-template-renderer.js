@@ -28,6 +28,7 @@ function renderDocument(options) {
         LANG: escapeHtml(options.lang || "pl"),
         TITLE: escapeHtml(options.title),
         LOGO_MARKUP: String(options.logoMarkup || "__SIRK_DOCUMENT_LOGO_MARKUP__"),
+        HEADER_META: String(options.headerMeta || ""),
         DOCUMENT_TYPE: escapeHtml(options.documentType),
         DOCUMENT_BODY: String(options.documentBody || ""),
         FOOTER: escapeHtml(options.footer || "")
@@ -71,11 +72,8 @@ function renderConfirmationProtocol(data) {
     var statement = data.hasChanges ?
         "Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu, nie zgłaszam uwag oraz zapoznałem/am się z regulaminem użytkowania sprzętu służbowego." :
         "Protokół potwierdza uzgodniony stan sprzętu i nie zleca żadnej zmiany w Jira Assets.";
-    var body = "<div class=\"meta\"><div><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) +
-        "</div><div><strong>Użytkownik:</strong> " + escapeHtml(protocolValue(user.name)) +
-        "</div><div><strong>E-mail:</strong> " + escapeHtml(protocolValue(user.email)) +
-        "</div><div><strong>Przedstawiciel IT:</strong> " + escapeHtml(protocolValue(itPerson.name)) + "</div></div>" +
-        "<div class=\"section\"><h2>Zmiany na stanie</h2><table><thead><tr><th>Operacja</th><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
+    var headerMeta = "<div class=\"header-date\"><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) + "</div>";
+    var body = "<div class=\"section\"><h2>Zmiany na stanie</h2><table><thead><tr><th>Operacja</th><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
         "</tr></thead><tbody>" + changeRows + "</tbody></table>" +
         "<div class=\"note\"><strong>Legenda:</strong><br>* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika<br>" +
         "** Zdanie sprzętu - sprzęt zostaje zdjęty ze stanu użytkownika</div></div>" +
@@ -85,7 +83,7 @@ function renderConfirmationProtocol(data) {
         "<div class=\"people\"><div class=\"person\"><span>Użytkownik</span><strong>" + escapeHtml(protocolValue(user.name)) +
         "</strong></div><div class=\"person\"><span>Przedstawiciel IT</span><strong>" + escapeHtml(protocolValue(itPerson.name)) +
         "</strong></div></div><div class=\"signatures\"><div class=\"signature\">Podpis</div><div class=\"signature\">Podpis</div></div>";
-    return renderDocument({ title: title, documentBody: body, footer: "" });
+    return renderDocument({ title: title, headerMeta: headerMeta, documentBody: body, footer: "" });
 }
 
 function renderLegacyProtocol(data) {
