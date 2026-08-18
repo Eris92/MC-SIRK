@@ -161,6 +161,71 @@
         });
     }
 
+    function protocolContext(request) {
+        var data = request && request.result && request.result.data;
+        if (!data || !data.user || !Array.isArray(data.assets) || !Array.isArray(data.finalAssets)) return null;
+        var user = String(data.user.name || data.user.email || data.user.id || "").trim();
+        var changed = data.assets.filter(function (asset) {
+            return asset && String(asset.action || "none") !== "none";
+        });
+        var source = changed.length ? changed : data.assets;
+        var assets = source.map(function (asset) {
+            if (!asset) return "";
+            var label = String(asset.hostname || asset.inventoryNumber || asset.assetIdentifier || asset.assetId || "").trim();
+            if (!label) return "";
+            if (asset.action && asset.action !== "none" && asset.actionLabel) label += " — " + String(asset.actionLabel);
+            return label;
+        }).filter(Boolean);
+        if (!user && !assets.length) return null;
+        return { user: user || "—", assets: assets.length ? assets : ["—"] };
+    }
+
+    function protocolSummary(request) {
+        var context = protocolContext(request);
+        if (!context) return "";
+        return "User: " + context.user + " | Assets: " + context.assets.join(", ");
+    }
+
+    function appendSummary(shell, host, request) {
+        var context = protocolContext(request);
+        if (!context) {
+            if (request.summary) host.appendChild(shell.element("p", "mc-approval-request-summary", request.summary));
+            return;
+        }
+        host.appendChild(shell.element("p", "mc-approval-request-summary", "User: " + context.user));
+        host.appendChild(shell.element("p", "mc-approval-request-summary", "Assets: " + context.assets.join(", ")));
+    }
+
+    function isActionable(request) {
+        return !!request && (request.status === "pending" || request.status === "awaiting_confirmation");
+    }
+
+    function renderCurrentRequests(shell) {
+        if (!selectedProvider) {
+            var actionable = requests.filter(isActionable);
+            overviewFilters(shell, actionable);
+            var filtered = overviewFilter
+                ? actionable.filter(function (request) { return request.type === overviewFilter; })
+                : actionable;
+            cards(
+                shell,
+                overviewFilter ? (titles[overviewFilter] || overviewFilter) + " requiring action" : "Requests requiring action",
+                "There are no approval or confirmation requests for the selected filter.",
+                filtered
+            );
+            return;
+        }
+        var visible = requests.filter(function (request) {
+            return !selectedStatus || request.status === selectedStatus;
+        });
+        table(
+            shell,
+            titles[selectedProvider] || selectedProvider,
+            "No requests match the selected provider and status.",
+            visible
+        );
+    }
+
     function decisions(shell, request, host) {
         if (!request.canDecide) return;
         var actions = document.createElement("div");
@@ -209,19 +274,32 @@
                     shell.error(host, new Error("Native MeshCentral confirmation dialog is unavailable."));
                     return;
                 }
+                var contextSummary = protocolSummary(request);
                 tools.openConfirmationDialog({
                     title: request.title || definition.dialogTitle,
-                    message: definition.message,
+                    message: contextSummary ? contextSummary + ". " + definition.message : definition.message,
                     trigger: button,
                     primaryLabel: definition.primaryLabel
                 }).then(function (confirmed) {
                     if (!confirmed) return;
                     setDisabled(true);
+                    if (definition.optimisticStatus) {
+                        request.status = definition.optimisticStatus;
+                        request.canConfirm = false;
+                        request.canCancelConfirmation = false;
+                        renderCurrentRequests(shell);
+                    }
                     return shell.post(definition.asset, { id: request.id, note: "" })
                         .then(shell.render)
                         .catch(function (error) {
-                            setDisabled(false);
-                            shell.error(host, error);
+                            if (!definition.optimisticStatus) {
+                                setDisabled(false);
+                                shell.error(host, error);
+                                return;
+                            }
+                            return Promise.resolve(shell.render()).catch(function () {}).then(function () {
+                                shell.error(shell.state.page.details || host, error);
+                            });
                         });
                 }).catch(function (error) {
                     setDisabled(false);
@@ -239,7 +317,8 @@
                 className: "btn-primary sirk-action-confirm",
                 message: "Confirm that the prepared result is accepted and the final step may proceed.",
                 primaryLabel: "Confirm",
-                asset: "confirm"
+                asset: "confirm",
+                optimisticStatus: "confirming"
             });
         }
         if (request.canCancelConfirmation) {
@@ -290,7 +369,7 @@
             card.appendChild(meta);
 
             card.appendChild(shell.element("div", "mc-shared-muted", new Date(request.createdAt).toLocaleString()));
-            if (request.summary) card.appendChild(shell.element("p", "mc-approval-request-summary", request.summary));
+            appendSummary(shell, card, request);
 
             var provider = shell.element("span", "mc-approval-request-provider", titles[request.type] || request.type);
             card.appendChild(provider);
@@ -334,7 +413,7 @@
                 { title: "Status", value: function (request) { return statusTitle(request.status); }, className: function (request) {
                     return "mc-results-status mc-results-status-" + statusKey(request.status);
                 } },
-                { title: "Summary", value: function (request) { return request.summary || "—"; } }
+                { title: "Summary", value: function (request) { return protocolSummary(request) || request.summary || "—"; } }
             ],
             actions: function (cell, request) { actions(shell, request, cell); },
             emptyText: empty
