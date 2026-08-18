@@ -50,8 +50,8 @@ function assertFixedParticipantOrder(html, context) {
 ["receive", "return", "none"].forEach(function (action) {
     var html = renderer.renderJiraAssetProtocol(participantData(action));
     assertFixedParticipantOrder(html, "current " + action + " protocol");
-    assert.ok(html.indexOf("<strong>Przedstawiciel IT:</strong> Adam IT") >= 0,
-        "Current protocol metadata must use Przedstawiciel IT for " + action + ".");
+    assert.strictEqual(html.indexOf("<strong>Przedstawiciel IT:</strong>"), -1,
+        "Current protocol must not duplicate the IT representative in top metadata for " + action + ".");
 });
 
 ["transfer", "return"].forEach(function (mode) {
@@ -81,4 +81,4 @@ assert.strictEqual(serviceSource.indexOf('"Osoba IT: "'), -1,
 assert.strictEqual(serviceSource.indexOf("IT person"), -1,
     "Current Jira protocol validation messages must use IT representative terminology.");
 
-console.log("Jira protocol uses fixed User / IT representative order and representative terminology: OK");
+console.log("Jira protocol uses fixed User / IT representative order without duplicate top participant metadata: OK");
