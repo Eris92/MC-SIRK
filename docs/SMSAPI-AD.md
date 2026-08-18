@@ -32,7 +32,7 @@ Login i UPN są przydzielane kolejno jako `i.nazwisko`, `im.nazwisko`, `imi.nazw
 Treść SMS po utworzeniu konta nie publikuje loginu ani UPN i ma postać:
 
 ```text
-Konto w domenie <domena> zostało utworzone. Tymczasowe hasło:
+Konto w domenie <domena>, zostało utworzone. Tymczasowe hasło:
 
 <hasło>
 ```
@@ -40,7 +40,7 @@ Konto w domenie <domena> zostało utworzone. Tymczasowe hasło:
 Treść SMS po resecie hasła również nie publikuje loginu:
 
 ```text
-Hasło w domenie <domena> zostało zmienione. Tymczasowe hasło:
+Hasło w domenie <domena>, zostało zmienione. Tymczasowe hasło:
 
 <hasło>
 ```
