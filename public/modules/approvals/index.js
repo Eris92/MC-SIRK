@@ -189,39 +189,69 @@
     }
 
     function requesterConfirmation(shell, request, host) {
-        if (!request.canConfirm) return;
+        if (!request.canConfirm && !request.canCancelConfirmation) return;
         var actions = document.createElement("div");
         actions.className = "mc-approval-request-actions";
-        var button = document.createElement("button");
-        button.type = "button";
-        button.className = "btn btn-sm btn-primary sirk-action-confirm";
-        button.textContent = "Confirm";
-        button.onclick = function () {
-            var tools = window.SharedScriptTools;
-            if (!tools || typeof tools.openConfirmationDialog !== "function") {
-                shell.error(host, new Error("Native MeshCentral confirmation dialog is unavailable."));
-                return;
-            }
-            tools.openConfirmationDialog({
-                title: request.title || "Confirm request",
+        var buttons = [];
+
+        function setDisabled(value) {
+            buttons.forEach(function (button) { button.disabled = value === true; });
+        }
+
+        function addAction(definition) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "btn btn-sm " + definition.className;
+            button.textContent = definition.title;
+            button.onclick = function () {
+                var tools = window.SharedScriptTools;
+                if (!tools || typeof tools.openConfirmationDialog !== "function") {
+                    shell.error(host, new Error("Native MeshCentral confirmation dialog is unavailable."));
+                    return;
+                }
+                tools.openConfirmationDialog({
+                    title: request.title || definition.dialogTitle,
+                    message: definition.message,
+                    trigger: button,
+                    primaryLabel: definition.primaryLabel
+                }).then(function (confirmed) {
+                    if (!confirmed) return;
+                    setDisabled(true);
+                    return shell.post(definition.asset, { id: request.id, note: "" })
+                        .then(shell.render)
+                        .catch(function (error) {
+                            setDisabled(false);
+                            shell.error(host, error);
+                        });
+                }).catch(function (error) {
+                    setDisabled(false);
+                    shell.error(host, error);
+                });
+            };
+            buttons.push(button);
+            actions.appendChild(button);
+        }
+
+        if (request.canConfirm) {
+            addAction({
+                title: "Confirm",
+                dialogTitle: "Confirm request",
+                className: "btn-primary sirk-action-confirm",
                 message: "Confirm that the prepared result is accepted and the final step may proceed.",
-                trigger: button,
-                primaryLabel: "Confirm"
-            }).then(function (confirmed) {
-                if (!confirmed) return;
-                button.disabled = true;
-                return shell.post("confirm", { id: request.id, note: "" })
-                    .then(shell.render)
-                    .catch(function (error) {
-                        button.disabled = false;
-                        shell.error(host, error);
-                    });
-            }).catch(function (error) {
-                button.disabled = false;
-                shell.error(host, error);
+                primaryLabel: "Confirm",
+                asset: "confirm"
             });
-        };
-        actions.appendChild(button);
+        }
+        if (request.canCancelConfirmation) {
+            addAction({
+                title: "Cancel",
+                dialogTitle: "Cancel request",
+                className: "btn-danger sirk-action-cancel",
+                message: "Cancel this request? The prepared result will remain available, but the final step will not proceed.",
+                primaryLabel: "Cancel request",
+                asset: "cancel-confirmation"
+            });
+        }
         host.appendChild(actions);
     }
 
