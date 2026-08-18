@@ -1,6 +1,6 @@
 #PL Wyślij SMS | Wysyła jedną wiadomość do jednego lub wielu numerów.
 #EN Send SMS | Sends one message to one or many phone numbers.
-# Approval: true
+# Approval: false
 # VariableRequiredPL: $PhoneNumbers, Numery telefonu | Rozdziel numery przecinkiem, średnikiem lub spacją
 # VariableRequiredEN: $PhoneNumbers, Phone numbers | Separate numbers with comma, semicolon or space
 # VariableRequiredPL: $Message, Wiadomość
