@@ -147,6 +147,10 @@ module.exports.createModule = function (context) {
                 return context.approval.confirm(user, value.id, value.note || "")
                     .then(function (request) { return { ok: true, request: request }; });
             }
+            if (asset === "cancel-confirmation") {
+                return context.approval.cancelConfirmation(user, value.id, value.note || "")
+                    .then(function (request) { return { ok: true, request: request }; });
+            }
             if (asset === "settings") return saveSettings(user, value);
             if (asset === "provider-settings") {
                 return saveOneProvider(user, value.type, value).then(function () { return { ok: true }; });
