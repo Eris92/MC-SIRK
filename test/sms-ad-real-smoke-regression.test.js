@@ -92,7 +92,7 @@ function context() {
     var smsSource = fs.readFileSync(path.join(root, "seed", "MyScripts", "_shared", "Sirk-AdSms.ps1"), "utf8");
     assert.ok(/function ConvertTo-SirkSmsFormBody/.test(smsSource));
     assert.ok(/\[Uri\]::EscapeDataString\(\$Text\)/.test(smsSource), "AD SMS text must be percent-encoded from Unicode before Windows PowerShell sends the form.");
-    assert.ok(/encoding=utf-8/.test(smsSource));
+    assert.ok(/\$encoding\s*=\s*'utf-8'/.test(smsSource) && /'encoding='\s*\+\s*\$encoding/.test(smsSource));
     assert.ok(/-Body \$body/.test(smsSource), "The outbound AD SMS request must use the already percent-encoded ASCII-safe form body.");
 
     console.log("Real-smoke regression: bounded Jira-UPN/AD matching and ASCII-safe UTF-8 SMS form transport: OK");
