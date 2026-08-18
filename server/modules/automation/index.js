@@ -123,6 +123,9 @@ module.exports.createModule = function (context) {
         if (workflow(script, "VmsSend")) return "vms";
         return "";
     }
+    function defaultDirectWorkflow(script) {
+        return !!messageWorkflow(script) || workflow(script, "RelayMailSend");
+    }
     function executeMessageWorkflow(script, payload) {
         var kind = messageWorkflow(script), values = payload && payload.variableValues || {};
         return sms.send(kind, values.PhoneNumbers, values.Message, { lector: values.Lector }).then(function (result) {
@@ -346,7 +349,7 @@ module.exports.createModule = function (context) {
                 if (!requestedScript) throw new Error("Script not found.");
                 if (requestedScript.confirmExecution === true && value.confirmedExecution !== true) throw new Error("Execution confirmation is required for this script.");
                 var levels = normalizeApprovalLevels(requestedScript.approvalLevels);
-                if (!levels.length && !allowNoApproval()) levels = [1];
+                if (!levels.length && !defaultDirectWorkflow(requestedScript) && !allowNoApproval()) levels = [1];
                 var language = String(value.language || "en").toLowerCase() === "pl" ? "pl" : "en";
                 var locale = requestedScript.locales && requestedScript.locales[language] || {};
                 var protocol = jiraProtocol.isProtocolScript(requestedScript);
