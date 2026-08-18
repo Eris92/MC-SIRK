@@ -57,6 +57,6 @@ function Send-SirkSms {
     $headers = @{ Authorization = "Bearer $($env:MYSCRIPTS_SMS_API_TOKEN)" }
     $body = @{ to = $normalizedNumber; message = $Text; format = 'json'; encoding = 'utf-8' }
     if ($env:MYSCRIPTS_SMS_SENDER) { $body.from = $env:MYSCRIPTS_SMS_SENDER }
-    $response = Invoke-RestMethod -Uri ($env:MYSCRIPTS_SMS_API_URL.TrimEnd('/') + '/sms.do') -Method Post -Headers $headers -Body $body
+    $response = Invoke-RestMethod -Uri ($env:MYSCRIPTS_SMS_API_URL.TrimEnd('/') + '/sms.do') -Method Post -Headers $headers -ContentType 'application/x-www-form-urlencoded; charset=UTF-8' -Body $body
     if ($response.error) { throw "SMSAPI error: $($response.message)" }
 }
