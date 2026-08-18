@@ -125,7 +125,8 @@
             required: false,
             control: "user",
             defaultValue: "",
-            inlineLabel: true
+            inlineLabel: true,
+            liveInput: true
         };
         var preparedAsset = copy(assetVariable);
         preparedAsset.required = false;
