@@ -46,18 +46,34 @@ assert.ok(changesSection.indexOf("** Zdanie sprzętu - sprzęt zostaje zdjęty z
 assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
     "Business legend must not mention the implementation confirmation phase.");
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
-assert.ok(/\.header\s*\{[\s\S]*?flex-direction:\s*column;/.test(templateSource),
-    "Protocol header must stack the title on a separate line below the logo.");
-assert.ok(/\.title\s*\{[\s\S]*?align-self:\s*stretch;[\s\S]*?text-align:\s*center;/.test(templateSource),
-    "Protocol title must stretch across the header and center its text.");
+assert.ok(/\.header\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto;/.test(templateSource),
+    "Protocol header must reserve a top-right metadata cell beside the logo.");
+assert.ok(/\.header-date\s*\{[\s\S]*?justify-self:\s*end;/.test(templateSource),
+    "Generated date must be aligned to the top-right header cell.");
+assert.ok(/\.title\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1;[\s\S]*?text-align:\s*center;/.test(templateSource),
+    "Protocol title must span both header columns and remain centered below the first row.");
 assert.ok(/\.title\s*\{[\s\S]*?margin:\s*0;/.test(templateSource),
-    "Protocol title must use the stacked header gap instead of a same-row offset.");
+    "Protocol title must use the shared header gap instead of a manual offset.");
 var logoMarkupIndex = templateSource.indexOf("{{LOGO_MARKUP}}");
+var headerMetaIndex = templateSource.indexOf("{{HEADER_META}}");
 var titleMarkupIndex = templateSource.indexOf('<h1 class="title">{{TITLE}}</h1>');
-assert.ok(logoMarkupIndex >= 0 && titleMarkupIndex > logoMarkupIndex,
-    "Shared A4 header markup must keep the logo first and the centered title immediately after it for column layout.");
+assert.ok(logoMarkupIndex >= 0 && headerMetaIndex > logoMarkupIndex && titleMarkupIndex > headerMetaIndex,
+    "Shared A4 header must render logo, optional top-right metadata, then the centered full-width title.");
 assert.strictEqual(templateSource.indexOf('<div><h1 class="title">{{TITLE}}</h1></div>'), -1,
-    "Centered protocol title must be a direct flex item instead of a shrink-to-content wrapper.");
+    "Centered protocol title must remain a direct header item.");
+var headerStart = html.indexOf('<div class="header">');
+var firstSectionStart = html.indexOf('<div class="section">');
+var headerRegion = html.slice(headerStart, firstSectionStart);
+assert.ok(headerRegion.indexOf('<div class="header-date"><strong>Data wygenerowania:</strong> ') >= 0,
+    "Current Jira protocol must show generated date in the top-right header.");
+assert.strictEqual(headerRegion.indexOf("<strong>Użytkownik:</strong>"), -1,
+    "Current Jira protocol must not duplicate the user in the top metadata area.");
+assert.strictEqual(headerRegion.indexOf("<strong>E-mail:</strong>"), -1,
+    "Current Jira protocol must not render e-mail in the top metadata area.");
+assert.strictEqual(headerRegion.indexOf("<strong>Przedstawiciel IT:</strong>"), -1,
+    "Current Jira protocol must not duplicate the IT representative in the top metadata area.");
+assert.strictEqual(html.indexOf('<div class="meta">'), -1,
+    "Current Jira protocol must not keep the old four-field metadata grid.");
 assert.ok(/\.signatures\s*\{[^}]*margin-top:\s*72px;[^}]*\}/.test(templateSource),
     "Shared A4 signature block must reserve 72px above the signature lines.");
 var printMediaSource = templateSource.slice(templateSource.indexOf("@media print"));
@@ -110,4 +126,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, changed-only table, stacked centered header, signature spacing, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, top-right date, simplified metadata, centered title, signature spacing, protected artifact contract and dev109 scoped Jira source: OK");
