@@ -1,3 +1,13 @@
+## 0.1.1-dev.123 - 2026-08-18
+
+- Correct the real dev.122 reset-selector latency by matching only Jira-cache e-mail identities to AD `UserPrincipalName` through escaped, chunked LDAP filters instead of enumerating up to 10,000 directory users for every dialog open.
+- Keep one PowerShell process for the bounded AD match, stream large identity sets through stdin, skip AD entirely when Jira exposes no usable UPNs, and preserve local Search with no per-keystroke requests.
+- Correct the Windows PowerShell 5.1 SMS transport by percent-encoding Unicode form values before HTTP so the request body is ASCII-safe while SMSAPI receives `encoding=utf-8` and UTF-8 form semantics.
+- Add a Windows PowerShell 5.1 smoke that validates the exact UTF-8 percent encoding of `Zażółć gęślą jaźń`, while preserving the existing Network Connections smoke.
+- Keep Issue #382 open until real MeshCentral/SMSAPI acceptance confirms prompt reset-list availability and correct Polish characters in the received SMS.
+
+Current development notes: `docs/releases/0.1.1-dev.123.md`.
+
 ## 0.1.1-dev.122 - 2026-08-18
 
 - Correct the dev.121 real-smoke AD reset failure by removing the redundant per-script Jira credential gate from the `ad-users` option path while retaining AD authorization and the existing server-owned Jira users cache.
