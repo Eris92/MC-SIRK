@@ -81,6 +81,7 @@ module.exports.createAdDirectoryService = function (options) {
                     })
                 }, finish);
                 if (matchUpns && !inlineMatchJson && child && child.stdin && typeof child.stdin.end === "function") {
+                    if (typeof child.stdin.on === "function") child.stdin.on("error", function (error) { finish(error, "", ""); });
                     child.stdin.end(matchJson, "utf8");
                 }
             } catch (error) {
