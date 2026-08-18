@@ -69,10 +69,15 @@ function hasUtf8Bom(filePath) {
     assert.strictEqual(JSON.stringify(publicSettings).indexOf("private-sms-token"), -1);
     assert.strictEqual(publicSettings.configured.smsExternalToken, true);
 
-    var sms = await service.send("sms", ["+48 500 100 200", "48500100300"], "Test");
+    var smsText = "Zażółć gęślą jaźń";
+    var sms = await service.send("sms", ["+48 500 100 200", "48500100300"], smsText);
     assert.strictEqual(requests[0].url, "https://api.smsapi.pl/sms.do");
     assert.strictEqual(requests[0].headers.Authorization, "Bearer " + "server-only-smsapi-token");
-    assert.ok(/to=48500100200%2C48500100300/.test(requests[0].body), "Multi SMS must use one comma-separated SMSAPI request.");
+    assert.strictEqual(requests[0].headers["Content-Type"], "application/x-www-form-urlencoded; charset=UTF-8");
+    var smsParams = new URLSearchParams(requests[0].body);
+    assert.strictEqual(smsParams.get("to"), "48500100200,48500100300", "Multi SMS must use one comma-separated SMSAPI request.");
+    assert.strictEqual(smsParams.get("encoding"), "utf-8", "SMSAPI must be told to decode Polish message text as UTF-8 instead of its windows-1250 default.");
+    assert.strictEqual(smsParams.get("message"), smsText, "UTF-8 SMS form encoding must preserve Polish characters before transport.");
     assert.strictEqual(JSON.stringify(sms).indexOf("48500100200"), -1, "Workflow output must mask recipient numbers.");
     assert.strictEqual(JSON.stringify(sms).indexOf("server-only-smsapi-token"), -1, "Workflow output must never expose the SMSAPI token.");
 
@@ -161,7 +166,10 @@ function hasUtf8Bom(filePath) {
     assert.strictEqual(adSearch.labels.pl, "Szukaj");
     assert.strictEqual(reset.locales.pl.label, "Reset hasła użytkownika i SMS");
     assert.strictEqual(reset.variables.find(function (item) { return item.name === "ChangeAtLogon"; }).labels.pl, "Wymuś zmianę hasła przy następnym logowaniu");
-    assert.ok(reset.extraHeaders.some(function (header) { return /^SirkSystemCredential:\s*Jira$/i.test(header); }), "Reset workflow must explicitly declare the Jira credential used by its cached user source.");
+    assert.ok(reset.extraHeaders.some(function (header) { return /^SirkSystemCredential:\s*AD$/i.test(header); }), "Reset workflow must retain its AD execution credential.");
+    assert.ok(reset.extraHeaders.some(function (header) { return /^SirkSystemCredential:\s*SMS$/i.test(header); }), "Reset workflow must retain its SMSAPI execution credential.");
+    assert.strictEqual(reset.extraHeaders.some(function (header) { return /^SirkSystemCredential:\s*Jira$/i.test(header); }), false,
+        "Reset workflow must not require a per-script Jira credential only to consume the server-owned Jira users cache.");
     assert.strictEqual(create.variables.find(function (item) { return item.name === "UserLocation"; }).optionSource, "ad-user-locations");
     assert.strictEqual(reset.variables.find(function (item) { return item.name === "ChangeAtLogon"; }).defaultValue, "true");
     assert.strictEqual(create.variables.find(function (item) { return item.name === "ChangeAtLogon"; }).defaultValue, "true");
@@ -188,19 +196,23 @@ function hasUtf8Bom(filePath) {
     assert.strictEqual(createSource.indexOf("UÅ"), -1);
     assert.strictEqual(resetSource.indexOf("UÅ"), -1);
     assert.ok(/RandomNumberGenerator/.test(sharedSource) && !/Get-Random/.test(sharedSource), "Passwords must use a cryptographic random-number generator.");
+    assert.ok(/encoding\s*=\s*'utf-8'/.test(sharedSource) && /-ContentType\s+'application\/x-www-form-urlencoded; charset=UTF-8'/.test(sharedSource),
+        "Windows PowerShell 5.1 AD SMS form posts must set both SMSAPI UTF-8 decoding and an explicit UTF-8 request-body charset.");
 
     var automationSource = fs.readFileSync(path.join(root, "server", "modules", "automation", "index.js"), "utf8");
     assert.ok(/createAdDirectoryService\(\{ context: context, jiraAssets: jiraAssets \}\)/.test(automationSource), "Automation must inject the canonical Jira cache owner into the AD directory owner.");
     var adOptionsBlock = automationSource.slice(automationSource.indexOf('variable.optionSource === "ad-users"'), automationSource.indexOf('variable.optionSource === "ad-user-locations"'));
-    assert.ok(/hasSystemCredential\(optionScript\.path, "ad"\)/.test(adOptionsBlock) && /hasSystemCredential\(optionScript\.path, "jira"\)/.test(adOptionsBlock),
-        "Jira-backed AD user options must require both explicitly assigned AD and Jira system credentials.");
+    assert.ok(/hasSystemCredential\(optionScript\.path, "ad"\)/.test(adOptionsBlock) && /adDirectory\.listUsers\(\)/.test(adOptionsBlock),
+        "AD reset options must keep AD authorization and reuse the server-owned Jira-cache/AD matching owner.");
+    assert.strictEqual(/hasSystemCredential\(optionScript\.path, "jira"\)/.test(adOptionsBlock), false,
+        "AD reset user loading must not be blocked by a redundant per-script Jira credential assignment.");
 
     var parameterDialogSource = fs.readFileSync(path.join(root, "public", "shared", "ui", "parameter-dialog.js"), "utf8");
     var filterBlock = parameterDialogSource.slice(parameterDialogSource.indexOf("function onFilterChanged"), parameterDialogSource.indexOf("function onChecklistChanged"));
     assert.ok(/applyUserFilter/.test(filterBlock) && filterBlock.indexOf("provider(") < 0 && filterBlock.indexOf("loadDynamic(") < 0,
         "Typing in the shared Search field must filter the already loaded list locally without backend requests.");
 
-    console.log("SMSAPI, Jira-cache/AD UPN matching, searchable localized account workflows: OK");
+    console.log("SMSAPI UTF-8, Jira-cache/AD UPN matching and searchable localized account workflows: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;

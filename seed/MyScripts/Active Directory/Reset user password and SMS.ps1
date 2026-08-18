@@ -10,7 +10,6 @@
 # SirkVariableOptionSource: AdUser=ad-users
 # SirkVariableSearch: AdUser=AdUserSearch
 # SirkSystemCredential: AD
-# SirkSystemCredential: Jira
 # SirkSystemCredential: SMS
 # MultiHost: false
 # runAsUser: 0

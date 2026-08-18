@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.121`
+Current version: `0.1.1-dev.122`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -53,10 +53,10 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
 - `server/core/jira-protocol-service.js` — kanoniczny Jira Asset Protocol owner: stable asset identity, przygotowanie PDF, expected final inventory i przejście do shared requester confirmation;
 - `server/core/jira-asset-confirmation-service.js` — bounded live ownership/schema snapshot, stale-state verification i finalne Jira Assets writes po confirmation;
-- `server/core/sms-service.js` — server-side owner wysyłki SMS i Voice SMS przez SMSAPI.pl, w tym multi-recipient i maskowanie numerów w output;
-- `server/core/ad-directory-service.js` — neutralne dynamiczne opcje użytkowników AD i dozwolonych lokalizacji OU bez publikowania numerów `mobile`;
+- `server/core/sms-service.js` — server-side owner wysyłki SMS i Voice SMS przez SMSAPI.pl, w tym multi-recipient, maskowanie numerów w output oraz jawne `encoding=utf-8` dla SMS;
+- `server/core/ad-directory-service.js` — jeden bounded owner dopasowania cache użytkowników Jira do AD przez `emailAddress -> UserPrincipalName` oraz dozwolonych lokalizacji OU; numer `mobile` nie jest publikowany w opcjach;
 - `server/core/sms-external-api.js` — chroniony oddzielnym tokenem endpoint `POST /sirk-sms/v1/send` z limitem 30 żądań/minutę/adres IP;
-- `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API;
+- `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API; `ad-users` wymaga credentialu AD, ale konsumuje server-owned Jira users cache bez redundantnego przypisania Jira do skryptu resetu;
 - `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu; brakujący menu node jest tworzony dopiero po zakończeniu bieżącego natywnego `goPageEnd`, a późniejsza rekonsyliacja nie przepisuje niezmienionego widocznego stanu;
 - `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
 - `public/shared/runtime.js` — browser bootstrap, permission-safe native surface readiness, native page/device lifecycle i bounded module startup; `goPageStart` unieważnia poprzedni page-ready state, a `goPageEnd` wykonuje jeden bounded menu reconcile;
@@ -134,15 +134,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.121
-config.json  -> 0.1.1-dev.121
+package.json -> 0.1.1-dev.122
+config.json  -> 0.1.1-dev.122
 ```
 
 Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.121.md`.
+Aktualne development notes: `docs/releases/0.1.1-dev.122.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
