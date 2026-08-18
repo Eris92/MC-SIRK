@@ -177,10 +177,10 @@ function hasUtf8Bom(filePath) {
     assert.ok(/for\(\$number=2;\$number -le 9999/.test(createSource), "Login allocation must have a numeric collision fallback.");
     assert.ok(/MYSCRIPTS_AD_USER_LOCATIONS_JSON/.test(createSource), "AD account creation must enforce the configured OU allowlist.");
     assert.ok(/Set-ADAccountPassword/.test(resetSource) && /Unlock-ADAccount/.test(resetSource) && /ChangePasswordAtLogon/.test(resetSource));
-    assert.ok(createSource.indexOf('Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN) zostało utworzone. Tymczasowe hasło:`r`n`r`n$password') >= 0,
-        "Create-account SMS must contain the configured AD domain, a blank line and the temporary password.");
-    assert.ok(resetSource.indexOf('Hasło w domenie $($env:MYSCRIPTS_AD_DOMAIN) zostało zmienione. Tymczasowe hasło:`r`n`r`n$password') >= 0,
-        "Reset SMS must contain the configured AD domain, a blank line and the temporary password.");
+    assert.ok(createSource.indexOf('Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało utworzone. Tymczasowe hasło:`r`n`r`n$password') >= 0,
+        "Create-account SMS must contain the configured AD domain, requested punctuation, a blank line and the temporary password.");
+    assert.ok(resetSource.indexOf('Hasło w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało zmienione. Tymczasowe hasło:`r`n`r`n$password') >= 0,
+        "Reset SMS must contain the configured AD domain, requested punctuation, a blank line and the temporary password.");
     assert.ok(createSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0].indexOf("$upn") < 0,
         "Create-account SMS text must not expose the generated login/UPN.");
     assert.ok(resetSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0].indexOf("$AdUser") < 0,
