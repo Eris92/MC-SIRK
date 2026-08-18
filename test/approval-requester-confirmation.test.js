@@ -144,7 +144,9 @@ function rows() {
 
     assert.ok(approvalModuleSource.indexOf('asset === "confirm"') >= 0 && approvalModuleSource.indexOf("context.approval.confirm") >= 0,
         "Approval Center backend must expose the shared requester confirmation owner.");
-    assert.ok(approvalClientSource.indexOf("openConfirmationDialog") >= 0 && approvalClientSource.indexOf('shell.post("confirm"') >= 0,
+    assert.ok(approvalClientSource.indexOf("openConfirmationDialog") >= 0 &&
+        approvalClientSource.indexOf('asset: "confirm"') >= 0 &&
+        approvalClientSource.indexOf("shell.post(definition.asset") >= 0,
         "Approval Center must reuse the native MeshCentral confirmation dialog before posting confirmation.");
     assert.ok(approvalClientSource.indexOf('status: "actionable"') >= 0,
         "Approval overview must surface both pending approvals and requester confirmations in one bounded request.");
