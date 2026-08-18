@@ -236,6 +236,7 @@ module.exports.createApprovalService = function (options) {
         delete result.payload;
         result.canDecide = canDecide(user, request);
         result.canConfirm = canConfirm(user, request);
+        result.canCancelConfirmation = canConfirm(user, request);
         result.currentApprovalLevel = currentLevel(request);
         return result;
     }
@@ -444,6 +445,26 @@ module.exports.createApprovalService = function (options) {
                     return publicRequest(user, request);
                 });
             });
+        });
+    }
+
+    function cancelConfirmation(user, id, note) {
+        return transact(function (rows) {
+            var request = rows.find(function (item) { return item.id === String(id || ""); });
+            if (!request) throw new Error("Approval request not found.");
+            if (request.requesterCancellation) {
+                if (!canSee(user, request)) throw new Error("Permission denied.");
+                return publicRequest(user, request);
+            }
+            if (!canConfirm(user, request)) throw new Error("Permission denied.");
+            request.requesterCancellation = {
+                user: { id: user._id, name: shared.userName(user) },
+                note: shared.cleanText(note, 4000),
+                cancelledAt: Date.now()
+            };
+            request.status = "rejected";
+            request.updatedAt = Date.now();
+            return publicRequest(user, request);
         });
     }
 
@@ -669,6 +690,7 @@ module.exports.createApprovalService = function (options) {
     return {
         authenticateApiToken: authenticateApiToken,
         externalContext: externalContext,
+        cancelConfirmation: cancelConfirmation,
         createApiToken: createApiToken,
         confirm: confirm,
         decide: decide,
