@@ -219,7 +219,7 @@ module.exports.createJiraProtocolService = function (options) {
         var lines = [
             data.hasChanges ? "PROTOKÓŁ ZMIAN SPRZĘTU" : "PROTOKÓŁ UZGODNIENIA STANU SPRZĘTU",
             "Użytkownik: " + data.user.name,
-            "Osoba IT: " + data.itPerson.name,
+            "Przedstawiciel IT: " + data.itPerson.name,
             "",
             "Zmiany na stanie:"
         ];
@@ -249,7 +249,7 @@ module.exports.createJiraProtocolService = function (options) {
         var itPersonValue = text(supplied.ItPerson, 500);
         var actions = actionMap(supplied.JiraAssetActionsJson);
         if (!userValue || !selected.length || !itPersonValue) {
-            return Promise.reject(new Error("Jira user, equipment and IT person are required."));
+            return Promise.reject(new Error("Jira user, equipment and IT representative are required."));
         }
 
         updateProgress(requestId, 10, "Validating protocol", "running");
@@ -265,7 +265,7 @@ module.exports.createJiraProtocolService = function (options) {
             jiraUser = findUser(users && users.items, userValue);
             if (!jiraUser) throw new Error("Selected Jira user is no longer available.");
             var mesh = meshUser(itPersonValue);
-            if (!mesh && context.parent) throw new Error("Selected IT person is no longer available in MeshCentral.");
+            if (!mesh && context.parent) throw new Error("Selected IT representative is no longer available in MeshCentral.");
             itPerson = {
                 id: text(mesh && mesh._id || "", 500),
                 name: mesh ? shared.userName(mesh) : itPersonValue,

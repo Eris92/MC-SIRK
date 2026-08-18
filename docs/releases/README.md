@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.119`](0.1.1-dev.119.md) — Jira Asset Protocol uses fixed `Użytkownik` / `Przedstawiciel IT` participant labels while the equipment table remains the receive/return direction owner;
 - [`0.1.1-dev.118`](0.1.1-dev.118.md) — Jira protocol PDF keeps the logo left-aligned while centering the protocol title across the shared A4 header;
 - [`0.1.1-dev.117`](0.1.1-dev.117.md) — Jira protocol PDF preserves the full 72 px signature area in print/PDF output instead of compressing it to 32 px;
 - [`0.1.1-dev.116`](0.1.1-dev.116.md) — Jira protocol PDF title is stacked on a separate line below the existing logo after real generated-PDF feedback;

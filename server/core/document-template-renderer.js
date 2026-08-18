@@ -57,26 +57,12 @@ function protocolRows(assets, includeAction) {
     return rows;
 }
 
-function confirmationSignatures(data) {
-    var receive = 0;
-    var returned = 0;
-    (Array.isArray(data.assets) ? data.assets : []).forEach(function (asset) {
-        if (asset && asset.action === "receive") receive++;
-        else if (asset && asset.action === "return") returned++;
-    });
-    if (receive && returned) return ["Użytkownik (przekazujący / odbierający)", "Osoba IT (przekazująca / odbierająca)"];
-    if (receive) return ["Osoba przekazująca (IT)", "Osoba odbierająca (użytkownik)"];
-    if (returned) return ["Osoba przekazująca (użytkownik)", "Osoba odbierająca (IT)"];
-    return ["Użytkownik", "Osoba IT"];
-}
-
 function renderConfirmationProtocol(data) {
     var user = data.user && typeof data.user === "object" ? data.user : {};
     var itPerson = data.itPerson && typeof data.itPerson === "object" ? data.itPerson : {};
     var generatedAt = String(data.generatedAt || "");
     var localDate = generatedAt;
     try { localDate = new Date(generatedAt).toLocaleString("sv-SE").replace("T", " "); } catch (error) {}
-    var signatures = confirmationSignatures(data);
     var changedAssets = (Array.isArray(data.assets) ? data.assets : []).filter(function (asset) {
         return asset && (asset.action === "receive" || asset.action === "return");
     });
@@ -88,7 +74,7 @@ function renderConfirmationProtocol(data) {
     var body = "<div class=\"meta\"><div><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) +
         "</div><div><strong>Użytkownik:</strong> " + escapeHtml(protocolValue(user.name)) +
         "</div><div><strong>E-mail:</strong> " + escapeHtml(protocolValue(user.email)) +
-        "</div><div><strong>Osoba IT:</strong> " + escapeHtml(protocolValue(itPerson.name)) + "</div></div>" +
+        "</div><div><strong>Przedstawiciel IT:</strong> " + escapeHtml(protocolValue(itPerson.name)) + "</div></div>" +
         "<div class=\"section\"><h2>Zmiany na stanie</h2><table><thead><tr><th>Operacja</th><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
         "</tr></thead><tbody>" + changeRows + "</tbody></table>" +
         "<div class=\"note\"><strong>Legenda:</strong><br>* Przyjęcie sprzętu - sprzęt zostaje przypisany do użytkownika<br>" +
@@ -96,8 +82,8 @@ function renderConfirmationProtocol(data) {
         "<div class=\"section\"><h2>Stan po zmianie</h2><table><thead><tr><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV / Asset ID</th>" +
         "</tr></thead><tbody>" + protocolRows(data.finalAssets, false) + "</tbody></table></div>" +
         "<div class=\"note\">" + escapeHtml(statement) + "</div>" +
-        "<div class=\"people\"><div class=\"person\"><span>" + escapeHtml(signatures[0]) + "</span><strong>" + escapeHtml(protocolValue(user.name)) +
-        "</strong></div><div class=\"person\"><span>" + escapeHtml(signatures[1]) + "</span><strong>" + escapeHtml(protocolValue(itPerson.name)) +
+        "<div class=\"people\"><div class=\"person\"><span>Użytkownik</span><strong>" + escapeHtml(protocolValue(user.name)) +
+        "</strong></div><div class=\"person\"><span>Przedstawiciel IT</span><strong>" + escapeHtml(protocolValue(itPerson.name)) +
         "</strong></div></div><div class=\"signatures\"><div class=\"signature\">Podpis</div><div class=\"signature\">Podpis</div></div>";
     return renderDocument({ title: title, documentBody: body, footer: "" });
 }
@@ -118,18 +104,15 @@ function renderLegacyProtocol(data) {
             "</td><td>" + escapeHtml(protocolValue(asset.serialNumber)) + "</td><td>" + escapeHtml(protocolValue(asset.inventoryNumber)) + "</td></tr>";
     }).join("");
     if (!rows) rows = '<tr><td colspan="4">Brak danych sprzętu.</td></tr>';
-    var givingPerson = transfer ? itPerson.name : user.name;
-    var receivingPerson = transfer ? user.name : itPerson.name;
     var statement = "Oświadczam, że zapoznałem/am się ze stanem przekazywanego sprzętu, nie zgłaszam uwag oraz zapoznałem/am się z regulaminem użytkowania sprzętu służbowego.";
     var body = "<div class=\"meta\"><div><strong>Data wygenerowania:</strong> " + escapeHtml(localDate) +
         "</div><div><strong>Typ protokołu:</strong> " + escapeHtml(protocolType) + "</div></div>" +
         "<div class=\"section\"><h2>Sprzęt</h2><table><thead><tr><th>Marka</th><th>Model</th><th>SN</th><th>Nr. INV</th>" +
         "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
-        "<div class=\"people\"><div class=\"person\"><span>Osoba przekazująca</span><strong>" + escapeHtml(protocolValue(givingPerson)) +
-        "</strong></div><div class=\"person\"><span>Osoba odbierająca</span><strong>" + escapeHtml(protocolValue(receivingPerson)) +
+        "<div class=\"people\"><div class=\"person\"><span>Użytkownik</span><strong>" + escapeHtml(protocolValue(user.name)) +
+        "</strong></div><div class=\"person\"><span>Przedstawiciel IT</span><strong>" + escapeHtml(protocolValue(itPerson.name)) +
         "</strong></div></div><div class=\"note\">" + escapeHtml(statement) + "</div>" +
-        "<div class=\"signatures\"><div class=\"signature\">Podpis osoby przekazującej</div>" +
-        "<div class=\"signature\">Podpis osoby odbierającej</div></div>";
+        "<div class=\"signatures\"><div class=\"signature\">Podpis</div><div class=\"signature\">Podpis</div></div>";
     return renderDocument({ title: title, documentBody: body, footer: "" });
 }
 
