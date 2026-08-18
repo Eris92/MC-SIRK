@@ -1,3 +1,12 @@
+## 0.1.1-dev.117 - 2026-08-18
+
+- Increase the Jira Asset Protocol handwritten-signature area in generated PDF/print output.
+- Remove the print-only `32px` signature compression so the existing shared `72px` spacing is preserved.
+- Reuse the current shared A4 template and signature block without adding a new class, renderer or lifecycle owner.
+- Preserve the dev.116 stacked logo/title header, protocol content, protected PDF, requester confirmation and CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.117.md`.
+
 ## 0.1.1-dev.116 - 2026-08-18
 
 - Stack the Jira Asset Protocol title on a separate line below the existing logo in the shared A4 header.
