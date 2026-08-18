@@ -4,7 +4,11 @@ $root = Split-Path -Parent $PSScriptRoot
 $helper = Join-Path $root 'seed\MyScripts\_shared\Sirk-AdSms.ps1'
 . $helper
 
-$sample = 'Zażółć gęślą jaźń'
+$sample = -join @(
+    [char]0x005A, [char]0x0061, [char]0x017C, [char]0x00F3, [char]0x0142, [char]0x0107, [char]0x0020,
+    [char]0x0067, [char]0x0119, [char]0x015B, [char]0x006C, [char]0x0105, [char]0x0020,
+    [char]0x006A, [char]0x0061, [char]0x017A, [char]0x0144
+)
 $body = ConvertTo-SirkSmsFormBody -Number '48500100200' -Text $sample -Sender 'SIRK'
 
 if ($body -match '[^\x00-\x7F]') {
