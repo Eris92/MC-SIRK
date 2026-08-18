@@ -1,12 +1,16 @@
-#PL Reset hasła użytkownika i SMS | Resetuje hasło, odblokowuje konto i wysyła nowe hasło na numer AD mobile.
+﻿#PL Reset hasła użytkownika i SMS | Resetuje hasło, odblokowuje konto i wysyła nowe hasło na numer AD mobile.
 #EN Reset user password and SMS | Resets password, unlocks the account and sends the new password to AD mobile.
 # Approval: true
+# VariablePL: $AdUserSearch, Szukaj
+# VariableEN: $AdUserSearch, Search
 # VariableUserRequiredPL: $AdUser, Użytkownik
 # VariableUserRequiredEN: $AdUser, User
 # VariableSwitchPL: $ChangeAtLogon=true, Wymuś zmianę hasła przy następnym logowaniu
 # VariableSwitchEN: $ChangeAtLogon=true, Require password change at next logon
 # SirkVariableOptionSource: AdUser=ad-users
+# SirkVariableSearch: AdUser=AdUserSearch
 # SirkSystemCredential: AD
+# SirkSystemCredential: Jira
 # SirkSystemCredential: SMS
 # MultiHost: false
 # runAsUser: 0
@@ -23,5 +27,6 @@ $password = New-SirkPassword
 Set-ADAccountPassword -Identity $user -Reset -NewPassword (ConvertTo-SecureString $password -AsPlainText -Force) -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
 Unlock-ADAccount -Identity $user -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
 Set-ADUser -Identity $user -ChangePasswordAtLogon ([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$') -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
-Send-SirkSms -Number ([string]$user.Mobile) -Text ("Nowe haslo dla konta $AdUser`: $password")
+$smsText = "Hasło w domenie $($env:MYSCRIPTS_AD_DOMAIN) zostało zmienione. Tymczasowe hasło:`r`n`r`n$password"
+Send-SirkSms -Number ([string]$user.Mobile) -Text $smsText
 [ordered]@{ success = $true; user = [string]$user.SamAccountName; mobile = ([string]$user.Mobile -replace '.(?=.{4})','*'); changeAtLogon = ([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$') }
