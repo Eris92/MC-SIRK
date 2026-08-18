@@ -66,6 +66,8 @@ assert.ok(source.indexOf('"Sprzęt użytkownika"') >= 0,
     "The second equipment step must be the optional current-user return selector.");
 assert.ok(source.indexOf('"WarehouseSearch"') >= 0 && source.indexOf('"UserEquipmentSearch"') >= 0,
     "Both equipment steps must expose a Search control.");
+assert.ok(source.indexOf("liveInput: true") >= 0,
+    "Both equipment Search controls must opt into shared live input so each typed character refreshes the visible list.");
 assert.ok(source.indexOf("preparedAsset.required = false") >= 0,
     "Warehouse and user return selections must both be optional.");
 assert.ok(source.indexOf("function prefetchAssets(values)") >= 0 && source.indexOf("splitInventory(optionsValue)") >= 0,
@@ -114,7 +116,7 @@ Promise.resolve(sandbox.window.SharedScriptTools.openParameterDialog({ item: cac
         "Wizard readiness must depend directly on the existing parameter-dialog promise.");
     assert.ok(adminSource.indexOf('"myscripts/jira-protocol-wizard.js": ["public/modules/automation/jira-protocol-wizard.js"') >= 0,
         "Canonical admin asset map must serve the wizard without a parallel wrapper.");
-    console.log("Jira protocol reuses one inventory prefetch for searchable optional warehouse and user-return steps: OK");
+    console.log("Jira protocol reuses one inventory prefetch for live-searchable optional warehouse and user-return steps: OK");
 }).catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;

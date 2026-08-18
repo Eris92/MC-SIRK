@@ -340,7 +340,10 @@
                 if (close) close.removeEventListener("click", onCancel, true);
                 if (modernModal) modernModal.removeEventListener("hidden.bs.modal", onHidden);
                 records.forEach(function (record) {
-                    if (record.kind === "user") record.control.removeEventListener("change", onUserChanged);
+                    if (record.kind === "user") {
+                        if (record.customUser && record.variable.liveInput === true) record.control.removeEventListener("input", onUserChanged);
+                        else record.control.removeEventListener("change", onUserChanged);
+                    }
                     if (record.optionHost) {
                         record.optionHost.removeEventListener("change", onChecklistChanged);
                         record.optionHost.removeEventListener("dblclick", onOptionDoubleClick);
@@ -520,7 +523,8 @@
             writeButtonText(submit, primaryLabel);
             refreshSubmitState();
             records.filter(function (record) { return record.kind === "user"; }).forEach(function (record) {
-                record.control.addEventListener("change", onUserChanged);
+                if (record.customUser && record.variable.liveInput === true) record.control.addEventListener("input", onUserChanged);
+                else record.control.addEventListener("change", onUserChanged);
             });
             records.forEach(function (record) {
                 if (record.optionHost) {

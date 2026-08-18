@@ -1,3 +1,12 @@
+## 0.1.1-dev.115 - 2026-08-18
+
+- Make Jira protocol equipment Search react to every typed character in both warehouse and current-user steps.
+- Reuse the existing shared parameter-dialog `onUserChanged` owner with opt-in `liveInput` instead of adding wizard-local handlers.
+- Keep ordinary user dependencies change-only and keep Jira equipment filtering local to the one prefetched inventory with no per-search Jira requests.
+- Preserve protocol selections, requester confirmation, PDF and CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.115.md`.
+
 ## 0.1.1-dev.114 - 2026-08-17
 
 - Top-align the existing protocol logo/fallback block in the shared A4 header.

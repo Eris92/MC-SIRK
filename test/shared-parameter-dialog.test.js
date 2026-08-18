@@ -179,6 +179,13 @@ assert.ok(dialog.indexOf('document.createElement(multiline ? "textarea" : listMo
     "List-mode selects must create a hidden-capable input instead of mutating the read-only HTMLSelectElement.type property.");
 assert.ok(dialog.indexOf('if (record.kind === "text") record.control.addEventListener("input", onFilterChanged);') >= 0,
     "Text search must filter on input without a duplicate change rebuild.");
+assert.ok(dialog.indexOf('record.customUser && record.variable.liveInput === true') >= 0 &&
+    dialog.indexOf('record.control.addEventListener("input", onUserChanged);') >= 0 &&
+    dialog.indexOf('record.control.removeEventListener("input", onUserChanged);') >= 0,
+    "Opt-in custom user dependencies must use the existing user-change owner on each input event and clean it up symmetrically.");
+assert.ok(dialog.indexOf('else record.control.addEventListener("change", onUserChanged);') >= 0 &&
+    dialog.indexOf('else record.control.removeEventListener("change", onUserChanged);') >= 0,
+    "Ordinary user dependencies must retain change-only behavior and avoid live provider churn.");
 assert.ok(dialog.indexOf('else if (record.kind === "switch") record.control.addEventListener("change", onFilterChanged);') >= 0,
     "Active-only checkbox must rebuild the large user list once per click.");
 assert.ok(dialog.indexOf('document.createDocumentFragment()') >= 0,
@@ -195,4 +202,4 @@ assert.ok(sharedUi.indexOf('.mc-parameter-checklist-item{display:grid;grid-templ
     sharedUi.indexOf('.mc-parameter-checklist-item input{position:relative;top:-1px;margin:0;align-self:center}') >= 0,
     "Every checklist radio/checkbox dot must remain vertically aligned and optically raised with its option text across browser and DPI differences.");
 
-console.log("Shared native execution parameter/confirmation dialog, consumers, loader order, Modern hide ordering and validation: OK");
+console.log("Shared native execution parameter/confirmation dialog, live dependency input, consumers, loader order, Modern hide ordering and validation: OK");

@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.115",
+    "date": "2026-08-18",
+    "summary": "Make both Jira protocol equipment searches react live to each typed character without per-search Jira requests.",
+    "notes": "docs/releases/0.1.1-dev.115.md"
+  },
+  {
     "version": "0.1.1-dev.114",
     "date": "2026-08-17",
     "summary": "Top-align the Jira protocol logo and lower the title in the shared A4 header.",
