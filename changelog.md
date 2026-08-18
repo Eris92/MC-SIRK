@@ -1,3 +1,12 @@
+## 0.1.1-dev.119 - 2026-08-18
+
+- Replace current Jira Asset Protocol `Osoba IT` terminology with `Przedstawiciel IT`.
+- Keep participant/signature cards in the fixed order `Użytkownik`, then `Przedstawiciel IT` for receive, return, mixed and reconciliation documents.
+- Remove direction-dependent participant labels; the `Przyjęcie sprzętu` / `Zdanie sprzętu` table remains the owner of equipment direction.
+- Preserve the dev.118 centered title, dev.117 `72px` signature area, protected PDF, requester confirmation and Jira CMDB semantics unchanged.
+
+Current development notes: `docs/releases/0.1.1-dev.119.md`.
+
 ## 0.1.1-dev.118 - 2026-08-18
 
 - Center `PROTOKÓŁ PRZEKAZANIA/ZWROTU SPRZĘTU` across the shared A4 header.
