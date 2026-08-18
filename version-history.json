@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.123",
+    "date": "2026-08-18",
+    "summary": "Bound the AD reset selector to Jira-cache UPN LDAP matches and make Windows PowerShell SMS forms ASCII-safe UTF-8 percent encoded.",
+    "notes": "docs/releases/0.1.1-dev.123.md"
+  },
+  {
     "version": "0.1.1-dev.122",
     "date": "2026-08-18",
     "summary": "Correct the dev.121 AD reset cache credential boundary and preserve Polish SMS text with explicit UTF-8 transport.",
