@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.116",
+    "date": "2026-08-18",
+    "summary": "Place the Jira Asset Protocol title on a separate line below the existing logo in the shared A4 header.",
+    "notes": "docs/releases/0.1.1-dev.116.md"
+  },
+  {
     "version": "0.1.1-dev.115",
     "date": "2026-08-18",
     "summary": "Make both Jira protocol equipment searches react live to each typed character without per-search Jira requests.",
@@ -44,7 +50,7 @@
   {
     "version": "0.1.1-dev.108",
     "date": "2026-08-14",
-    "summary": "Use authoritative Jira Assets total counts, truthful cache reporting and workspace-wide user-bound scope.",
+    "summary": "Use Jira Assets authoritative total counts while preserving truthful cache reporting and the validated user-equipment scope.",
     "notes": "docs/releases/0.1.1-dev.108.md"
   },
   {
