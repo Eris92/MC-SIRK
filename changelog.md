@@ -1,3 +1,13 @@
+## 0.1.1-dev.122 - 2026-08-18
+
+- Correct the dev.121 real-smoke AD reset failure by removing the redundant per-script Jira credential gate from the `ad-users` option path while retaining AD authorization and the existing server-owned Jira users cache.
+- Remove `SirkSystemCredential: Jira` from the AD reset script; reset execution still requires AD and SMSAPI credentials, while Jira cache authentication remains owned server-side.
+- Preserve Polish SMS text by setting SMSAPI `encoding=utf-8` on the Node SMS path and explicit UTF-8 form charset plus `encoding='utf-8'` on the Windows PowerShell 5.1 AD SMS helper.
+- Keep case-insensitive Jira e-mail -> AD UPN matching, AD-safe values and local shared Search filtering with no per-keystroke Jira/AD requests or new cache owner.
+- Preserve AD reset/unlock/mobile lookup, ChangePasswordAtLogon, account-creation OU allowlist, cryptographic password generation and no-login/no-UPN SMS wording.
+
+Current development notes: `docs/releases/0.1.1-dev.122.md`.
+
 ## 0.1.1-dev.121 - 2026-08-18
 
 - Default built-in SMS, Voice SMS and SMTP Relay workflows to no pre-approval while preserving explicit approval levels and the ordinary My Scripts Level 1 fallback.
@@ -40,7 +50,7 @@ Current development notes: `docs/releases/0.1.1-dev.118.md`.
 - Increase the Jira Asset Protocol handwritten-signature area in generated PDF/print output.
 - Remove the print-only `32px` signature compression so the existing shared `72px` spacing is preserved.
 - Reuse the current shared A4 template and signature block without adding a new class, renderer or lifecycle owner.
-- Preserve the dev.116 stacked logo/title header, protocol content, protected PDF, requester confirmation and CMDB semantics unchanged.
+- Preserve the dev.116 stacked logo/title header, protocol content, protected PDF, requester confirmation and Jira CMDB semantics unchanged.
 
 Current development notes: `docs/releases/0.1.1-dev.117.md`.
 
