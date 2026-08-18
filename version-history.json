@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.119",
+    "date": "2026-08-18",
+    "summary": "Use fixed User / IT representative participant labels in Jira Asset Protocol and replace current Osoba IT terminology.",
+    "notes": "docs/releases/0.1.1-dev.119.md"
+  },
+  {
     "version": "0.1.1-dev.118",
     "date": "2026-08-18",
     "summary": "Center the Jira Asset Protocol title across the shared A4 header while keeping the logo left-aligned.",
