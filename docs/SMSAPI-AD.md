@@ -16,7 +16,7 @@ New            OU=_NewUsers,OU=Business,DC=domena,DC=local
 Testowe konta  OU=Test,OU=Business,DC=domena,DC=local
 ```
 
-Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwracane do przeglądarki. Po konfiguracji przypisz profile systemowe do właściwych skryptów przez akcję Credentials. `Reset user password and SMS.ps1` wymaga `AD`, `Jira` i `SMSAPI`; konto tworzone w AD wymaga `AD` i `SMSAPI`.
+Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwracane do przeglądarki. Po konfiguracji przypisz profile systemowe do właściwych skryptów przez akcję Credentials. `Reset user password and SMS.ps1` wymaga `AD` i `SMSAPI`; Jira jest używana wyłącznie przez współdzielonego server-side ownera cache użytkowników i nie wymaga osobnego przypisania credentialu Jira do skryptu resetu. Konto tworzone w AD wymaga `AD` i `SMSAPI`.
 
 ## Dostępne skrypty
 
@@ -26,6 +26,8 @@ Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwr
 - `Active Directory/Create user and SMS.ps1` — utworzenie konta w dozwolonym OU oraz wysłanie tymczasowego hasła na podany numer.
 
 Operacje AD są objęte Approval. `ChangePasswordAtLogon` jest domyślnie włączone i można je odznaczyć. Lista resetu nie publikuje numerów telefonów i nie wykonuje zapytań Jira/AD przy każdym znaku Search; filtrowanie odbywa się lokalnie po jednorazowym załadowaniu dopasowanej listy. Reset pobiera `mobile` ponownie bezpośrednio z AD przed wysłaniem SMS.
+
+Wysyłka SMS jawnie ustawia po stronie SMSAPI `encoding=utf-8`. Ścieżka PowerShell używana przez operacje AD dodatkowo ustawia `application/x-www-form-urlencoded; charset=UTF-8`, aby Windows PowerShell 5.1 zakodował formularz w UTF-8 zamiast domyślnego kodowania. Dzięki temu polskie znaki są zachowane zarówno w zwykłym `Send SMS`, jak i w wiadomościach create/reset AD.
 
 Login i UPN są przydzielane kolejno jako `i.nazwisko`, `im.nazwisko`, `imi.nazwisko` itd. Po wykorzystaniu prefiksów skrypt dodaje sufiks liczbowy. `sAMAccountName` pozostaje w limicie 20 znaków, a unikalność jest sprawdzana dla loginu i UPN.
 
