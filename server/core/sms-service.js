@@ -42,6 +42,7 @@ module.exports.createSmsService = function (options) {
         params.set("to", numbers.join(","));
         params.set(kind === "vms" ? "tts" : "message", bodyText);
         params.set("format", "json");
+        if (kind === "sms") params.set("encoding", "utf-8");
         if (kind === "sms" && value.sender) params.set("from", text(value.sender, 11));
         if (kind === "vms") {
             var lector = text(sendOptions && sendOptions.lector || value.vmsLector || "ewa", 20).toLowerCase();
