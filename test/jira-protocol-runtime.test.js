@@ -48,12 +48,16 @@ assert.strictEqual(changesSection.indexOf("po finalnym potwierdzeniu"), -1,
 assert.ok(html.indexOf("Nr. INV / Asset ID") >= 0 && html.indexOf("Legenda") >= 0);
 assert.ok(/\.header\s*\{[\s\S]*?flex-direction:\s*column;/.test(templateSource),
     "Protocol header must stack the title on a separate line below the logo.");
+assert.ok(/\.title\s*\{[\s\S]*?align-self:\s*stretch;[\s\S]*?text-align:\s*center;/.test(templateSource),
+    "Protocol title must stretch across the header and center its text.");
 assert.ok(/\.title\s*\{[\s\S]*?margin:\s*0;/.test(templateSource),
     "Protocol title must use the stacked header gap instead of a same-row offset.");
 var logoMarkupIndex = templateSource.indexOf("{{LOGO_MARKUP}}");
-var titleMarkupIndex = templateSource.indexOf('<div><h1 class="title">{{TITLE}}</h1></div>');
+var titleMarkupIndex = templateSource.indexOf('<h1 class="title">{{TITLE}}</h1>');
 assert.ok(logoMarkupIndex >= 0 && titleMarkupIndex > logoMarkupIndex,
-    "Shared A4 header markup must keep the logo first and the title immediately after it for column layout.");
+    "Shared A4 header markup must keep the logo first and the centered title immediately after it for column layout.");
+assert.strictEqual(templateSource.indexOf('<div><h1 class="title">{{TITLE}}</h1></div>'), -1,
+    "Centered protocol title must be a direct flex item instead of a shrink-to-content wrapper.");
 assert.ok(/\.signatures\s*\{[^}]*margin-top:\s*72px;[^}]*\}/.test(templateSource),
     "Shared A4 signature block must reserve 72px above the signature lines.");
 var printMediaSource = templateSource.slice(templateSource.indexOf("@media print"));
@@ -106,4 +110,4 @@ assert.strictEqual(seedSource.charCodeAt(0), 0xFEFF,
     "Polish PowerShell seed must retain UTF-8 BOM for Windows PowerShell 5.1.");
 assert.strictEqual(seedSource.indexOf("MYSCRIPTS_JIRA_TOKEN"), -1);
 
-console.log("Canonical Jira protocol renderer, changed-only table, stacked header, signature spacing, protected artifact contract and dev109 scoped Jira source: OK");
+console.log("Canonical Jira protocol renderer, changed-only table, stacked centered header, signature spacing, protected artifact contract and dev109 scoped Jira source: OK");

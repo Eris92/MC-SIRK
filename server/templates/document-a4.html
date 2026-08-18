@@ -70,9 +70,11 @@
       letter-spacing: 0.08em;
     }
     .title {
+      align-self: stretch;
       font-size: 26px;
       line-height: 1.2;
       margin: 0;
+      text-align: center;
       color: #000000;
     }
     .meta {
@@ -167,7 +169,7 @@
     <div class="toolbar"><button type="button" onclick="printProtocol()">Drukuj</button></div>
     <div class="header">
       {{LOGO_MARKUP}}
-      <div><h1 class="title">{{TITLE}}</h1></div>
+      <h1 class="title">{{TITLE}}</h1>
     </div>
     {{DOCUMENT_BODY}}
   </div>
