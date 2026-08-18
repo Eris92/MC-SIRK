@@ -25,7 +25,7 @@ module.exports.createModule = function (context) {
     });
     var jiraProtocol = jiraProtocolFactory.createJiraProtocolService({ context: context, jiraAssets: jiraAssets, executor: executor });
     var sms = smsFactory.createSmsService({ integrations: context.integrations });
-    var adDirectory = adDirectoryFactory.createAdDirectoryService({ context: context });
+    var adDirectory = adDirectoryFactory.createAdDirectoryService({ context: context, jiraAssets: jiraAssets });
     var protocolStartSignals = Object.create(null);
     var unregister = null;
 
@@ -122,6 +122,9 @@ module.exports.createModule = function (context) {
         if (workflow(script, "SmsSend")) return "sms";
         if (workflow(script, "VmsSend")) return "vms";
         return "";
+    }
+    function defaultDirectWorkflow(script) {
+        return !!messageWorkflow(script) || workflow(script, "RelayMailSend");
     }
     function executeMessageWorkflow(script, payload) {
         var kind = messageWorkflow(script), values = payload && payload.variableValues || {};
@@ -311,6 +314,7 @@ module.exports.createModule = function (context) {
                 }
                 if (variable.optionSource === "ad-users") {
                     if (!admin.hasSystemCredential(optionScript.path, "ad")) throw new Error("Assign the configured Active Directory integration to this script first.");
+                    if (!admin.hasSystemCredential(optionScript.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
                     return adDirectory.listUsers().then(function (items) { return { ok: true, items: items, stale: false, warning: "" }; });
                 }
                 if (variable.optionSource === "ad-user-locations") {
@@ -346,7 +350,7 @@ module.exports.createModule = function (context) {
                 if (!requestedScript) throw new Error("Script not found.");
                 if (requestedScript.confirmExecution === true && value.confirmedExecution !== true) throw new Error("Execution confirmation is required for this script.");
                 var levels = normalizeApprovalLevels(requestedScript.approvalLevels);
-                if (!levels.length && !allowNoApproval()) levels = [1];
+                if (!levels.length && !defaultDirectWorkflow(requestedScript) && !allowNoApproval()) levels = [1];
                 var language = String(value.language || "en").toLowerCase() === "pl" ? "pl" : "en";
                 var locale = requestedScript.locales && requestedScript.locales[language] || {};
                 var protocol = jiraProtocol.isProtocolScript(requestedScript);

@@ -83,6 +83,15 @@ function variableOptionSources(headers) {
     return result;
 }
 
+function variableSearches(headers) {
+    var result = Object.create(null);
+    (Array.isArray(headers) ? headers : []).forEach(function (header) {
+        var match = String(header || "").match(/^SirkVariableSearch\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)\s*$/i);
+        if (match) result[match[1].toLowerCase()] = match[2];
+    });
+    return result;
+}
+
 function multilineVariables(headers) {
     var result = Object.create(null);
     (Array.isArray(headers) ? headers : []).forEach(function (header) {
@@ -178,6 +187,7 @@ function decorateScript(base, script) {
 
     var policy = jiraAssetPolicy(result.extraHeaders);
     var optionSources = variableOptionSources(result.extraHeaders);
+    var searches = variableSearches(result.extraHeaders);
     var multiline = multilineVariables(result.extraHeaders);
     if (policy.aql || policy.labelAttribute || policy.maxResults || policy.userVariable) {
         result.variables = (result.variables || []).map(function (variable) {
@@ -193,6 +203,20 @@ function decorateScript(base, script) {
             if (!source) return variable;
             var decorated = shared.copy(variable);
             decorated.optionSource = source;
+            return decorated;
+        });
+    }
+    if (Object.keys(searches).length) {
+        var variableNames = Object.create(null);
+        (result.variables || []).forEach(function (variable) {
+            if (variable && variable.name) variableNames[String(variable.name).toLowerCase()] = true;
+        });
+        result.variables = (result.variables || []).map(function (variable) {
+            var searchVariable = variable && searches[String(variable.name || "").toLowerCase()];
+            if (!searchVariable || variable.control !== "user" || !variableNames[String(searchVariable).toLowerCase()]) return variable;
+            var decorated = shared.copy(variable);
+            decorated.searchVariable = searchVariable;
+            decorated.listMode = true;
             return decorated;
         });
     }

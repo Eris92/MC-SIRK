@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.121",
+    "date": "2026-08-18",
+    "summary": "Default built-in message workflows to direct execution and make Jira requester confirmations leave the actionable view immediately with User/Assets context.",
+    "notes": "docs/releases/0.1.1-dev.121.md"
+  },
+  {
     "version": "0.1.1-dev.120",
     "date": "2026-08-18",
     "summary": "Move Jira Asset Protocol generation date to the top-right header and remove duplicated top participant metadata.",

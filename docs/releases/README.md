@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.121`](0.1.1-dev.121.md) — built-in SMS/Voice SMS/SMTP Relay default to direct execution, while Approval Center immediately transitions requester confirmations and shows Jira User/Assets context;
 - [`0.1.1-dev.120`](0.1.1-dev.120.md) — Jira Asset Protocol moves the generated date to the top-right header and removes duplicated participant metadata above the equipment sections;
 - [`0.1.1-dev.119`](0.1.1-dev.119.md) — Jira Asset Protocol uses fixed `Użytkownik` / `Przedstawiciel IT` participant labels while the equipment table remains the receive/return direction owner;
 - [`0.1.1-dev.118`](0.1.1-dev.118.md) — Jira protocol PDF keeps the logo left-aligned while centering the protocol title across the shared A4 header;

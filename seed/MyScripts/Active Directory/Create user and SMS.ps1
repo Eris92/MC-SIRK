@@ -1,4 +1,4 @@
-#PL Utwórz konto użytkownika i wyślij SMS | Tworzy konto AD w wybranej lokalizacji i wysyła hasło na podany numer.
+﻿#PL Utwórz konto użytkownika i wyślij SMS | Tworzy konto AD w wybranej lokalizacji i wysyła hasło na podany numer.
 #EN Create user and send SMS | Creates an AD account in a selected location and sends its password to the supplied number.
 # Approval: true
 # VariableRequiredPL: $FirstName, Imię
@@ -40,5 +40,6 @@ if(-not $login){for($number=2;$number -le 9999;$number++){$numberText=[string]$n
 if(-not $login){throw 'Could not allocate a unique AD login.'}
 $upn=$login+'@'+$suffix;$password=New-SirkPassword
 New-ADUser -Name $login -GivenName $FirstName -Surname $LastName -DisplayName ($FirstName+' '+$LastName) -SamAccountName $login -UserPrincipalName $upn -EmailAddress $Email -MobilePhone $normalizedMobile -Path $UserLocation -AccountPassword (ConvertTo-SecureString $password -AsPlainText -Force) -Enabled $true -ChangePasswordAtLogon ([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$') -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $cred
-Send-SirkSms -Number $normalizedMobile -Text ("Utworzono konto $upn. Haslo: $password")
+$smsText = "Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało utworzone. Tymczasowe hasło:`r`n`r`n$password"
+Send-SirkSms -Number $normalizedMobile -Text $smsText
 [ordered]@{success=$true;login=$login;userPrincipalName=$upn;location=$UserLocation;mobile=($normalizedMobile -replace '.(?=.{4})','*');changeAtLogon=([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$')}

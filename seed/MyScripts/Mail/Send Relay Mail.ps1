@@ -1,6 +1,6 @@
 #PL Wyślij e-mail przez SMTP Relay | Wysyła wiadomość tekstową lub HTML, opcjonalnie z załącznikami z dozwolonego katalogu serwera.
 #EN Send mail through SMTP Relay | Sends a text or HTML message with optional attachments from the allowed server directory.
-# Approval: true
+# Approval: false
 # VariablePL: $From, Nadawca | Puste pole użyje domyślnego nadawcy z Integrations
 # VariableEN: $From, Sender | Leave blank to use the default sender from Integrations
 # VariableRequiredPL: $To, Do | Wiele adresów rozdziel przecinkiem, średnikiem lub nową linią
