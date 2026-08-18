@@ -55,11 +55,12 @@ function ConvertTo-SirkSmsFormBody {
         [Parameter(Mandatory = $true)][string]$Text,
         [string]$Sender
     )
+    $encoding = 'utf-8'
     $parts = [Collections.Generic.List[string]]::new()
     $parts.Add('to=' + [Uri]::EscapeDataString($Number))
     $parts.Add('message=' + [Uri]::EscapeDataString($Text))
     $parts.Add('format=json')
-    $parts.Add('encoding=utf-8')
+    $parts.Add('encoding=' + $encoding)
     if (-not [string]::IsNullOrWhiteSpace($Sender)) { $parts.Add('from=' + [Uri]::EscapeDataString($Sender)) }
     return ($parts -join '&')
 }
