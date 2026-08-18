@@ -49,14 +49,29 @@ function ConvertTo-SirkLoginPart {
     return ($result -replace '[^a-z0-9-]', '')
 }
 
+function ConvertTo-SirkSmsFormBody {
+    param(
+        [Parameter(Mandatory = $true)][string]$Number,
+        [Parameter(Mandatory = $true)][string]$Text,
+        [string]$Sender
+    )
+    $encoding = 'utf-8'
+    $parts = [Collections.Generic.List[string]]::new()
+    $parts.Add('to=' + [Uri]::EscapeDataString($Number))
+    $parts.Add('message=' + [Uri]::EscapeDataString($Text))
+    $parts.Add('format=json')
+    $parts.Add('encoding=' + $encoding)
+    if (-not [string]::IsNullOrWhiteSpace($Sender)) { $parts.Add('from=' + [Uri]::EscapeDataString($Sender)) }
+    return ($parts -join '&')
+}
+
 function Send-SirkSms {
     param([Parameter(Mandatory = $true)][string]$Number, [Parameter(Mandatory = $true)][string]$Text)
     if ([string]::IsNullOrWhiteSpace($env:MYSCRIPTS_SMS_API_TOKEN)) { throw 'SMSAPI credential is not configured.' }
     $normalizedNumber = ($Number -replace '[^0-9]', '')
     if ($normalizedNumber -notmatch '^\d{9,15}$') { throw 'Phone number must contain between 9 and 15 digits.' }
     $headers = @{ Authorization = "Bearer $($env:MYSCRIPTS_SMS_API_TOKEN)" }
-    $body = @{ to = $normalizedNumber; message = $Text; format = 'json'; encoding = 'utf-8' }
-    if ($env:MYSCRIPTS_SMS_SENDER) { $body.from = $env:MYSCRIPTS_SMS_SENDER }
+    $body = ConvertTo-SirkSmsFormBody -Number $normalizedNumber -Text $Text -Sender $env:MYSCRIPTS_SMS_SENDER
     $response = Invoke-RestMethod -Uri ($env:MYSCRIPTS_SMS_API_URL.TrimEnd('/') + '/sms.do') -Method Post -Headers $headers -ContentType 'application/x-www-form-urlencoded; charset=UTF-8' -Body $body
     if ($response.error) { throw "SMSAPI error: $($response.message)" }
 }
