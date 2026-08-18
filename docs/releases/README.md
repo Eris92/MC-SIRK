@@ -4,9 +4,10 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.123`](0.1.1-dev.123.md) — corrects the dev.122 real-smoke reset-list latency with bounded Jira-UPN/AD matching and makes Windows PowerShell SMS forms ASCII-safe UTF-8 percent encoded;
 - [`0.1.1-dev.122`](0.1.1-dev.122.md) — corrects the dev.121 real-smoke AD reset cache credential boundary and preserves Polish SMS text through explicit UTF-8 transport;
 - [`0.1.1-dev.121`](0.1.1-dev.121.md) — built-in SMS/Voice SMS/SMTP Relay default to direct execution, while Approval Center immediately transitions requester confirmations and shows Jira User/Assets context;
-- [`0.1.1-dev.120`](0.1.1-dev.120.md) — Jira Asset Protocol moves the generated date to the top-right header and removes duplicated participant metadata above the equipment sections;
+- [`0.1.1-dev.120`](0.1.1-dev.120.md) — Jira Asset Protocol moves the generated date to the top-right header and removes duplicated top participant metadata above the equipment sections;
 - [`0.1.1-dev.119`](0.1.1-dev.119.md) — Jira Asset Protocol uses fixed `Użytkownik` / `Przedstawiciel IT` participant labels while the equipment table remains the receive/return direction owner;
 - [`0.1.1-dev.118`](0.1.1-dev.118.md) — Jira protocol PDF keeps the logo left-aligned while centering the protocol title across the shared A4 header;
 - [`0.1.1-dev.117`](0.1.1-dev.117.md) — Jira protocol PDF preserves the full 72 px signature area in print/PDF output instead of compressing it to 32 px;
