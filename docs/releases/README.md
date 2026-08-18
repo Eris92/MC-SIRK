@@ -49,8 +49,8 @@ Aktualna linia development:
 - [`0.1.1-dev.60`](0.1.1-dev.60.md) — intrinsic-width Jira equipment modal with unwrapped option labels;
 - [`0.1.1-dev.59`](0.1.1-dev.59.md) — native-modal persistence for the default Jira protocol radio selection;
 - [`0.1.1-dev.58`](0.1.1-dev.58.md) — restored SN/inventory aliases, bounded active-only rendering and corrected protocol defaults;
-- [`0.1.1-dev.57`](0.1.1-dev.57.md) — complete Jira Assets daily pagination plus corrected active-only and full-width Jira protocol lists;
-- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native list-field borders for the Jira protocol workflow;
+- [`0.1.1-dev.57`](0.1.1-dev.57.md) — complete Jira Assets pagination plus corrected active-only and full-width Jira protocol lists;
+- [`0.1.1-dev.56`](0.1.1-dev.56.md) — persistent shared protocol-logo upload and native field borders for Jira user/equipment lists;
 - [`0.1.1-dev.55`](0.1.1-dev.55.md) — corrective Jira transfer/return list control after real Modern smoke exposed a read-only `HTMLSelectElement.type` assignment;
 - [`0.1.1-dev.54`](0.1.1-dev.54.md) — Jira protocol searchable users, shared 24h equipment cache, checkbox multi-selection, MeshCentral IT identity and styled logo PDF;
 - [`0.1.1-dev.53`](0.1.1-dev.53.md) — corrective shared dynamic-option provider bridge after real dev.52 smoke exposed an empty Jira User selector; real Jira/MeshCentral User -> Asset -> Protocol -> PDF smoke pending;
