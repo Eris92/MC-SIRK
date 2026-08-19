@@ -175,10 +175,5 @@ module.exports.createAdDirectoryService = function (options) {
         }).filter(function (item) { return item.value && item.label; });
     }
 
-    return {
-        listUsers: listUsers,
-        locations: locations,
-        matchJiraUsers: matchJiraUsers,
-        jiraUserOptions: jiraUserOptions
-    };
+    return { listUsers: listUsers, locations: locations, matchJiraUsers: matchJiraUsers };
 };
