@@ -26,10 +26,38 @@ module.exports.createAdDirectoryService = function (options) {
         return shared.cleanText(value == null ? "" : value, 500).trim().toLowerCase();
     }
 
+    function usableUpn(item) {
+        item = item && typeof item === "object" ? item : {};
+        var value = shared.cleanText(item.emailAddress || item.userPrincipalName || item.upn || "", 500).trim();
+        if (!value) {
+            var fallback = shared.cleanText(item.value || "", 500).trim();
+            if (/^[^@\s]+@[^@\s]+$/.test(fallback)) value = fallback;
+        }
+        return /^[^@\s]+@[^@\s]+$/.test(value) ? value : "";
+    }
+
+    function jiraUserOptions(jiraUsers) {
+        var seen = Object.create(null);
+        return (Array.isArray(jiraUsers) ? jiraUsers : []).map(function (item) {
+            var identity = usableUpn(item);
+            var key = upn(identity);
+            if (!key || seen[key]) return null;
+            seen[key] = true;
+            return {
+                value: identity,
+                label: shared.cleanText(item.label || item.displayName || identity, 1000),
+                displayName: shared.cleanText(item.displayName || "", 500),
+                email: shared.cleanText(item.emailAddress || identity, 500),
+                upn: identity,
+                active: item.active !== false
+            };
+        }).filter(Boolean);
+    }
+
     function requestedUpns(jiraUsers) {
         var seen = Object.create(null);
         return (Array.isArray(jiraUsers) ? jiraUsers : []).map(function (item) {
-            return upn(item && item.emailAddress);
+            return upn(usableUpn(item));
         }).filter(function (value) {
             if (!value || seen[value]) return false;
             seen[value] = true;
@@ -114,14 +142,14 @@ module.exports.createAdDirectoryService = function (options) {
         });
         var seen = Object.create(null);
         return (Array.isArray(jiraUsers) ? jiraUsers : []).map(function (jiraUser) {
-            var key = upn(jiraUser && jiraUser.emailAddress);
+            var key = upn(usableUpn(jiraUser));
             var directoryUser = key && byUpn[key];
             var value = shared.cleanText(directoryUser && directoryUser.value, 500).trim();
             if (!directoryUser || !value || seen[value.toLowerCase()]) return null;
             seen[value.toLowerCase()] = true;
             return {
                 value: value,
-                label: shared.cleanText(jiraUser.label || jiraUser.displayName || jiraUser.emailAddress || directoryUser.label || value, 1000),
+                label: shared.cleanText(jiraUser.label || jiraUser.displayName || usableUpn(jiraUser) || directoryUser.label || value, 1000),
                 displayName: shared.cleanText(jiraUser.displayName || directoryUser.displayName || "", 500),
                 email: shared.cleanText(jiraUser.emailAddress || directoryUser.email || "", 500),
                 upn: shared.cleanText(directoryUser.upn || "", 500),
@@ -134,9 +162,9 @@ module.exports.createAdDirectoryService = function (options) {
         if (!jiraAssets || typeof jiraAssets.listUsers !== "function") return listDirectoryUsers(null);
         return jiraAssets.listUsers(false, false).then(function (result) {
             var jiraUsers = result && Array.isArray(result.items) ? result.items : [];
-            return listDirectoryUsers(jiraUsers).then(function (directoryUsers) {
-                return matchJiraUsers(jiraUsers, directoryUsers);
-            });
+            var items = jiraUserOptions(jiraUsers);
+            if (!items.length) throw new Error("Jira user cache contains no selectable users with a usable UPN/e-mail.");
+            return items;
         });
     }
 
@@ -147,5 +175,10 @@ module.exports.createAdDirectoryService = function (options) {
         }).filter(function (item) { return item.value && item.label; });
     }
 
-    return { listUsers: listUsers, locations: locations, matchJiraUsers: matchJiraUsers };
+    return {
+        listUsers: listUsers,
+        locations: locations,
+        matchJiraUsers: matchJiraUsers,
+        jiraUserOptions: jiraUserOptions
+    };
 };
