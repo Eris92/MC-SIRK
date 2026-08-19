@@ -71,12 +71,12 @@ try {
 
     $authentication = [System.DirectoryServices.AuthenticationTypes]::Secure
     $rootDsePath = 'LDAP://' + $env:SIRK_AD_DOMAIN + '/RootDSE'
-    $rootDse = New-Object System.DirectoryServices.DirectoryEntry($rootDsePath, $env:SIRK_AD_LOGIN, $env:SIRK_AD_PASSWORD, $authentication)
+    $rootDse = [System.DirectoryServices.DirectoryEntry]::new($rootDsePath, $env:SIRK_AD_LOGIN, $env:SIRK_AD_PASSWORD, $authentication)
     $baseDn = [string]$rootDse.Properties['defaultNamingContext'][0]
     if ([string]::IsNullOrWhiteSpace($baseDn)) { throw 'Active Directory default naming context is unavailable.' }
 
     $rootPath = 'LDAP://' + $env:SIRK_AD_DOMAIN + '/' + $baseDn
-    $root = New-Object System.DirectoryServices.DirectoryEntry($rootPath, $env:SIRK_AD_LOGIN, $env:SIRK_AD_PASSWORD, $authentication)
+    $root = [System.DirectoryServices.DirectoryEntry]::new($rootPath, $env:SIRK_AD_LOGIN, $env:SIRK_AD_PASSWORD, $authentication)
     $rows = New-Object System.Collections.Generic.List[object]
     $seen = @{}
 
@@ -96,12 +96,12 @@ try {
     }
 
     foreach ($ldap in $queries) {
-        $searcher = New-Object System.DirectoryServices.DirectorySearcher($root)
+        $searcher = [System.DirectoryServices.DirectorySearcher]::new($root)
         $results = $null
         try {
             $searcher.Filter = $ldap
             $searcher.PageSize = 1000
-            $searcher.SizeLimit = if ($matchMode -eq 'upn') { 1000 } else { 10000 }
+            if ($matchMode -eq 'upn') { $searcher.SizeLimit = 1000 } else { $searcher.SizeLimit = 10000 }
             $searcher.ServerTimeLimit = [TimeSpan]::FromSeconds(8)
             $searcher.ClientTimeout = [TimeSpan]::FromSeconds(10)
             [void]$searcher.PropertiesToLoad.Add('sAMAccountName')
