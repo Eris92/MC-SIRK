@@ -13,27 +13,27 @@ Do czasu jawnej decyzji użytkownika o gotowości produktu:
 
 ## Konwencja development
 
-Preferowana konwencja użytkownika:
+Od rewizji 125 repozytorium i plugin MeshCentral używają jednej, SemVer-compatible i MeshCentral-compatible postaci:
 
 ```text
-0.1.1.X
+0.1.X
 ```
 
-Repo używa npm/Node, więc źródła wymagające poprawnego SemVer reprezentują tę samą rewizję jako:
+Trzeci segment `X` jest kolejną rewizją development, np.:
 
 ```text
-0.1.1-dev.X
+0.1.125
+0.1.126
+0.1.127
 ```
 
-Przykłady:
+`package.json` i pluginowy `config.json` muszą zawsze mieć identyczną wersję.
 
-```text
-0.1.1.1      -> 0.1.1-dev.1
-0.1.1.2      -> 0.1.1-dev.2
-0.1.1.42     -> 0.1.1-dev.42
-```
+### Dlaczego nie `0.1.1-dev.X`
 
-`package.json` i pluginowy `config.json` muszą zawsze mieć identyczną, SemVer-compatible wersję.
+Historyczna konwencja repozytorium używała `0.1.1-dev.X`, aby reprezentować preferowaną czteroczęściową rewizję development w poprawnym npm SemVer. Real MeshCentral smoke i analiza bieżącego `pluginHandler.js` wykazały jednak, że MeshCentral przed porównaniem wersji pluginów usuwa część po `-`. W efekcie `0.1.1-dev.121`, `0.1.1-dev.122`, `0.1.1-dev.123` i `0.1.1-dev.124` były dla updatera tą samą wersją `0.1.1`.
+
+Od `0.1.125` numer rewizji musi więc zmieniać trzyczęściowy numeric SemVer core. Historycznych nazw plików i wpisów `0.1.1-dev.X` nie przepisuj; pozostają evidence wcześniejszego developmentu.
 
 ## Historyczne numery 1.8.x
 
@@ -41,19 +41,21 @@ Wcześniejsze `1.8.x` były wewnętrzną numeracją intensywnego developmentu i 
 
 - nie używaj `1.8.x` jako źródła kolejnego numeru;
 - nie traktuj historycznych tagów/release notes jako dowodu gotowości produktu;
-- historia Git i stare dokumenty mogą pozostać jako evidence rozwoju, ale aktualne metadata/version history mają używać linii pre-1.0;
+- historia Git i stare dokumenty mogą pozostać jako evidence rozwoju, ale aktualne metadata/version history mają używać bieżącej linii pre-1.0;
 - nie przywracaj numeracji `1.8.x` bez jawnej decyzji użytkownika.
 
 ## Bump
 
-Przy zwykłej iteracji zwiększaj tylko rewizję development:
+Przy zwykłej iteracji zwiększaj wyłącznie trzeci segment development:
 
 ```text
-0.1.1-dev.1
-0.1.1-dev.2
-0.1.1-dev.3
+0.1.125
+0.1.126
+0.1.127
 ...
 ```
+
+Nie używaj prerelease suffixu jako jedynej zmiennej części wersji pluginu, ponieważ nie jest on widoczny dla bieżącego porównania wersji MeshCentral.
 
 Bump nie jest automatycznie wymagany dla samej dokumentacji. Jeśli zadanie obejmuje wersję/release artifact, zsynchronizuj wszystkie aktywne źródła wersji w jednej zmianie.
 

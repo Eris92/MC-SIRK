@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.1-dev.124
+# SIRK Management Platform 0.1.125
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -14,7 +14,7 @@ Repozytorium nie utrzymuje kompatybilności z testową strukturą `MyCompany` an
 
 Projekt nie osiągnął jeszcze `1.0.0`.
 
-Preferowana konwencja development to `0.1.1.X`. Ponieważ npm wymaga poprawnego SemVer, repo reprezentuje tę samą rewizję jako `0.1.1-dev.X`, np. `0.1.1.42 -> 0.1.1-dev.42`.
+Od rewizji 125 bieżąca konwencja development to trzyczęściowy numeric SemVer `0.1.X`, gdzie `X` jest kolejną rewizją development. Zmiana wynika z kontraktu updatera MeshCentral, który przy porównywaniu pluginów usuwa prerelease suffix po `-`; historyczne `0.1.1-dev.X` pozostają tylko wcześniejszymi snapshotami.
 
 Historyczne numery `1.8.x` były wewnętrzną numeracją developmentu i nie są podstawą kolejnych wersji. Pierwszy świadomie zaakceptowany kompletny produkt jest zarezerwowany dla `1.0.0`.
 
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.1-dev.124.md)
+- [Aktualne development notes](docs/releases/0.1.125.md)
 
 ## Warstwy
 
