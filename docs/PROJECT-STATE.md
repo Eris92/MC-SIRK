@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.125`
+Current version: `0.1.126`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -44,11 +44,14 @@ Dane runtime:
 meshcentral-data/sirk-platform-data
 ```
 
+`runtime-state.json` w tym katalogu jest małym, nie-sekretnym dowodem aktywnej instancji pluginu: zawiera wersję z dysku, wersję załadowanego runtime, PID, rzeczywisty plugin root i czas załadowania. Instalator usuwa poprzedni marker przed restartem i akceptuje deployment dopiero po pojawieniu się świeżego, zgodnego stanu.
+
 Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami ani historycznymi warstwami DOM/runtime.
 
 ## Kanoniczni ownerzy
 
-- `SIRKPortal.js` — stabilny backend bootstrap pluginu; przy ponownej instancji odczytuje wersję z bieżącego `config.json`, dla tej samej wersji reuse istniejący runtime, a po zmianie wersji czyści wyłącznie wewnętrzny cache modułów MC-SIRK i ładuje aktualne `plugin-main.js`/policy bez patchowania MeshCentral;
+- `SIRKPortal.js` — stabilny backend bootstrap pluginu; przy ponownej instancji odczytuje wersję z bieżącego `config.json`, dla tej samej wersji reuse istniejący runtime, a po zmianie wersji czyści wyłącznie wewnętrzny cache modułów MC-SIRK i ładuje aktualne `plugin-main.js`/policy bez patchowania MeshCentral; po utworzeniu pluginu zapisuje `runtime-state.json`, aby deployment mógł udowodnić zgodność disk/runtime/plugin root zamiast ufać samym metadanym;
+- `tools/install/Install-SIRK-Portal-FromGit.ps1` — utrzymywany deployment owner: wykrywa rzeczywistą usługę Windows MeshCentral, buduje runtime-only artifact, weryfikuje kompletne SHA-256 po instalacji i kończy sukcesem dopiero po świeżym runtime proof z uruchomionego procesu;
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
@@ -102,7 +105,7 @@ Moduły renderują do odłączonych elementów i wykonują atomic commit. `rende
 - pokazanie Output kasuje attention;
 - brak osobnego output controllera i zbędnego observera DOM;
 - launcher ma stałą geometrię 38 px;
-- ukrycie Output używa `is-details-collapsed`.
+- ukrycie Output używa klasy `is-details-collapsed`.
 
 ## Zdarzenia i security
 
@@ -135,15 +138,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.125
-config.json  -> 0.1.125
+package.json -> 0.1.126
+config.json  -> 0.1.126
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.125.md`.
+Aktualne development notes: `docs/releases/0.1.126.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
