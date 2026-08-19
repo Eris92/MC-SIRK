@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.129
+# SIRK Management Platform 0.1.130
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.129.md)
+- [Aktualne development notes](docs/releases/0.1.130.md)
 
 ## Warstwy
 
@@ -157,7 +157,7 @@ Nie istnieją już warstwy `mesh-plugin-core.js` ani `quick-output-state.js`.
 
 ## Wyniki i CSV
 
-`public/shared/ui/results.js` jest jednym rendererem wyników. Rozpoznaje wygenerowane raporty CSV i prowadzi do uwierzytelnionego endpointu `admin.js`.
+`public/shared/ui/results.js` jest jednym rendererem wyników. Rozpoznaje wygenerowane raporty CSV i prowadzi do uwierzytelnionego endpointu `admin.js`. Dla akumulowanego outputu używa ostatniego `CSV_DOWNLOAD:` jako bieżącego artefaktu, a pobranie uruchamia przez dedykowany same-origin attachment link bez nawigowania głównego widoku MeshCentral.
 
 Endpoint pobierania:
 
