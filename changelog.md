@@ -35,7 +35,7 @@ Current development notes: `docs/releases/0.1.126.md`.
 
 - Record the real `0.1.1-dev.124` Issue #382 smoke as ineffective because both the reset selector and the actually received SMS remained unchanged.
 - Correct the underlying native MeshCentral update contract: use numeric `0.1.X` revisions because the current MeshCentral plugin comparator removes prerelease suffixes before comparing versions, which made the earlier `0.1.1-dev.X` revisions indistinguishable.
-- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk version changes.
+- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk plugin version changes.
 - Preserve the dev.124 AD DirectoryServices bridge and dev.123 SMS transport unchanged until the real environment proves that the intended backend revision is actually active.
 - Require one normal MeshCentral backend restart for the first `0.1.125` installation so the new stable bootstrap itself replaces the already cached pre-fix entrypoint.
 - Preserve the exact changelog through `0.1.1-dev.124` in `docs/releases/changelog-through-0.1.1-dev.124.md`; all historical development notes remain indexed in `docs/releases/README.md`.
@@ -47,7 +47,7 @@ Current development notes: `docs/releases/0.1.125.md`.
 - Correct the real dev.123 AD reset selector failure where Windows PowerShell ActiveDirectory module progress/failure surfaced as raw `#< CLIXML` with mojibake and the user list remained empty.
 - Replace the selector-only `Import-Module ActiveDirectory` / `Get-ADUser` hot path with one bounded `System.DirectoryServices` bridge querying only Jira-cache UPN identities in escaped LDAP chunks.
 - Emit one explicit UTF-8 JSON envelope from the bridge, suppress non-data PowerShell streams and never copy raw stderr/CLIXML into the native parameter dialog.
-- Keep the selector bounded to 15 seconds, preserve local Search and the Jira `emailAddress -> UserPrincipalName -> sAMAccountName` contract without a new cache, timer, observer or per-search request.
+- Keep the selector bounded to 15 seconds, preserve local Search and the Jira `emailAddress -> AD UserPrincipalName -> sAMAccountName` contract without a new cache, timer, observer or per-search request.
 - Preserve dev.123 percent-encoded SMS transport unchanged; Issue #382 remains open until both the real selector and actually received Polish SMS are accepted.
 
 Current development notes: `docs/releases/0.1.1-dev.124.md`.
