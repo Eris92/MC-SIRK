@@ -5,12 +5,15 @@ var shared = require("./shared.js");
 
 var MAX_MATCH_UPNS = 10000;
 var INLINE_UPNS_JSON_MAX = 8000;
+var MATCH_TIMEOUT_MS = 15000;
+var FALLBACK_TIMEOUT_MS = 30000;
 
 module.exports.createAdDirectoryService = function (options) {
     options = options || {};
     var context = options.context;
     var jiraAssets = options.jiraAssets || null;
     var execFile = options.execFile || childProcess.execFile;
+    var queryScriptPath = options.queryScriptPath || context.nativePath.join(__dirname, "ad-directory-query.ps1");
 
     function powershellPath() {
         if (process.platform !== "win32") return "pwsh";
@@ -34,6 +37,26 @@ module.exports.createAdDirectoryService = function (options) {
         }).slice(0, MAX_MATCH_UPNS);
     }
 
+    function parseBridgePayload(stdout) {
+        var raw = String(stdout || "").trim();
+        if (!raw) return null;
+        try {
+            var payload = JSON.parse(raw);
+            return payload && typeof payload === "object" && !Array.isArray(payload) ? payload : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function processFailure(error, payload) {
+        var message = payload && shared.cleanText(payload.error || "", 1000).trim();
+        if (message) return new Error(message);
+        if (error && (error.killed === true || error.signal || /timed?\s*out/i.test(String(error.message || "")))) {
+            return new Error("Active Directory user lookup timed out.");
+        }
+        return new Error("Active Directory user lookup failed.");
+    }
+
     function listDirectoryUsers(jiraUsers) {
         var ad = context.integrations.get("ad");
         if (!ad.domain || !ad.login || !ad.password) return Promise.reject(new Error("Active Directory integration is not configured."));
@@ -41,37 +64,30 @@ module.exports.createAdDirectoryService = function (options) {
         if (matchUpns && !matchUpns.length) return Promise.resolve([]);
         var matchJson = matchUpns ? JSON.stringify(matchUpns) : "";
         var inlineMatchJson = matchJson.length <= INLINE_UPNS_JSON_MAX ? matchJson : "";
-        var script = [
-            "$ErrorActionPreference='Stop'", "Import-Module ActiveDirectory -ErrorAction Stop",
-            "$sec=ConvertTo-SecureString $env:SIRK_AD_PASSWORD -AsPlainText -Force",
-            "$cred=[pscredential]::new($env:SIRK_AD_LOGIN,$sec)",
-            "function ConvertTo-SirkLdapValue { param([string]$Value); $builder=New-Object Text.StringBuilder; foreach($character in $Value.ToCharArray()){ switch([int][char]$character){ 0 {[void]$builder.Append('\\00')} 40 {[void]$builder.Append('\\28')} 41 {[void]$builder.Append('\\29')} 42 {[void]$builder.Append('\\2a')} 92 {[void]$builder.Append('\\5c')} default {[void]$builder.Append($character)} } }; $builder.ToString() }",
-            "if($env:SIRK_AD_MATCH_MODE -eq 'upn'){",
-            "$raw=[string]$env:SIRK_AD_UPNS_JSON; if([string]::IsNullOrWhiteSpace($raw)){$raw=[Console]::In.ReadToEnd()}",
-            "$wanted=@(ConvertFrom-Json -InputObject $raw | ForEach-Object {[string]$_} | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })",
-            "$matches=New-Object System.Collections.Generic.List[object]; $chunkSize=500",
-            "for($offset=0;$offset -lt $wanted.Count;$offset+=$chunkSize){$last=[Math]::Min($offset+$chunkSize,$wanted.Count);$parts=New-Object System.Collections.Generic.List[string];for($index=$offset;$index -lt $last;$index++){[void]$parts.Add('(userPrincipalName='+(ConvertTo-SirkLdapValue $wanted[$index])+')')};$ldap='(|'+($parts -join '')+')';Get-ADUser -Server $env:SIRK_AD_DOMAIN -Credential $cred -LDAPFilter $ldap -Properties DisplayName,Mail,Enabled,UserPrincipalName | ForEach-Object {[void]$matches.Add($_)}}",
-            "$source=@($matches)",
-            "}else{$source=@(Get-ADUser -Server $env:SIRK_AD_DOMAIN -Credential $cred -Filter * -Properties DisplayName,Mail,Enabled,UserPrincipalName | Select-Object -First 10000)}",
-            "$rows=$source | Sort-Object DisplayName,SamAccountName | Select-Object -First 10000 | ForEach-Object {[ordered]@{value=[string]$_.SamAccountName;label=(([string]$_.DisplayName)+' ('+([string]$_.SamAccountName)+')');displayName=[string]$_.DisplayName;email=[string]$_.Mail;upn=[string]$_.UserPrincipalName;active=[bool]$_.Enabled}}",
-            "ConvertTo-Json -InputObject @($rows) -Depth 4 -Compress"
-        ].join(";");
-        var encoded = Buffer.from(script, "utf16le").toString("base64");
+
         return new Promise(function (resolve, reject) {
             var settled = false;
             var child;
-            function finish(error, stdout, stderr) {
+            function finish(error, stdout) {
                 if (settled) return;
                 settled = true;
-                if (error) { reject(new Error(shared.cleanText(stderr || error.message, 1000))); return; }
-                try {
-                    var rows = JSON.parse(String(stdout || "[]").trim() || "[]");
-                    resolve((Array.isArray(rows) ? rows : [rows]).filter(function (item) { return item && item.value; }));
-                } catch (parseError) { reject(new Error("Active Directory returned invalid user data.")); }
+                var payload = parseBridgePayload(stdout);
+                if (error) {
+                    reject(processFailure(error, payload));
+                    return;
+                }
+                if (!payload || payload.ok !== true || !Array.isArray(payload.rows)) {
+                    reject(new Error("Active Directory returned invalid user data."));
+                    return;
+                }
+                resolve(payload.rows.filter(function (item) { return item && item.value; }));
             }
             try {
-                child = execFile(powershellPath(), ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], {
-                    windowsHide: true, timeout: matchUpns ? 30000 : 60000, maxBuffer: 8 * 1024 * 1024,
+                child = execFile(powershellPath(), ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", queryScriptPath], {
+                    windowsHide: true,
+                    encoding: "utf8",
+                    timeout: matchUpns ? MATCH_TIMEOUT_MS : FALLBACK_TIMEOUT_MS,
+                    maxBuffer: 8 * 1024 * 1024,
                     env: Object.assign({}, process.env, {
                         SIRK_AD_DOMAIN: String(ad.domain),
                         SIRK_AD_LOGIN: String(ad.login),
@@ -81,11 +97,11 @@ module.exports.createAdDirectoryService = function (options) {
                     })
                 }, finish);
                 if (matchUpns && !inlineMatchJson && child && child.stdin && typeof child.stdin.end === "function") {
-                    if (typeof child.stdin.on === "function") child.stdin.on("error", function (error) { finish(error, "", ""); });
+                    if (typeof child.stdin.on === "function") child.stdin.on("error", function (error) { finish(error, ""); });
                     child.stdin.end(matchJson, "utf8");
                 }
             } catch (error) {
-                finish(error, "", "");
+                finish(error, "");
             }
         });
     }
