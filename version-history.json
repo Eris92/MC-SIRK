@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.130",
+    "date": "2026-08-19",
+    "summary": "Single-flight My Scripts browser submissions and download the newest generated CSV without navigating away from MeshCentral.",
+    "notes": "docs/releases/0.1.130.md"
+  },
+  {
     "version": "0.1.129",
     "date": "2026-08-19",
     "summary": "Load reset users cache-first from Jira and resolve only the selected UPN against AD at execution time.",
