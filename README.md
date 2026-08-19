@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.125
+# SIRK Management Platform 0.1.126
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.125.md)
+- [Aktualne development notes](docs/releases/0.1.126.md)
 
 ## Warstwy
 
@@ -211,6 +211,8 @@ Plugin jest instalowany do:
 meshcentral-data/plugins/SIRKPortal
 ```
 
+Instalator nie zakłada nazwy procesu jako nazwy usługi. Wykrywa standardową usługę Windows `MeshCentral` albo jeden jednoznaczny serwis należący do wskazanego `MeshRoot`; niestandardową nazwę można podać jawnie przez `-ServiceName`. Przed raportem sukcesu installer porównuje SHA-256 kompletnego runtime artifactu oraz czeka na świeży `meshcentral-data/sirk-platform-data/runtime-state.json`, który musi potwierdzić tę samą wersję runtime i rzeczywisty katalog `SIRKPortal` w uruchomionym procesie.
+
 ## Testy
 
 ```bash
@@ -224,6 +226,6 @@ scripts/validate-repository-layout.js
 scripts/validate-architecture.js
 ```
 
-CI używa Node.js 24 oraz `actions/checkout@v7` / `actions/setup-node@v7`.
+CI używa Node.js 24 oraz `actions/checkout@v7` / `actions/setup-node@v7`. Windows job dodatkowo parsuje składnię utrzymywanego instalatora przed istniejącymi smoke testami Network/SMS/AD.
 
 Wersje `package.json` i `config.json` muszą być identyczne.
