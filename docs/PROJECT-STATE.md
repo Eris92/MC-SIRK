@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.1-dev.124`
+Current version: `0.1.125`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -48,6 +48,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 
 ## Kanoniczni ownerzy
 
+- `SIRKPortal.js` — stabilny backend bootstrap pluginu; przy ponownej instancji odczytuje wersję z bieżącego `config.json`, dla tej samej wersji reuse istniejący runtime, a po zmianie wersji czyści wyłącznie wewnętrzny cache modułów MC-SIRK i ładuje aktualne `plugin-main.js`/policy bez patchowania MeshCentral;
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
@@ -134,15 +135,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.1-dev.124
-config.json  -> 0.1.1-dev.124
+package.json -> 0.1.125
+config.json  -> 0.1.125
 ```
 
-Preferowana konwencja użytkownika `0.1.1.X` jest mapowana na SemVer-compatible `0.1.1-dev.X`, ponieważ npm wymaga poprawnego SemVer.
+Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.1-dev.124.md`.
+Aktualne development notes: `docs/releases/0.1.125.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
