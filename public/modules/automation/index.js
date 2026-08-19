@@ -6,6 +6,7 @@
     var status = "";
     var treeState = { selectedRoot: "", selectedScript: "", expanded: {} };
     var outputs = Object.create(null);
+    var executionsInFlight = Object.create(null);
     var progressSequence = 0;
     var tools = window.SharedScriptTools.create({
         storageKey: "sirkPlatform.myscripts.preferences",
@@ -240,7 +241,10 @@
     }
 
     function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
-        return confirmExecution(script, button || document.activeElement).then(function (confirmed) {
+        var executionKey = String(script && script.path || "");
+        if (executionKey && executionsInFlight[executionKey]) return executionsInFlight[executionKey];
+
+        var operation = confirmExecution(script, button || document.activeElement).then(function (confirmed) {
             if (!confirmed) return;
             if (button) button.disabled = true;
             switchToResult(detailsHost, resultHost, "Executing script...");
@@ -277,6 +281,16 @@
                 switchToResult(detailsHost, resultHost, error.message || String(error));
                 resultHost.classList.add("mc-shared-error");
             }
+        });
+
+        if (!executionKey) return operation;
+        executionsInFlight[executionKey] = operation;
+        return operation.then(function (value) {
+            delete executionsInFlight[executionKey];
+            return value;
+        }, function (error) {
+            delete executionsInFlight[executionKey];
+            throw error;
         });
     }
 

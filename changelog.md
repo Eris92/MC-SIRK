@@ -1,3 +1,14 @@
+## 0.1.130 - 2026-08-19
+
+- Record the real `0.1.129` Issue #397 license-report failure: one visible action produced a serialized sequence of timestamped CSV reports and the visible `Download CSV` action did not yield a usable download.
+- Guard My Scripts browser submissions with one in-flight operation per script path so duplicate execute callbacks cannot enqueue another backend `request` while the current operation is active.
+- Release the single-flight state after both success and failure so an explicit later run remains possible.
+- Make the newest `CSV_DOWNLOAD:` marker authoritative when result output contains multiple generated-file markers.
+- Trigger CSV attachment through a transient same-origin link instead of navigating the MeshCentral page with `window.location.href`; preserve the existing authenticated canonical-root allowlist, `.csv` restriction, attachment headers and `nosniff` protection.
+- Add generated-download and My Scripts single-flight regressions; keep Issue #397 OPEN for real one-file/download acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.130.md`.
+
 ## 0.1.129 - 2026-08-19
 
 - Record the real `0.1.128` Issue #382 reset-dialog follow-up: current Search/User metadata is active, but the user checklist still renders empty.
@@ -27,7 +38,7 @@ Current development notes: `docs/releases/0.1.128.md`.
 - Make bundled My Scripts metadata/tree/dynamic options and execution share one canonical `seed/MyScripts` owner; legacy persistent script directories remain untouched but no longer shadow current definitions.
 - Add a regression with stale persistent AD reset copies proving the bundled `ad-users` and local Search metadata remains authoritative and legacy files are not modified.
 - Preserve the current bounded DirectoryServices AD selector bridge and ASCII-safe percent-encoded SMS UTF-8 transport unchanged.
-- Keep Issue #382 open for real selector/received-SMS acceptance and Issue #386 open for real runtime activation acceptance; no tag or GitHub Release.
+- Keep Issue #382 open for real selector/received-SMS acceptance and Issue #386 open for real runtime activation acceptance; no tag/GitHub Release.
 
 Current development notes: `docs/releases/0.1.127.md`.
 

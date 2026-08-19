@@ -50,7 +50,7 @@
             var trimmed = String(line || "").trim();
             var match = /^CSV_DOWNLOAD:(.+)$/i.exec(trimmed);
             if (match) {
-                if (!downloadPath) downloadPath = String(match[1] || "").trim();
+                downloadPath = String(match[1] || "").trim();
                 return;
             }
             if (/^__(?:MYCOMMANDS|COMMANDTABS)_PROGRESS__/i.test(trimmed)) return;
@@ -247,6 +247,15 @@
         return copyText(output).then(function () { if (!button) return; button.textContent = "Copied"; setTimeout(function () { if (button.isConnected) button.textContent = "Copy"; }, 1200); });
     }
 
+    function startDownload(url) {
+        var link = document.createElement("a");
+        link.href = String(url || "");
+        link.style.display = "none";
+        link.setAttribute("aria-hidden", "true");
+        document.body.appendChild(link);
+        try { link.click(); } finally { link.remove(); }
+    }
+
     function appendResult(host, raw, options) {
         options = options || {};
         var parsedOutput = parseDownloadResult(raw);
@@ -274,8 +283,7 @@
             download.className = "btn btn-secondary btn-sm mc-results-download-button";
             download.textContent = "Download CSV";
             download.onclick = function () {
-                var url = window.SirkPlatformCore.assetUrl("", "download", { path: parsedOutput.downloadPath });
-                window.location.href = url;
+                startDownload(window.SirkPlatformCore.assetUrl("", "download", { path: parsedOutput.downloadPath }));
             };
             actions.appendChild(download);
         }
