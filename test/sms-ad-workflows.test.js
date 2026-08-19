@@ -87,7 +87,7 @@ function hasUtf8Bom(filePath) {
     await assert.rejects(function () { return service.send("vms", "48500100200", "Voice", { lector: "invalid" }); }, /Unsupported Voice SMS lector/);
 
     var jiraCalls = [];
-    var adCommand = "";
+    var adQueryPath = "";
     var directory = adDirectoryFactory.createAdDirectoryService({
         context: {
             nativePath: path,
@@ -111,17 +111,19 @@ function hasUtf8Bom(filePath) {
             }
         },
         execFile: function (file, args, options, callback) {
-            adCommand = Buffer.from(args[3], "base64").toString("utf16le");
-            callback(null, JSON.stringify([
+            var fileIndex = args.indexOf("-File");
+            adQueryPath = fileIndex >= 0 ? args[fileIndex + 1] : "";
+            callback(null, JSON.stringify({ ok: true, rows: [
                 { value: "alice", label: "Alice AD (alice)", displayName: "Alice AD", email: "alice@example.test", upn: "alice@example.test", active: true },
                 { value: "bob", label: "Bob AD (bob)", displayName: "Bob AD", email: "bob@example.test", upn: "BOB@EXAMPLE.TEST", active: true },
                 { value: "display", label: "Display Match Only (display)", displayName: "Display Match Only", email: "display@example.test", upn: "display@example.test", active: true }
-            ]), "");
+            ] }), "");
         }
     });
     var matchedUsers = await directory.listUsers();
     assert.deepStrictEqual(jiraCalls, [[false, false]], "AD reset options must reuse the standard active Jira users cache path once.");
-    assert.ok(/UserPrincipalName/.test(adCommand), "AD matching must query UserPrincipalName.");
+    assert.ok(adQueryPath && /ad-directory-query\.ps1$/i.test(adQueryPath), "AD matching must use the maintained selector bridge.");
+    assert.ok(/userPrincipalName/i.test(fs.readFileSync(adQueryPath, "utf8")), "AD matching bridge must query UserPrincipalName.");
     assert.deepStrictEqual(matchedUsers.map(function (item) { return item.value; }), ["alice", "bob"], "Only case-insensitive Jira e-mail/AD UPN matches may be selectable.");
     assert.strictEqual(matchedUsers[0].label, "Alicja Jira (Alice@Example.Test)", "The visible option must retain the Jira cache label while the value stays AD-safe.");
     assert.strictEqual(matchedUsers.some(function (item) { return item.value === "display"; }), false, "Display-name-only matches must not be accepted.");
