@@ -1,3 +1,14 @@
+## 0.1.129 - 2026-08-19
+
+- Record the real `0.1.128` Issue #382 reset-dialog follow-up: current Search/User metadata is active, but the user checklist still renders empty.
+- Remove the eager whole-cache AD intersection from the reset-dialog hot path; return deduplicated usable Jira-cache UPN/e-mail identities directly from the canonical cache.
+- Keep Search local and add no cache, polling, timer, observer or per-search backend request.
+- Resolve only the selected Jira UPN by exact AD `UserPrincipalName` immediately before reset execution and fail closed unless exactly one AD account matches.
+- Preserve password generation, reset/unlock, `ChangePasswordAtLogon`, mobile lookup, the maintained DirectoryServices fallback bridge, SMS transport and the `0.1.128` ASCII-safe AD account SMS wording.
+- Add cache-first, explicit-empty-cache, execution-time UPN match and full regression coverage; keep Issue #382 OPEN for real selector/reset acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.129.md`.
+
 ## 0.1.128 - 2026-08-19
 
 - Record the real `0.1.127` Issue #382 follow-up as still unchanged for the user's SMS problem.
