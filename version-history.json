@@ -27,12 +27,7 @@
     "version": "0.1.1-dev.121",
     "date": "2026-08-18",
     "summary": "Default built-in message workflows to direct execution and make Jira requester confirmations leave the actionable view immediately with User/Assets context.",
-    "notes": "docs/releases/0.1.1-dev.121.md"
-  },
-  {
-    "version": "history-through-0.1.1-dev.124",
-    "date": "2026-08-19",
-    "summary": "Exact pre-0.1.125 version history is preserved as an immutable migration archive; per-version development notes remain indexed in docs/releases/README.md.",
-    "notes": "docs/releases/version-history-through-0.1.1-dev.124.json"
+    "notes": "docs/releases/0.1.1-dev.121.md",
+    "historyArchive": "docs/releases/version-history-through-0.1.1-dev.124.json"
   }
 ]
