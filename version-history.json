@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.1-dev.124",
+    "date": "2026-08-19",
+    "summary": "Remove the AD reset selector ActiveDirectory module/CLIXML failure path with a bounded UTF-8 DirectoryServices bridge.",
+    "notes": "docs/releases/0.1.1-dev.124.md"
+  },
+  {
     "version": "0.1.1-dev.123",
     "date": "2026-08-18",
     "summary": "Bound the AD reset selector to Jira-cache UPN LDAP matches and make Windows PowerShell SMS forms ASCII-safe UTF-8 percent encoded.",
