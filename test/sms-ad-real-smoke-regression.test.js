@@ -7,6 +7,7 @@ var adDirectoryFactory = require("../server/core/ad-directory-service.js");
 
 var root = path.resolve(__dirname, "..");
 var queryScriptPath = path.join(root, "server", "core", "ad-directory-query.ps1");
+var resetScriptPath = path.join(root, "seed", "MyScripts", "Active Directory", "Reset user password and SMS.ps1");
 
 function context() {
     return {
@@ -37,9 +38,6 @@ function jiraUsers(count) {
 (async function () {
     var users = jiraUsers(700);
     var execCalls = 0;
-    var execArgs = null;
-    var execOptions = null;
-    var stdinPayload = "";
     var directory = adDirectoryFactory.createAdDirectoryService({
         context: context(),
         jiraAssets: {
@@ -50,47 +48,18 @@ function jiraUsers(count) {
             }
         },
         queryScriptPath: queryScriptPath,
-        execFile: function (file, args, options, callback) {
+        execFile: function () {
             execCalls++;
-            execArgs = args;
-            execOptions = options;
-            return {
-                stdin: {
-                    on: function () {},
-                    end: function (payload) {
-                        stdinPayload = String(payload || "");
-                        callback(null, JSON.stringify({ ok: true, rows: [
-                            { value: "user42", label: "AD User 42 (user42)", displayName: "AD User 42", email: "user42@example.test", upn: "USER42@EXAMPLE.TEST", active: true }
-                        ] }), "");
-                    }
-                }
-            };
+            throw new Error("Opening the reset selector must not start PowerShell/AD work.");
         }
     });
 
     var result = await directory.listUsers();
-    assert.strictEqual(execCalls, 1, "Opening the reset selector must use one bounded PowerShell process, not one process per Jira user.");
-    assert.ok(execArgs.indexOf("-File") >= 0, "AD selector must execute the maintained machine-readable bridge file.");
-    assert.strictEqual(execArgs[execArgs.indexOf("-File") + 1], queryScriptPath);
-    assert.strictEqual(execArgs.indexOf("-EncodedCommand"), -1, "AD selector must not rebuild an opaque inline ActiveDirectory-module command.");
-    assert.strictEqual(execOptions.encoding, "utf8");
-    assert.strictEqual(execOptions.timeout, 15000, "Jira-backed selector work must remain bounded instead of waiting on a long AD module import.");
-    assert.strictEqual(execOptions.env.SIRK_AD_MATCH_MODE, "upn", "Jira-backed reset loading must select the bounded UPN match path.");
-    assert.strictEqual(execOptions.env.SIRK_AD_UPNS_JSON, "", "Large Jira user sets must use stdin instead of risking the Windows environment-size limit.");
-    var postedUpns = JSON.parse(stdinPayload);
-    assert.strictEqual(postedUpns.length, users.length);
-    assert.strictEqual(postedUpns[42], "user42@example.test");
-    assert.deepStrictEqual(result.map(function (item) { return item.value; }), ["user42"]);
-    assert.strictEqual(result[0].label, users[42].label);
-
-    var bridgeSource = fs.readFileSync(queryScriptPath, "utf8");
-    assert.strictEqual(bridgeSource.indexOf("Import-Module ActiveDirectory"), -1, "The selector hot path must not import the AD PowerShell provider/default drive.");
-    assert.strictEqual(bridgeSource.indexOf("Get-ADUser"), -1, "The selector hot path must not depend on the ActiveDirectory cmdlet module.");
-    assert.ok(/System\.DirectoryServices\.DirectoryEntry/.test(bridgeSource));
-    assert.ok(/System\.DirectoryServices\.DirectorySearcher/.test(bridgeSource));
-    assert.ok(/\$ProgressPreference\s*=\s*'SilentlyContinue'/.test(bridgeSource), "Machine-readable selector bridge must suppress PowerShell progress output.");
-    assert.ok(/OpenStandardOutput/.test(bridgeSource) && /Encoding\]::UTF8\.GetBytes/.test(bridgeSource), "Bridge JSON must be written as explicit UTF-8 bytes.");
-    assert.ok(/\$chunkSize\s*=\s*1000/.test(bridgeSource), "Requested UPN matching must remain bounded in LDAP chunks.");
+    assert.strictEqual(execCalls, 0, "Opening the reset selector must return the canonical Jira cache without waiting on Active Directory.");
+    assert.strictEqual(result.length, users.length);
+    assert.strictEqual(result[0].value, "user0@example.test");
+    assert.strictEqual(result[42].value, "user42@example.test");
+    assert.strictEqual(result[42].label, users[42].label);
 
     var noAdCalls = 0;
     var emptyDirectory = adDirectoryFactory.createAdDirectoryService({
@@ -101,39 +70,43 @@ function jiraUsers(count) {
             }
         },
         queryScriptPath: queryScriptPath,
-        execFile: function () { noAdCalls++; throw new Error("AD must not run without a Jira UPN to match."); }
+        execFile: function () { noAdCalls++; throw new Error("AD must not run while opening the cache-first selector."); }
     });
-    assert.deepStrictEqual(await emptyDirectory.listUsers(), []);
-    assert.strictEqual(noAdCalls, 0, "No Jira e-mail identities means no AD directory query.");
+    await assert.rejects(emptyDirectory.listUsers(), function (error) {
+        assert.strictEqual(error.message, "Jira user cache contains no selectable users with a usable UPN/e-mail.");
+        return true;
+    });
+    assert.strictEqual(noAdCalls, 0, "A Jira cache without UPN/e-mail identities must fail explicitly without querying AD.");
+
+    var bridgeSource = fs.readFileSync(queryScriptPath, "utf8");
+    assert.strictEqual(bridgeSource.indexOf("Import-Module ActiveDirectory"), -1, "The maintained fallback bridge must not import the AD PowerShell provider/default drive.");
+    assert.strictEqual(bridgeSource.indexOf("Get-ADUser"), -1, "The maintained fallback bridge must not depend on the ActiveDirectory cmdlet module.");
+    assert.ok(/System\.DirectoryServices\.DirectoryEntry/.test(bridgeSource));
+    assert.ok(/System\.DirectoryServices\.DirectorySearcher/.test(bridgeSource));
+    assert.ok(/\$ProgressPreference\s*=\s*'SilentlyContinue'/.test(bridgeSource), "Machine-readable AD bridge must suppress PowerShell progress output.");
+    assert.ok(/OpenStandardOutput/.test(bridgeSource) && /Encoding\]::UTF8\.GetBytes/.test(bridgeSource), "Bridge JSON must be written as explicit UTF-8 bytes.");
+    assert.ok(/\$chunkSize\s*=\s*1000/.test(bridgeSource), "Requested UPN matching support must remain bounded in LDAP chunks.");
 
     var timeoutDirectory = adDirectoryFactory.createAdDirectoryService({
         context: context(),
-        jiraAssets: { listUsers: function () { return Promise.resolve({ items: users }); } },
         queryScriptPath: queryScriptPath,
         execFile: function (file, args, options, callback) {
-            return {
-                stdin: {
-                    on: function () {},
-                    end: function () {
-                        var error = new Error("Command failed after timeout");
-                        error.killed = true;
-                        error.signal = "SIGTERM";
-                        callback(error, "", "#< CLIXML <AV>\ufffdadowanie modu\ufffdu us\ufffdugi Active Directory</AV>");
-                    }
-                }
-            };
+            var error = new Error("Command failed after timeout");
+            error.killed = true;
+            error.signal = "SIGTERM";
+            callback(error, "", "#< CLIXML <AV>\ufffdadowanie modu\ufffdu us\ufffdugi Active Directory</AV>");
+            return { stdin: { on: function () {}, end: function () {} } };
         }
     });
     await assert.rejects(timeoutDirectory.listUsers(), function (error) {
         assert.strictEqual(error.message, "Active Directory user lookup timed out.");
-        assert.strictEqual(error.message.indexOf("CLIXML"), -1, "Raw PowerShell serialization must never leak into the native dialog.");
+        assert.strictEqual(error.message.indexOf("CLIXML"), -1, "Raw PowerShell serialization must never leak from the fallback bridge.");
         assert.strictEqual(error.message.indexOf("\ufffd"), -1, "Mojibake from a redirected PowerShell stream must never reach the user.");
         return true;
     });
 
     var localizedFailure = adDirectoryFactory.createAdDirectoryService({
         context: context(),
-        jiraAssets: { listUsers: function () { return Promise.resolve({ items: jiraUsers(1) }); } },
         queryScriptPath: queryScriptPath,
         execFile: function (file, args, options, callback) {
             var error = new Error("exit 1");
@@ -147,13 +120,19 @@ function jiraUsers(count) {
         return true;
     });
 
+    var resetSource = fs.readFileSync(resetScriptPath, "utf8");
+    assert.ok(/\$selectedUpn\s*=\s*\(\[string\]\$AdUser\)\.Trim\(\)/.test(resetSource), "Reset execution must treat the selected value as a Jira UPN identity.");
+    assert.ok(/Get-ADUser\s+-LDAPFilter\s+"\(userPrincipalName=\$selectedUpn\)"/.test(resetSource), "Only the selected UPN should be resolved against AD at execution time.");
+    assert.ok(/Select-Object\s+-First\s+2/.test(resetSource) && /\$matches\.Count\s+-ne\s+1/.test(resetSource), "Selected UPN resolution must be bounded and fail closed unless exactly one AD account matches.");
+    assert.strictEqual(/Get-ADUser\s+-Identity\s+\$AdUser/.test(resetSource), false);
+
     var smsSource = fs.readFileSync(path.join(root, "seed", "MyScripts", "_shared", "Sirk-AdSms.ps1"), "utf8");
     assert.ok(/function ConvertTo-SirkSmsFormBody/.test(smsSource));
     assert.ok(/\[Uri\]::EscapeDataString\(\$Text\)/.test(smsSource), "AD SMS text must be percent-encoded from Unicode before Windows PowerShell sends the form.");
     assert.ok(/\$encoding\s*=\s*'utf-8'/.test(smsSource) && /'encoding='\s*\+\s*\$encoding/.test(smsSource));
     assert.ok(/-Body \$body/.test(smsSource), "The outbound AD SMS request must use the already percent-encoded ASCII-safe form body.");
 
-    console.log("Real-smoke regression: AD selector avoids AD module CLIXML/timeout path and SMS form stays UTF-8 safe: OK");
+    console.log("Real-smoke regression: reset users load cache-first and selected UPN is matched to AD only at execution: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;

@@ -87,7 +87,7 @@ function hasUtf8Bom(filePath) {
     await assert.rejects(function () { return service.send("vms", "48500100200", "Voice", { lector: "invalid" }); }, /Unsupported Voice SMS lector/);
 
     var jiraCalls = [];
-    var adQueryPath = "";
+    var adCalls = 0;
     var directory = adDirectoryFactory.createAdDirectoryService({
         context: {
             nativePath: path,
@@ -105,28 +105,41 @@ function hasUtf8Bom(filePath) {
                     { value: "jira-a", label: "Alicja Jira (Alice@Example.Test)", displayName: "Alicja Jira", emailAddress: "Alice@Example.Test", active: true },
                     { value: "jira-b", label: "Robert Jira (bob@example.test)", displayName: "Robert Jira", emailAddress: "bob@example.test", active: true },
                     { value: "jira-duplicate", label: "Alicja duplikat", displayName: "Alicja duplikat", emailAddress: "alice@example.test", active: true },
-                    { value: "jira-display-only", label: "Display Match Only", displayName: "Display Match Only", emailAddress: "other@example.test", active: true },
+                    { value: "other@example.test", label: "UPN from cache value", displayName: "UPN from cache value", emailAddress: "", active: true },
                     { value: "jira-no-mail", label: "Bez UPN", displayName: "Bez UPN", emailAddress: "", active: true }
                 ] });
             }
         },
-        execFile: function (file, args, options, callback) {
-            var fileIndex = args.indexOf("-File");
-            adQueryPath = fileIndex >= 0 ? args[fileIndex + 1] : "";
-            callback(null, JSON.stringify({ ok: true, rows: [
-                { value: "alice", label: "Alice AD (alice)", displayName: "Alice AD", email: "alice@example.test", upn: "alice@example.test", active: true },
-                { value: "bob", label: "Bob AD (bob)", displayName: "Bob AD", email: "bob@example.test", upn: "BOB@EXAMPLE.TEST", active: true },
-                { value: "display", label: "Display Match Only (display)", displayName: "Display Match Only", email: "display@example.test", upn: "display@example.test", active: true }
-            ] }), "");
+        execFile: function () {
+            adCalls++;
+            throw new Error("Opening the reset dialog must not query Active Directory.");
         }
     });
-    var matchedUsers = await directory.listUsers();
+    var cachedUsers = await directory.listUsers();
     assert.deepStrictEqual(jiraCalls, [[false, false]], "AD reset options must reuse the standard active Jira users cache path once.");
-    assert.ok(adQueryPath && /ad-directory-query\.ps1$/i.test(adQueryPath), "AD matching must use the maintained selector bridge.");
-    assert.ok(/userPrincipalName/i.test(fs.readFileSync(adQueryPath, "utf8")), "AD matching bridge must query UserPrincipalName.");
-    assert.deepStrictEqual(matchedUsers.map(function (item) { return item.value; }), ["alice", "bob"], "Only case-insensitive Jira e-mail/AD UPN matches may be selectable.");
-    assert.strictEqual(matchedUsers[0].label, "Alicja Jira (Alice@Example.Test)", "The visible option must retain the Jira cache label while the value stays AD-safe.");
-    assert.strictEqual(matchedUsers.some(function (item) { return item.value === "display"; }), false, "Display-name-only matches must not be accepted.");
+    assert.strictEqual(adCalls, 0, "Opening the reset selector must not block on a live AD query.");
+    assert.deepStrictEqual(cachedUsers.map(function (item) { return item.value; }), ["Alice@Example.Test", "bob@example.test", "other@example.test"],
+        "The reset selector must expose deduplicated usable Jira-cache UPN identities immediately.");
+    assert.strictEqual(cachedUsers[0].label, "Alicja Jira (Alice@Example.Test)", "The visible option must retain the Jira cache label.");
+    assert.strictEqual(cachedUsers.some(function (item) { return item.value === "jira-no-mail"; }), false, "A Jira account without a usable UPN/e-mail must not be selectable.");
+
+    var unusableDirectory = adDirectoryFactory.createAdDirectoryService({
+        context: {
+            nativePath: path,
+            integrations: {
+                get: function () { return { domain: "example.test", login: "svc-ad", password: "secret" }; },
+                readSettings: function () { return { ad: { userLocations: [] } }; }
+            }
+        },
+        jiraAssets: {
+            listUsers: function () {
+                return Promise.resolve({ items: [{ value: "jira-account-id", label: "No UPN", emailAddress: "", active: true }] });
+            }
+        },
+        execFile: function () { throw new Error("AD must not run while building the cache-first selector."); }
+    });
+    await assert.rejects(unusableDirectory.listUsers(), /no selectable users with a usable UPN\/e-mail/i,
+        "An unusable Jira cache must surface a short explicit error instead of a silently empty checklist.");
 
     var routes = {};
     var web = {
@@ -187,6 +200,11 @@ function hasUtf8Bom(filePath) {
     assert.ok(/for\(\$number=2;\$number -le 9999/.test(createSource), "Login allocation must have a numeric collision fallback.");
     assert.ok(/MYSCRIPTS_AD_USER_LOCATIONS_JSON/.test(createSource), "AD account creation must enforce the configured OU allowlist.");
     assert.ok(/Set-ADAccountPassword/.test(resetSource) && /Unlock-ADAccount/.test(resetSource) && /ChangePasswordAtLogon/.test(resetSource));
+    assert.ok(/\$selectedUpn\s*=/.test(resetSource) && /Get-ADUser\s+-LDAPFilter\s+"\(userPrincipalName=\$selectedUpn\)"/.test(resetSource),
+        "Reset execution must resolve the selected Jira UPN to AD by exact UserPrincipalName immediately before mutation.");
+    assert.strictEqual(/Get-ADUser\s+-Identity\s+\$AdUser/.test(resetSource), false,
+        "The selected Jira UPN must not be treated as an already-resolved sAMAccountName.");
+    assert.ok(/\$matches\.Count\s+-ne\s+1/.test(resetSource), "Reset must fail closed unless the selected UPN maps to exactly one AD account.");
     assert.ok(createSource.indexOf('Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostalo utworzone. Tymczasowe haslo:`r`n`r`n$password') >= 0,
         "Create-account SMS must contain the configured AD domain, ASCII-safe Polish wording, a blank line and the temporary password.");
     assert.ok(resetSource.indexOf('Haslo w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostalo zmienione. Tymczasowe haslo:`r`n`r`n$password') >= 0,
@@ -207,7 +225,7 @@ function hasUtf8Bom(filePath) {
     assert.ok(/createAdDirectoryService\(\{ context: context, jiraAssets: jiraAssets \}\)/.test(automationSource), "Automation must inject the canonical Jira cache owner into the AD directory owner.");
     var adOptionsBlock = automationSource.slice(automationSource.indexOf('variable.optionSource === "ad-users"'), automationSource.indexOf('variable.optionSource === "ad-user-locations"'));
     assert.ok(/hasSystemCredential\(optionScript\.path, "ad"\)/.test(adOptionsBlock) && /adDirectory\.listUsers\(\)/.test(adOptionsBlock),
-        "AD reset options must keep AD authorization and reuse the server-owned Jira-cache/AD matching owner.");
+        "AD reset options must keep AD authorization and reuse the cache-first Jira user owner.");
     assert.strictEqual(/hasSystemCredential\(optionScript\.path, "jira"\)/.test(adOptionsBlock), false,
         "AD reset user loading must not be blocked by a redundant per-script Jira credential assignment.");
 
@@ -216,7 +234,7 @@ function hasUtf8Bom(filePath) {
     assert.ok(/applyUserFilter/.test(filterBlock) && filterBlock.indexOf("provider(") < 0 && filterBlock.indexOf("loadDynamic(") < 0,
         "Typing in the shared Search field must filter the already loaded list locally without backend requests.");
 
-    console.log("SMSAPI UTF-8, Jira-cache/AD UPN matching and ASCII-safe AD account SMS workflows: OK");
+    console.log("SMSAPI UTF-8, cache-first Jira UPN selection, execution-time AD match and ASCII-safe AD account SMS workflows: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;

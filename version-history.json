@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.129",
+    "date": "2026-08-19",
+    "summary": "Load reset users cache-first from Jira and resolve only the selected UPN against AD at execution time.",
+    "notes": "docs/releases/0.1.129.md"
+  },
+  {
     "version": "0.1.128",
     "date": "2026-08-19",
     "summary": "Use ASCII-safe Polish wording without diacritics for AD account create/reset SMS after repeated real received-message mojibake.",

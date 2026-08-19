@@ -5,7 +5,7 @@
 W panelu `Settings -> Integrations` skonfiguruj:
 
 - `Active Directory`: domenę, login techniczny, hasło, sufiks UPN oraz listę `Users locations` w formie nazwa + pełny DN OU;
-- `Jira`: połączenie używane przez współdzielony cache użytkowników; reset hasła korzysta z tej samej listy użytkowników co Jira i mapuje ją do AD po UPN;
+- `Jira`: połączenie używane przez współdzielony cache użytkowników; reset hasła korzysta z tej samej listy użytkowników co Jira i mapuje wybraną tożsamość do AD po UPN;
 - `SMS / Voice SMS (SMSAPI.pl)`: URL `https://api.smsapi.pl`, opcjonalnego nadawcę, lektora i token SMSAPI;
 - opcjonalny `External send API token` o długości co najmniej 32 znaków, niezależny od tokenu SMSAPI.
 
@@ -22,10 +22,10 @@ Sekrety są write-only, trafiają do szyfrowanego magazynu pluginu i nie są zwr
 
 - `SMS/Send SMS.ps1` — SMS do jednego lub wielu numerów;
 - `SMS/Send Voice SMS.ps1` — Voice SMS/TTS do jednego lub wielu numerów;
-- `Active Directory/Reset user password and SMS.ps1` — wyszukiwalny wybór z istniejącego cache użytkowników Jira, case-insensitive dopasowanie `Jira emailAddress -> AD UserPrincipalName`, 12-znakowe hasło, reset, odblokowanie i SMS na atrybut `mobile`;
+- `Active Directory/Reset user password and SMS.ps1` — wyszukiwalny wybór bezpośrednio z istniejącego cache użytkowników Jira; opcja niesie Jira `emailAddress`/UPN, a dopiero przy wykonaniu wybrany UPN jest dopasowywany dokładnie do jednego AD `UserPrincipalName`; następnie generowane jest 12-znakowe hasło, konto jest resetowane/odblokowywane, a SMS trafia na atrybut `mobile`;
 - `Active Directory/Create user and SMS.ps1` — utworzenie konta w dozwolonym OU oraz wysłanie tymczasowego hasła na podany numer.
 
-Operacje AD są objęte Approval. `ChangePasswordAtLogon` jest domyślnie włączone i można je odznaczyć. Lista resetu nie publikuje numerów telefonów. Po odczycie współdzielonego cache Jira backend przekazuje do AD tylko znormalizowane adresy e-mail/UPN. Selector używa bezpośredniego `System.DirectoryServices` bridge z ograniczonymi filtrami LDAP w paczkach i nie importuje modułu PowerShell `ActiveDirectory` ani domyślnego dysku `AD:`. Machine output jest jednym UTF-8 JSON envelope; surowy Windows PowerShell CLIXML/stderr nie jest publikowany w dialogu. Search filtruje lokalnie już załadowaną listę i nie wykonuje zapytania Jira/AD przy każdym znaku. Reset pobiera `mobile` ponownie bezpośrednio z AD przed wysłaniem SMS.
+Operacje AD są objęte Approval. `ChangePasswordAtLogon` jest domyślnie włączone i można je odznaczyć. Lista resetu nie publikuje numerów telefonów. Otwarcie dialogu nie uruchamia już live zapytania do AD dla całego cache Jira: backend zwraca deduplikowane aktywne tożsamości z użytecznym UPN/e-mailem bezpośrednio z kanonicznego cache. Search filtruje lokalnie już załadowaną listę i nie wykonuje zapytania Jira/AD przy każdym znaku. Przy wykonaniu resetu wybrany UPN jest walidowany i rozwiązywany jednym dokładnym `Get-ADUser` po `UserPrincipalName`; operacja kończy się błędem, jeśli nie istnieje dokładnie jedno konto. Reset pobiera `mobile` bezpośrednio z AD przed wysłaniem SMS. Maintained `System.DirectoryServices` bridge pozostaje wewnętrznym/fallbackowym ownerem bounded zapytań AD i nadal nie publikuje surowego CLIXML.
 
 Wysyłka SMS jawnie ustawia po stronie SMSAPI `encoding=utf-8`. Ścieżka PowerShell używana przez operacje AD koduje wartości formularza przez `.NET Uri.EscapeDataString()` przed wywołaniem HTTP, więc do `Invoke-RestMethod` trafia już ASCII-safe percent-encoded body reprezentujący bajty UTF-8; zachowany jest również `application/x-www-form-urlencoded; charset=UTF-8`.
 

@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.129`](0.1.129.md) — loads reset users directly from the canonical Jira cache and resolves only the selected UPN against AD at execution time instead of blocking dialog open on a whole-cache AD intersection;
 - [`0.1.128`](0.1.128.md) — changes only AD account create/reset SMS wording to ASCII-safe Polish without diacritics after repeated real received-message mojibake;
 - [`0.1.127`](0.1.127.md) — makes bundled My Scripts metadata, dynamic options and execution share one canonical `seed/MyScripts` source instead of allowing stale persistent script trees to shadow current definitions;
 - [`0.1.126`](0.1.126.md) — makes Git deployment fail closed unless the actual MeshCentral service loads the exact staged MC-SIRK runtime, proven by artifact hashes and a fresh runtime-state marker;
