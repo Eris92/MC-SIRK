@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.1-dev.124`](0.1.1-dev.124.md) — removes the ActiveDirectory module/CLIXML failure path from the reset selector with a bounded UTF-8 DirectoryServices bridge;
 - [`0.1.1-dev.123`](0.1.1-dev.123.md) — corrects the dev.122 real-smoke reset-list latency with bounded Jira-UPN/AD matching and makes Windows PowerShell SMS forms ASCII-safe UTF-8 percent encoded;
 - [`0.1.1-dev.122`](0.1.1-dev.122.md) — corrects the dev.121 real-smoke AD reset cache credential boundary and preserves Polish SMS text through explicit UTF-8 transport;
 - [`0.1.1-dev.121`](0.1.1-dev.121.md) — built-in SMS/Voice SMS/SMTP Relay default to direct execution, while Approval Center immediately transitions requester confirmations and shows Jira User/Assets context;
