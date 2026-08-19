@@ -36,3 +36,6 @@ jobs:
       - name: Validate SMS UTF-8 form encoding
         shell: powershell
         run: .\test\windows-sms-utf8-smoke.ps1
+      - name: Validate AD selector bridge
+        shell: powershell
+        run: .\test\windows-ad-selector-bridge-smoke.ps1
