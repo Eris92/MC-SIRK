@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.127`](0.1.127.md) — makes bundled My Scripts metadata, dynamic options and execution share one canonical `seed/MyScripts` source instead of allowing stale persistent script trees to shadow current definitions;
 - [`0.1.126`](0.1.126.md) — makes Git deployment fail closed unless the actual MeshCentral service loads the exact staged MC-SIRK runtime, proven by artifact hashes and a fresh runtime-state marker;
 - [`0.1.125`](0.1.125.md) — made development revisions visible to MeshCentral's plugin updater and added version-aware backend reload; real smoke later remained completely unchanged, so deployment activation was not proven;
 - [`0.1.1-dev.124`](0.1.1-dev.124.md) — removed the ActiveDirectory module/CLIXML selector path with a bounded UTF-8 DirectoryServices bridge; real smoke later remained unchanged;
