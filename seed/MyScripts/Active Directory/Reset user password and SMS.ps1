@@ -26,6 +26,6 @@ $password = New-SirkPassword
 Set-ADAccountPassword -Identity $user -Reset -NewPassword (ConvertTo-SecureString $password -AsPlainText -Force) -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
 Unlock-ADAccount -Identity $user -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
 Set-ADUser -Identity $user -ChangePasswordAtLogon ([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$') -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
-$smsText = "Hasło w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało zmienione. Tymczasowe hasło:`r`n`r`n$password"
+$smsText = "Haslo w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostalo zmienione. Tymczasowe haslo:`r`n`r`n$password"
 Send-SirkSms -Number ([string]$user.Mobile) -Text $smsText
 [ordered]@{ success = $true; user = [string]$user.SamAccountName; mobile = ([string]$user.Mobile -replace '.(?=.{4})','*'); changeAtLogon = ([string]$ChangeAtLogon -match '^(1|true|yes|tak|on)$') }

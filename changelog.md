@@ -1,3 +1,14 @@
+## 0.1.128 - 2026-08-19
+
+- Record the real `0.1.127` Issue #382 follow-up as still unchanged for the user's SMS problem.
+- Narrow this iteration to the user-requested received AD account SMS text only; do not change the reset selector, DirectoryServices bridge or SMS transport again.
+- Replace Polish diacritics in create/reset account SMS wording with ASCII-safe Polish (`Haslo`, `zostalo`, `Tymczasowe haslo`) while preserving the configured domain, requested blank line, temporary password and no-login/no-UPN contract.
+- Add regression coverage proving both AD-account `$smsText` lines are ASCII-only so those two messages contain no encoding-sensitive code points that can become mojibake after provider transport.
+- Keep generic SMS UTF-8 support and Polish UI labels unchanged.
+- Keep Issue #382 OPEN until one actually received create/reset SMS accepts the new wording; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.128.md`.
+
 ## 0.1.127 - 2026-08-19
 
 - Record the real `0.1.126` Issue #382 follow-up as still unchanged; keep #382/#386 open and do not count deployment CI as feature acceptance.

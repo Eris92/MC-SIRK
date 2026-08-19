@@ -187,14 +187,16 @@ function hasUtf8Bom(filePath) {
     assert.ok(/for\(\$number=2;\$number -le 9999/.test(createSource), "Login allocation must have a numeric collision fallback.");
     assert.ok(/MYSCRIPTS_AD_USER_LOCATIONS_JSON/.test(createSource), "AD account creation must enforce the configured OU allowlist.");
     assert.ok(/Set-ADAccountPassword/.test(resetSource) && /Unlock-ADAccount/.test(resetSource) && /ChangePasswordAtLogon/.test(resetSource));
-    assert.ok(createSource.indexOf('Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało utworzone. Tymczasowe hasło:`r`n`r`n$password') >= 0,
-        "Create-account SMS must contain the configured AD domain, requested punctuation, a blank line and the temporary password.");
-    assert.ok(resetSource.indexOf('Hasło w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostało zmienione. Tymczasowe hasło:`r`n`r`n$password') >= 0,
-        "Reset SMS must contain the configured AD domain, requested punctuation, a blank line and the temporary password.");
-    assert.ok(createSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0].indexOf("$upn") < 0,
-        "Create-account SMS text must not expose the generated login/UPN.");
-    assert.ok(resetSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0].indexOf("$AdUser") < 0,
-        "Reset SMS text must not expose the account login.");
+    assert.ok(createSource.indexOf('Konto w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostalo utworzone. Tymczasowe haslo:`r`n`r`n$password') >= 0,
+        "Create-account SMS must contain the configured AD domain, ASCII-safe Polish wording, a blank line and the temporary password.");
+    assert.ok(resetSource.indexOf('Haslo w domenie $($env:MYSCRIPTS_AD_DOMAIN), zostalo zmienione. Tymczasowe haslo:`r`n`r`n$password') >= 0,
+        "Reset SMS must contain the configured AD domain, ASCII-safe Polish wording, a blank line and the temporary password.");
+    var createSmsLine = createSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0];
+    var resetSmsLine = resetSource.split(/\r?\n/).filter(function (line) { return /\$smsText\s*=/.test(line); })[0];
+    assert.strictEqual(/[^\x00-\x7F]/.test(createSmsLine), false, "Create-account SMS wording must remain ASCII-only so no Polish diacritic can turn into mojibake in the received message.");
+    assert.strictEqual(/[^\x00-\x7F]/.test(resetSmsLine), false, "Reset SMS wording must remain ASCII-only so no Polish diacritic can turn into mojibake in the received message.");
+    assert.ok(createSmsLine.indexOf("$upn") < 0, "Create-account SMS text must not expose the generated login/UPN.");
+    assert.ok(resetSmsLine.indexOf("$AdUser") < 0, "Reset SMS text must not expose the account login.");
     assert.strictEqual(createSource.indexOf("UÅ"), -1);
     assert.strictEqual(resetSource.indexOf("UÅ"), -1);
     assert.ok(/RandomNumberGenerator/.test(sharedSource) && !/Get-Random/.test(sharedSource), "Passwords must use a cryptographic random-number generator.");
@@ -214,7 +216,7 @@ function hasUtf8Bom(filePath) {
     assert.ok(/applyUserFilter/.test(filterBlock) && filterBlock.indexOf("provider(") < 0 && filterBlock.indexOf("loadDynamic(") < 0,
         "Typing in the shared Search field must filter the already loaded list locally without backend requests.");
 
-    console.log("SMSAPI UTF-8, Jira-cache/AD UPN matching and searchable localized account workflows: OK");
+    console.log("SMSAPI UTF-8, Jira-cache/AD UPN matching and ASCII-safe AD account SMS workflows: OK");
 })().catch(function (error) {
     console.error(error && error.stack || error);
     process.exitCode = 1;
