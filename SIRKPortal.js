@@ -20,6 +20,36 @@ function diskVersion() {
     return version;
 }
 
+function runtimeDataRoot(parent) {
+    var meshServer = parent && parent.parent;
+    var dataBase = meshServer && meshServer.datapath
+        ? meshServer.datapath
+        : path.dirname(parent && parent.pluginPath || __dirname);
+    return path.join(dataBase, "sirk-platform-data");
+}
+
+function writeRuntimeState(parent, plugin, version) {
+    var root = runtimeDataRoot(parent);
+    var target = path.join(root, "runtime-state.json");
+    var temporary = target + "." + process.pid + ".tmp";
+    var runtimeVersion = String(plugin && plugin.runtime && plugin.runtime.version || "").trim();
+    var state = {
+        version: String(version || ""),
+        runtimeVersion: runtimeVersion,
+        pid: process.pid,
+        pluginRoot: path.resolve(__dirname),
+        loadedAt: new Date().toISOString()
+    };
+
+    fs.mkdirSync(root, { recursive: true });
+    try {
+        fs.writeFileSync(temporary, JSON.stringify(state, null, 2) + "\n", "utf8");
+        fs.renameSync(temporary, target);
+    } finally {
+        try { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); } catch (ignored) {}
+    }
+}
+
 function clearInternalModuleCache() {
     Object.keys(require.cache).forEach(function (id) {
         var candidate = canonicalPath(id);
@@ -53,5 +83,10 @@ module.exports.SIRKPortal = function (parent) {
     var runtime = loadRuntime();
     var plugin = runtime.implementation.createPlugin(parent, "SIRKPortal");
     runtime.policies.forEach(function (policy) { policy.apply(plugin); });
+    try {
+        writeRuntimeState(parent, plugin, loadedVersion);
+    } catch (error) {
+        console.error("SIRK Platform runtime identity write failed", error);
+    }
     return plugin;
 };

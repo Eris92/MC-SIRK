@@ -1,8 +1,14 @@
 [
   {
+    "version": "0.1.126",
+    "date": "2026-08-19",
+    "summary": "Make Git deployment fail closed unless the real MeshCentral service loads the exact staged MC-SIRK runtime, proven by hashes and a fresh runtime-state marker.",
+    "notes": "docs/releases/0.1.126.md"
+  },
+  {
     "version": "0.1.125",
     "date": "2026-08-19",
-    "summary": "Make development revisions visible to MeshCentral plugin updates and reload MC-SIRK backend dependencies when the on-disk version changes.",
+    "summary": "Make development revisions visible to MeshCentral plugin updates and reload MC-SIRK backend dependencies when the on-disk version changes; real smoke later remained unchanged.",
     "notes": "docs/releases/0.1.125.md"
   },
   {

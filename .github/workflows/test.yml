@@ -30,6 +30,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Validate Git installer syntax
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path '.\tools\install\Install-SIRK-Portal-FromGit.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
       - name: Validate Network Connections shell namespace
         shell: powershell
         run: .\test\windows-network-shell-smoke.ps1
