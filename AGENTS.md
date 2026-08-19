@@ -82,10 +82,10 @@ Nie przywracaj historycznych aliasów, shimów, `MyCompany`, starych loaderów a
 
 MC-SIRK nie ma jeszcze pierwszego product release.
 
-- aktualna linia development: `0.1.1-dev.X`;
-- odpowiada ona preferowanej konwencji użytkownika `0.1.1.X`;
+- aktualna linia development: `0.1.X`, gdzie trzeci segment `X` jest kolejną rewizją development;
+- historyczna linia `0.1.1-dev.X` pozostaje dowodem wcześniejszego developmentu, ale od rewizji 125 nie jest używana, ponieważ MeshCentral usuwa suffix `-...` przed porównaniem wersji pluginów;
 - `package.json` i `config.json` muszą mieć identyczną wersję;
-- każda zakończona i zweryfikowana zmiana techniczna przeznaczona do integracji/testu na `main` podnosi rewizję `dev.X` przed merge; kilka zmian w jednym jeszcze niezintegrowanym kandydacie może współdzielić jeden bump;
+- każda zakończona i zweryfikowana zmiana techniczna przeznaczona do integracji/testu na `main` podnosi trzeci segment `X` przed merge; kilka zmian w jednym jeszcze niezintegrowanym kandydacie może współdzielić jeden bump;
 - historyczne `1.8.x` są wewnętrznymi snapshotami developmentu i nie są źródłem kolejnego numeru;
 - nie twórz nowych `1.x`, `2.x`, `3.x` ani `1.0.0` bez jawnego otwarcia release gate przez użytkownika;
 - nie twórz automatycznie tagu/GitHub Release przy zwykłym bumpie development revision.
@@ -105,7 +105,7 @@ Przy pracy z Issue:
 ## Commit, push, bump i merge — stała reguła użytkownika
 
 - Zakończone i zweryfikowane zmiany należące do bieżącego zadania commituj i wypychaj automatycznie; nie czekaj na osobne polecenie `commit` ani `push`.
-- Dla zmiany technicznej przeznaczonej do instalacji lub realnego smoke zawsze przygotuj kolejną rewizję `0.1.1-dev.X`, zsynchronizuj aktywne źródła wersji i development notes przed integracją. Nie twórz drugiego pustego bumpu tylko dlatego, że do tego samego jeszcze niezmergowanego kandydata doszła zmiana instrukcji/dokumentacji.
+- Dla zmiany technicznej przeznaczonej do instalacji lub realnego smoke zawsze przygotuj kolejną rewizję `0.1.X`, zsynchronizuj aktywne źródła wersji i development notes przed integracją. Nie twórz drugiego pustego bumpu tylko dlatego, że do tego samego jeszcze niezmergowanego kandydata doszła zmiana instrukcji/dokumentacji.
 - Przed integracją potwierdź zakres diffu, targeted tests, wymagany pełny `npm test`, spójność wersji i docelową gałąź; stosuj zwykły projektowy workflow branch/PR.
 - Gdy wymagane testy są zielone, diff jest oczekiwany, PR jest mergeable i nie ma blockerów bezpieczeństwa/struktury, scal PR automatycznie do kanonicznego `main` bez czekania na osobne polecenie `merge`. Dotyczy to także buildów przeznaczonych do realnego smoke; powiązane Issue może pozostać otwarte do potwierdzenia acceptance criteria.
 - Jeśli CI jest czerwone, diff zawiera nieoczekiwany zakres, PR nie jest mergeable albo acceptance wymaga najpierw dodatkowej weryfikacji przed integracją, nie scalaj; napraw problem i kontynuuj autonomicznie.
