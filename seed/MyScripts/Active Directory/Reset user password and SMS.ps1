@@ -20,7 +20,11 @@ Import-Module ActiveDirectory -ErrorAction Stop
 
 $adSecure = ConvertTo-SecureString $env:MYSCRIPTS_AD_PASSWORD -AsPlainText -Force
 $adCredential = [pscredential]::new($env:MYSCRIPTS_AD_LOGIN, $adSecure)
-$user = Get-ADUser -Identity $AdUser -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential -Properties DisplayName,Mobile
+$selectedUpn = ([string]$AdUser).Trim()
+if ($selectedUpn -notmatch '^[^@\s\(\)\\\*]+@[^@\s\(\)\\\*]+$') { throw 'Selected Jira user has no valid UPN/e-mail identity.' }
+$matches = @(Get-ADUser -LDAPFilter "(userPrincipalName=$selectedUpn)" -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential -Properties DisplayName,Mobile | Select-Object -First 2)
+if ($matches.Count -ne 1) { throw 'Selected Jira user does not map to exactly one Active Directory account by UserPrincipalName.' }
+$user = $matches[0]
 if ([string]::IsNullOrWhiteSpace([string]$user.Mobile)) { throw 'Selected user has no mobile number in Active Directory.' }
 $password = New-SirkPassword
 Set-ADAccountPassword -Identity $user -Reset -NewPassword (ConvertTo-SecureString $password -AsPlainText -Force) -Server $env:MYSCRIPTS_AD_DOMAIN -Credential $adCredential
