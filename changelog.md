@@ -1,3 +1,14 @@
+## 0.1.126 - 2026-08-19
+
+- Record the real `0.1.125` Issue #382/#386 smoke as ineffective because the user observed no behavior change after the update/runtime candidate.
+- Correct the maintained Git installer so it no longer assumes `meshcentral.exe` is the Windows service name; auto-detect the upstream-standard `MeshCentral` service first, then a unique service whose command belongs to the configured MeshCentral root, with explicit `-ServiceName` as the fail-closed override.
+- Hash the complete staged runtime artifact with SHA-256 and verify the installed plugin tree and `config.json` version before restarting MeshCentral.
+- Have the stable `SIRKPortal.js` entrypoint write `sirk-platform-data/runtime-state.json` with the disk version, loaded runtime version, PID and actual plugin root; installer success now requires a fresh matching proof after the real service reaches Running.
+- Keep the AD DirectoryServices selector and UTF-8 SMS transport unchanged until deployment evidence proves that the intended backend/script files are actually loaded.
+- Keep Issues #386 and #382 open for real `0.1.126` activation proof and subsequent AD selector / received-SMS acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.126.md`.
+
 ## 0.1.125 - 2026-08-19
 
 - Record the real `0.1.1-dev.124` Issue #382 smoke as ineffective because both the reset selector and the actually received SMS remained unchanged.
