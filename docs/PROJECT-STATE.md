@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.126`
+Current version: `0.1.127`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -46,6 +46,8 @@ meshcentral-data/sirk-platform-data
 
 `runtime-state.json` w tym katalogu jest małym, nie-sekretnym dowodem aktywnej instancji pluginu: zawiera wersję z dysku, wersję załadowanego runtime, PID, rzeczywisty plugin root i czas załadowania. Instalator usuwa poprzedni marker przed restartem i akceptuje deployment dopiero po pojawieniu się świeżego, zgodnego stanu.
 
+Bundled My Scripts mają jeden kanoniczny source root: `pluginRoot/seed/MyScripts`. Metadata/tree/dynamic options oraz wykonanie używają tego samego katalogu. Historyczne katalogi skryptów pod `sirk-platform-data` nie są usuwane ani modyfikowane, ale nie mogą przesłaniać bundled definitions.
+
 Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami ani historycznymi warstwami DOM/runtime.
 
 ## Kanoniczni ownerzy
@@ -60,6 +62,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `server/core/sms-service.js` — server-side owner wysyłki SMS i Voice SMS przez SMSAPI.pl, w tym multi-recipient, maskowanie numerów w output oraz jawne `encoding=utf-8` dla SMS;
 - `server/core/ad-directory-service.js` — jeden bounded owner dopasowania cache użytkowników Jira do AD przez `emailAddress -> UserPrincipalName`; jego bezpośredni Windows bridge `ad-directory-query.ps1` odpytuje tylko żądane UPN przez `System.DirectoryServices`, bez importu modułu ActiveDirectory/defaultowego `AD:` i bez publikowania surowego CLIXML; numer `mobile` nie jest publikowany w opcjach;
 - `server/core/sms-external-api.js` — chroniony oddzielnym tokenem endpoint `POST /sirk-sms/v1/send` z limitem 30 żądań/minutę/adres IP;
+- `server/core/automation-root.js` — jeden source-root owner bundled My Scripts: zawsze `pluginRoot/seed/MyScripts`; persistent data-root directories nie shadowują metadata ani dynamic-option definitions;
 - `server/modules/automation/index.js` — publiczny My Scripts access boundary; ścieżki z segmentem `_...`, w tym `_shared`, pozostają wewnętrzne i nie są publikowane ani wykonywane przez publiczne My Scripts API; `ad-users` wymaga credentialu AD, ale konsumuje server-owned Jira users cache bez redundantnego przypisania Jira do skryptu resetu;
 - `public/shared/core.js` — workspace, menu, aktywny moduł, request guard oraz finalne first-paint klasy/active state/geometria i source ikon left menu; brakujący menu node jest tworzony dopiero po zakończeniu bieżącego natywnego `goPageEnd`, a późniejsza rekonsyliacja nie przepisuje niezmienionego widocznego stanu;
 - `public/shared/ui/settings.js` / `SirkIconMode` — jeden browser owner polityki `auto/classic/modern` dla ikon menu;
@@ -138,15 +141,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.126
-config.json  -> 0.1.126
+package.json -> 0.1.127
+config.json  -> 0.1.127
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.126.md`.
+Aktualne development notes: `docs/releases/0.1.127.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

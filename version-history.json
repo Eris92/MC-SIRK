@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.127",
+    "date": "2026-08-19",
+    "summary": "Make bundled My Scripts metadata, dynamic options and execution share one canonical seed source so stale persistent script trees cannot shadow current definitions.",
+    "notes": "docs/releases/0.1.127.md"
+  },
+  {
     "version": "0.1.126",
     "date": "2026-08-19",
     "summary": "Make Git deployment fail closed unless the real MeshCentral service loads the exact staged MC-SIRK runtime, proven by hashes and a fresh runtime-state marker.",

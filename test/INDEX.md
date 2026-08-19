@@ -8,6 +8,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | lokalizacja skryptów | `script-localization.test.js` |
 | folder permissions | `folder-access.test.js` |
 | SMSAPI, zewnętrzny endpoint i workflow kont AD | `sms-ad-workflows.test.js` |
+| My Scripts canonical bundled source i brak persistent shadowing | `myscripts-source-ownership.test.js` |
 | MeshCentral-visible wersja, reload cache backendu i verified installer/runtime activation proof | `plugin-update-runtime.test.js` |
 | SMTP Relay, multiline body i ograniczone załączniki | `smtp-relay-workflow.test.js` |
 | wspólny wygląd wierszy Approval, Commands, My Scripts i Quick | `shared-list-quick-style.test.js` |

@@ -1,3 +1,14 @@
+## 0.1.127 - 2026-08-19
+
+- Record the real `0.1.126` Issue #382 follow-up as still unchanged; keep #382/#386 open and do not count deployment CI as feature acceptance.
+- Correct the My Scripts source split where `automation-root.js` could prefer persistent `sirk-platform-data` script trees for metadata while execution always used `pluginRoot/seed/MyScripts`.
+- Make bundled My Scripts metadata/tree/dynamic options and execution share one canonical `seed/MyScripts` owner; legacy persistent script directories remain untouched but no longer shadow current definitions.
+- Add a regression with stale persistent AD reset copies proving the bundled `ad-users` and local Search metadata remains authoritative and legacy files are not modified.
+- Preserve the current bounded DirectoryServices AD selector bridge and ASCII-safe percent-encoded SMS UTF-8 transport unchanged.
+- Keep Issue #382 open for real selector/received-SMS acceptance and Issue #386 open for real runtime activation acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.127.md`.
+
 ## 0.1.126 - 2026-08-19
 
 - Record the real `0.1.125` Issue #382/#386 smoke as ineffective because the user observed no behavior change after the update/runtime candidate.

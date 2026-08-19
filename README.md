@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.126
+# SIRK Management Platform 0.1.127
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.126.md)
+- [Aktualne development notes](docs/releases/0.1.127.md)
 
 ## Warstwy
 
@@ -173,6 +173,8 @@ Jedyny katalog danych runtime:
 ```text
 meshcentral-data/sirk-platform-data
 ```
+
+Bundled My Scripts mają jednego właściciela źródła w `seed/MyScripts`: z tego samego katalogu pochodzą metadata/tree/dynamic options i wykonywany plik. Historyczne katalogi skryptów pod `sirk-platform-data` nie są usuwane, ale nie mogą już przesłaniać aktualnych bundled definitions.
 
 Plugin nie odczytuje, nie kopiuje i nie migruje `meshcentral-data/mycompany-data`.
 
