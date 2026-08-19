@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.128",
+    "date": "2026-08-19",
+    "summary": "Use ASCII-safe Polish wording without diacritics for AD account create/reset SMS after repeated real received-message mojibake.",
+    "notes": "docs/releases/0.1.128.md"
+  },
+  {
     "version": "0.1.127",
     "date": "2026-08-19",
     "summary": "Make bundled My Scripts metadata, dynamic options and execution share one canonical seed source so stale persistent script trees cannot shadow current definitions.",
