@@ -47,10 +47,15 @@ function Resolve-MeshCentralService {
         return $requested[0]
     }
 
-    $standard = @($services | Where-Object { [string]$_.Name -ieq 'MeshCentral' })
-    if ($standard.Count -eq 1) { return $standard[0] }
-
     $normalizedRoot = [IO.Path]::GetFullPath($Root).TrimEnd([char[]]'\/')
+    $standard = @($services | Where-Object { [string]$_.Name -ieq 'MeshCentral' })
+    if ($standard.Count -eq 1) {
+        $standardCommand = [Environment]::ExpandEnvironmentVariables([string]$standard[0].PathName)
+        if ($standardCommand -and $standardCommand.IndexOf($normalizedRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $standard[0]
+        }
+    }
+
     $matches = @($services | Where-Object {
         $command = [Environment]::ExpandEnvironmentVariables([string]$_.PathName)
         $command -and
