@@ -1,3 +1,14 @@
+## 0.1.128 - 2026-08-19
+
+- Record the real `0.1.127` Issue #382 follow-up as still unchanged for the user's SMS problem.
+- Narrow this iteration to the user-requested received AD account SMS text only; do not change the reset selector, DirectoryServices bridge or SMS transport again.
+- Replace Polish diacritics in create/reset account SMS wording with ASCII-safe Polish (`Haslo`, `zostalo`, `Tymczasowe haslo`) while preserving the configured domain, requested blank line, temporary password and no-login/no-UPN contract.
+- Add regression coverage proving both AD-account `$smsText` lines are ASCII-only so those two messages contain no encoding-sensitive code points that can become mojibake after provider transport.
+- Keep generic SMS UTF-8 support and Polish UI labels unchanged.
+- Keep Issue #382 OPEN until one actually received create/reset SMS accepts the new wording; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.128.md`.
+
 ## 0.1.127 - 2026-08-19
 
 - Record the real `0.1.126` Issue #382 follow-up as still unchanged; keep #382/#386 open and do not count deployment CI as feature acceptance.
@@ -24,7 +35,7 @@ Current development notes: `docs/releases/0.1.126.md`.
 
 - Record the real `0.1.1-dev.124` Issue #382 smoke as ineffective because both the reset selector and the actually received SMS remained unchanged.
 - Correct the underlying native MeshCentral update contract: use numeric `0.1.X` revisions because the current MeshCentral plugin comparator removes prerelease suffixes before comparing versions, which made the earlier `0.1.1-dev.X` revisions indistinguishable.
-- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk plugin version changes.
+- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk version changes.
 - Preserve the dev.124 AD DirectoryServices bridge and dev.123 SMS transport unchanged until the real environment proves that the intended backend revision is actually active.
 - Require one normal MeshCentral backend restart for the first `0.1.125` installation so the new stable bootstrap itself replaces the already cached pre-fix entrypoint.
 - Preserve the exact changelog through `0.1.1-dev.124` in `docs/releases/changelog-through-0.1.1-dev.124.md`; all historical development notes remain indexed in `docs/releases/README.md`.
@@ -36,7 +47,7 @@ Current development notes: `docs/releases/0.1.125.md`.
 - Correct the real dev.123 AD reset selector failure where Windows PowerShell ActiveDirectory module progress/failure surfaced as raw `#< CLIXML` with mojibake and the user list remained empty.
 - Replace the selector-only `Import-Module ActiveDirectory` / `Get-ADUser` hot path with one bounded `System.DirectoryServices` bridge querying only Jira-cache UPN identities in escaped LDAP chunks.
 - Emit one explicit UTF-8 JSON envelope from the bridge, suppress non-data PowerShell streams and never copy raw stderr/CLIXML into the native parameter dialog.
-- Keep the selector bounded to 15 seconds, preserve local Search and the Jira `emailAddress -> AD UserPrincipalName -> sAMAccountName` contract without a new cache, timer, observer or per-search request.
+- Keep the selector bounded to 15 seconds, preserve local Search and the Jira `emailAddress -> UserPrincipalName -> sAMAccountName` contract without a new cache, timer, observer or per-search request.
 - Preserve dev.123 percent-encoded SMS transport unchanged; Issue #382 remains open until both the real selector and actually received Polish SMS are accepted.
 
 Current development notes: `docs/releases/0.1.1-dev.124.md`.
