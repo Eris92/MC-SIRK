@@ -57,7 +57,7 @@ Przed jakimkolwiek tagiem/GitHub Release:
 7. nie używaj `1.0.0+` bez jawnego otwarcia release gate;
 8. po publikacji zweryfikuj rzeczywisty artefakt albo wpis release.
 
-Zwykły bump `0.1.1-dev.X` nie oznacza zgody na utworzenie taga/GitHub Release.
+Zwykły bump `0.1.X` nie oznacza zgody na utworzenie taga/GitHub Release.
 
 ## Wersja pluginu MeshCentral
 
@@ -65,12 +65,13 @@ Przy zmianie wersji pluginu:
 
 1. ustal root konkretnego pluginu i nie pomyl jego `config.json` z głównym `config.json` MeshCentral,
 2. odczytaj bieżące pole `version` z pluginowych `package.json` i `config.json`,
-3. dla MC-SIRK stosuj linię `0.1.1-dev.X`, odpowiadającą preferowanej konwencji `0.1.1.X`,
-4. nie kontynuuj historycznej numeracji `1.8.x`,
-5. jeżeli oba pliki istnieją, zmień `version` w obu w ramach tej samej zmiany,
-6. zaktualizuj `version-history.json`, `changelog.md` i bieżący development draft, jeśli zakres obejmuje bump,
-7. przed stagingiem, commitem, tagiem i push ponownie odczytaj oba źródła i potwierdź identyczną wersję,
-8. zatrzymaj publikację przy rozbieżności albo niejednoznacznym źródle wersji.
+3. dla MC-SIRK od rewizji 125 stosuj linię `0.1.X`, gdzie trzeci segment jest kolejną rewizją development widoczną dla natywnego porównania wersji MeshCentral,
+4. historyczną linię `0.1.1-dev.X` zachowuj wyłącznie jako evidence wcześniejszych rewizji; nie używaj suffixu `-dev.X` jako jedynej zmiennej części nowej wersji,
+5. nie kontynuuj historycznej numeracji `1.8.x`,
+6. jeżeli oba pliki istnieją, zmień `version` w obu w ramach tej samej zmiany,
+7. zaktualizuj `version-history.json`, `changelog.md` i bieżący development draft, jeśli zakres obejmuje bump,
+8. przed stagingiem, commitem, tagiem i push ponownie odczytaj oba źródła i potwierdź identyczną wersję,
+9. zatrzymaj publikację przy rozbieżności albo niejednoznacznym źródle wersji.
 
 Nie podnoś wersji automatycznie przy każdym zwykłym pushu. Dokumentacja-only zwykle nie wymaga bumpu.
 
