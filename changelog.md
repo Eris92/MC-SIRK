@@ -1,3 +1,13 @@
+## 0.1.1-dev.124 - 2026-08-19
+
+- Correct the real dev.123 AD reset selector failure where Windows PowerShell ActiveDirectory module progress/failure surfaced as raw `#< CLIXML` with mojibake and the user list remained empty.
+- Replace the selector-only `Import-Module ActiveDirectory` / `Get-ADUser` hot path with one bounded `System.DirectoryServices` bridge querying only Jira-cache UPN identities in escaped LDAP chunks.
+- Emit one explicit UTF-8 JSON envelope from the bridge, suppress non-data PowerShell streams and never copy raw stderr/CLIXML into the native parameter dialog.
+- Keep the selector bounded to 15 seconds, preserve local Search and the Jira `emailAddress -> AD UserPrincipalName -> sAMAccountName` contract without a new cache, timer, observer or per-search request.
+- Preserve dev.123 percent-encoded SMS transport unchanged; Issue #382 remains open until both the real selector and actually received Polish SMS are accepted.
+
+Current development notes: `docs/releases/0.1.1-dev.124.md`.
+
 ## 0.1.1-dev.123 - 2026-08-18
 
 - Correct the real dev.122 reset-selector latency by matching only Jira-cache e-mail identities to AD `UserPrincipalName` through escaped, chunked LDAP filters instead of enumerating up to 10,000 directory users for every dialog open.
