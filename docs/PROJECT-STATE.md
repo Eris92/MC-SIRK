@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.131`
+Current version: `0.1.132`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -74,7 +74,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/shared/ui/toolbar.js` + `toolbar-api.js` — toolbar i Edit/Multi;
 - `public/shared/ui/toolbar-config.js` — `MeshThemeAdapter` i integracja natywnych klas MeshCentral;
 - `public/shared/ui/parameter-dialog.js` — jeden owner natywnego MeshCentral parameter/confirmation dialog lifecycle; w Modern udany parameter submit jest finalizowany dopiero po hostowym `hidden.bs.modal`, aby kolejny dialog nie ścigał się z trwającym hide transition;
-- `public/shared/ui/results.js` — wyniki, CSV oraz live content Results montowany do natywnego dialog managera MeshCentral; dla nagromadzonego outputu wybiera najnowszy `CSV_DOWNLOAD:` i uruchamia pobranie przez transient same-origin attachment link bez nawigacji workspace;
+- `public/shared/ui/results.js` — wyniki, CSV oraz live content Results montowany do natywnego dialog managera MeshCentral; dla nagromadzonego CSV wybiera najnowszy `CSV_DOWNLOAD:`, pokazuje tylko bieżący report summary i najnowszą liczbę rekordów, zachowuje pełny output w `Debug / raw output` oraz pobiera przez transient same-origin attachment link bez nawigacji workspace;
 - `public/modules/automation/index.js` — My Scripts renderer i browser-side per-script single-flight guard zapobiegający równoległym duplicate submitom tej samej ścieżki;
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
@@ -143,15 +143,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.131
-config.json  -> 0.1.131
+package.json -> 0.1.132
+config.json  -> 0.1.132
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.131.md`.
+Aktualne development notes: `docs/releases/0.1.132.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

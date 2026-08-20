@@ -1,3 +1,13 @@
+## 0.1.132 - 2026-08-20
+
+- Keep full accumulated CSV execution text in `Debug / raw output` while making the normal Results body authoritative for the current downloadable artifact.
+- When generated-report text is present, show only the line for the latest `CSV_DOWNLOAD:` path plus the latest record count and replace the visible server filesystem path with the CSV basename.
+- Preserve structured CSV result bodies that use a download marker plus JSON/table output, and preserve non-CSV output unchanged.
+- Reuse `public/shared/ui/results.js` without a new renderer, observer, timer or polling loop.
+- Add generated-download regression coverage for historical-block compaction, newest-marker alignment, raw preservation and structured-result compatibility; keep Issue #400 OPEN for real MeshCentral acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.132.md`.
+
 ## 0.1.131 - 2026-08-20
 
 - Record the real `0.1.130` Issue #397 smoke: CSV download now works, but duplicate report executions still reach the backend despite browser-side single-flight.
@@ -67,7 +77,7 @@ Current development notes: `docs/releases/0.1.126.md`.
 
 - Record the real `0.1.1-dev.124` Issue #382 smoke as ineffective because both the reset selector and the actually received SMS remained unchanged.
 - Correct the underlying native MeshCentral update contract: use numeric `0.1.X` revisions because the current MeshCentral plugin comparator removes prerelease suffixes before comparing versions, which made the earlier `0.1.1-dev.X` revisions indistinguishable.
-- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk plugin version changes.
+- Keep `SIRKPortal.js` as a stable version-aware backend bootstrap that reuses the same-version runtime but reloads only MC-SIRK internal modules when the on-disk version changes.
 - Preserve the dev.124 AD DirectoryServices bridge and dev.123 SMS transport unchanged until the real environment proves that the intended backend revision is actually active.
 - Require one normal MeshCentral backend restart for the first `0.1.125` installation so the new stable bootstrap itself replaces the already cached pre-fix entrypoint.
 - Preserve the exact changelog through `0.1.1-dev.124` in `docs/releases/changelog-through-0.1.1-dev.124.md`; all historical development notes remain indexed in `docs/releases/README.md`.
