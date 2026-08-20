@@ -60,17 +60,31 @@ var sandbox = {
     clearTimeout: clearTimeout
 };
 vm.runInNewContext(results, sandbox, { filename: "results.js" });
-var parsed = sandbox.window.SharedResultsView.parseDownloadResult([
+var raw = [
     "Wygenerowano raport CSV: C:\\reports\\first.csv",
     "CSV_DOWNLOAD:C:\\reports\\first.csv",
-    "Liczba rekordow: 1613",
+    "Liczba rekordow: 1200",
     "Wygenerowano raport CSV: C:\\reports\\latest.csv",
     "CSV_DOWNLOAD:C:\\reports\\latest.csv",
     "Liczba rekordow: 1613"
-].join("\n"));
+].join("\n");
+var parsed = sandbox.window.SharedResultsView.parseDownloadResult(raw);
 assert.strictEqual(parsed.downloadPath, "C:\\reports\\latest.csv",
     "Accumulated output must download the newest generated CSV marker, not the first stale path.");
+assert.strictEqual(parsed.visible, "Wygenerowano raport CSV: latest.csv\nLiczba rekordow: 1613",
+    "Visible CSV output must contain only the current downloadable report and its latest record count.");
+assert.strictEqual(parsed.visible.indexOf("first.csv"), -1,
+    "Historical report paths must not remain in the normal Results body.");
 assert.strictEqual(parsed.visible.indexOf("CSV_DOWNLOAD:"), -1,
     "CSV marker lines must remain hidden from the visible result body.");
+assert.strictEqual(parsed.raw, raw,
+    "Raw/debug output must preserve the complete accumulated execution text for diagnostics.");
 
-console.log("Generated CSV download contract: OK");
+var structured = sandbox.window.SharedResultsView.parseDownloadResult([
+    "CSV_DOWNLOAD:C:\\reports\\structured.csv",
+    '{"title":"Report","rows":[{"Value":"ok"}]}'
+].join("\n"));
+assert.strictEqual(structured.visible, '{"title":"Report","rows":[{"Value":"ok"}]}',
+    "CSV markers must not collapse structured result bodies that do not use generated-report/count text.");
+
+console.log("Generated CSV download and current-summary contract: OK");
