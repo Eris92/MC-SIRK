@@ -32,6 +32,14 @@ function workflowAssignmentKey(script) {
     return match ? "@workflow:" + assignmentKey(match[1]) : "";
 }
 
+function entraVariableField(name) {
+    var key = String(name || "").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+    if (["tenantid", "tenant", "directoryid", "azuretenantid", "entratenantid"].indexOf(key) >= 0) return "tenantId";
+    if (["clientid", "appid", "applicationid", "azureclientid", "entraclientid"].indexOf(key) >= 0) return "clientId";
+    if (["clientsecret", "appsecret", "applicationsecret", "azureclientsecret", "entraclientsecret"].indexOf(key) >= 0) return "clientSecret";
+    return "";
+}
+
 module.exports.createServerScriptExecutor = function (options) {
     options = options || {};
     var context = options.context;
@@ -47,14 +55,63 @@ module.exports.createServerScriptExecutor = function (options) {
         return Math.max(30, Math.min(3600, Number(moduleSettings.runTimeoutSeconds) || 600)) * 1000;
     }
 
-    function validateValues(script, supplied) {
+    function assignedProfiles(script) {
+        if (admin && typeof admin.systemProfiles === "function") {
+            return admin.systemProfiles(script && script.path);
+        }
+        var assignments = context.secrets.get(assignmentNamespace);
+        assignments = assignments && typeof assignments === "object" ? assignments : {};
+        var workflowKey = workflowAssignmentKey(script);
+        var selected = workflowKey && assignments[workflowKey] || assignments[assignmentKey(script && script.path)];
+        return Array.isArray(selected) ? selected.map(String) : [];
+    }
+
+    function requireConfiguredProfiles(selected) {
+        var readiness = context.integrations.configured();
+        selected.forEach(function (name) {
+            if (readiness[name] !== true) {
+                throw new Error("System credential profile '" + name + "' is assigned but not configured globally.");
+            }
+        });
+    }
+
+    function systemVariableValues(script) {
+        var selected = assignedProfiles(script);
+        if (selected.indexOf("entra") < 0) return {};
+        requireConfiguredProfiles(selected);
+
+        var entra = context.integrations.get("entra");
+        var source = {
+            tenantId: String(entra.tenantId || ""),
+            clientId: String(entra.clientId || ""),
+            clientSecret: String(entra.clientSecret || "")
+        };
+        var values = {
+            TenantId: source.tenantId,
+            ClientId: source.clientId,
+            ClientSecret: source.clientSecret,
+            AppId: source.clientId,
+            AppSecret: source.clientSecret
+        };
+
+        (script.variables || []).concat(script.secretVariables || []).forEach(function (variable) {
+            var field = entraVariableField(variable && variable.name);
+            if (field) values[variable.name] = source[field];
+        });
+        return values;
+    }
+
+    function validateValues(script, supplied, skipSystemValues) {
         supplied = supplied && typeof supplied === "object" && !Array.isArray(supplied) ? supplied : {};
+        var systemValues = skipSystemValues === true ? {} : systemVariableValues(script);
         var values = {};
 
         (script.variables || []).forEach(function (variable) {
-            var value = Object.prototype.hasOwnProperty.call(supplied, variable.name)
-                ? supplied[variable.name]
-                : variable.defaultValue;
+            var value = Object.prototype.hasOwnProperty.call(systemValues, variable.name)
+                ? systemValues[variable.name]
+                : Object.prototype.hasOwnProperty.call(supplied, variable.name)
+                    ? supplied[variable.name]
+                    : variable.defaultValue;
             value = text(value, 4000);
             if (variable.control === "switch") value = bool(value) ? "true" : "false";
             if (variable.control === "select") {
@@ -73,28 +130,17 @@ module.exports.createServerScriptExecutor = function (options) {
         Object.keys(secrets || {}).forEach(function (name) {
             values[name] = String(secrets[name] == null ? "" : secrets[name]);
         });
+        Object.keys(systemValues).forEach(function (name) {
+            values[name] = String(systemValues[name] == null ? "" : systemValues[name]);
+        });
         return values;
-    }
-
-    function assignedProfiles(script) {
-        var assignments = context.secrets.get(assignmentNamespace);
-        assignments = assignments && typeof assignments === "object" ? assignments : {};
-        var workflowKey = workflowAssignmentKey(script);
-        var selected = workflowKey && assignments[workflowKey] || assignments[assignmentKey(script && script.path)];
-        return Array.isArray(selected) ? selected.map(String) : [];
     }
 
     function systemEnvironment(script) {
         var selected = assignedProfiles(script);
         var environment = {};
-        var readiness = context.integrations.configured();
+        requireConfiguredProfiles(selected);
         function enabled(name) { return selected.indexOf(name) >= 0; }
-
-        selected.forEach(function (name) {
-            if (readiness[name] !== true) {
-                throw new Error("System credential profile '" + name + "' is assigned but not configured globally.");
-            }
-        });
 
         if (enabled("ad")) {
             var ad = context.integrations.get("ad");
@@ -253,15 +299,15 @@ module.exports.createServerScriptExecutor = function (options) {
             return Promise.reject(new Error("The script changed after submission and was not executed."));
         }
 
+        executionOptions = executionOptions && typeof executionOptions === "object" ? executionOptions : {};
         var values;
-        try { values = validateValues(script, payload.variableValues); }
+        try { values = validateValues(script, payload.variableValues, executionOptions.skipSystemEnvironment === true); }
         catch (error) { return Promise.reject(error); }
 
         var plan;
         try { plan = buildPlan(script, values); }
         catch (error) { return Promise.reject(error); }
 
-        executionOptions = executionOptions && typeof executionOptions === "object" ? executionOptions : {};
         var environment = Object.assign(
             {},
             process.env,
