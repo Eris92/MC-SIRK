@@ -41,6 +41,27 @@
         return storedName || nodeId || summary || "—";
     }
 
+    function csvFileName(value) {
+        var parts = String(value || "").replace(/\\/g, "/").split("/");
+        return parts[parts.length - 1] || String(value || "");
+    }
+
+    function compactCsvVisible(lines, downloadPath) {
+        if (!downloadPath) return lines;
+        var selectedLine = "";
+        var selectedPathLower = String(downloadPath).toLocaleLowerCase();
+        var latestCount = "";
+        lines.forEach(function (line) {
+            var trimmed = String(line || "").trim();
+            if (!trimmed) return;
+            if (trimmed.toLocaleLowerCase().indexOf(selectedPathLower) >= 0) selectedLine = trimmed;
+            if (/^(?:liczba\s+rekord(?:ow|ów)|record\s+count|records?)\s*:/i.test(trimmed)) latestCount = trimmed;
+        });
+        if (!selectedLine) selectedLine = "CSV ready: " + csvFileName(downloadPath);
+        else selectedLine = selectedLine.replace(downloadPath, csvFileName(downloadPath));
+        return latestCount ? [selectedLine, latestCount] : [selectedLine];
+    }
+
     function parseDownloadResult(value) {
         var raw = String(value == null ? "" : value);
         var downloadPath = "";
@@ -57,6 +78,7 @@
             if (/^Run as:/i.test(trimmed)) return;
             visible.push(line);
         });
+        visible = compactCsvVisible(visible, downloadPath);
         return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath };
     }
 
