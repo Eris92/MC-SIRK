@@ -1,3 +1,13 @@
+## 0.1.131 - 2026-08-20
+
+- Record the real `0.1.130` Issue #397 smoke: CSV download now works, but duplicate report executions still reach the backend despite browser-side single-flight.
+- Add server-side single-flight in `server/core/server-script-executor.js` for ordinary My Scripts execution paths so identical active requester/script/effective-value executions reuse one Promise and one child process.
+- Keep different requesters, scripts and effective variable values independent, preserve the existing global executor queue, and bypass dedupe for special `executionOptions` paths.
+- Release active single-flight state on both success and failure so explicit later execution remains available.
+- Add runtime regression coverage for duplicate active execution, independent keys and success/failure release; keep Issue #399 OPEN for real MeshCentral acceptance; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.131.md`.
+
 ## 0.1.130 - 2026-08-19
 
 - Record the real `0.1.129` Issue #397 license-report failure: one visible action produced a serialized sequence of timestamped CSV reports and the visible `Download CSV` action did not yield a usable download.

@@ -1,6 +1,7 @@
 "use strict";
 
 var childProcess = require("child_process");
+var crypto = require("crypto");
 var shared = require("./shared.js");
 
 function text(value, limit) {
@@ -38,6 +39,7 @@ module.exports.createServerScriptExecutor = function (options) {
     var admin = options.admin;
     var assignmentNamespace = String(options.assignmentNamespace || "script-secrets.myscripts.system-credentials");
     var queue = Promise.resolve();
+    var activeExecutions = Object.create(null);
 
     function timeoutMs() {
         var current = context.settings.read();
@@ -304,15 +306,48 @@ module.exports.createServerScriptExecutor = function (options) {
         });
     }
 
+    function stableValues(script, supplied) {
+        var values = validateValues(script, supplied);
+        var ordered = {};
+        Object.keys(values).sort().forEach(function (name) {
+            ordered[name] = String(values[name] == null ? "" : values[name]);
+        });
+        return JSON.stringify(ordered);
+    }
+
+    function singleFlightKey(script, payload, request, executionOptions) {
+        executionOptions = executionOptions && typeof executionOptions === "object" ? executionOptions : {};
+        if (Object.keys(executionOptions).length) return "";
+        var requesterId = text(request && request.requester && request.requester.id, 300).trim();
+        if (!requesterId) return "";
+        var material = requesterId + "\u0000" + String(script.path || "") + "\u0000" +
+            String(script.hash || "") + "\u0000" + stableValues(script, payload && payload.variableValues);
+        return "sha256:" + crypto.createHash("sha256").update(material).digest("hex");
+    }
+
     function execute(payload, request, executionOptions) {
         payload = payload && typeof payload === "object" ? payload : {};
+        var script = library.getScript(String(payload.scriptPath || ""), true);
+        if (!script) return Promise.reject(new Error("Script not found."));
+
+        var key;
+        try { key = singleFlightKey(script, payload, request || {}, executionOptions); }
+        catch (error) { return Promise.reject(error); }
+        if (key && activeExecutions[key]) return activeExecutions[key];
+
         var task = function () {
-            var script = library.getScript(String(payload.scriptPath || ""), true);
-            if (!script) throw new Error("Script not found.");
             return run(script, payload, request || {}, executionOptions);
         };
         var operation = queue.catch(function () {}).then(task);
         queue = operation.catch(function () {});
+
+        if (!key) return operation;
+        activeExecutions[key] = operation;
+        operation.then(function () {
+            if (activeExecutions[key] === operation) delete activeExecutions[key];
+        }, function () {
+            if (activeExecutions[key] === operation) delete activeExecutions[key];
+        });
         return operation;
     }
 

@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.131",
+    "date": "2026-08-20",
+    "summary": "Add server-side single-flight for ordinary My Scripts executions so duplicate active requests reuse one underlying child process.",
+    "notes": "docs/releases/0.1.131.md"
+  },
+  {
     "version": "0.1.130",
     "date": "2026-08-19",
     "summary": "Single-flight My Scripts browser submissions and download the newest generated CSV without navigating away from MeshCentral.",
