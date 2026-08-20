@@ -23,6 +23,45 @@ function fileNameKey(value) {
     return parts[parts.length - 1] || "";
 }
 
+function profileName(value) {
+    var key = String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+    if (key === "ad" || key === "activedirectory") return "ad";
+    if (key === "entra" || key === "entraid" || key === "aad" || key === "azuread") return "entra";
+    if (key === "jira") return "jira";
+    if (key === "sms" || key === "smsapi") return "sms";
+    if (key === "smtp" || key === "smtprelay") return "smtp";
+    if (key === "defender" || key === "defenderxdr") return "defender";
+    if (key === "zabbix") return "zabbix";
+    return "";
+}
+
+function implicitProfiles(value) {
+    value = value || {};
+    var result = [];
+    function add(name) {
+        name = profileName(name);
+        if (name && result.indexOf(name) < 0) result.push(name);
+    }
+
+    var root = keyFor(value.path).split("/")[0] || "";
+    if (profileName(root) === "entra") add("entra");
+
+    (Array.isArray(value.extraHeaders) ? value.extraHeaders : []).forEach(function (header) {
+        var match = /^SirkSystemCredential\s*:\s*(.+)$/i.exec(String(header || "").trim());
+        if (!match) return;
+        String(match[1] || "").split(/[,;|]/).forEach(add);
+    });
+    return result;
+}
+
+function entraVariableField(name) {
+    var key = String(name || "").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+    if (["tenantid", "tenant", "directoryid", "azuretenantid", "entratenantid"].indexOf(key) >= 0) return "tenantId";
+    if (["clientid", "appid", "applicationid", "azureclientid", "entraclientid"].indexOf(key) >= 0) return "clientId";
+    if (["clientsecret", "appsecret", "applicationsecret", "azureclientsecret", "entraclientsecret"].indexOf(key) >= 0) return "clientSecret";
+    return "";
+}
+
 module.exports.createScriptAdminService = function (options) {
     options = options || {};
     var context = options.context;
@@ -61,8 +100,7 @@ module.exports.createScriptAdminService = function (options) {
         return value && typeof value === "object" ? value : {};
     }
 
-    function selectedProfiles(relativePath) {
-        var value = script(relativePath);
+    function selectedProfilesForScript(value) {
         var assignments = readAssignments();
         var pathKey = keyFor(value.path);
         var stableKey = workflowKey(value);
@@ -78,11 +116,20 @@ module.exports.createScriptAdminService = function (options) {
                 context.secrets.set(assignmentNamespace, assignments);
             }
         }
-        return Array.isArray(selected) ? selected.map(String) : [];
+
+        var result = implicitProfiles(value);
+        (Array.isArray(selected) ? selected : []).map(String).forEach(function (name) {
+            if (result.indexOf(name) < 0) result.push(name);
+        });
+        return result;
     }
 
-    function hasSystemCredential(relativePath, profileName) {
-        return selectedProfiles(relativePath).indexOf(String(profileName || "")) >= 0;
+    function selectedProfiles(relativePath) {
+        return selectedProfilesForScript(script(relativePath));
+    }
+
+    function hasSystemCredential(relativePath, profileNameValue) {
+        return selectedProfiles(relativePath).indexOf(String(profileNameValue || "")) >= 0;
     }
 
     function configuredProfiles() {
@@ -112,11 +159,13 @@ module.exports.createScriptAdminService = function (options) {
     function getSystemCredentialState(user, relativePath) {
         requireAdmin(user);
         var value = script(relativePath);
-        var selected = selectedProfiles(value.path);
+        var selected = selectedProfilesForScript(value);
+        var required = implicitProfiles(value);
         return {
             path: value.path,
             profiles: configuredProfiles().map(function (profile) {
                 profile.selected = selected.indexOf(profile.name) >= 0;
+                profile.required = required.indexOf(profile.name) >= 0;
                 return profile;
             })
         };
@@ -126,8 +175,9 @@ module.exports.createScriptAdminService = function (options) {
         requireAdmin(user);
         var value = script(relativePath);
         var allowed = Object.keys(profileLabels);
+        var required = implicitProfiles(value);
         selected = (Array.isArray(selected) ? selected : []).map(String).filter(function (name, index, list) {
-            return allowed.indexOf(name) >= 0 && list.indexOf(name) === index;
+            return allowed.indexOf(name) >= 0 && required.indexOf(name) < 0 && list.indexOf(name) === index;
         });
         var assignments = readAssignments();
         var key = workflowKey(value) || keyFor(value.path);
@@ -137,6 +187,10 @@ module.exports.createScriptAdminService = function (options) {
         return getSystemCredentialState(user, value.path);
     }
 
+    function integrationBackedSecret(value, variable) {
+        return selectedProfilesForScript(value).indexOf("entra") >= 0 && !!entraVariableField(variable && variable.name);
+    }
+
     function getSecretState(user, relativePath) {
         requireAdmin(user);
         var value = script(relativePath);
@@ -144,7 +198,9 @@ module.exports.createScriptAdminService = function (options) {
         var configured = store[keyFor(value.path)] || {};
         return {
             path: value.path,
-            variables: (value.secretVariables || []).map(function (variable) {
+            variables: (value.secretVariables || []).filter(function (variable) {
+                return !integrationBackedSecret(value, variable);
+            }).map(function (variable) {
                 return {
                     name: variable.name,
                     label: variable.label,
@@ -160,7 +216,7 @@ module.exports.createScriptAdminService = function (options) {
         var value = script(relativePath);
         var allowed = Object.create(null);
         (value.secretVariables || []).forEach(function (variable) {
-            allowed[variable.name] = true;
+            if (!integrationBackedSecret(value, variable)) allowed[variable.name] = true;
         });
 
         values = values && typeof values === "object" ? values : {};
@@ -192,6 +248,7 @@ module.exports.createScriptAdminService = function (options) {
         var current = store[keyFor(value.path)] || {};
         var result = {};
         (value.secretVariables || []).forEach(function (variable) {
+            if (integrationBackedSecret(value, variable)) return;
             var secret = String(current[variable.name] || "");
             if (variable.required && !secret) {
                 throw new Error(
@@ -249,6 +306,7 @@ module.exports.createScriptAdminService = function (options) {
         secretValues: secretValues,
         getSystemCredentialState: getSystemCredentialState,
         saveSystemCredentials: saveSystemCredentials,
-        hasSystemCredential: hasSystemCredential
+        hasSystemCredential: hasSystemCredential,
+        systemProfiles: selectedProfiles
     };
 };
