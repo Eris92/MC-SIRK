@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.131`](0.1.131.md) — adds server-side single-flight for ordinary My Scripts executions so duplicate active requests reuse one underlying child process;
 - [`0.1.130`](0.1.130.md) — single-flights My Scripts browser submissions and makes Results download the newest generated CSV through a dedicated attachment action without navigating the MeshCentral page;
 - [`0.1.129`](0.1.129.md) — loads reset users directly from the canonical Jira cache and resolves only the selected UPN against AD at execution time instead of blocking dialog open on a whole-cache AD intersection;
 - [`0.1.128`](0.1.128.md) — changes only AD account create/reset SMS wording to ASCII-safe Polish without diacritics after repeated real received-message mojibake;
