@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.133`](0.1.133.md) — makes Entra ID My Scripts use the global Entra/AAD integration credentials instead of duplicate per-script tenant/client secrets;
 - [`0.1.132`](0.1.132.md) — keeps full CSV diagnostics in Debug while the normal Results body shows only the current downloadable report and latest record count;
 - [`0.1.131`](0.1.131.md) — adds server-side single-flight for ordinary My Scripts executions so duplicate active requests reuse one underlying child process;
 - [`0.1.130`](0.1.130.md) — single-flights My Scripts browser submissions and makes Results download the newest generated CSV through a dedicated attachment action without navigating the MeshCentral page;
