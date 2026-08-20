@@ -1,3 +1,14 @@
+## 0.1.133 - 2026-08-20
+
+- Make the canonical `Entra ID` My Scripts namespace consume the configured global Entra/AAD integration instead of requiring duplicate per-script tenant/client credentials.
+- Treat implicit Entra namespace ownership and explicit `SirkSystemCredential: Entra` metadata as required system profiles while preserving optional manual profiles for other scripts.
+- Inject global `tenantId`, `clientId` and `clientSecret` only at execution time through `MYSCRIPTS_ENTRA_*` and compatible declared PowerShell variables including `TenantId`, `ClientId`, `ClientSecret`, `AppId` and `AppSecret`.
+- Remove mapped Entra variables from per-script secret configuration and make integration values authoritative over stale local copies.
+- Fail closed before process spawn when the global Entra integration is incomplete; preserve existing local/system credential behavior outside Entra scripts.
+- Add targeted regression for the real `Entra ID/druk/Sprawdzanie_licencji.ps1` credential shape, exact child-process injection and negative non-Entra behavior; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.133.md`.
+
 ## 0.1.132 - 2026-08-20
 
 - Keep full accumulated CSV execution text in `Debug / raw output` while making the normal Results body authoritative for the current downloadable artifact.
