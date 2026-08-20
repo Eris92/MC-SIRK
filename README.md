@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.132
+# SIRK Management Platform 0.1.133
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.132.md)
+- [Aktualne development notes](docs/releases/0.1.133.md)
 
 ## Warstwy
 
@@ -123,6 +123,10 @@ Uruchom jako Administrator:
 ```
 
 Instalator zapisuje bezwzględne ścieżki w zadaniu `MC-SIRK Jira Cache Refresh`, uruchamia je jako `SYSTEM` co godzinę i zleca pierwszy refresh od razu. Token Jira jest odczytywany z istniejącego zaszyfrowanego magazynu SIRK; nie jest kopiowany do BAT-a ani definicji zadania.
+
+## Entra ID w My Scripts
+
+Skrypty w kanonicznym namespace `seed/MyScripts/Entra ID` korzystają z globalnej integracji Entra ID (`tenantId`, `clientId`, `clientSecret`) zamiast duplikować te dane w per-script secrets. Istniejące zmienne skryptów o typowych nazwach `TenantId`, `ClientId`, `ClientSecret`, `AppId` i `AppSecret` są zasilane wartościami integracji wyłącznie podczas wykonania. Niekompletna integracja Entra powoduje fail-closed przed uruchomieniem procesu skryptu.
 
 ## Atomic render
 
