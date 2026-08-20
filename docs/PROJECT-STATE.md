@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.132`
+Current version: `0.1.133`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -56,7 +56,8 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `tools/install/Install-SIRK-Portal-FromGit.ps1` — utrzymywany deployment owner: wykrywa rzeczywistą usługę Windows MeshCentral, buduje runtime-only artifact, weryfikuje kompletne SHA-256 po instalacji i kończy sukcesem dopiero po świeżym runtime proof z uruchomionego procesu;
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
-- `server/core/server-script-executor.js` — server-side wykonanie My Scripts, globalna kolejka child-process oraz single-flight zwykłych aktywnych wykonań po requester/script/effective values; specjalne executionOptions zachowują odrębny lifecycle;
+- `server/core/script-admin-service.js` — owner per-script secret/system-credential metadata; deklarowane `SirkSystemCredential` dependencies oraz kanoniczny namespace `Entra ID` są traktowane jako wymagane profile integracji, a odpowiadające im Entra tenant/client secret variables nie są oferowane jako duplikowane per-script secrets;
+- `server/core/server-script-executor.js` — server-side wykonanie My Scripts, globalna kolejka child-process oraz single-flight zwykłych aktywnych wykonań po requester/script/effective values; specjalne executionOptions zachowują odrębny lifecycle; dla profilu `entra` executor wstrzykuje globalne `tenantId`/`clientId`/`clientSecret` do `MYSCRIPTS_ENTRA_*` oraz kompatybilnych legacy PowerShell variables wyłącznie w child process i fail-closed, jeśli integracja jest niekompletna;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
 - `server/core/jira-protocol-service.js` — kanoniczny Jira Asset Protocol owner: stable asset identity, przygotowanie PDF, expected final inventory i przejście do shared requester confirmation;
 - `server/core/jira-asset-confirmation-service.js` — bounded live ownership/schema snapshot, stale-state verification i finalne Jira Assets writes po confirmation;
@@ -143,15 +144,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.132
-config.json  -> 0.1.132
+package.json -> 0.1.133
+config.json  -> 0.1.133
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.132.md`.
+Aktualne development notes: `docs/releases/0.1.133.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
@@ -163,6 +164,6 @@ Kanoniczna pełna komenda:
 npm test
 ```
 
-Nie uruchamiaj jej automatycznie dla każdej małej zmiany. Najpierw targeted test; pełny suite dla zmian runtime, loadera, shared UI, struktury, security/public contractu lub przed release.
+Nie uruchamiaj jej automatycznie dla każdej małej zmiany. Najpierw targeted test; pełny suite dla zmian runtime, loadera, shared UI, struktury, security/public contract/release.
 
 GitHub Issues w `Eris92/MC-SIRK` są stanem aktywnych zadań. Trwałe decyzje przekrojowe zapisuj oszczędnie w `docs/memory/PROJECT_MEMORY.md`.
