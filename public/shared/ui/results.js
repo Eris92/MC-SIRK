@@ -57,6 +57,7 @@
             if (trimmed.toLocaleLowerCase().indexOf(selectedPathLower) >= 0) selectedLine = trimmed;
             if (/^(?:liczba\s+rekord(?:ow|ów)|record\s+count|records?)\s*:/i.test(trimmed)) latestCount = trimmed;
         });
+        if (!selectedLine && !latestCount) return lines;
         if (!selectedLine) selectedLine = "CSV ready: " + csvFileName(downloadPath);
         else selectedLine = selectedLine.replace(downloadPath, csvFileName(downloadPath));
         return latestCount ? [selectedLine, latestCount] : [selectedLine];
