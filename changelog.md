@@ -1,3 +1,13 @@
+## 0.1.134 - 2026-08-24
+
+- Allow native Desktop Quick direct executions to run concurrently on the same device instead of returning `SIRK_AGENT_COMMAND_BUSY` while a previous Quick result is still pending.
+- Keep the ordinary per-node agent command guard active for non-Quick Commands, approval and multi-device execution paths.
+- Scope the Quick-only bypass with `AsyncLocalStorage` inside `server/core/agent-command-guard.js`, so unrelated concurrent requests cannot inherit it and an existing guarded lock is neither cleared nor replaced.
+- Preserve unique response IDs, agent result capture and terminal/failure release behavior without adding another queue, timer, polling loop or execution owner.
+- Extend `agent-command-guard.test.js` with parallel Quick direct coverage, ordinary-lock negative checks and command-payload leak protection; keep Issue #411 open for real MeshCentral smoke; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.134.md`.
+
 ## 0.1.133 - 2026-08-20
 
 - Make the canonical `Entra ID` My Scripts namespace consume the configured global Entra/AAD integration instead of requiring duplicate per-script tenant/client credentials.
