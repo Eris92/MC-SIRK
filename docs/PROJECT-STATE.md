@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.133`
+Current version: `0.1.134`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -56,6 +56,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `tools/install/Install-SIRK-Portal-FromGit.ps1` — utrzymywany deployment owner: wykrywa rzeczywistą usługę Windows MeshCentral, buduje runtime-only artifact, weryfikuje kompletne SHA-256 po instalacji i kończy sukcesem dopiero po świeżym runtime proof z uruchomionego procesu;
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
+- `server/core/agent-command-guard.js` — per-node guard zwykłych agent `runcommands`; native Desktop Quick direct execution otrzymuje wyłącznie scoped `AsyncLocalStorage` bypass w istniejącym ownerze, dzięki czemu kilka Quick launchy może współbieżnie dotrzeć do agenta bez kasowania lub obchodzenia locka niezależnego ordinary Commands/approval/multi requestu;
 - `server/core/script-admin-service.js` — owner per-script secret/system-credential metadata; deklarowane `SirkSystemCredential` dependencies oraz kanoniczny namespace `Entra ID` są traktowane jako wymagane profile integracji, a odpowiadające im Entra tenant/client secret variables nie są oferowane jako duplikowane per-script secrets;
 - `server/core/server-script-executor.js` — server-side wykonanie My Scripts, globalna kolejka child-process oraz single-flight zwykłych aktywnych wykonań po requester/script/effective values; specjalne executionOptions zachowują odrębny lifecycle; dla profilu `entra` executor wstrzykuje globalne `tenantId`/`clientId`/`clientSecret` do `MYSCRIPTS_ENTRA_*` oraz kompatybilnych legacy PowerShell variables wyłącznie w child process i fail-closed, jeśli integracja jest niekompletna;
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
@@ -111,6 +112,7 @@ Moduły renderują do odłączonych elementów i wykonują atomic commit. `rende
 - pokazanie Output kasuje attention;
 - brak osobnego output controllera i zbędnego observera DOM;
 - launcher ma stałą geometrię 38 px;
+- native Desktop Quick direct calls mogą być wysyłane współbieżnie do tego samego urządzenia; bypass jest scoped do konkretnego async request lifecycle i nie zwalnia existing guarded ordinary command;
 - ukrycie Output używa klasy `is-details-collapsed`.
 
 ## Zdarzenia i security
@@ -144,15 +146,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.133
-config.json  -> 0.1.133
+package.json -> 0.1.134
+config.json  -> 0.1.134
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.133.md`.
+Aktualne development notes: `docs/releases/0.1.134.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 
