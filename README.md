@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.133
+# SIRK Management Platform 0.1.134
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.133.md)
+- [Aktualne development notes](docs/releases/0.1.134.md)
 
 ## Warstwy
 
@@ -154,6 +154,7 @@ public/native/desktop-commands.js
 - attention/pending są stanem runtime;
 - czerwony attention jest uzbrajany wyłącznie przez nowy wynik wykonania i kasowany po pokazaniu wyniku;
 - zwykłe kliknięcia, Refresh i ładowanie metadanych nie uzbrajają ponownie attention;
+- native Desktop Quick direct execution może uruchamiać kilka niezależnych poleceń na tym samym urządzeniu bez dziedziczenia globalnego `SIRK_AGENT_COMMAND_BUSY`; zwykłe Commands/approval/multi nadal używają per-node guard;
 - Quick nie używa własnego MutationObservera;
 - wiersze otrzymują natywne zaznaczenie MeshCentral synchronicznie podczas renderu.
 
