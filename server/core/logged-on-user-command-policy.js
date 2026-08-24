@@ -151,13 +151,18 @@ function buildLoggedOnUserLauncher(command, options) {
     ].join(";");
 }
 
+function isNativeGuiLauncher(command) {
+    return Number(command && command.runAsUser) === 2 &&
+        Number(command && command.type) === 1 &&
+        /^\s*start\s+\"\"\s+/i.test(String(command && command.cmd || ""));
+}
+
 function transformCommand(command, options) {
     if (!command) return command;
     var runAsUser = Number(command.runAsUser);
     var type = Number(command.type);
     if ((runAsUser !== 1 && runAsUser !== 2) || (type !== 1 && type !== 2)) return command;
-    // Interactive GUI commands reuse this single launcher owner. Trusted built-ins may
-    // request the elevated interactive token; ordinary user commands remain Limited.
+    if (isNativeGuiLauncher(command)) return command;
     if (String(command.cmd || "").indexOf(MARKER) >= 0) return command;
 
     return Object.assign({}, command, {
@@ -182,4 +187,5 @@ module.exports.activeSessionSource = activeSessionSource;
 module.exports.runnerSource = runnerSource;
 module.exports.hiddenLauncherSource = hiddenLauncherSource;
 module.exports.buildLoggedOnUserLauncher = buildLoggedOnUserLauncher;
+module.exports.isNativeGuiLauncher = isNativeGuiLauncher;
 module.exports.transformCommand = transformCommand;
