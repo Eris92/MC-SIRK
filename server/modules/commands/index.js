@@ -310,11 +310,34 @@ module.exports.createModule = function (context) {
         } catch (error) { return Promise.reject(error); }
         return context.device.resolveNode(user, payload.nodeId, { requireCommandRights: true }).then(function (node) {
             var id = "sirk-platform-" + shared.randomId(10);
+            var now = Date.now();
+            var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: "submitting", requester: request.requester, createdAt: now, updatedAt: now, output: "" };
+            saveExecution(row);
             return context.device.sendRunCommands(node, command, id, null).then(function (state) {
-                var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: state.state, requester: request.requester, createdAt: Date.now(), updatedAt: Date.now(), output: "" };
-                saveExecution(row);
+                var rows = executionRows();
+                var saved = rows.find(function (item) { return item.id === id; });
+                if (saved) {
+                    var terminal = ["completed", "failed", "error"].indexOf(String(saved.status || "").toLowerCase()) >= 0;
+                    if (!saved.output && !terminal) saved.status = String(state && state.state || "executing");
+                    saved.updatedAt = Date.now();
+                    writeRows(rows);
+                    row = saved;
+                }
                 context.device.auditCommand(node, user, command);
                 return row;
+            }).catch(function (error) {
+                var rows = executionRows();
+                var saved = rows.find(function (item) { return item.id === id; });
+                if (saved) {
+                    var terminal = ["completed", "failed", "error"].indexOf(String(saved.status || "").toLowerCase()) >= 0;
+                    if (!saved.output && !terminal) {
+                        saved.status = "error";
+                        saved.output = shared.cleanText(error && error.message || error, 1000000);
+                    }
+                    saved.updatedAt = Date.now();
+                    writeRows(rows);
+                }
+                throw error;
             });
         });
     }
