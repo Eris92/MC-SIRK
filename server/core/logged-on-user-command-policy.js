@@ -152,9 +152,11 @@ function buildLoggedOnUserLauncher(command, options) {
 }
 
 function isNativeGuiLauncher(command) {
+    var commandText = String(command && command.cmd || "");
+    if (/\bcertmgr\.msc\b/i.test(commandText)) return false;
     return Number(command && command.runAsUser) === 2 &&
         Number(command && command.type) === 1 &&
-        /^\s*start\s+\"\"\s+/i.test(String(command && command.cmd || ""));
+        /^\s*start\s+\"\"\s+/i.test(commandText);
 }
 
 function transformCommand(command, options) {
