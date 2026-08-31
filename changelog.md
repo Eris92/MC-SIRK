@@ -1,3 +1,13 @@
+## 0.1.138 - 2026-08-31
+
+- Add `seed/MyScripts/Entra ID/Get-SmsVoicePolicyUsers.ps1` as a canonical My Scripts report for SMS/Voice authentication-method policy scope.
+- Replace interactive Microsoft Graph PowerShell authentication with app-only REST authentication from the existing global Entra/AAD integration.
+- Resolve group display names, export Include/Exclude policy targets to UTF-8 CSV, and emit the shared `CSV_DOWNLOAD:` plus record-count Results contract.
+- Reuse the existing Entra system credential and protected CSV download owners without a new route, renderer, polling loop or credential copy.
+- Add targeted My Scripts/CSV contract regression; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.138.md`.
+
 ## 0.1.134 - 2026-08-24
 
 - Allow native Desktop Quick direct executions to run concurrently on the same device instead of returning `SIRK_AGENT_COMMAND_BUSY` while a previous Quick result is still pending.
