@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.138",
+    "date": "2026-08-31",
+    "summary": "Add an Entra ID SMS/Voice authentication-method policy report that runs from the global Entra integration and exposes a downloadable CSV in My Scripts.",
+    "notes": "docs/releases/0.1.138.md"
+  },
+  {
     "version": "0.1.134",
     "date": "2026-08-24",
     "summary": "Allow concurrent native Desktop Quick direct launches on one device while preserving the ordinary per-node agent command guard.",
