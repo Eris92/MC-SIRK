@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.134
+# SIRK Management Platform 0.1.138
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.134.md)
+- [Aktualne development notes](docs/releases/0.1.138.md)
 
 ## Warstwy
 
@@ -127,6 +127,8 @@ Instalator zapisuje bezwzględne ścieżki w zadaniu `MC-SIRK Jira Cache Refresh
 ## Entra ID w My Scripts
 
 Skrypty w kanonicznym namespace `seed/MyScripts/Entra ID` korzystają z globalnej integracji Entra ID (`tenantId`, `clientId`, `clientSecret`) zamiast duplikować te dane w per-script secrets. Istniejące zmienne skryptów o typowych nazwach `TenantId`, `ClientId`, `ClientSecret`, `AppId` i `AppSecret` są zasilane wartościami integracji wyłącznie podczas wykonania. Niekompletna integracja Entra powoduje fail-closed przed uruchomieniem procesu skryptu.
+
+`Get-SmsVoicePolicyUsers.ps1` działa w tym namespace bez `Connect-MgGraph`: używa app-only Microsoft Graph z globalnej integracji Entra i zapisuje UTF-8 CSV z zakresem SMS/Voice. Skrypt emituje `CSV_DOWNLOAD:`, więc wynik korzysta z istniejącego chronionego pobierania CSV w Results.
 
 ## Atomic render
 
