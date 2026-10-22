@@ -27,7 +27,7 @@ function variable() { return { control: "asset", name: "PcName", jiraAsset: { aq
     assert.strictEqual(applied.auditComments, 2);
     assert.strictEqual(comments.length, 2, "Each confirmed change must have its own Jira object comment.");
     assert.deepStrictEqual(comments.map(function (call) { return call.json.objectId; }), [1001, 1002]);
-    assert.ok(comments.every(function (call) { return call.url.endsWith("/v1/comment/create") && call.json.comment.indexOf("Wykonana przez: Operator Test (operator)") >= 0 && call.json.comment.indexOf("MC-SIRK request ID: REQ-420") >= 0; }));
+    assert.ok(comments.every(function (call) { return call.url === "https://api.atlassian.com/jsm/assets/workspace/workspace/v1/comment/create" && call.json.comment.indexOf("Wykonana przez: Operator Test (operator)") >= 0 && call.json.comment.indexOf("MC-SIRK request ID: REQ-420") >= 0; }));
     assert.strictEqual(puts.length, 2);
     assert.deepStrictEqual(puts[0].json.attributes[0].objectAttributeValues, [{ value: "acc-1" }]);
     assert.deepStrictEqual(puts[1].json.attributes[0].objectAttributeValues, []);
