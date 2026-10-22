@@ -11,6 +11,7 @@ function refObject(id, ownerId) { return { id: id, objectType: { id: "10", name:
         if (/\/object\/2001$/.test(options.url) && options.method === "GET") return Promise.resolve(refObject("2001", owner));
         if (/\/object\/2001$/.test(options.url) && options.method === "PUT") { puts.push(options); var vals = options.json.attributes[0].objectAttributeValues; owner = vals.length ? String(vals[0].value) : ""; return Promise.resolve({}); }
         if (/\/object\/aql/.test(options.url) && options.method === "POST") return Promise.resolve({ values: [{ id: "700", objectKey: "USR-1", label: "User One", objectType: { id: "99", name: "Pracownik" }, attributes: [{ objectTypeAttribute: { name: "Account" }, objectAttributeValues: [{ value: "acc-1", displayValue: "acc-1" }] }] }], isLast: true, total: 1 });
+        if (options.url.endsWith("/comment/create")) return Promise.resolve({ id: 1 });
         return Promise.reject(new Error("Unexpected request: " + options.method + " " + options.url));
     } });
     var user = { value: "acc-1", accountId: "acc-1", displayName: "User One" };
@@ -19,7 +20,11 @@ function refObject(id, ownerId) { return { id: id, objectType: { id: "10", name:
     assert.strictEqual(snapshot.changes[0].attributeId, "77");
     assert.strictEqual(snapshot.changes[0].targetValue, "700");
     assert.strictEqual(puts.length, 0);
-    var result = await service.apply(snapshot);
+    var result = await service.apply(snapshot, {
+        requestId: "REQ-420",
+        confirmedBy: { id: "user/test/op", name: "Test Operator", login: "op" },
+        requestedBy: { id: "user/test/op", name: "Test Operator", login: "op" }
+    });
     assert.strictEqual(result.updated, 1);
     assert.strictEqual(owner, "700");
     assert.deepStrictEqual(puts[0].json.attributes[0].objectAttributeValues, [{ value: "700" }]);

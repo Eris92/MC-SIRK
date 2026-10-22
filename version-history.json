@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.138",
+    "date": "2026-10-22",
+    "summary": "Record authenticated MeshCentral requester/confirmer in per-object Jira Assets comments after verified protocol writes.",
+    "notes": "docs/releases/0.1.138.md"
+  },
+  {
     "version": "0.1.134",
     "date": "2026-08-24",
     "summary": "Allow concurrent native Desktop Quick direct launches on one device while preserving the ordinary per-node agent command guard.",
