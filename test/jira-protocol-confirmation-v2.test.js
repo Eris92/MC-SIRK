@@ -28,6 +28,7 @@ function item(id, assigned) {
     try {
         var live = { "1001": "acc-1", "1002": "", "1003": "acc-1" };
         var puts = [];
+        var comments = [];
         var reads = [];
         var forcedRefresh = 0;
         var renderCount = 0;
@@ -70,6 +71,10 @@ function item(id, assigned) {
             requestJson: function (options) {
                 if (/\/objecttype\/10\/attributes$/.test(options.url)) {
                     return Promise.resolve([{ id: "55", name: "Owner", editable: true, maximumCardinality: 1, defaultType: { name: "User" } }]);
+                }
+                if (options.url.endsWith("/comment/create")) {
+                    comments.push(options);
+                    return Promise.resolve({ id: comments.length });
                 }
                 var match = /\/object\/(100[123])$/.exec(options.url);
                 if (match && options.method === "GET") {
@@ -141,7 +146,8 @@ function item(id, assigned) {
                 }
             }]
         };
-        var request = { id: "ReqProtocol_123", requester: { id: "user/one", name: "Operator" } };
+        var request = { id: "ReqProtocol_123", requester: { id: "user/one", name: "Operator" },
+            confirmation: { user: { id: "user/admin", name: "Site Admin" } } };
         var result = await service.execute(script, {
             variableValues: {
                 JiraUser: "acc-1",
@@ -166,6 +172,13 @@ function item(id, assigned) {
         var finalized = await service.confirm(result, request);
         assert.strictEqual(puts.length, 2, "Only changed assets must be written after confirmation.");
         assert.strictEqual(finalized.data.cmdb.updated, 2);
+        assert.strictEqual(finalized.data.cmdb.auditComments, 2);
+        assert.deepStrictEqual(comments.map(function (call) { return call.json.objectId; }), [1001, 1002]);
+        assert.ok(comments.every(function (call) {
+            return call.json.comment.indexOf("Wykonana przez: Site Admin (admin)") >= 0 &&
+                call.json.comment.indexOf("Zlecona przez: Operator (one)") >= 0 &&
+                call.json.comment.indexOf("MC-SIRK request ID: ReqProtocol_123") >= 0;
+        }), "Confirmed actor and original requester must both be represented in the Jira audit comments.");
         assert.strictEqual(Object.prototype.hasOwnProperty.call(finalized, "_jiraConfirmation"), false);
         assert.strictEqual(forcedRefresh, 1, "Successful mutation must refresh the Jira Assets snapshot.");
         assert.strictEqual(live["1001"], "");
