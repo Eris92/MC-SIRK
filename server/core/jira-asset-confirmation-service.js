@@ -52,8 +52,8 @@ module.exports.createJiraAssetConfirmationService = function (options) {
         }
         var owner = escapeHtml(user && (user.displayName || user.label || user.value || user.accountId));
         var action = row.action === "receive" ?
-            "Przyj\\u0119cie sprz\\u0119tu - przypisano do " + owner :
-            "Zdanie sprz\\u0119tu - usuni\\u0119to przypisanie do " + owner;
+            "Przyj\u0119cie sprz\u0119tu - przypisano do " + owner :
+            "Zdanie sprz\u0119tu - usuni\u0119to przypisanie do " + owner;
         var comment = "<p>Zmiana: " + action + "</p>" +
             "<p>Wykonana przez: " + actorLabel(audit.confirmedBy) + "</p>" +
             (audit.confirmedBy.id === audit.requestedBy.id ? "" :
