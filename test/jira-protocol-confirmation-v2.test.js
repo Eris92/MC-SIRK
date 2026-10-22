@@ -200,6 +200,7 @@ function item(id, assigned) {
                 ItPerson: "Operator"
             }
         }, { id: "ReqProtocol_None" });
+        assert.strictEqual(comments.length, 2, "No-change protocol must not add any Jira activity comment.");
         assert.strictEqual(noChange.data.hasChanges, false);
         assert.strictEqual(service.requiresConfirmation(noChange), false);
         assert.strictEqual(puts.length, 0);
