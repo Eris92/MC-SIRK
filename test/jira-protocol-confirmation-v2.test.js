@@ -169,14 +169,18 @@ function item(id, assigned) {
         assert.ok(result._jiraConfirmation && result._jiraConfirmation.changes.length === 2,
             "Private mutation snapshot must remain server-side until confirmation.");
 
+        context.parent = { webserver: { users: {
+            "user/one": { _id: "user/one", name: "initiator.login", realname: "Jan Kowalski" },
+            "user/admin": { _id: "user/admin", name: "admin.login", realname: "Anna Nowak" }
+        } } };
         var finalized = await service.confirm(result, request);
         assert.strictEqual(puts.length, 2, "Only changed assets must be written after confirmation.");
         assert.strictEqual(finalized.data.cmdb.updated, 2);
         assert.strictEqual(finalized.data.cmdb.auditComments, 2);
         assert.deepStrictEqual(comments.map(function (call) { return call.json.objectId; }), [1001, 1002]);
         assert.ok(comments.every(function (call) {
-            return call.json.comment.indexOf("Wykonana przez: Site Admin (admin)") >= 0 &&
-                call.json.comment.indexOf("Zlecona przez: Operator (one)") >= 0 &&
+            return call.json.comment.indexOf("Wykonana przez: Anna Nowak (admin.login)") >= 0 &&
+                call.json.comment.indexOf("Zlecona przez: Jan Kowalski (initiator.login)") >= 0 &&
                 call.json.comment.indexOf("MC-SIRK request ID: ReqProtocol_123") >= 0;
         }), "Confirmed actor and original requester must both be represented in the Jira audit comments.");
         assert.strictEqual(Object.prototype.hasOwnProperty.call(finalized, "_jiraConfirmation"), false);
@@ -185,6 +189,7 @@ function item(id, assigned) {
         assert.strictEqual(live["1002"], "acc-1");
         assert.strictEqual(live["1003"], "acc-1");
 
+        context.parent = null;
         reads.length = 0;
         puts.length = 0;
         var noChange = await service.execute(script, {
