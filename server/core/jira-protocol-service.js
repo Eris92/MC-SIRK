@@ -386,11 +386,32 @@ module.exports.createJiraProtocolService = function (options) {
             return Promise.resolve(shared.copy(result));
         }
         updateProgress(request && request.id, 100, "Finalizing Jira Assets", "confirming");
-        return mutation.apply(snapshot).then(function (summary) {
+        var confirmed = object(request && request.confirmation && request.confirmation.user);
+        var requested = object(request && request.requester);
+        var requestId = text(request && request.id, 128);
+        var confirmedId = text(confirmed.id, 500);
+        var requestedId = text(requested.id, 500);
+        if (!requestId || !confirmedId || !requestedId) {
+            return Promise.reject(new Error("Authenticated Jira confirmation actor is unavailable."));
+        }
+        function actor(id, fallbackName) {
+            var mesh = shared.findUser(context.parent, id);
+            return {
+                id: id,
+                login: text(mesh && mesh.name || id.split("/").pop(), 200),
+                name: text(mesh && shared.userName(mesh) || fallbackName || id, 300)
+            };
+        }
+        var audit = {
+            requestId: requestId,
+            confirmedBy: actor(confirmedId, confirmed.name),
+            requestedBy: actor(requestedId, requested.name)
+        };
+        return mutation.apply(snapshot, audit).then(function (summary) {
             var completed = shared.copy(result);
             delete completed._jiraConfirmation;
             completed.data = object(completed.data);
-            completed.data.cmdb = { updated: summary.updated, assetIds: summary.assetIds };
+            completed.data.cmdb = { updated: summary.updated, assetIds: summary.assetIds, auditComments: summary.auditComments };
             completed.message = "Jira Assets updated after requester confirmation: " + summary.updated + " item(s).";
             updateProgress(request && request.id, 100, "Ready", "ready");
             return completed;

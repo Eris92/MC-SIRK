@@ -1,3 +1,13 @@
+## 0.1.138 - 2026-10-22
+
+- Add a separate Jira Assets object comment after each successfully verified receive/return update, including the business action, authenticated MeshCentral confirmer login/full name, original requester when different, and protocol request ID.
+- Keep Jira API credential attribution in native object History unchanged; write the human attribution in the additional object comment after confirmation, not from browser-provided fields.
+- Surface partial ownership-write/audit failures explicitly; do not add comments for unchanged or stale assets. Retain bounded requests and existing requester confirmation lifecycle.
+- Atlassian Cloud Assets object comments currently lack a documented public create endpoint; the Basic Auth comment route is unsupported and requires a real tenant smoke before depending on this as compliance evidence. See Issue #420.
+- Targeted tests updated; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.138.md`.
+
 ## 0.1.134 - 2026-08-24
 
 - Allow native Desktop Quick direct executions to run concurrently on the same device instead of returning `SIRK_AGENT_COMMAND_BUSY` while a previous Quick result is still pending.

@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.134`
+Current version: `0.1.138`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
