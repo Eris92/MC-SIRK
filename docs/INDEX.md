@@ -21,6 +21,7 @@ Ten plik jest drugim krokiem po root `AGENTS.md`. Służy do wyboru najmniejszeg
 | wydajność, reuse, duplikacja | `docs/agent/12-Agent-Wydajnosc-Reuse.md` |
 | GitHub Issue / kontynuacja nowego czatu | `docs/agent/13-Agent-Kontekst-Issues.md` |
 | trwałe decyzje projektu | `docs/memory/PROJECT_MEMORY.md` |
+| AI context / Claude / Codex / ciche testy | `docs/ai/OPERATIONS.md` |
 
 ## Reguła selektywnego odczytu
 

@@ -1,0 +1,4 @@
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2
+# Configure a cheap verified model locally if available; never assume plan entitlements.
