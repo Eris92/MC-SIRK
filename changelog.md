@@ -1,3 +1,11 @@
+## 0.1.139 - 2026-11-03
+
+- Fix native Desktop Quick concurrency after real 0.1.134 smoke still returned SIRK_AGENT_COMMAND_BUSY: mark only the server-resolved direct execution context after device-rights verification, rather than relying on AsyncLocalStorage across the MeshCentral callback chain.
+- Keep the per-node ordinary Commands/approval/multi guard, response correlation, lifecycle and MeshAgent command payload unchanged; no internal marker is serialized.
+- Add asynchronous resolved-context regression coverage. Real MeshCentral smoke remains required for Issue #411; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.139.md`.
+
 ## 0.1.138 - 2026-10-22
 
 - Add a separate Jira Assets object comment after each successfully verified receive/return update, including the business action, authenticated MeshCentral confirmer login/full name, original requester when different, and protocol request ID.
