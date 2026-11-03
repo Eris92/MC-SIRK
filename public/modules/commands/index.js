@@ -81,7 +81,7 @@
         return tools.openConfirmationDialog({
             title: item.label || item.name || msg("Potwierdź wykonanie", "Confirm execution"),
             message: msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?",
-            trigger: trigger,
+            trigger: trigger, item: item,
             primaryLabel: item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")
         });
     }
@@ -159,6 +159,7 @@
     function showDefinition(shell, item, autoExecute) {
         var host = shell.state.page.details; host.innerHTML = "";
         var card = shell.card(item.label || item.name, item.description || item.path);
+        if (typeof tools.appendRebootNotice === "function") tools.appendRebootNotice(card, item);
         var button = shell.element("button", "btn btn-primary mc-command-run-button", item.requiresApproval ? msg("Poproś o akceptację", "Request") : "▶ " + msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
         var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
@@ -316,42 +317,36 @@
         var fields = row.fields || {};
         return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }])
             .concat(row.excluded ? [{ Field: msg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") }] : [])
-            .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : []) });
+            .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : [])
+            .concat(row.remediation && row.remediation.rollbackScriptPath ? [{ Field: msg("Rollback", "Rollback"), Value: row.remediation.rollbackScriptPath }] : []) });
     }
     function remediationLabel(scriptPath) {
         var item = window.SharedDirectoryTree.find(tree, scriptPath);
         return item ? (item.label || item.name || scriptPath) : scriptPath;
     }
-    // One "Fix" action per pinned remediation command; it opens the normal
-    // Commands launch (rights, parameters, confirmation) for the current device.
-    function appendRemediations(shell, details, host) {
-        var byPath = {};
-        (host.findings || []).forEach(function (row) {
-            if (row.excluded || !row.remediation) return;
-            var key = row.remediation.scriptPath;
-            byPath[key] = (byPath[key] || 0) + 1;
-        });
-        var paths = Object.keys(byPath).sort();
-        if (!paths.length) return;
-        var box = shell.card(msg("Naprawy", "Remediation"), msg("Polecenia przypięte do wykrytych podatności.", "Commands pinned to the detected vulnerabilities."));
-        box.classList.add("mc-vulnerability-remediation");
-        var actions = shell.element("div", "mc-script-manage-actions");
-        paths.forEach(function (scriptPath) {
-            var item = window.SharedDirectoryTree.find(tree, scriptPath);
-            var button = shell.element("button", "btn btn-primary", msg("Napraw", "Fix") + ": " + remediationLabel(scriptPath) + " (" + byPath[scriptPath] + ")");
-            button.type = "button";
-            button.disabled = !item || !filterItem(item);
-            if (button.disabled) button.title = msg("Polecenie jest dla Ciebie niedostępne.", "The command is not available to you.");
-            button.onclick = function () {
-                mode = "commands";
-                treeState.selectedScript = scriptPath;
-                tools.saveTreeState(treeState);
-                show(shell, item, true);
-            };
-            actions.appendChild(button);
-        });
-        box.appendChild(actions);
-        details.appendChild(box);
+    // Per-row Fix / Undo actions open the normal Commands launch (rights,
+    // parameters, confirmation) of the pinned My Commands script on this device.
+    function appendRemediationButton(shell, cell, scriptPath, label, primaryStyle) {
+        var item = window.SharedDirectoryTree.find(tree, scriptPath);
+        var button = shell.element("button", "btn btn-sm " + (primaryStyle ? "btn-primary" : "btn-secondary"), label);
+        button.type = "button";
+        button.title = remediationLabel(scriptPath);
+        button.disabled = !item || !filterItem(item);
+        if (button.disabled) button.title += " — " + msg("polecenie jest dla Ciebie niedostępne", "the command is not available to you");
+        button.onclick = function () {
+            mode = "commands";
+            treeState.selectedScript = scriptPath;
+            tools.saveTreeState(treeState);
+            show(shell, item, true);
+        };
+        cell.appendChild(button);
+    }
+    function renderRemediation(shell, cell, row) {
+        cell.classList.add("mc-vuln-actions");
+        if (row.excluded) { cell.textContent = msg("wykluczone", "excluded"); return; }
+        if (!row.remediation) { cell.textContent = "—"; return; }
+        appendRemediationButton(shell, cell, row.remediation.scriptPath, msg("Napraw", "Fix"), true);
+        if (row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
     }
     function vulnerabilities(shell) {
         primary(shell, document.createElement("div"));
@@ -402,10 +397,9 @@
                 { title: "Plugin ID", value: function (row) { return row.fields && row.fields["Plugin ID"] || "—"; } },
                 { title: "Score", value: function (row) { return row.score == null ? "—" : String(row.score); } },
                 { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } },
-                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; } }
+                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
             ]
         });
-        appendRemediations(shell, details, host);
         if (pages > 1 || (host.truncated === true)) {
             var pager = shell.element("div", "mc-script-manage-actions");
             var prev = shell.element("button", "btn btn-secondary", "‹"); prev.type = "button"; prev.disabled = vuln.page <= 1; prev.onclick = function () { vuln.page--; shell.render(); };

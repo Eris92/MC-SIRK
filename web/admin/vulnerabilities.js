@@ -46,28 +46,26 @@
         }).then(readJson);
     }
 
-    function input(host, label, value, options) {
+    function control(cell, label, value, options) {
         options = options || {};
-        var wrap = element("label", "mc-admin-field mc-admin-vuln-field");
-        wrap.appendChild(element("span", "mc-admin-field-label", label));
-        var control = document.createElement(options.options ? "select" : "input");
-        control.className = "mc-admin-input";
+        var item = document.createElement(options.options ? "select" : "input");
+        item.className = "mc-admin-input mc-admin-vuln-input";
+        item.setAttribute("aria-label", label);
         if (options.options) {
             options.options.forEach(function (option) {
-                var item = document.createElement("option");
-                item.value = option[0];
-                item.textContent = option[1];
-                control.appendChild(item);
+                var entry = document.createElement("option");
+                entry.value = option[0];
+                entry.textContent = option[1];
+                item.appendChild(entry);
             });
         } else {
-            control.type = options.type || "text";
-            if (options.placeholder) control.placeholder = options.placeholder;
-            if (options.maxLength) control.maxLength = options.maxLength;
+            item.type = options.type || "text";
+            if (options.placeholder) item.placeholder = options.placeholder;
+            if (options.maxLength) item.maxLength = options.maxLength;
         }
-        control.value = value == null ? "" : String(value);
-        wrap.appendChild(control);
-        host.appendChild(wrap);
-        return control;
+        item.value = value == null ? "" : String(value);
+        cell.appendChild(item);
+        return item;
     }
 
     function render(state) {
@@ -75,8 +73,8 @@
         var card = element("section", "mc-admin-card");
         card.appendChild(element("h3", "", msg("Podatności", "Vulnerabilities")));
         card.appendChild(element("p", "mc-admin-card-description", msg(
-            "Reguły dla danych Nessus. Wykluczenie ukrywa pasującą podatność z liczników i alertu w Desktop (nadal jest widoczna jako „wykluczona”). Naprawa przypina polecenie z My Commands, które pojawia się jako „Napraw” w Commands i Quick. Dopasowanie: Plugin ID i/lub nazwa, opcjonalnie host (wzorzec z *). Wykluczenie ma pierwszeństwo przed naprawą.",
-            "Rules for Nessus data. An exclusion removes a matching vulnerability from counts and the Desktop alert (it stays visible as \"excluded\"). A remediation pins a My Commands script shown as \"Fix\" in Commands and Quick. Match by Plugin ID and/or name, optionally a host pattern with *. Exclusions win over remediation."
+            "Reguły dla danych Nessus. Wykluczenie ukrywa pasującą podatność z liczników i alertu w Desktop (nadal jest widoczna jako „wykluczona”). Naprawa przypina polecenie z My Commands, które pojawia się jako „Napraw” w Commands i Quick, oraz opcjonalnie polecenie rollback („Cofnij”), np. ponowne włączenie TLS 1.0. Dopasowanie: Plugin ID i/lub nazwa, opcjonalnie host (wzorzec z *). Wykluczenie ma pierwszeństwo przed naprawą.",
+            "Rules for Nessus data. An exclusion removes a matching vulnerability from counts and the Desktop alert (it stays visible as \"excluded\"). A remediation pins a My Commands script shown as \"Fix\" in Commands and Quick, plus an optional rollback command (\"Undo\"), e.g. re-enabling TLS 1.0. Match by Plugin ID and/or name, optionally a host pattern with *. Exclusions win over remediation."
         )));
         if (state.path) card.appendChild(element("p", "mc-admin-card-description", msg("Plik reguł (można go też edytować ręcznie): ", "Rules file (may also be edited by hand): ") + state.path));
         if (state.error) card.appendChild(element("p", "mc-admin-error", msg("Plik reguł jest niepoprawny i nie jest stosowany: ", "The rules file is invalid and is not applied: ") + state.error.reason));
@@ -85,42 +83,66 @@
         var commandOptions = [["", msg("— wybierz polecenie —", "— choose a command —")]].concat((state.commands || []).map(function (command) {
             return [command.path, command.label + " (" + command.path + ")"];
         }));
-        var list = element("div", "mc-admin-vuln-rules");
-        card.appendChild(list);
+        var rollbackOptions = [["", msg("— brak —", "— none —")]].concat(commandOptions.slice(1));
+        function commandSelect(cell, label, value, options) {
+            var select = control(cell, label, value, { options: options });
+            if (value && !(state.commands || []).some(function (command) { return command.path === value; })) {
+                var missing = document.createElement("option");
+                missing.value = value;
+                missing.textContent = value + msg(" (brak)", " (missing)");
+                select.appendChild(missing);
+                select.value = value;
+            }
+            return select;
+        }
+        var wrap = element("div", "mc-admin-table-wrap");
+        var table = element("table", "mc-admin-table mc-admin-vuln-table");
+        var headRow = table.createTHead().insertRow();
+        [msg("Typ", "Type"), "Plugin ID", msg("Nazwa pluginu", "Plugin name"), msg("Dopasowanie", "Match"), msg("Host (wzorzec)", "Host (pattern)"), msg("Polecenie naprawy", "Remediation command"), msg("Polecenie rollback", "Rollback command"), msg("Powód", "Reason"), msg("Wygasa", "Expires"), msg("Wł.", "On"), ""].forEach(function (title) {
+            headRow.appendChild(element("th", "", title));
+        });
+        var list = table.createTBody();
+        wrap.appendChild(table);
+        card.appendChild(wrap);
+        var empty = element("p", "mc-admin-card-description mc-admin-vuln-empty", msg("Brak reguł. Dodaj wykluczenie albo naprawę.", "No rules yet. Add an exclusion or a remediation."));
+        card.appendChild(empty);
         var rows = [];
+        function syncEmpty() { empty.hidden = rows.length > 0; }
 
         function addRule(rule) {
             rule = rule || {};
-            var row = element("div", "mc-admin-vuln-rule");
-            var action = input(row, msg("Typ", "Type"), rule.action || "exclude", { options: [["exclude", msg("Wykluczenie", "Exclusion")], ["remediate", msg("Naprawa", "Remediation")]] });
-            var pluginId = input(row, "Plugin ID", rule.pluginId, { placeholder: "156860", maxLength: 12 });
-            var name = input(row, msg("Nazwa pluginu", "Plugin name"), rule.name, { placeholder: "Google Chrome <", maxLength: 200 });
-            var nameMode = input(row, msg("Dopasowanie nazwy", "Name match"), rule.nameMode || "contains", { options: [["contains", msg("zawiera", "contains")], ["exact", msg("dokładnie", "exact")]] });
-            var host = input(row, msg("Host (wzorzec)", "Host (pattern)"), rule.host, { placeholder: msg("puste = wszystkie, np. pc-*", "empty = all, e.g. pc-*"), maxLength: 253 });
-            var script = input(row, msg("Polecenie naprawy", "Remediation command"), rule.scriptPath, { options: commandOptions });
-            if (rule.scriptPath && !(state.commands || []).some(function (command) { return command.path === rule.scriptPath; })) {
-                var missing = document.createElement("option");
-                missing.value = rule.scriptPath;
-                missing.textContent = rule.scriptPath + msg(" (brak)", " (missing)");
-                script.appendChild(missing);
-                script.value = rule.scriptPath;
-            }
-            var reason = input(row, msg("Powód", "Reason"), rule.reason, { maxLength: 500 });
-            var expires = input(row, msg("Wygasa", "Expires"), rule.expires, { type: "date" });
-            var enabledLabel = element("label", "mc-admin-check mc-admin-vuln-enabled");
+            var row = list.insertRow();
+            row.className = "mc-admin-vuln-rule";
+            function cell() { return row.insertCell(); }
+            var action = control(cell(), msg("Typ", "Type"), rule.action || "exclude", { options: [["exclude", msg("Wykluczenie", "Exclusion")], ["remediate", msg("Naprawa", "Remediation")]] });
+            var pluginId = control(cell(), "Plugin ID", rule.pluginId, { placeholder: "156860", maxLength: 12 });
+            var name = control(cell(), msg("Nazwa pluginu", "Plugin name"), rule.name, { placeholder: "Google Chrome <", maxLength: 200 });
+            var nameMode = control(cell(), msg("Dopasowanie nazwy", "Name match"), rule.nameMode || "contains", { options: [["contains", msg("zawiera", "contains")], ["exact", msg("dokładnie", "exact")]] });
+            var host = control(cell(), msg("Host (wzorzec)", "Host (pattern)"), rule.host, { placeholder: msg("wszystkie", "all"), maxLength: 253 });
+            var scriptCell = cell();
+            var script = commandSelect(scriptCell, msg("Polecenie naprawy", "Remediation command"), rule.scriptPath, commandOptions);
+            var rollbackCell = cell();
+            var rollback = commandSelect(rollbackCell, msg("Polecenie rollback (opcjonalne)", "Rollback command (optional)"), rule.rollbackScriptPath, rollbackOptions);
+            var reason = control(cell(), msg("Powód", "Reason"), rule.reason, { maxLength: 500 });
+            var expires = control(cell(), msg("Wygasa", "Expires"), rule.expires, { type: "date" });
+            var enabledCell = cell();
+            enabledCell.className = "mc-admin-vuln-center";
             var enabled = document.createElement("input");
             enabled.type = "checkbox";
             enabled.checked = rule.enabled !== false;
-            enabledLabel.appendChild(enabled);
-            enabledLabel.appendChild(document.createTextNode(msg("Włączona", "Enabled")));
-            row.appendChild(enabledLabel);
-            var remove = element("button", "mc-admin-secondary", msg("Usuń", "Remove"));
+            enabled.setAttribute("aria-label", msg("Włączona", "Enabled"));
+            enabledCell.appendChild(enabled);
+            var removeCell = cell();
+            removeCell.className = "mc-admin-vuln-center";
+            var remove = element("button", "mc-admin-secondary mc-admin-vuln-remove", "×");
             remove.type = "button";
-            row.appendChild(remove);
+            remove.title = msg("Usuń regułę", "Remove rule");
+            remove.setAttribute("aria-label", remove.title);
+            removeCell.appendChild(remove);
             function syncAction() {
                 var remediate = action.value === "remediate";
-                script.disabled = !remediate;
-                script.parentNode.hidden = !remediate;
+                script.disabled = rollback.disabled = !remediate;
+                script.hidden = rollback.hidden = !remediate;
                 row.classList.toggle("is-remediation", remediate);
             }
             action.onchange = syncAction;
@@ -136,6 +158,7 @@
                         nameMode: nameMode.value,
                         host: host.value.trim(),
                         scriptPath: action.value === "remediate" ? script.value : "",
+                        rollbackScriptPath: action.value === "remediate" ? rollback.value : "",
                         reason: reason.value.trim(),
                         expires: expires.value,
                         enabled: enabled.checked,
@@ -144,12 +167,13 @@
                     };
                 }
             };
-            remove.onclick = function () { row.remove(); rows = rows.filter(function (item) { return item !== entry; }); };
+            remove.onclick = function () { row.remove(); rows = rows.filter(function (item) { return item !== entry; }); syncEmpty(); };
             rows.push(entry);
-            list.appendChild(row);
+            syncEmpty();
         }
 
         (state.rules || []).forEach(addRule);
+        syncEmpty();
 
         var actions = element("div", "mc-admin-actions");
         var addExclusion = element("button", "mc-admin-secondary", msg("Dodaj wykluczenie", "Add exclusion"));

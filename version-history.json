@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.145",
+    "date": "2026-11-03",
+    "summary": "Rules table with rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag.",
+    "notes": "docs/releases/0.1.145.md"
+  },
+  {
     "version": "0.1.144",
     "date": "2026-11-03",
     "summary": "Vulnerability exclusions and pinned remediation rules (settings + rules.json), Fix actions, Quick table and My Scripts all-host table with header filters.",

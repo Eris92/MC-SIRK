@@ -65,7 +65,7 @@
             vuln_host_unmatched: "Nie znaleziono hosta w danych Nessus. Stan podatności jest nieznany.",
             vuln_ambiguous: "Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.",
             vuln_stale: "Ostatni skan jest nieaktualny.", vuln_no_findings: "Ostatni skan nie wykazał podatności.",
-            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnColScore: "Score", vulnColExploit: "Exploit", vulnExcluded: "wykluczone", vulnFix: "Napraw", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnRequestFailed: "Nie można odczytać podatności"
+            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnRequestFailed: "Nie można odczytać podatności"
         },
         en: {
             title: "Quick commands", scripts: "Scripts", search: "Search commands…",
@@ -86,7 +86,7 @@
             vuln_host_unmatched: "This host was not found in the Nessus data. Vulnerability state is unknown.",
             vuln_ambiguous: "The host name matches several Nessus entries. No unambiguous match.",
             vuln_stale: "The latest scan is stale.", vuln_no_findings: "The latest scan reported no vulnerabilities.",
-            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnColScore: "Score", vulnColExploit: "Exploit", vulnExcluded: "excluded", vulnFix: "Fix", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnRequestFailed: "Cannot read vulnerabilities"
+            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnRequestFailed: "Cannot read vulnerabilities"
         }
     };
 
@@ -362,6 +362,7 @@
             title: text("confirm"),
             message: text("confirm") + ' "' + item.label + '"?',
             trigger: trigger,
+            item: item,
             primaryLabel: item.requiresApproval ? "Request" : text("run")
         }).then(function (confirmed) {
             if (confirmed !== true) return false;
@@ -431,7 +432,8 @@
                 label: localized(script, "label") || script.label || script.name,
                 description: localized(script, "description") || script.description || "",
                 variables: script.variables || [], requiresApproval: false,
-                confirmExecution: script.confirmExecution === true
+                confirmExecution: script.confirmExecution === true,
+                rebootRequired: script.rebootRequired === true
             });
         }).catch(function (error) {
             button.disabled = false;
@@ -553,48 +555,73 @@
             summary.appendChild(element("div", "", text("vulnScan") + ": " + (host.generationDate || "—")));
         }
         tree.appendChild(summary);
-        // Compact table (risk | name | score | exploit); excluded findings stay visible but muted.
+        // Compact table (risk | name | fix); excluded findings stay visible but muted.
         var findings = host && host.findings || [];
+        var quickScripts = state.data ? flattenScripts(state.data.tree, []) : [];
+        function remediationItem(finding, rollback) {
+            var remediation = !finding.excluded && finding.remediation;
+            var scriptPath = remediation && (rollback ? remediation.rollbackScriptPath : remediation.scriptPath);
+            if (!scriptPath) return null;
+            return quickScripts.filter(function (candidate) { return candidate.path === scriptPath; })[0] || { missing: true, label: scriptPath };
+        }
+        function launchFix(item, trigger) {
+            if (!item || item.missing) return;
+            state.category = "scripts";
+            selectItem(panel, item, trigger);
+        }
         if (findings.length) {
             var table = element("table", "sirk-quick-vuln-table");
             var head = element("tr");
-            ["vulnColRisk", "vulnColName", "vulnColScore", "vulnColExploit"].forEach(function (key) { head.appendChild(element("th", "", text(key))); });
+            ["vulnColRisk", "vulnColName", ""].forEach(function (key) { head.appendChild(element("th", "", key ? text(key) : "")); });
             table.appendChild(element("thead")).appendChild(head);
             var body = table.appendChild(element("tbody"));
             findings.forEach(function (finding) {
                 var fields = finding.fields || {};
                 var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded ? " is-excluded" : "") + (vuln.selected === finding ? " is-active" : ""));
                 row.tabIndex = 0;
-                row.title = fields["Plugin Name"] || "";
+                row.title = (fields["Plugin Name"] || "") + " · Plugin " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + (finding.exploit ? " · Exploit" : "");
                 row.setAttribute("aria-selected", vuln.selected === finding ? "true" : "false");
                 row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
                 var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
                 if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
                 row.appendChild(name);
-                row.appendChild(element("td", "sirk-quick-vuln-score", finding.score == null ? "—" : String(finding.score)));
-                row.appendChild(element("td", "sirk-quick-vuln-exploit", finding.exploit ? "✓" : "—"));
+                var action = element("td", "sirk-quick-vuln-action");
+                var item = remediationItem(finding);
+                if (item) {
+                    var fix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix"));
+                    fix.type = "button";
+                    fix.title = item.missing ? text("vulnFixUnavailable") : text("vulnFix") + ": " + item.label;
+                    fix.disabled = item.missing === true;
+                    fix.onclick = function (event) { event.stopPropagation(); launchFix(item, fix); };
+                    action.appendChild(fix);
+                }
+                row.appendChild(action);
                 function select() { vuln.selected = finding; render(panel); }
                 row.onclick = select;
-                row.onkeydown = function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } };
+                row.onkeydown = function (event) { if (event.target === row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); select(); } };
                 body.appendChild(row);
             });
             tree.appendChild(table);
         }
         if (vuln.selected) {
-            var remediation = !vuln.selected.excluded && vuln.selected.remediation;
-            if (remediation) {
+            var selectedFix = remediationItem(vuln.selected);
+            if (selectedFix) {
                 // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
-                var item = state.data ? flattenScripts(state.data.tree, []).filter(function (candidate) { return candidate.path === remediation.scriptPath; })[0] : null;
-                var fix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix") + ": " + (item ? item.label : remediation.scriptPath));
-                fix.type = "button";
-                fix.disabled = !item;
-                if (!item) fix.title = text("vulnFixUnavailable");
-                fix.onclick = function () {
-                    if (!item) return;
-                    state.category = "scripts";
-                    selectItem(panel, item, fix);
-                };
-                details.appendChild(fix);
+                var detailFix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix") + ": " + selectedFix.label);
+                detailFix.type = "button";
+                detailFix.disabled = selectedFix.missing === true;
+                if (selectedFix.missing) detailFix.title = text("vulnFixUnavailable");
+                detailFix.onclick = function () { launchFix(selectedFix, detailFix); };
+                details.appendChild(detailFix);
+            }
+            var selectedUndo = remediationItem(vuln.selected, true);
+            if (selectedUndo) {
+                var detailUndo = element("button", "btn btn-secondary btn-sm sirk-quick-vuln-fix", text("vulnUndo") + ": " + selectedUndo.label);
+                detailUndo.type = "button";
+                detailUndo.disabled = selectedUndo.missing === true;
+                if (selectedUndo.missing) detailUndo.title = text("vulnFixUnavailable");
+                detailUndo.onclick = function () { launchFix(selectedUndo, detailUndo); };
+                details.appendChild(detailUndo);
             }
             if (vuln.selected.excluded && vuln.selected.exclusion) {
                 details.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (vuln.selected.exclusion.reason ? ": " + vuln.selected.exclusion.reason : "") + (vuln.selected.exclusion.expires ? " (" + vuln.selected.exclusion.expires + ")" : "")));
@@ -861,6 +888,9 @@
         else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
         if (!tree.children.length) tree.appendChild(element("p", "sirk-quick-command-empty", text(state.favoritesOnly ? "emptyFavorites" : "empty")));
 
+        if (state.detail && window.SharedScriptTools && typeof window.SharedScriptTools.appendRebootNotice === "function") {
+            window.SharedScriptTools.appendRebootNotice(details, state.detail);
+        }
         var status = element("div", "sirk-quick-command-status", state.output);
         status.classList.toggle("is-error", state.outputError);
         details.appendChild(status);

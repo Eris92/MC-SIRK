@@ -1,3 +1,15 @@
+## 0.1.145 - 2026-11-03
+
+- Poprawki po drugim smoke #422–#425.
+- Quick: tabela podatności Ryzyko | Nazwa | bardzo mały przycisk „Napraw” (bez Score i Exploit, które są w podpowiedzi wiersza i szczegółach); szersza kolumna Ryzyko.
+- Ustawienia „Vulnerabilities”: reguły edytowane w tabeli zamiast kart (Typ, Plugin ID, Nazwa, Dopasowanie, Host, Polecenie naprawy, Polecenie rollback, Powód, Wygasa, Wł.).
+- Reguła naprawy ma opcjonalne polecenie rollback (np. ponowne włączenie TLS 1.0), walidowane jak polecenie naprawy.
+- Commands → Podatności: kolumna „Naprawa” ma w każdym wierszu przyciski „Napraw” i „Cofnij” zamiast opisu; usunięta osobna karta napraw.
+- Skrypty: nowa opcja „Reboot required” w edytorze definicji (`# RebootRequired: true`); informacja o wymaganym restarcie jest widoczna w karcie skryptu (Commands, My Scripts), w oknie parametrów i potwierdzenia oraz w szczegółach Quick.
+- Nowy test `test/script-reboot-required.test.js`, rozszerzony `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.145.md`.
+
 ## 0.1.144 - 2026-11-03
 
 - Poprawki po pierwszym smoke #422–#425 na lokalnym MeshCentral.

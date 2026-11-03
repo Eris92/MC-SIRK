@@ -63,7 +63,7 @@
         return tools.openConfirmationDialog({
             title: script.label || script.name || "Confirm execution",
             message: "Run \"" + (script.label || script.name || script.path || "this script") + "\" now?",
-            trigger: trigger,
+            trigger: trigger, item: script,
             primaryLabel: script.requiresApproval ? "Request" : "Run"
         });
     }
@@ -347,6 +347,7 @@
 
             var card = shell.card(script.label || script.name, script.description || script.path);
             card.classList.add("mc-script-run-card");
+            if (typeof tools.appendRebootNotice === "function") tools.appendRebootNotice(card, script);
 
             var button = shell.element(
                 "button",
