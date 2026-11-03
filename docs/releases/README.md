@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.140`](0.1.140.md) — introduces the editable Entra SMS/Voice policy scope CSV report with safe download, pending real Entra/MeshCentral smoke;
 - [`0.1.139`](0.1.139.md) — fixes the real Quick concurrency regression with a server-resolved execution marker while keeping ordinary per-node guard; pending real smoke;
 - [`0.1.138`](0.1.138.md) — adds explicit MeshCentral actor attribution to Jira Assets object comments after successful confirmation (Cloud Comments endpoint unsupported; real smoke required);
 - [`0.1.134`](0.1.134.md) — allows concurrent native Desktop Quick direct launches on one device while preserving the ordinary per-node agent command guard;
