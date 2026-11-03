@@ -125,7 +125,7 @@ function apply(plugin, options) {
     runtime.captureAgentData = function (command, agent) {
         var id = responseId(command);
         var released = id ? clearByResponse(id) : false;
-        if (!released && isRunCommandsResult(command)) {
+        if (!released && !id && isRunCommandsResult(command)) {
             var nodeId = agentNodeId(agent);
             if (nodeId) clearByNode(nodeId);
         }
