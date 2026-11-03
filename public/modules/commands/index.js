@@ -360,7 +360,7 @@
         if (vuln.loading || (!data && !vuln.error)) { details.appendChild(shell.card(msg("Podatności", "Vulnerabilities"), msg("Wczytywanie danych Nessus…", "Loading Nessus data…"))); sync(shell); return; }
         if (vuln.error) { var failed = shell.card(msg("Podatności", "Vulnerabilities"), msg("Nie można odczytać podatności: ", "Cannot read vulnerabilities: ") + vuln.error); failed.classList.add("mc-shared-error"); details.appendChild(failed); sync(shell); return; }
         var statusText = VULN_STATUS[data.status] || [data.status, data.status];
-        var summary = shell.card((host && host.host) || data.nodeName || msg("Podatności", "Vulnerabilities"), msg(statusText[0], statusText[1]));
+        var summary = shell.card((host && host.host) || data.nodeName || msg("Podatności", "Vulnerabilities"), host && data.status === "available" ? "" : msg(statusText[0], statusText[1]));
         summary.classList.add("mc-vulnerability-summary", "mc-vulnerability-status-" + String(data.status || "unknown"));
         if (data.status === "error" || data.status === "ambiguous" || data.status === "host_unmatched" || data.status === "not_imported") summary.classList.add("mc-shared-error");
         var facts = [];
@@ -372,7 +372,20 @@
         }
         if (data.import) facts.push([msg("Import danych", "Data imported"), formatDate(data.import.importedAt)]);
         if (data.import && data.import.lastError) facts.push([msg("Ostatni błąd importu", "Last import error"), formatDate(data.import.lastError.at) + " — " + data.import.lastError.reason]);
-        facts.forEach(function (fact) { var line = shell.element("div", "mc-shared-muted", fact[0] + ": " + fact[1]); summary.appendChild(line); });
+        // Visible: host and scan date. "View" opens status, counts and import facts.
+        if (host) summary.appendChild(shell.element("div", "mc-shared-muted", msg("Data skanu", "Scan generated") + ": " + (host.generationDate || "—")));
+        var summaryView = shell.element("button", "btn btn-secondary btn-sm mc-results-view-button mc-vulnerability-summary-view", "View");
+        summaryView.type = "button";
+        summaryView.onclick = function () {
+            var title = (host && host.host) || data.nodeName || msg("Podatności", "Vulnerabilities");
+            window.SharedResultsView.openViewer({ title: title }, {
+                dialogTitle: title,
+                resultValue: function () {
+                    return JSON.stringify({ meshTable: true, title: title, columns: ["Field", "Value"], rows: [{ Field: msg("Status", "Status"), Value: msg(statusText[0], statusText[1]) }].concat(facts.map(function (fact) { return { Field: fact[0], Value: String(fact[1]) }; })) });
+                }
+            });
+        };
+        summary.appendChild(summaryView);
         details.appendChild(summary);
         if (!host || !host.findingsCount) { sync(shell); return; }
         var controls = shell.element("div", "mc-script-manage-actions");

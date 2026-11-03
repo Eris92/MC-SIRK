@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.146",
+    "date": "2026-11-03",
+    "summary": "Expandable Quick vulnerability rows with Fix/Undo, scan summary collapsed behind View in Quick and Commands.",
+    "notes": "docs/releases/0.1.146.md"
+  },
+  {
     "version": "0.1.145",
     "date": "2026-11-03",
     "summary": "Rules table with rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag.",

@@ -1,3 +1,11 @@
+## 0.1.146 - 2026-11-03
+
+- Quick → Podatności: bez przycisku „Napraw” w tabeli. Kliknięcie wiersza rozwija go (szczegóły, „Napraw”/„Cofnij”, powód wykluczenia), drugie kliknięcie zwija; ikona 🔧 przy nazwie oznacza przypiętą naprawę.
+- Podsumowanie skanu w Quick i Commands pokazuje tylko nazwę hosta i datę skanu; status, liczniki i dane importu są pod przyciskiem „View” (Quick: rozwinięcie, Commands: okno szczegółów). Statusy błędów nadal są widoczne od razu.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.146.md`.
+
 ## 0.1.145 - 2026-11-03
 
 - Poprawki po drugim smoke #422–#425.

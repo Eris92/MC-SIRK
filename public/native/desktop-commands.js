@@ -547,15 +547,26 @@
             tree.appendChild(element("p", "sirk-quick-command-empty", text("vulnLoading")));
             return;
         }
+        // Summary shows host and scan date; "View" toggles status and counts.
         var summary = element("div", "sirk-quick-vuln-summary");
-        summary.appendChild(element("strong", "", host && host.host || data.nodeName || text("vulnerabilities")));
-        summary.appendChild(element("div", "", text("vuln_" + data.status) || data.status));
-        if (host) {
-            summary.appendChild(element("div", "", countsText(data)));
-            summary.appendChild(element("div", "", text("vulnScan") + ": " + (host.generationDate || "—")));
+        var summaryHead = element("div", "sirk-quick-vuln-summary-head");
+        var summaryTitle = element("div", "sirk-quick-vuln-summary-title");
+        summaryTitle.appendChild(element("strong", "", host && host.host || data.nodeName || text("vulnerabilities")));
+        if (host) summaryTitle.appendChild(element("span", "", text("vulnScan") + ": " + (host.generationDate || "—")));
+        summaryHead.appendChild(summaryTitle);
+        var summaryToggle = element("button", "btn btn-secondary btn-sm sirk-quick-vuln-view", "View");
+        summaryToggle.type = "button";
+        summaryToggle.setAttribute("aria-expanded", vuln.summaryOpen ? "true" : "false");
+        summaryToggle.onclick = function () { vuln.summaryOpen = !vuln.summaryOpen; render(panel); };
+        summaryHead.appendChild(summaryToggle);
+        summary.appendChild(summaryHead);
+        if (vuln.summaryOpen || !host) {
+            summary.appendChild(element("div", "", text("vuln_" + data.status) || data.status));
+            if (host) summary.appendChild(element("div", "", countsText(data)));
         }
         tree.appendChild(summary);
-        // Compact table (risk | name | fix); excluded findings stay visible but muted.
+        // Compact table (risk | name). A click expands the row with details and
+        // Fix/Undo; a second click collapses it. Excluded findings stay muted.
         var findings = host && host.findings || [];
         var quickScripts = state.data ? flattenScripts(state.data.tree, []) : [];
         function remediationItem(finding, rollback) {
@@ -569,70 +580,62 @@
             state.category = "scripts";
             selectItem(panel, item, trigger);
         }
-        if (findings.length) {
-            var table = element("table", "sirk-quick-vuln-table");
-            var head = element("tr");
-            ["vulnColRisk", "vulnColName", ""].forEach(function (key) { head.appendChild(element("th", "", key ? text(key) : "")); });
-            table.appendChild(element("thead")).appendChild(head);
-            var body = table.appendChild(element("tbody"));
-            findings.forEach(function (finding) {
-                var fields = finding.fields || {};
-                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded ? " is-excluded" : "") + (vuln.selected === finding ? " is-active" : ""));
-                row.tabIndex = 0;
-                row.title = (fields["Plugin Name"] || "") + " · Plugin " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + (finding.exploit ? " · Exploit" : "");
-                row.setAttribute("aria-selected", vuln.selected === finding ? "true" : "false");
-                row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
-                var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
-                if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
-                row.appendChild(name);
-                var action = element("td", "sirk-quick-vuln-action");
-                var item = remediationItem(finding);
-                if (item) {
-                    var fix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix"));
-                    fix.type = "button";
-                    fix.title = item.missing ? text("vulnFixUnavailable") : text("vulnFix") + ": " + item.label;
-                    fix.disabled = item.missing === true;
-                    fix.onclick = function (event) { event.stopPropagation(); launchFix(item, fix); };
-                    action.appendChild(fix);
-                }
-                row.appendChild(action);
-                function select() { vuln.selected = finding; render(panel); }
-                row.onclick = select;
-                row.onkeydown = function (event) { if (event.target === row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); select(); } };
-                body.appendChild(row);
-            });
-            tree.appendChild(table);
+        function actionButton(host, item, label, style) {
+            if (!item) return;
+            // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
+            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix", label + ": " + item.label);
+            button.type = "button";
+            button.disabled = item.missing === true;
+            if (item.missing) button.title = text("vulnFixUnavailable");
+            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button); };
+            host.appendChild(button);
         }
-        if (vuln.selected) {
-            var selectedFix = remediationItem(vuln.selected);
-            if (selectedFix) {
-                // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
-                var detailFix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix") + ": " + selectedFix.label);
-                detailFix.type = "button";
-                detailFix.disabled = selectedFix.missing === true;
-                if (selectedFix.missing) detailFix.title = text("vulnFixUnavailable");
-                detailFix.onclick = function () { launchFix(selectedFix, detailFix); };
-                details.appendChild(detailFix);
+        function appendExpanded(body, finding) {
+            var row = element("tr", "sirk-quick-vuln-expand");
+            var cell = element("td", "");
+            cell.colSpan = 2;
+            var actions = element("div", "sirk-quick-vuln-expand-actions");
+            actionButton(actions, remediationItem(finding), text("vulnFix"), "btn-primary");
+            actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
+            if (actions.children.length) cell.appendChild(actions);
+            if (finding.excluded && finding.exclusion) {
+                cell.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (finding.exclusion.reason ? ": " + finding.exclusion.reason : "") + (finding.exclusion.expires ? " (" + finding.exclusion.expires + ")" : "")));
             }
-            var selectedUndo = remediationItem(vuln.selected, true);
-            if (selectedUndo) {
-                var detailUndo = element("button", "btn btn-secondary btn-sm sirk-quick-vuln-fix", text("vulnUndo") + ": " + selectedUndo.label);
-                detailUndo.type = "button";
-                detailUndo.disabled = selectedUndo.missing === true;
-                if (selectedUndo.missing) detailUndo.title = text("vulnFixUnavailable");
-                detailUndo.onclick = function () { launchFix(selectedUndo, detailUndo); };
-                details.appendChild(detailUndo);
-            }
-            if (vuln.selected.excluded && vuln.selected.exclusion) {
-                details.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (vuln.selected.exclusion.reason ? ": " + vuln.selected.exclusion.reason : "") + (vuln.selected.exclusion.expires ? " (" + vuln.selected.exclusion.expires + ")" : "")));
-            }
-            var fields = vuln.selected.fields || {};
+            var fields = finding.fields || {};
             Object.keys(fields).forEach(function (name) {
                 var line = element("div", "sirk-quick-vuln-field");
                 line.appendChild(element("strong", "", name + ": "));
                 line.appendChild(document.createTextNode(String(fields[name] == null ? "" : fields[name])));
-                details.appendChild(line);
+                cell.appendChild(line);
             });
+            row.appendChild(cell);
+            body.appendChild(row);
+        }
+        if (findings.length) {
+            var table = element("table", "sirk-quick-vuln-table");
+            var head = element("tr");
+            ["vulnColRisk", "vulnColName"].forEach(function (key) { head.appendChild(element("th", "", text(key))); });
+            table.appendChild(element("thead")).appendChild(head);
+            var body = table.appendChild(element("tbody"));
+            findings.forEach(function (finding) {
+                var fields = finding.fields || {};
+                var open = vuln.selected === finding;
+                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded ? " is-excluded" : "") + (open ? " is-active" : ""));
+                row.tabIndex = 0;
+                row.title = (fields["Plugin Name"] || "") + " · Plugin " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + (finding.exploit ? " · Exploit" : "");
+                row.setAttribute("aria-expanded", open ? "true" : "false");
+                row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
+                var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
+                if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
+                if (!finding.excluded && finding.remediation) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "🔧"));
+                row.appendChild(name);
+                function toggle() { vuln.selected = open ? null : finding; render(panel); }
+                row.onclick = toggle;
+                row.onkeydown = function (event) { if (event.target === row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); toggle(); } };
+                body.appendChild(row);
+                if (open) appendExpanded(body, finding);
+            });
+            tree.appendChild(table);
         }
     }
 
