@@ -24,6 +24,26 @@ function array(value) {
 }
 
 var HEALTH_STATES = ["ok", "warning", "critical"];
+
+// #405: one canonical, non-secret Certificate Authority setting shared by
+// CA workflows in My Scripts (server side) and My Commands (agent side).
+var CA_CONFIG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9.-]{0,252}\\[^\\"\u0000-\u001F]{1,128}$/;
+var CA_TEMPLATE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,127}$/;
+
+function normalizeThumbprint(value) {
+    return String(value == null ? "" : value).replace(/[\s:\u200e\u200f]/g, "").toUpperCase();
+}
+
+function normalizeCa(value) {
+    value = object(value);
+    var config = text(value.config, 400);
+    var template = text(value.template, 128);
+    var thumbprint = normalizeThumbprint(value.rdpSigningThumbprint);
+    if (config && !CA_CONFIG_PATTERN.test(config)) throw new Error("CA config must use the form host\\CA name.");
+    if (template && !CA_TEMPLATE_PATTERN.test(template)) throw new Error("CA template name is invalid.");
+    if (thumbprint && !/^[0-9A-F]{40}$/.test(thumbprint)) throw new Error("RDP signing thumbprint must be a 40-character SHA-1 hex value.");
+    return { config: config, template: template, rdpSigningThumbprint: thumbprint };
+}
 var HEALTH_NAMES = ["ad", "entra", "jira", "sms", "smtp", "defender", "zabbix"];
 
 function normalizeHealth(value) {
@@ -100,7 +120,8 @@ module.exports.createIntegrationService = function (options) {
             zabbix: !!(
                 current.zabbix && current.zabbix.url &&
                 (secretValue.zabbixToken || (current.zabbix.username && secretValue.zabbixPassword))
-            )
+            ),
+            ca: !!(current.ca && CA_CONFIG_PATTERN.test(String(current.ca.config || "")))
         };
     }
 
@@ -230,6 +251,8 @@ module.exports.createIntegrationService = function (options) {
             health: normalizeHealth(zabbix.health)
         };
 
+        result.ca = normalizeCa(payload.ca);
+
         if (result.jira.url && !/^https:\/\//i.test(result.jira.url)) {
             throw new Error("Jira URL must use HTTPS.");
         }
@@ -315,6 +338,7 @@ module.exports.createIntegrationService = function (options) {
     }
 
     return {
+        caPattern: CA_CONFIG_PATTERN,
         configured: configured,
         get: get,
         healthSummary: healthSummary,

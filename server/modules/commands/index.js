@@ -255,7 +255,7 @@ module.exports.createModule = function (context) {
             if (!script) throw new Error("Script not found.");
             if (payload.scriptHash && String(payload.scriptHash) !== String(script.hash)) throw new Error("The script changed after submission and was not executed.");
             var type = script.shell === "cmd" ? 1 : 2;
-            return { label: script.label || script.name, cmd: injectVariables(script.body, type, script.variables || [], payload.variableValues, admin.secretValues(script.path)), type: type, runAsUser: Number(script.runAsUser) || 0 };
+            return { label: script.label || script.name, cmd: injectVariables(script.body, type, script.variables || [], payload.variableValues, Object.assign({}, admin.secretValues(script.path), admin.caVariables(script.path))), type: type, runAsUser: Number(script.runAsUser) || 0 };
         }
         if (payload.commandId) {
             var found = findCatalogCommand(payload.commandId);

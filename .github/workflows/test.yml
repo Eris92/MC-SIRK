@@ -51,3 +51,6 @@ jobs:
       - name: Validate AD selector bridge
         shell: powershell
         run: .\test\windows-ad-selector-bridge-smoke.ps1
+      - name: Validate signed RDP command helpers
+        shell: powershell
+        run: .\test\windows-ca-rdp-smoke.ps1

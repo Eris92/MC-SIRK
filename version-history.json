@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.142",
+    "date": "2026-11-03",
+    "summary": "Add shared Certificate Authority integration (CA config, template, RDP signing thumbprint), CA script category and signed RDP file command for the logged-on user's Desktop.",
+    "notes": "docs/releases/0.1.142.md"
+  },
+  {
     "version": "0.1.139",
     "date": "2026-11-03",
     "summary": "Fix native Quick concurrency through a server-owned resolved execution context marker, preserving ordinary command guard.",

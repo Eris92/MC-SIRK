@@ -81,6 +81,7 @@
         var smtp = values.smtp || {};
         var ad = values.ad || {};
         var entra = values.entra || {};
+        var ca = values.ca || {};
 
         var jiraBox = disclosure(card, "Jira");
         var jiraUrl = field(jiraBox, "Jira URL", jira.url || "", { placeholder: "https://tenant.atlassian.net" });
@@ -150,6 +151,12 @@
         });
         clientSecret.autocomplete = "new-password";
 
+        var caBox = disclosure(card, "Certificate Authority (CA)");
+        var caConfig = field(caBox, "CA config (host\\CA name)", ca.config || "", { placeholder: "CA-SRV01.example.local\\Example Issuing CA" });
+        var caTemplate = field(caBox, "Certificate template", ca.template || "", { placeholder: "WebServer" });
+        var caThumbprint = field(caBox, "RDP signing certificate thumbprint", ca.rdpSigningThumbprint || "", { placeholder: "40 hex characters (SHA-1)" });
+        caBox.appendChild(element("p", "mc-admin-card-description", "Non-secret. Scripts declaring SirkSystemCredential: CA receive these values; AD credentials stay in the Active Directory profile."));
+
         var actions = element("div", "mc-admin-actions");
         var save = element("button", "mc-admin-primary", "Save integrations");
         save.type = "button";
@@ -187,6 +194,7 @@
             });
             integrations.sms = Object.assign({}, sms, { url: smsUrl.value, sender: smsSender.value, vmsLector: smsLector.value, verifyTls: smsVerifyTls.checked });
             integrations.smtp = Object.assign({}, smtp, { host: smtpHost.value, port: Number(smtpPort.value), defaultFrom: smtpFrom.value, attachmentRoot: smtpAttachmentRoot.value, maxAttachmentMb: Number(smtpMaxAttachmentMb.value), enableSsl: smtpEnableSsl.checked });
+            integrations.ca = Object.assign({}, ca, { config: caConfig.value, template: caTemplate.value, rdpSigningThumbprint: caThumbprint.value });
             integrations.entra = Object.assign({}, entra, {
                 tenantId: tenantId.value,
                 clientId: clientId.value
