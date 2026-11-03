@@ -4,6 +4,11 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.147`](0.1.147.md) — Quick vulnerability buttons no longer squeezed by the tree icon grid; pending real smoke;
+- [`0.1.146`](0.1.146.md) — expandable Quick vulnerability rows, collapsed scan summary behind View in Quick and Commands; pending real smoke;
+- [`0.1.145`](0.1.145.md) — rules table in settings, rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag; pending real smoke;
+- [`0.1.144`](0.1.144.md) — vulnerability exclusions/remediation rules, Fix actions, Quick table and My Scripts all-host table after first smoke; pending real smoke;
+- [`0.1.141`](0.1.141.md) — adds the Nessus vulnerability dataset (#422) with Commands/Quick views, Desktop alert and an all-host My Script report (#423–#425); pending real smoke;
 - [`0.1.139`](0.1.139.md) — fixes the real Quick concurrency regression with a server-resolved execution marker while keeping ordinary per-node guard; pending real smoke;
 - [`0.1.138`](0.1.138.md) — adds explicit MeshCentral actor attribution to Jira Assets object comments after successful confirmation (Cloud Comments endpoint unsupported; real smoke required);
 - [`0.1.134`](0.1.134.md) — allows concurrent native Desktop Quick direct launches on one device while preserving the ordinary per-node agent command guard;

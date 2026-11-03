@@ -51,3 +51,6 @@ jobs:
       - name: Validate AD selector bridge
         shell: powershell
         run: .\test\windows-ad-selector-bridge-smoke.ps1
+      - name: Validate Nessus all-host report script
+        shell: powershell
+        run: .\test\windows-nessus-report-smoke.ps1

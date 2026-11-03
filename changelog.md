@@ -1,3 +1,52 @@
+## 0.1.147 - 2026-11-03
+
+- Quick → Podatności: przyciski „Napraw”, „Cofnij” i „View” nie dziedziczą już siatki 24 px przycisków drzewa Quick, przez którą tekst łamał się po kilka liter („Nap/raw”). Sprawdzone renderem w przeglądarce.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.147.md`.
+
+## 0.1.146 - 2026-11-03
+
+- Quick → Podatności: bez przycisku „Napraw” w tabeli. Kliknięcie wiersza rozwija go (szczegóły, „Napraw”/„Cofnij”, powód wykluczenia), drugie kliknięcie zwija; ikona 🔧 przy nazwie oznacza przypiętą naprawę.
+- Podsumowanie skanu w Quick i Commands pokazuje tylko nazwę hosta i datę skanu; status, liczniki i dane importu są pod przyciskiem „View” (Quick: rozwinięcie, Commands: okno szczegółów). Statusy błędów nadal są widoczne od razu.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.146.md`.
+
+## 0.1.145 - 2026-11-03
+
+- Poprawki po drugim smoke #422–#425.
+- Quick: tabela podatności Ryzyko | Nazwa | bardzo mały przycisk „Napraw” (bez Score i Exploit, które są w podpowiedzi wiersza i szczegółach); szersza kolumna Ryzyko.
+- Ustawienia „Vulnerabilities”: reguły edytowane w tabeli zamiast kart (Typ, Plugin ID, Nazwa, Dopasowanie, Host, Polecenie naprawy, Polecenie rollback, Powód, Wygasa, Wł.).
+- Reguła naprawy ma opcjonalne polecenie rollback (np. ponowne włączenie TLS 1.0), walidowane jak polecenie naprawy.
+- Commands → Podatności: kolumna „Naprawa” ma w każdym wierszu przyciski „Napraw” i „Cofnij” zamiast opisu; usunięta osobna karta napraw.
+- Skrypty: nowa opcja „Reboot required” w edytorze definicji (`# RebootRequired: true`); informacja o wymaganym restarcie jest widoczna w karcie skryptu (Commands, My Scripts), w oknie parametrów i potwierdzenia oraz w szczegółach Quick.
+- Nowy test `test/script-reboot-required.test.js`, rozszerzony `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.145.md`.
+
+## 0.1.144 - 2026-11-03
+
+- Poprawki po pierwszym smoke #422–#425 na lokalnym MeshCentral.
+- Quick: podatności jako zwarta tabela (Ryzyko | Nazwa | Score | Exploit) zamiast przycisków drzewa, których układ ikony 24 px łamał tekst w pionie.
+- Reguły podatności w `sirk-platform-data/nessus/rules.json` (edytowalne ręcznie lub z harmonogramu) i w nowej zakładce ustawień „Vulnerabilities” (tylko Site Admin): wykluczenia i przypięte polecenia naprawy z My Commands, dopasowanie po Plugin ID i/lub nazwie (zawiera/dokładnie), opcjonalny wzorzec hosta z `*`, powód, data wygaśnięcia, włącz/wyłącz. Reguły są stosowane przy odczycie bez ponownego importu; wykluczenie wygrywa z naprawą; wykluczone pozycje nie liczą się do liczników ani alertu w Desktop; niepoprawny plik nie ukrywa niczego i jest raportowany. Zapis reguł generuje zdarzenie MeshCentral bez treści reguł.
+- „Napraw” w Commands (lista napraw dla urządzenia) i w Quick (szczegóły podatności) uruchamia przypięte polecenie przez zwykły przepływ uruchomienia (uprawnienia, parametry, potwierdzenie).
+- My Scripts: widok „Podatności” dla Site Admina z tabelą wszystkich hostów, filtrami w nagłówku (Host, Plugin ID, Nazwa, Score od, Exploit, Naprawa/wykluczone), sortowaniem, stronicowaniem i eksportem CSV przefiltrowanych wierszy.
+- Windows smoke Nessus zapisany wyłącznie w ASCII (PowerShell 5.1 czyta pliki bez BOM jako ANSI).
+- Nowy test `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.144.md`.
+
+## 0.1.141 - 2026-11-03
+
+- #422: import Nessus CSV (separator `;`, UTF-8/BOM, dokładnie 17 kolumn eksportera) z katalogu `sirk-platform-data/nessus/inbox` zasilanego przez harmonogram zadań; walidacja całego pliku, atomowa publikacja snapshotu, brak częściowej podmiany, wybór najnowszej generacji per host, deduplikacja append i obsługa `Plugin ID=0`; node-scoped read API z kontrolą uprawnień MeshCentral oraz zdarzenie importu bez payloadu.
+- #423: pozycja Podatności bezpośrednio pod Wynikami w Commands: liczniki, status świeżości, filtry Risk/Exploit/tekst, sortowanie, paginacja, pełne 17 pól w natywnym podglądzie, odrzucanie spóźnionych odpowiedzi po zmianie hosta.
+- #424: duży, nieblokujący alert przy połączeniu Desktop z hostem mającym aktywne podatności (raz na sesję) oraz lista Podatności w Quick.
+- #425: edytowalny My Script `Security/Nessus - All Hosts.ps1` z filtrami jako zmiennymi skryptu, raportem wszystkich hostów i CSV do pobrania; dostęp tylko dla Site Admin (request, wykonanie i download).
+- Real MeshCentral smoke wymagany. Brak tagu/GitHub Release.
+
+Current development notes: `docs/releases/0.1.141.md`.
+
 ## 0.1.139 - 2026-11-03
 
 - Fix native Desktop Quick concurrency after real 0.1.134 smoke still returned SIRK_AGENT_COMMAND_BUSY: mark only the server-resolved direct execution context after device-rights verification, rather than relying on AsyncLocalStorage across the MeshCentral callback chain.

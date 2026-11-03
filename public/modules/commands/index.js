@@ -12,6 +12,9 @@
     var outputs = Object.create(null);
     var pollSequence = 0;
     var siteAdmin = false;
+    var vuln = { nodeId: "", sequence: 0, data: null, error: null, loading: false, risk: "", exploit: "", sort: "severity", page: 1, showExcluded: false };
+    var VULN_PAGE_SIZE = 100;
+    var VULN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M12 8v5M12 16h.01"/></svg>';
     var tools = window.SharedScriptTools.create({ storageKey: "sirkPlatform.mycommands.preferences", deepLinkParameter: "mycommand" });
     tools.restoreTreeState(treeState);
 
@@ -78,7 +81,7 @@
         return tools.openConfirmationDialog({
             title: item.label || item.name || msg("Potwierdź wykonanie", "Confirm execution"),
             message: msg("Uruchomić teraz: ", "Run now: ") + (item.label || item.name || item.path) + "?",
-            trigger: trigger,
+            trigger: trigger, item: item,
             primaryLabel: item.requiresApproval ? msg("Poproś o akceptację", "Request") : msg("Uruchom", "Run")
         });
     }
@@ -156,6 +159,7 @@
     function showDefinition(shell, item, autoExecute) {
         var host = shell.state.page.details; host.innerHTML = "";
         var card = shell.card(item.label || item.name, item.description || item.path);
+        if (typeof tools.appendRebootNotice === "function") tools.appendRebootNotice(card, item);
         var button = shell.element("button", "btn btn-primary mc-command-run-button", item.requiresApproval ? msg("Poproś o akceptację", "Request") : "▶ " + msg("Uruchom", "Run")); button.type = "button"; card.appendChild(button);
         var outputHost = document.createElement("div"); outputHost.className = "mc-command-inline-result";
         if (outputs[item.path]) renderOutput(outputHost, outputs[item.path]); else renderWaiting(outputHost, autoExecute ? msg("Uruchamianie…", "Starting…") : msg("Wybierz Uruchom, aby zobaczyć wynik.", "Select Run to see the result."));
@@ -241,6 +245,10 @@
             resultsActive: mode === "results", emptyText: tools.state.favoritesOnly ? msg("Brak ulubionych poleceń.", "No favorite commands found.") : msg("Nie znaleziono poleceń.", "No commands found."),
             filterScript: filterItem, scriptActions: function (item) { return actions(shell, item); },
             onResults: function () { mode = "results"; treeState.selectedScript = ""; shell.render(); },
+            extraItems: [{
+                key: "vulnerabilities", label: msg("Podatności", "Vulnerabilities"), iconMarkup: VULN_ICON, active: mode === "vulnerabilities",
+                onClick: function () { mode = "vulnerabilities"; treeState.selectedScript = ""; vuln.data = null; vuln.error = null; vuln.page = 1; shell.render(); }
+            }],
             onRootSelect: function () { mode = "commands"; treeState.selectedScript = ""; tools.saveTreeState(treeState); window.setTimeout(shell.render, 0); },
             onScript: function (item) {
                 mode = "commands";
@@ -257,8 +265,166 @@
         window.SharedResultsView.mountStatus(shell.state.page.secondary, { selected: status, onSelect: function (value) { status = value; shell.render(); } }); sync(shell);
         return shell.api("results", { status: status, q: shell.state.search, page: 1, perPage: 200 }).then(function (response) { window.SharedResultsView.mountTable(shell.state.page.details, { title: msg("Wyniki poleceń", "Command results"), kind: "commands", rows: response.rows || [], emptyText: msg("Brak wyników dla wybranego statusu.", "No command results match the selected status.") }); sync(shell); });
     }
+    // #423: node-scoped Nessus findings from the #422 backend read contract.
+    var VULN_STATUS = {
+        not_imported: ["Brak zaimportowanych danych Nessus. Stan podatności jest nieznany.", "No Nessus data has been imported. Vulnerability state is unknown."],
+        error: ["Import danych Nessus nie powiódł się. Stan podatności jest nieznany.", "Nessus data import failed. Vulnerability state is unknown."],
+        host_unmatched: ["Nie znaleziono tego hosta w danych Nessus. Stan podatności jest nieznany.", "This host was not found in the Nessus data. Vulnerability state is unknown."],
+        ambiguous: ["Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.", "The host name matches several Nessus entries. No unambiguous match."],
+        stale: ["Ostatni skan tego hosta jest nieaktualny. Wyniki mogą nie odpowiadać bieżącemu stanowi.", "The latest scan of this host is stale. Results may not reflect the current state."],
+        no_findings: ["Ostatni skan nie wykazał podatności.", "The latest scan reported no vulnerabilities."],
+        available: ["Wykryto podatności w ostatnim skanie.", "Vulnerabilities were found in the latest scan."]
+    };
+    var RISK_ORDER = ["critical", "high", "medium", "low", "info"];
+    var RISK_LABELS = { critical: ["Krytyczne", "Critical"], high: ["Wysokie", "High"], medium: ["Średnie", "Medium"], low: ["Niskie", "Low"], info: ["Info", "Info"] };
+    function riskLabel(risk) { var label = RISK_LABELS[risk]; return label ? msg(label[0], label[1]) : String(risk || "—"); }
+    function formatDate(value) { if (!value) return "—"; var date = new Date(value); return isNaN(date.getTime()) ? String(value) : date.toLocaleString(); }
+    function loadVulnerabilities(shell, force) {
+        var nodeId = node(shell);
+        if (!force && vuln.nodeId === nodeId && (vuln.data || vuln.error || vuln.loading)) return;
+        var sequence = ++vuln.sequence;
+        vuln.nodeId = nodeId; vuln.data = null; vuln.error = null; vuln.loading = true;
+        shell.api("vulnerabilities", { nodeId: nodeId, detail: "1" }).then(function (response) {
+            if (sequence !== vuln.sequence || node(shell) !== nodeId) return;
+            vuln.loading = false; vuln.data = response;
+            if (mode === "vulnerabilities") shell.render();
+        }).catch(function (error) {
+            if (sequence !== vuln.sequence || node(shell) !== nodeId) return;
+            vuln.loading = false; vuln.error = error && error.message || String(error);
+            if (mode === "vulnerabilities") shell.render();
+        });
+    }
+    function vulnerabilityRows() {
+        var host = vuln.data && vuln.data.host;
+        var rows = host && Array.isArray(host.findings) ? host.findings.slice() : [];
+        if (!vuln.showExcluded) rows = rows.filter(function (row) { return row.excluded !== true; });
+        if (vuln.risk) rows = rows.filter(function (row) { return row.risk === vuln.risk; });
+        if (vuln.exploit) rows = rows.filter(function (row) { return (row.exploit === true) === (vuln.exploit === "yes"); });
+        if (vuln.sort === "score") rows.sort(function (a, b) { return (b.score || 0) - (a.score || 0) || RISK_ORDER.indexOf(a.risk) - RISK_ORDER.indexOf(b.risk); });
+        else rows.sort(function (a, b) { return RISK_ORDER.indexOf(a.risk) - RISK_ORDER.indexOf(b.risk) || (b.score || 0) - (a.score || 0); });
+        return rows;
+    }
+    function vulnerabilitySelect(shell, title, value, options, onChange) {
+        var label = shell.element("label", "mc-script-form-row");
+        label.appendChild(shell.element("span", "mc-script-form-label", title));
+        var select = document.createElement("select");
+        options.forEach(function (option) { var item = document.createElement("option"); item.value = option[0]; item.textContent = option[1]; select.appendChild(item); });
+        select.value = value; select.onchange = function () { onChange(select.value); };
+        label.appendChild(select);
+        return label;
+    }
+    function vulnerabilityDetails(row) {
+        var fields = row.fields || {};
+        return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }])
+            .concat(row.excluded ? [{ Field: msg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") }] : [])
+            .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : [])
+            .concat(row.remediation && row.remediation.rollbackScriptPath ? [{ Field: msg("Rollback", "Rollback"), Value: row.remediation.rollbackScriptPath }] : []) });
+    }
+    function remediationLabel(scriptPath) {
+        var item = window.SharedDirectoryTree.find(tree, scriptPath);
+        return item ? (item.label || item.name || scriptPath) : scriptPath;
+    }
+    // Per-row Fix / Undo actions open the normal Commands launch (rights,
+    // parameters, confirmation) of the pinned My Commands script on this device.
+    function appendRemediationButton(shell, cell, scriptPath, label, primaryStyle) {
+        var item = window.SharedDirectoryTree.find(tree, scriptPath);
+        var button = shell.element("button", "btn btn-sm " + (primaryStyle ? "btn-primary" : "btn-secondary"), label);
+        button.type = "button";
+        button.title = remediationLabel(scriptPath);
+        button.disabled = !item || !filterItem(item);
+        if (button.disabled) button.title += " — " + msg("polecenie jest dla Ciebie niedostępne", "the command is not available to you");
+        button.onclick = function () {
+            mode = "commands";
+            treeState.selectedScript = scriptPath;
+            tools.saveTreeState(treeState);
+            show(shell, item, true);
+        };
+        cell.appendChild(button);
+    }
+    function renderRemediation(shell, cell, row) {
+        cell.classList.add("mc-vuln-actions");
+        if (row.excluded) { cell.textContent = msg("wykluczone", "excluded"); return; }
+        if (!row.remediation) { cell.textContent = "—"; return; }
+        appendRemediationButton(shell, cell, row.remediation.scriptPath, msg("Napraw", "Fix"), true);
+        if (row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
+    }
+    function vulnerabilities(shell) {
+        primary(shell, document.createElement("div"));
+        loadVulnerabilities(shell, false);
+        var data = vuln.data, host = data && data.host, counts = host && host.counts || {};
+        var items = [{ key: "", title: msg("Wszystkie", "All"), icon: VULN_ICON, badge: host ? host.findingsCount : null }].concat(RISK_ORDER.map(function (risk) {
+            return { key: risk, title: riskLabel(risk), icon: VULN_ICON, badge: host ? counts[risk] || 0 : null };
+        }));
+        window.SharedResultsView.mountStatus(shell.state.page.secondary, { selected: vuln.risk, items: items, onSelect: function (value) { vuln.risk = value; vuln.page = 1; shell.render(); } });
+        var details = shell.state.page.details; details.innerHTML = "";
+        if (vuln.loading || (!data && !vuln.error)) { details.appendChild(shell.card(msg("Podatności", "Vulnerabilities"), msg("Wczytywanie danych Nessus…", "Loading Nessus data…"))); sync(shell); return; }
+        if (vuln.error) { var failed = shell.card(msg("Podatności", "Vulnerabilities"), msg("Nie można odczytać podatności: ", "Cannot read vulnerabilities: ") + vuln.error); failed.classList.add("mc-shared-error"); details.appendChild(failed); sync(shell); return; }
+        var statusText = VULN_STATUS[data.status] || [data.status, data.status];
+        var summary = shell.card((host && host.host) || data.nodeName || msg("Podatności", "Vulnerabilities"), host && data.status === "available" ? "" : msg(statusText[0], statusText[1]));
+        summary.classList.add("mc-vulnerability-summary", "mc-vulnerability-status-" + String(data.status || "unknown"));
+        if (data.status === "error" || data.status === "ambiguous" || data.status === "host_unmatched" || data.status === "not_imported") summary.classList.add("mc-shared-error");
+        var facts = [];
+        if (host) {
+            facts.push([msg("Host oryginalny", "Host original"), host.hostOriginal || "—"]);
+            facts.push([msg("System", "OS"), host.hostOs || "—"]);
+            facts.push([msg("Data skanu", "Scan generated"), host.generationDate ? host.generationDate + (host.generatedAt ? "" : msg(" (nieprawidłowa data)", " (invalid date)")) : "—"]);
+            facts.push([msg("Liczniki", "Counts"), RISK_ORDER.filter(function (risk) { return risk !== "info"; }).map(function (risk) { return riskLabel(risk) + ": " + (counts[risk] || 0); }).join(" · ")]);
+        }
+        if (data.import) facts.push([msg("Import danych", "Data imported"), formatDate(data.import.importedAt)]);
+        if (data.import && data.import.lastError) facts.push([msg("Ostatni błąd importu", "Last import error"), formatDate(data.import.lastError.at) + " — " + data.import.lastError.reason]);
+        // Visible: host and scan date. "View" opens status, counts and import facts.
+        if (host) summary.appendChild(shell.element("div", "mc-shared-muted", msg("Data skanu", "Scan generated") + ": " + (host.generationDate || "—")));
+        var summaryView = shell.element("button", "btn btn-secondary btn-sm mc-results-view-button mc-vulnerability-summary-view", "View");
+        summaryView.type = "button";
+        summaryView.onclick = function () {
+            var title = (host && host.host) || data.nodeName || msg("Podatności", "Vulnerabilities");
+            window.SharedResultsView.openViewer({ title: title }, {
+                dialogTitle: title,
+                resultValue: function () {
+                    return JSON.stringify({ meshTable: true, title: title, columns: ["Field", "Value"], rows: [{ Field: msg("Status", "Status"), Value: msg(statusText[0], statusText[1]) }].concat(facts.map(function (fact) { return { Field: fact[0], Value: String(fact[1]) }; })) });
+                }
+            });
+        };
+        summary.appendChild(summaryView);
+        details.appendChild(summary);
+        if (!host || !host.findingsCount) { sync(shell); return; }
+        var controls = shell.element("div", "mc-script-manage-actions");
+        controls.appendChild(vulnerabilitySelect(shell, "Exploit", vuln.exploit, [["", msg("Wszystkie", "All")], ["yes", msg("Tak", "Yes")], ["no", msg("Nie", "No")]], function (value) { vuln.exploit = value; vuln.page = 1; shell.render(); }));
+        if (host.excludedCount) controls.appendChild(vulnerabilitySelect(shell, msg("Wykluczone", "Excluded"), vuln.showExcluded ? "show" : "", [["", msg("Ukryj", "Hide") + " (" + host.excludedCount + ")"], ["show", msg("Pokaż", "Show")]], function (value) { vuln.showExcluded = value === "show"; vuln.page = 1; shell.render(); }));
+        controls.appendChild(vulnerabilitySelect(shell, msg("Sortuj", "Sort"), vuln.sort, [["severity", msg("Ważność", "Severity")], ["score", "Score"]], function (value) { vuln.sort = value; vuln.page = 1; shell.render(); }));
+        details.appendChild(controls);
+        var rows = vulnerabilityRows();
+        var pages = Math.max(1, Math.ceil(rows.length / VULN_PAGE_SIZE));
+        vuln.page = Math.min(Math.max(1, vuln.page), pages);
+        var tableHost = document.createElement("div"); details.appendChild(tableHost);
+        window.SharedResultsView.mountTable(tableHost, {
+            kind: "vulnerabilities",
+            rows: rows.slice((vuln.page - 1) * VULN_PAGE_SIZE, vuln.page * VULN_PAGE_SIZE),
+            filterPlaceholder: msg("Filtruj po nazwie lub ID pluginu", "Filter by plugin name or ID"),
+            emptyText: msg("Brak podatności dla wybranych filtrów.", "No vulnerabilities match the selected filters."),
+            dialogTitle: msg("Szczegóły podatności", "Vulnerability details"),
+            resultValue: vulnerabilityDetails,
+            columns: [
+                { title: "Risk", value: function (row) { return riskLabel(row.risk); }, className: function (row) { return "mc-vulnerability-risk mc-vulnerability-risk-" + row.risk; } },
+                { title: "Plugin Name", value: function (row) { return row.fields && row.fields["Plugin Name"] || "—"; } },
+                { title: "Plugin ID", value: function (row) { return row.fields && row.fields["Plugin ID"] || "—"; } },
+                { title: "Score", value: function (row) { return row.score == null ? "—" : String(row.score); } },
+                { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } },
+                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
+            ]
+        });
+        if (pages > 1 || (host.truncated === true)) {
+            var pager = shell.element("div", "mc-script-manage-actions");
+            var prev = shell.element("button", "btn btn-secondary", "‹"); prev.type = "button"; prev.disabled = vuln.page <= 1; prev.onclick = function () { vuln.page--; shell.render(); };
+            var next = shell.element("button", "btn btn-secondary", "›"); next.type = "button"; next.disabled = vuln.page >= pages; next.onclick = function () { vuln.page++; shell.render(); };
+            pager.appendChild(prev); pager.appendChild(shell.element("span", "mc-shared-muted", vuln.page + " / " + pages + " (" + rows.length + ")" + (host.truncated ? msg(" — lista skrócona", " — list truncated") : ""))); pager.appendChild(next);
+            details.appendChild(pager);
+        }
+        sync(shell);
+    }
+
     function commands(shell) { primary(shell, shell.state.page.secondary); if (!treeState.selectedScript) { empty(shell); return; } var item = window.SharedDirectoryTree.find(tree, treeState.selectedScript); if (item && filterItem(item)) show(shell, item, false); else { treeState.selectedScript = ""; empty(shell); } }
-    function refresh(shell) { var toolbar = shell.state.page && shell.state.page.toolbar; if (toolbar) toolbar.setEnabled("refresh", false); shell.post("refresh", {}).then(function (response) { sourceTree = response.tree || sourceTree; catalog = response.catalog || catalog; tree = buildTree(); if (treeState.selectedScript && !window.SharedDirectoryTree.find(tree, treeState.selectedScript)) treeState.selectedScript = ""; shell.render(); }).catch(function (error) { note(shell, msg("Odświeżanie nie powiodło się", "Refresh failed"), error.message || String(error), true); }).then(function () { if (toolbar) toolbar.setEnabled("refresh", true); }); }
+    function refresh(shell) { if (mode === "vulnerabilities") { loadVulnerabilities(shell, true); shell.render(); return; } var toolbar = shell.state.page && shell.state.page.toolbar; if (toolbar) toolbar.setEnabled("refresh", false); shell.post("refresh", {}).then(function (response) { sourceTree = response.tree || sourceTree; catalog = response.catalog || catalog; tree = buildTree(); if (treeState.selectedScript && !window.SharedDirectoryTree.find(tree, treeState.selectedScript)) treeState.selectedScript = ""; shell.render(); }).catch(function (error) { note(shell, msg("Odświeżanie nie powiodło się", "Refresh failed"), error.message || String(error), true); }).then(function () { if (toolbar) toolbar.setEnabled("refresh", true); }); }
 
     var module = window.SirkPlatformModuleShell.create({
         key: "mycommands", title: "My Commands", menuTitle: "My Commands", showInMenu: false, order: 150, preset: "mycommands",
@@ -273,7 +439,7 @@
             search: { side: "left", order: 70 }, clear: false, settings: false
         },
         tabs: [], defaultTab: "commands",
-        render: function (shell) { siteAdmin = isAdmin(shell); return shell.api("scripts").then(function (response) { sourceTree = response.tree; catalog = response.catalog || []; tree = buildTree(); tools.applyDeepLink(tree, treeState); return mode === "results" ? results(shell) : commands(shell); }); }
+        render: function (shell) { siteAdmin = isAdmin(shell); return shell.api("scripts").then(function (response) { sourceTree = response.tree; catalog = response.catalog || []; tree = buildTree(); tools.applyDeepLink(tree, treeState); return mode === "results" ? results(shell) : mode === "vulnerabilities" ? vulnerabilities(shell) : commands(shell); }); }
     });
 
     module.mountDeviceCommands = function (host, nodeId) { mode = "commands"; status = ""; if (typeof module.onDeviceRefreshEnd === "function") module.onDeviceRefreshEnd(String(nodeId || "")); return module.mount(host, "sirk-device-commands"); };

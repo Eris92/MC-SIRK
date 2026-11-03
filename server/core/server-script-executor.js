@@ -46,6 +46,7 @@ module.exports.createServerScriptExecutor = function (options) {
     var library = options.library;
     var admin = options.admin;
     var assignmentNamespace = String(options.assignmentNamespace || "script-secrets.myscripts.system-credentials");
+    var dataFeeds = options.dataFeeds && typeof options.dataFeeds === "object" ? options.dataFeeds : {};
     var queue = Promise.resolve();
     var activeExecutions = Object.create(null);
 
@@ -198,6 +199,25 @@ module.exports.createServerScriptExecutor = function (options) {
         return environment;
     }
 
+    // Read-only, server-controlled data feeds declared by `# SirkDataFeed: <name>`.
+    // Authorization for the feed is enforced by the owning module before execution.
+    function dataFeedName(script) {
+        var name = "";
+        (script && Array.isArray(script.extraHeaders) ? script.extraHeaders : []).some(function (header) {
+            var match = /^SirkDataFeed\s*:\s*([A-Za-z0-9_-]+)\s*$/i.exec(String(header || "").trim());
+            if (match) name = match[1].toLowerCase();
+            return !!match;
+        });
+        return name;
+    }
+    function dataFeedEnvironment(script) {
+        var name = dataFeedName(script);
+        if (!name) return {};
+        var feed = dataFeeds[name];
+        if (typeof feed !== "function") throw new Error("Data feed '" + name + "' is not available.");
+        return feed(script) || {};
+    }
+
     function callerEnvironment(value) {
         value = value && typeof value === "object" && !Array.isArray(value) ? value : {};
         var result = {};
@@ -304,8 +324,8 @@ module.exports.createServerScriptExecutor = function (options) {
         try { values = validateValues(script, payload.variableValues, executionOptions.skipSystemEnvironment === true); }
         catch (error) { return Promise.reject(error); }
 
-        var plan;
-        try { plan = buildPlan(script, values); }
+        var plan, feedEnvironment;
+        try { plan = buildPlan(script, values); feedEnvironment = dataFeedEnvironment(script); }
         catch (error) { return Promise.reject(error); }
 
         var environment = Object.assign(
@@ -313,6 +333,7 @@ module.exports.createServerScriptExecutor = function (options) {
             process.env,
             executionOptions.skipSystemEnvironment === true ? {} : systemEnvironment(script),
             callerEnvironment(executionOptions.environment),
+            feedEnvironment,
             {
                 MYSCRIPTS_REQUEST_ID: request && request.id || "",
                 MYSCRIPTS_REQUESTER: request && request.requester && request.requester.name || "",
@@ -398,6 +419,7 @@ module.exports.createServerScriptExecutor = function (options) {
     }
 
     return {
+        dataFeedName: dataFeedName,
         execute: execute,
         normalizeLevels: uniqueLevels,
         validateValues: validateValues

@@ -171,6 +171,7 @@ function parseScript(path, text, fileName) {
     var titleParsed = false;
     var runAsUser = 0;
     var multiHost = false;
+    var rebootRequired = false;
     var index = 0;
 
     while (index < lines.length) {
@@ -187,6 +188,7 @@ function parseScript(path, text, fileName) {
         );
         var runAs = header.match(/^runAsUser\s*:\s*([012])\s*$/i);
         var multi = header.match(/^MultiHost\s*:\s*(true|false)\s*$/i);
+        var reboot = header.match(/^RebootRequired\s*:\s*(true|false)\s*$/i);
         var directive = header.match(/^([^:]+)\s*:\s*(.*)$/);
         var directiveName = directive && String(directive[1] || "").trim();
         var translatedTitle = localizedHeader(header);
@@ -204,6 +206,8 @@ function parseScript(path, text, fileName) {
             runAsUser = Number(runAs[1]);
         } else if (multi) {
             multiHost = multi[1].toLowerCase() === "true";
+        } else if (reboot) {
+            rebootRequired = reboot[1].toLowerCase() === "true";
         } else if (directive && VARIABLE_DIRECTIVE.test(directiveName)) {
             var value = String(directive[2] || "").trim();
             var directiveMatch = directiveName.match(VARIABLE_DIRECTIVE);
@@ -267,6 +271,7 @@ function parseScript(path, text, fileName) {
         label: shared.cleanText(label, 200),
         locales: locales,
         multiHost: multiHost,
+        rebootRequired: rebootRequired,
         requiresApproval: levels.length > 0,
         runAsUser: runAsUser,
         secretDefinitions: mergedSecrets.definitions,
@@ -441,6 +446,7 @@ module.exports.createScriptLibrary = function (options) {
             requiresApproval: parsed.requiresApproval,
             runAsUser: parsed.runAsUser,
             multiHost: parsed.multiHost,
+            rebootRequired: parsed.rebootRequired,
             hash: crypto.createHash("sha256").update(buffer).digest("hex"),
             size: stat.size,
             mtimeMs: stat.mtimeMs,
@@ -508,7 +514,8 @@ module.exports.createScriptLibrary = function (options) {
             variables: parsed.variableDefinitions,
             secretVariables: parsed.secretDefinitions,
             runAsUser: parsed.runAsUser,
-            multiHost: parsed.multiHost
+            multiHost: parsed.multiHost,
+            rebootRequired: parsed.rebootRequired
         };
     }
 
@@ -533,6 +540,7 @@ module.exports.createScriptLibrary = function (options) {
         var secrets = normalizeDefinitions(definition.secretVariables, true);
         var runAsUser = Math.max(0, Math.min(2, Number(definition.runAsUser) || 0));
         var multiHost = definition.multiHost === true;
+        var rebootRequired = definition.rebootRequired === true;
         var newline = source.text.indexOf("\r\n") >= 0 ? "\r\n" : "\n";
         var header = [
             "#PL " + locales.pl.label + (locales.pl.description ? " | " + locales.pl.description : ""),
@@ -544,6 +552,7 @@ module.exports.createScriptLibrary = function (options) {
         });
         if (runAsUser) header.push("# runAsUser: " + runAsUser);
         if (multiHost) header.push("# MultiHost: true");
+        if (rebootRequired) header.push("# RebootRequired: true");
         variables.forEach(function (item) {
             header.push("# " + item.directive + ": " + item.value);
         });
