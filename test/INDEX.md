@@ -16,3 +16,5 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | lekkie wcięcie kolejnych poziomów folderów i skryptów | `tree-indent.test.js` |
 
 Po teście celowanym uruchom `npm test`, jeżeli zmiana wpływa na wiele warstw albo wspólny kontrakt.
+
+AI tooling nie jest częścią testów runtime MeshCentral; do jego izolowanej weryfikacji uruchom `node scripts/ai/test-tools.mjs`. Dla obowiązkowego `npm test` użyj cichego wrappera: `node scripts/ai/quiet-run.mjs -- node scripts/run-tests.js` (zachowuje exit code).

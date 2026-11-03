@@ -236,3 +236,7 @@ scripts/validate-architecture.js
 CI używa Node.js 24 oraz `actions/checkout@v7` / `actions/setup-node@v7`. Windows job dodatkowo parsuje składnię utrzymywanego instalatora przed istniejącymi smoke testami Network/SMS/AD.
 
 Wersje `package.json` i `config.json` muszą być identyczne.
+
+## AI development (Codex / Claude Code)
+
+`AGENTS.md` + `docs/INDEX.md` routes to the smallest module; [AI operations](docs/ai/OPERATIONS.md) documents source locator, Haiku read-only agent, bounded hooks and errors-only test output. This AI-only tooling does not change plugin runtime or require a version bump.
