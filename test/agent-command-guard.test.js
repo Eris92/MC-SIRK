@@ -94,8 +94,10 @@ Promise.resolve()
         assert.strictEqual(sent[0].direct, false, "Ordinary execution must not have a direct marker.");
         assert.strictEqual(sent[1].direct, true, "Direct execution must carry a resolved-context marker.");
         assert.strictEqual(sent[2].direct, true, "Second direct execution must carry its own resolved-context marker.");
+        runtime.captureAgentData({ action: "runcommands", responseid: "quick-1", status: "completed" },
+            { dbNodeKey: "node/domain/a" });
         assert.strictEqual(device.__sirkAgentCommandGuard.activeByNode["node/domain/a"].responseId, "response-1",
-            "Quick direct commands must not clear or replace an existing guarded command lock.");
+            "An untracked Quick result must not release the existing guarded command lock.");
         assert.deepStrictEqual(Object.keys(sent[1].command).sort(), ["cmd", "runAsUser"],
             "Quick concurrency policy must not inject an internal bypass flag into the MeshAgent command object.");
         return expectBusy("node/domain/a", "response-3");
@@ -122,7 +124,7 @@ Promise.resolve()
     .then(function () {
         assert.strictEqual(sent.length, 7,
             "The guard must preserve ordinary release behavior while allowing native Quick direct concurrency.");
-        assert.strictEqual(captured.length, 4,
+        assert.strictEqual(captured.length, 5,
             "Every agent message must still reach the original runtime handler.");
         assert.strictEqual(sent[6].responseId, "response-5",
             "The command sent after fallback release must preserve its response identifier.");
