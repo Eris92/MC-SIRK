@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.140",
+    "date": "2026-11-03",
+    "summary": "Add Entra SMS/Voice policy scope My Script with app-only Graph integration and protected downloadable CSV.",
+    "notes": "docs/releases/0.1.140.md"
+  },
+  {
     "version": "0.1.139",
     "date": "2026-11-03",
     "summary": "Fix native Quick concurrency through a server-owned resolved execution context marker, preserving ordinary command guard.",
