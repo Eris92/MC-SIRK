@@ -25,7 +25,7 @@ $content = New-RdpContent 'pc01.corp.local'
 $lines = $content -split "`r`n"
 if ($lines[0] -ne 'full address:s:pc01.corp.local') { throw 'RDP content does not start with the target address.' }
 if (@($lines | Where-Object { $_ -like 'full address:*' }).Count -ne 1) { throw 'RDP content must contain exactly one target.' }
-if ($content -notmatch '(?m)^prompt for credentials:i:1$') { throw 'RDP content must prompt for credentials.' }
+if ($content -notmatch '(?m)^prompt for credentials:i:1\r?$') { throw 'RDP content must prompt for credentials.' }
 if ($content -match '(?i)password') { throw 'RDP content must never carry a password.' }
 
 foreach ($badThumbprint in @('', 'ABC', ('Z' * 40))) {
