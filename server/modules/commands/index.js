@@ -4,6 +4,7 @@ var shared = require("../../core/shared.js");
 var libraryFactory = require("../../core/script-confirmation-library.js");
 var adminFactory = require("../../core/script-admin-service.js");
 var folderAccess = require("../../core/folder-access.js");
+var QUICK_DIRECT_CONTEXT = Symbol.for("sirk.platform.quick.direct");
 
 module.exports.createModule = function (context) {
     var root = context.path.join(context.pluginRoot, "seed", "MyCommands");
@@ -300,7 +301,7 @@ module.exports.createModule = function (context) {
         payload.approvalLevels = approvalLevels(payload.approvalLevels || []);
         return payload;
     }
-    function execute(payload, request) {
+    function execute(payload, request, quickDirect) {
         var user = shared.findUser(context.parent, request.requester && request.requester.id) || { _id: request.requester && request.requester.id, name: request.requester && request.requester.name };
         var command;
         try {
@@ -309,6 +310,7 @@ module.exports.createModule = function (context) {
             command = buildCommand(payload);
         } catch (error) { return Promise.reject(error); }
         return context.device.resolveNode(user, payload.nodeId, { requireCommandRights: true }).then(function (node) {
+            if (quickDirect === true) Object.defineProperty(node, QUICK_DIRECT_CONTEXT, { value: true });
             var id = "sirk-platform-" + shared.randomId(10);
             var now = Date.now();
             var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: "submitting", requester: request.requester, createdAt: now, updatedAt: now, output: "" };
@@ -355,7 +357,7 @@ module.exports.createModule = function (context) {
             if (payload.approvalLevels.length) return Promise.reject(new Error("This command requires approval."));
         }
         var request = { id: "", requester: { id: user && user._id || "", name: shared.userName(user) }, executionId: shared.randomId(12) };
-        return execute(payload, request).then(function (result) {
+        return execute(payload, request, value.desktopDirect === true).then(function (result) {
             return { ok: true, direct: true, request: { status: result.status || "executing", result: result } };
         });
     }

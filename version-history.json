@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.139",
+    "date": "2026-11-03",
+    "summary": "Fix native Quick concurrency through a server-owned resolved execution context marker, preserving ordinary command guard.",
+    "notes": "docs/releases/0.1.139.md"
+  },
+  {
     "version": "0.1.138",
     "date": "2026-10-22",
     "summary": "Record authenticated MeshCentral requester/confirmer in per-object Jira Assets comments after verified protocol writes.",

@@ -7,7 +7,7 @@ var path = require("path");
 var root = path.join(__dirname, "..");
 var source = fs.readFileSync(path.join(root, "server", "modules", "commands", "index.js"), "utf8");
 
-var executeStart = source.indexOf("function execute(payload, request)");
+var executeStart = source.search(/function execute\(payload, request(?:, quickDirect)?\)/);
 var executeEnd = source.indexOf("function executeDirect(user, value)", executeStart);
 var executeSource = source.slice(executeStart, executeEnd);
 
