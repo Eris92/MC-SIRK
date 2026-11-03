@@ -20,6 +20,8 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Validate AI context tools
+        run: node scripts/ai/test-tools.mjs
       - name: Run test suite
         run: npm test
 
