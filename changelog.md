@@ -1,3 +1,10 @@
+## 0.1.147 - 2026-11-03
+
+- Quick → Podatności: przyciski „Napraw”, „Cofnij” i „View” nie dziedziczą już siatki 24 px przycisków drzewa Quick, przez którą tekst łamał się po kilka liter („Nap/raw”). Sprawdzone renderem w przeglądarce.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.147.md`.
+
 ## 0.1.146 - 2026-11-03
 
 - Quick → Podatności: bez przycisku „Napraw” w tabeli. Kliknięcie wiersza rozwija go (szczegóły, „Napraw”/„Cofnij”, powód wykluczenia), drugie kliknięcie zwija; ikona 🔧 przy nazwie oznacza przypiętą naprawę.

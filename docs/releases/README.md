@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.147`](0.1.147.md) — Quick vulnerability buttons no longer squeezed by the tree icon grid; pending real smoke;
 - [`0.1.146`](0.1.146.md) — expandable Quick vulnerability rows, collapsed scan summary behind View in Quick and Commands; pending real smoke;
 - [`0.1.145`](0.1.145.md) — rules table in settings, rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag; pending real smoke;
 - [`0.1.144`](0.1.144.md) — vulnerability exclusions/remediation rules, Fix actions, Quick table and My Scripts all-host table after first smoke; pending real smoke;
