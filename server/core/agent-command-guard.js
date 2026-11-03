@@ -1,6 +1,6 @@
 "use strict";
 
-var AsyncLocalStorage = require("async_hooks").AsyncLocalStorage;
+var QUICK_DIRECT_CONTEXT = Symbol.for("sirk.platform.quick.direct");
 
 var DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -50,7 +50,6 @@ function apply(plugin, options) {
     var timeoutMs = Math.max(30000, Number(options.timeoutMs) || DEFAULT_TIMEOUT_MS);
     var activeByNode = Object.create(null);
     var nodeByResponse = Object.create(null);
-    var parallelContext = new AsyncLocalStorage();
     var originalSend = device.sendRunCommands;
     var originalCapture = typeof runtime.captureAgentData === "function"
         ? runtime.captureAgentData
@@ -80,7 +79,7 @@ function apply(plugin, options) {
     }
 
     device.sendRunCommands = function (context, command, id, sessionId) {
-        if (parallelContext.getStore() === true) {
+        if (context && context[QUICK_DIRECT_CONTEXT] === true) {
             return originalSend.call(device, context, command, id, sessionId);
         }
 
@@ -132,21 +131,6 @@ function apply(plugin, options) {
         }
         return originalCapture.call(runtime, command, agent);
     };
-
-    var commands = runtime.modules && runtime.modules.mycommands;
-    if (commands && typeof commands.apiPost === "function" && commands.__sirkQuickParallelGuardBypass !== true) {
-        var originalApiPost = commands.apiPost;
-        commands.apiPost = function (asset, req, user) {
-            var body = req && req.body || {};
-            if (asset === "execute" && body.desktopDirect === true) {
-                return parallelContext.run(true, function () {
-                    return originalApiPost.call(commands, asset, req, user);
-                });
-            }
-            return originalApiPost.call(commands, asset, req, user);
-        };
-        commands.__sirkQuickParallelGuardBypass = true;
-    }
 
     device.__sirkAgentCommandGuard = {
         activeByNode: activeByNode,
