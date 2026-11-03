@@ -510,6 +510,8 @@ module.exports.createModule = function (context) {
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
             if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true, showOnDesktop: found.command.showOnDesktop === true, showWithoutDesktop: found.command.showWithoutDesktop === true } }; }
+            if (asset === "vulnerabilities") return context.vulnerabilities.readForNode(user, query.nodeId, query.detail === "1" || query.detail === "true");
+            if (asset === "vulnerabilities-status") { requireAdmin(user); return context.vulnerabilities.ensureFresh(true).then(function () { return { ok: true, import: context.vulnerabilities.importState(), inbox: context.vulnerabilities.inboxPath }; }); }
             if (asset === "output") return outputForUser(user, query.id);
             if (asset === "results") return approvalResults(user, query);
             if (asset === "settings") return { ok: true, settings: context.settings.read().modules.mycommands || {}, scriptsRoot: root };
