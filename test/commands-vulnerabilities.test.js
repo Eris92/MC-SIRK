@@ -133,7 +133,7 @@ definition.render(shell).then(function () {
     assert.ok(text(shell.state.page.details).indexOf("b.local") >= 0);
     var table = mountedTables[mountedTables.length - 1];
     assert.deepStrictEqual(Array.from(table.rows).map(function (row) { return row.fields["Plugin Name"]; }), ["High thing", "Low thing"], "severity sort");
-    assert.deepStrictEqual(Array.from(table.columns).map(function (column) { return column.title; }), ["Risk", "Plugin Name", "Plugin ID", "Score", "Exploit"]);
+    assert.deepStrictEqual(Array.from(table.columns).map(function (column) { return column.title; }), ["Risk", "Plugin Name", "Plugin ID", "Score", "Exploit", "Fix"]);
     var details = JSON.parse(table.resultValue(table.rows[0]));
     assert.strictEqual(details.meshTable, true, "full CSV fields open in the shared structured viewer");
     var status = mountedStatus[mountedStatus.length - 1];

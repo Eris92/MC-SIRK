@@ -1,3 +1,15 @@
+## 0.1.144 - 2026-11-03
+
+- Poprawki po pierwszym smoke #422–#425 na lokalnym MeshCentral.
+- Quick: podatności jako zwarta tabela (Ryzyko | Nazwa | Score | Exploit) zamiast przycisków drzewa, których układ ikony 24 px łamał tekst w pionie.
+- Reguły podatności w `sirk-platform-data/nessus/rules.json` (edytowalne ręcznie lub z harmonogramu) i w nowej zakładce ustawień „Vulnerabilities” (tylko Site Admin): wykluczenia i przypięte polecenia naprawy z My Commands, dopasowanie po Plugin ID i/lub nazwie (zawiera/dokładnie), opcjonalny wzorzec hosta z `*`, powód, data wygaśnięcia, włącz/wyłącz. Reguły są stosowane przy odczycie bez ponownego importu; wykluczenie wygrywa z naprawą; wykluczone pozycje nie liczą się do liczników ani alertu w Desktop; niepoprawny plik nie ukrywa niczego i jest raportowany. Zapis reguł generuje zdarzenie MeshCentral bez treści reguł.
+- „Napraw” w Commands (lista napraw dla urządzenia) i w Quick (szczegóły podatności) uruchamia przypięte polecenie przez zwykły przepływ uruchomienia (uprawnienia, parametry, potwierdzenie).
+- My Scripts: widok „Podatności” dla Site Admina z tabelą wszystkich hostów, filtrami w nagłówku (Host, Plugin ID, Nazwa, Score od, Exploit, Naprawa/wykluczone), sortowaniem, stronicowaniem i eksportem CSV przefiltrowanych wierszy.
+- Windows smoke Nessus zapisany wyłącznie w ASCII (PowerShell 5.1 czyta pliki bez BOM jako ANSI).
+- Nowy test `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.144.md`.
+
 ## 0.1.141 - 2026-11-03
 
 - #422: import Nessus CSV (separator `;`, UTF-8/BOM, dokładnie 17 kolumn eksportera) z katalogu `sirk-platform-data/nessus/inbox` zasilanego przez harmonogram zadań; walidacja całego pliku, atomowa publikacja snapshotu, brak częściowej podmiany, wybór najnowszej generacji per host, deduplikacja append i obsługa `Plugin ID=0`; node-scoped read API z kontrolą uprawnień MeshCentral oraz zdarzenie importu bez payloadu.

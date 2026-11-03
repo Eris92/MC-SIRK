@@ -14,6 +14,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | wspólny wygląd wierszy Approval, Commands, My Scripts i Quick | `shared-list-quick-style.test.js` |
 | bezpośrednia struktura pierwszej kolumny Commands i My Scripts | `shared-catalog-direct-columns.test.js` |
 | lekkie wcięcie kolejnych poziomów folderów i skryptów | `tree-indent.test.js` |
+| reguły podatności: wykluczenia, naprawy, ustawienia, tabele Quick/My Scripts | `vulnerability-rules.test.js` |
 | import Nessus CSV, snapshot i dopasowanie hostów | `vulnerability-import.test.js`, `vulnerability-route.test.js` |
 | Podatności w Commands i alert/lista w Quick | `commands-vulnerabilities.test.js`, `quick-vulnerability-alert.test.js` |
 | raport Nessus wszystkich hostów (My Scripts) | `nessus-all-hosts-report.test.js`, `windows-nessus-report-smoke.ps1` |

@@ -12,7 +12,7 @@
     var outputs = Object.create(null);
     var pollSequence = 0;
     var siteAdmin = false;
-    var vuln = { nodeId: "", sequence: 0, data: null, error: null, loading: false, risk: "", exploit: "", sort: "severity", page: 1 };
+    var vuln = { nodeId: "", sequence: 0, data: null, error: null, loading: false, risk: "", exploit: "", sort: "severity", page: 1, showExcluded: false };
     var VULN_PAGE_SIZE = 100;
     var VULN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3Z"/><path d="M12 8v5M12 16h.01"/></svg>';
     var tools = window.SharedScriptTools.create({ storageKey: "sirkPlatform.mycommands.preferences", deepLinkParameter: "mycommand" });
@@ -296,6 +296,7 @@
     function vulnerabilityRows() {
         var host = vuln.data && vuln.data.host;
         var rows = host && Array.isArray(host.findings) ? host.findings.slice() : [];
+        if (!vuln.showExcluded) rows = rows.filter(function (row) { return row.excluded !== true; });
         if (vuln.risk) rows = rows.filter(function (row) { return row.risk === vuln.risk; });
         if (vuln.exploit) rows = rows.filter(function (row) { return (row.exploit === true) === (vuln.exploit === "yes"); });
         if (vuln.sort === "score") rows.sort(function (a, b) { return (b.score || 0) - (a.score || 0) || RISK_ORDER.indexOf(a.risk) - RISK_ORDER.indexOf(b.risk); });
@@ -313,7 +314,44 @@
     }
     function vulnerabilityDetails(row) {
         var fields = row.fields || {};
-        return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }]) });
+        return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }])
+            .concat(row.excluded ? [{ Field: msg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") }] : [])
+            .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : []) });
+    }
+    function remediationLabel(scriptPath) {
+        var item = window.SharedDirectoryTree.find(tree, scriptPath);
+        return item ? (item.label || item.name || scriptPath) : scriptPath;
+    }
+    // One "Fix" action per pinned remediation command; it opens the normal
+    // Commands launch (rights, parameters, confirmation) for the current device.
+    function appendRemediations(shell, details, host) {
+        var byPath = {};
+        (host.findings || []).forEach(function (row) {
+            if (row.excluded || !row.remediation) return;
+            var key = row.remediation.scriptPath;
+            byPath[key] = (byPath[key] || 0) + 1;
+        });
+        var paths = Object.keys(byPath).sort();
+        if (!paths.length) return;
+        var box = shell.card(msg("Naprawy", "Remediation"), msg("Polecenia przypięte do wykrytych podatności.", "Commands pinned to the detected vulnerabilities."));
+        box.classList.add("mc-vulnerability-remediation");
+        var actions = shell.element("div", "mc-script-manage-actions");
+        paths.forEach(function (scriptPath) {
+            var item = window.SharedDirectoryTree.find(tree, scriptPath);
+            var button = shell.element("button", "btn btn-primary", msg("Napraw", "Fix") + ": " + remediationLabel(scriptPath) + " (" + byPath[scriptPath] + ")");
+            button.type = "button";
+            button.disabled = !item || !filterItem(item);
+            if (button.disabled) button.title = msg("Polecenie jest dla Ciebie niedostępne.", "The command is not available to you.");
+            button.onclick = function () {
+                mode = "commands";
+                treeState.selectedScript = scriptPath;
+                tools.saveTreeState(treeState);
+                show(shell, item, true);
+            };
+            actions.appendChild(button);
+        });
+        box.appendChild(actions);
+        details.appendChild(box);
     }
     function vulnerabilities(shell) {
         primary(shell, document.createElement("div"));
@@ -344,6 +382,7 @@
         if (!host || !host.findingsCount) { sync(shell); return; }
         var controls = shell.element("div", "mc-script-manage-actions");
         controls.appendChild(vulnerabilitySelect(shell, "Exploit", vuln.exploit, [["", msg("Wszystkie", "All")], ["yes", msg("Tak", "Yes")], ["no", msg("Nie", "No")]], function (value) { vuln.exploit = value; vuln.page = 1; shell.render(); }));
+        if (host.excludedCount) controls.appendChild(vulnerabilitySelect(shell, msg("Wykluczone", "Excluded"), vuln.showExcluded ? "show" : "", [["", msg("Ukryj", "Hide") + " (" + host.excludedCount + ")"], ["show", msg("Pokaż", "Show")]], function (value) { vuln.showExcluded = value === "show"; vuln.page = 1; shell.render(); }));
         controls.appendChild(vulnerabilitySelect(shell, msg("Sortuj", "Sort"), vuln.sort, [["severity", msg("Ważność", "Severity")], ["score", "Score"]], function (value) { vuln.sort = value; vuln.page = 1; shell.render(); }));
         details.appendChild(controls);
         var rows = vulnerabilityRows();
@@ -362,9 +401,11 @@
                 { title: "Plugin Name", value: function (row) { return row.fields && row.fields["Plugin Name"] || "—"; } },
                 { title: "Plugin ID", value: function (row) { return row.fields && row.fields["Plugin ID"] || "—"; } },
                 { title: "Score", value: function (row) { return row.score == null ? "—" : String(row.score); } },
-                { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } }
+                { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } },
+                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; } }
             ]
         });
+        appendRemediations(shell, details, host);
         if (pages > 1 || (host.truncated === true)) {
             var pager = shell.element("div", "mc-script-manage-actions");
             var prev = shell.element("button", "btn btn-secondary", "‹"); prev.type = "button"; prev.disabled = vuln.page <= 1; prev.onclick = function () { vuln.page--; shell.render(); };

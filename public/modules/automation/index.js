@@ -3,6 +3,10 @@
 
     var tree = null;
     var mode = "scripts";
+    var VULN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>';
+    var VULN_RISKS = ["critical", "high", "medium", "low", "info"];
+    var VULN_PAGE_SIZE = 100;
+    var vulnState = { sequence: 0, data: null, error: null, loading: false, risk: "", page: 1, sort: "risk", desc: false, filters: { host: "", pluginId: "", name: "", minScore: "", exploit: "", fix: "active" } };
     var status = "";
     var treeState = { selectedRoot: "", selectedScript: "", expanded: {} };
     var outputs = Object.create(null);
@@ -440,6 +444,10 @@
             state: treeState,
             search: shell.state.search,
             resultsActive: mode === "results",
+            extraItems: admin(shell) ? [{
+                key: "vulnerabilities", label: vulnMsg("Podatności", "Vulnerabilities"), iconMarkup: VULN_ICON, active: mode === "vulnerabilities",
+                onClick: function () { progressSequence++; mode = "vulnerabilities"; treeState.selectedScript = ""; vulnState.data = null; vulnState.error = null; vulnState.page = 1; shell.render(); }
+            }] : [],
             emptyText: tools.state.favoritesOnly ? "No favorite scripts found." : "No scripts found.",
             filterScript: tools.filterScript,
             scriptActions: function (script) { return actions(shell, script); },
@@ -511,6 +519,241 @@
         });
     }
 
+    // All-host Nessus table for Site Admin (#425 follow-up): per-column filters
+    // in the table header, sorting, paging and CSV export of the filtered rows.
+    function vulnMsg(polish, english) {
+        var language = "";
+        try { language = window.localStorage.getItem("sirkPortal.language") || ""; } catch (error) {}
+        if (!language) language = String(document.documentElement.lang || navigator.language || "");
+        return /^pl/i.test(language) ? polish : english;
+    }
+    function vulnRiskLabel(risk) {
+        var labels = { critical: ["Krytyczne", "Critical"], high: ["Wysokie", "High"], medium: ["Średnie", "Medium"], low: ["Niskie", "Low"], info: ["Info", "Info"] };
+        var value = labels[risk] || [risk, risk];
+        return vulnMsg(value[0], value[1]);
+    }
+    function loadAllVulnerabilities(shell, force) {
+        if (vulnState.loading || (vulnState.data && force !== true)) return;
+        var sequence = ++vulnState.sequence;
+        vulnState.loading = true;
+        vulnState.error = null;
+        shell.api("vulnerabilities-all").then(function (response) {
+            if (sequence !== vulnState.sequence) return;
+            vulnState.loading = false;
+            vulnState.data = response;
+            if (mode === "vulnerabilities") shell.render();
+        }).catch(function (error) {
+            if (sequence !== vulnState.sequence) return;
+            vulnState.loading = false;
+            vulnState.error = error && error.message || String(error);
+            if (mode === "vulnerabilities") shell.render();
+        });
+    }
+    function allVulnerabilityRows() {
+        var rows = [];
+        (vulnState.data && vulnState.data.hosts || []).forEach(function (host) {
+            (host.findings || []).forEach(function (finding) {
+                var fields = finding.fields || {};
+                rows.push({
+                    host: host.host || host.hostOriginal || "",
+                    hostOs: host.hostOs || "",
+                    scan: host.generationDate || "",
+                    stale: host.stale === true,
+                    risk: finding.risk,
+                    score: finding.score,
+                    exploit: finding.exploit === true,
+                    excluded: finding.excluded === true,
+                    exclusion: finding.exclusion || null,
+                    remediation: finding.remediation || null,
+                    pluginId: String(fields["Plugin ID"] || ""),
+                    name: String(fields["Plugin Name"] || ""),
+                    occurrences: finding.occurrences || 1,
+                    fields: fields
+                });
+            });
+        });
+        return rows;
+    }
+    function filteredVulnerabilityRows() {
+        var f = vulnState.filters;
+        var host = f.host.trim().toLowerCase(), plugin = f.pluginId.trim(), name = f.name.trim().toLowerCase();
+        var minScore = f.minScore === "" ? null : Number(f.minScore);
+        var rows = allVulnerabilityRows().filter(function (row) {
+            if (vulnState.risk && row.risk !== vulnState.risk) return false;
+            if (host && row.host.toLowerCase().indexOf(host) < 0) return false;
+            if (plugin && row.pluginId.indexOf(plugin) !== 0) return false;
+            if (name && row.name.toLowerCase().indexOf(name) < 0) return false;
+            if (minScore != null && !isNaN(minScore) && !(Number(row.score) >= minScore)) return false;
+            if (f.exploit && row.exploit !== (f.exploit === "yes")) return false;
+            if (f.fix === "active" && row.excluded) return false;
+            if (f.fix === "fix" && (row.excluded || !row.remediation)) return false;
+            if (f.fix === "excluded" && !row.excluded) return false;
+            return true;
+        });
+        var direction = vulnState.desc ? -1 : 1;
+        rows.sort(function (a, b) {
+            var key = vulnState.sort, result = 0;
+            if (key === "risk") result = VULN_RISKS.indexOf(a.risk) - VULN_RISKS.indexOf(b.risk) || (Number(b.score) || 0) - (Number(a.score) || 0);
+            else if (key === "score") result = (Number(a.score) || 0) - (Number(b.score) || 0);
+            else if (key === "exploit") result = (a.exploit ? 1 : 0) - (b.exploit ? 1 : 0);
+            else result = String(a[key] || "").localeCompare(String(b[key] || ""), undefined, { numeric: true });
+            return result * direction || a.host.localeCompare(b.host);
+        });
+        return rows;
+    }
+    function csvCell(value) {
+        var textValue = String(value == null ? "" : value);
+        if (/^[=+\-@\t\r]/.test(textValue)) textValue = "'" + textValue;
+        return '"' + textValue.replace(/"/g, '""') + '"';
+    }
+    function exportVulnerabilities(rows) {
+        var header = ["Host", "Risk", "Plugin ID", "Plugin Name", "Score", "Exploit", "Excluded", "Remediation", "Host OS", "Scan", "Occurrences"];
+        var lines = [header.map(csvCell).join(";")].concat(rows.map(function (row) {
+            return [row.host, row.risk, row.pluginId, row.name, row.score == null ? "" : row.score, row.exploit ? "True" : "False", row.excluded ? "True" : "False", row.remediation ? row.remediation.scriptPath : "", row.hostOs, row.scan, row.occurrences].map(csvCell).join(";");
+        }));
+        var blob = new Blob(["﻿" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "vulnerabilities-" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(link.href); }, 0);
+    }
+    function vulnerabilityDetail(row) {
+        var extra = [{ Field: "Occurrences", Value: String(row.occurrences) }];
+        if (row.excluded) extra.push({ Field: vulnMsg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") });
+        if (row.remediation) extra.push({ Field: vulnMsg("Naprawa", "Remediation"), Value: row.remediation.scriptPath });
+        return JSON.stringify({ meshTable: true, title: vulnMsg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(row.fields).map(function (key) { return { Field: key, Value: String(row.fields[key] == null ? "" : row.fields[key]) }; }).concat(extra) });
+    }
+    function vulnerabilities(shell) {
+        primary(shell, document.createElement("div"));
+        loadAllVulnerabilities(shell, false);
+        var all = allVulnerabilityRows().filter(function (row) { return !row.excluded; });
+        var counts = {};
+        all.forEach(function (row) { counts[row.risk] = (counts[row.risk] || 0) + 1; });
+        var items = [{ key: "", title: vulnMsg("Wszystkie", "All"), icon: VULN_ICON, badge: vulnState.data ? all.length : null }].concat(VULN_RISKS.map(function (risk) {
+            return { key: risk, title: vulnRiskLabel(risk), icon: VULN_ICON, badge: vulnState.data ? counts[risk] || 0 : null };
+        }));
+        window.SharedResultsView.mountStatus(shell.state.page.secondary, { selected: vulnState.risk, items: items, onSelect: function (value) { vulnState.risk = value; vulnState.page = 1; shell.render(); } });
+        var details = shell.state.page.details;
+        details.innerHTML = "";
+        if (vulnState.error) {
+            var failed = shell.card(vulnMsg("Podatności", "Vulnerabilities"), vulnMsg("Nie można odczytać podatności: ", "Cannot read vulnerabilities: ") + vulnState.error);
+            failed.classList.add("mc-shared-error");
+            details.appendChild(failed);
+            sync(shell);
+            return;
+        }
+        if (!vulnState.data) {
+            details.appendChild(shell.card(vulnMsg("Podatności", "Vulnerabilities"), vulnMsg("Wczytywanie danych Nessus…", "Loading Nessus data…")));
+            sync(shell);
+            return;
+        }
+        var importState = vulnState.data.import || {};
+        var summary = shell.card(vulnMsg("Podatności — wszystkie hosty", "Vulnerabilities — all hosts"),
+            vulnMsg("Hosty: ", "Hosts: ") + (vulnState.data.hosts || []).length + " · " + vulnMsg("Import: ", "Imported: ") + (importState.importedAt ? new Date(importState.importedAt).toLocaleString() : "—"));
+        if (importState.lastError) summary.appendChild(shell.element("div", "mc-shared-error", vulnMsg("Ostatni błąd importu: ", "Last import error: ") + importState.lastError.reason));
+        details.appendChild(summary);
+
+        var wrap = shell.element("div", "mc-vuln-table-wrap");
+        var table = document.createElement("table");
+        table.className = "mc-vuln-table";
+        var columns = [
+            { key: "host", title: "Host", filter: "host" },
+            { key: "risk", title: vulnMsg("Ryzyko", "Risk") },
+            { key: "pluginId", title: "Plugin ID", filter: "pluginId" },
+            { key: "name", title: vulnMsg("Nazwa", "Name"), filter: "name" },
+            { key: "score", title: "Score", filter: "minScore" },
+            { key: "exploit", title: "Exploit", filter: "exploit" },
+            { key: "fix", title: vulnMsg("Naprawa", "Fix"), filter: "fix" },
+            { key: "scan", title: vulnMsg("Skan", "Scan") }
+        ];
+        var head = table.createTHead();
+        var titles = head.insertRow();
+        var filters = head.insertRow();
+        filters.className = "mc-vuln-filter-row";
+        var body = table.createTBody();
+        var pager = shell.element("div", "mc-script-manage-actions mc-vuln-pager");
+        function fill() {
+            var rows = filteredVulnerabilityRows();
+            var pages = Math.max(1, Math.ceil(rows.length / VULN_PAGE_SIZE));
+            vulnState.page = Math.min(Math.max(1, vulnState.page), pages);
+            body.innerHTML = "";
+            rows.slice((vulnState.page - 1) * VULN_PAGE_SIZE, vulnState.page * VULN_PAGE_SIZE).forEach(function (row) {
+                var tr = body.insertRow();
+                tr.className = "mc-vuln-row" + (row.excluded ? " is-excluded" : "");
+                tr.tabIndex = 0;
+                [row.host + (row.stale ? vulnMsg(" (nieaktualny)", " (stale)") : ""), vulnRiskLabel(row.risk), row.pluginId, row.name, row.score == null ? "—" : String(row.score), row.exploit ? vulnMsg("Tak", "Yes") : vulnMsg("Nie", "No"),
+                    row.excluded ? vulnMsg("wykluczone", "excluded") : row.remediation ? row.remediation.scriptPath : "—", row.scan].forEach(function (value, index) {
+                    var cell = tr.insertCell();
+                    cell.textContent = value;
+                    if (index === 1) cell.className = "mc-vulnerability-risk mc-vulnerability-risk-" + row.risk;
+                });
+                function open() { window.SharedResultsView.openViewer(row, { resultValue: vulnerabilityDetail, title: vulnMsg("Szczegóły podatności", "Vulnerability details") }); }
+                tr.onclick = open;
+                tr.onkeydown = function (event) { if (event.key === "Enter") { event.preventDefault(); open(); } };
+            });
+            if (!rows.length) {
+                var empty = body.insertRow().insertCell();
+                empty.colSpan = columns.length;
+                empty.className = "mc-shared-muted";
+                empty.textContent = vulnMsg("Brak podatności dla wybranych filtrów.", "No vulnerabilities match the selected filters.");
+            }
+            pager.innerHTML = "";
+            var prev = shell.element("button", "btn btn-secondary", "‹"); prev.type = "button"; prev.disabled = vulnState.page <= 1; prev.onclick = function () { vulnState.page--; fill(); };
+            var next = shell.element("button", "btn btn-secondary", "›"); next.type = "button"; next.disabled = vulnState.page >= pages; next.onclick = function () { vulnState.page++; fill(); };
+            var exportButton = shell.element("button", "btn btn-secondary", vulnMsg("Eksport CSV (", "Export CSV (") + rows.length + ")"); exportButton.type = "button"; exportButton.disabled = !rows.length;
+            exportButton.onclick = function () { exportVulnerabilities(rows); };
+            pager.appendChild(prev);
+            pager.appendChild(shell.element("span", "mc-shared-muted", vulnState.page + " / " + pages + " (" + rows.length + ")"));
+            pager.appendChild(next);
+            pager.appendChild(exportButton);
+        }
+        columns.forEach(function (column) {
+            var th = document.createElement("th");
+            var sortButton = shell.element("button", "mc-vuln-sort", column.title + (vulnState.sort === column.key ? (vulnState.desc ? " ▼" : " ▲") : ""));
+            sortButton.type = "button";
+            sortButton.onclick = function () {
+                if (vulnState.sort === column.key) vulnState.desc = !vulnState.desc;
+                else { vulnState.sort = column.key; vulnState.desc = column.key === "score" || column.key === "exploit"; }
+                vulnState.page = 1;
+                shell.render();
+            };
+            th.appendChild(sortButton);
+            titles.appendChild(th);
+            var cell = document.createElement("th");
+            var control = null;
+            if (column.filter === "exploit" || column.filter === "fix") {
+                control = document.createElement("select");
+                var options = column.filter === "exploit"
+                    ? [["", vulnMsg("Wszystkie", "All")], ["yes", vulnMsg("Tak", "Yes")], ["no", vulnMsg("Nie", "No")]]
+                    : [["active", vulnMsg("Aktywne", "Active")], ["fix", vulnMsg("Z naprawą", "With fix")], ["excluded", vulnMsg("Wykluczone", "Excluded")], ["all", vulnMsg("Wszystkie", "All")]];
+                options.forEach(function (option) { var item = document.createElement("option"); item.value = option[0]; item.textContent = option[1]; control.appendChild(item); });
+                control.onchange = function () { vulnState.filters[column.filter] = control.value; vulnState.page = 1; fill(); };
+            } else if (column.filter) {
+                control = document.createElement("input");
+                control.type = column.filter === "minScore" ? "number" : "search";
+                if (column.filter === "minScore") { control.min = "0"; control.max = "10"; control.step = "0.1"; control.placeholder = "≥"; }
+                else control.placeholder = vulnMsg("Filtruj", "Filter");
+                control.oninput = function () { vulnState.filters[column.filter] = control.value; vulnState.page = 1; fill(); };
+            }
+            if (control) {
+                control.className = "mc-definition-input mc-vuln-filter";
+                control.value = vulnState.filters[column.filter];
+                control.setAttribute("aria-label", column.title);
+                if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") window.MeshThemeAdapter.control(control);
+                cell.appendChild(control);
+            }
+            filters.appendChild(cell);
+        });
+        wrap.appendChild(table);
+        details.appendChild(wrap);
+        details.appendChild(pager);
+        fill();
+        sync(shell);
+    }
+
     function scripts(shell) {
         primary(shell, shell.state.page.secondary);
         if (!treeState.selectedScript) {
@@ -526,6 +769,7 @@
     }
 
     function refresh(shell) {
+        if (mode === "vulnerabilities") { vulnState.data = null; vulnState.error = null; loadAllVulnerabilities(shell, true); shell.render(); return; }
         var toolbar = shell.state.page && shell.state.page.toolbar;
         if (toolbar) toolbar.setEnabled("refresh", false);
         shell.post("refresh", {}).then(function (response) {
@@ -586,7 +830,7 @@
             return shell.api("scripts").then(function (response) {
                 tree = response.tree;
                 tools.applyDeepLink(tree, treeState);
-                return mode === "results" ? results(shell) : scripts(shell);
+                return mode === "results" ? results(shell) : mode === "vulnerabilities" && admin(shell) ? vulnerabilities(shell) : scripts(shell);
             });
         }
     });

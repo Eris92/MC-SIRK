@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.144",
+    "date": "2026-11-03",
+    "summary": "Vulnerability exclusions and pinned remediation rules (settings + rules.json), Fix actions, Quick table and My Scripts all-host table with header filters.",
+    "notes": "docs/releases/0.1.144.md"
+  },
+  {
     "version": "0.1.141",
     "date": "2026-11-03",
     "summary": "Add Nessus CSV import, Commands and Quick vulnerability views, Desktop alert and Site Admin all-host My Script report.",

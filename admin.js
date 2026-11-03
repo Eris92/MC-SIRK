@@ -13,6 +13,7 @@ module.exports.admin = function (plugin) {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
         "integrations-admin.js": ["web/admin/integrations.js", "text/javascript; charset=utf-8"],
+        "vulnerabilities-admin.js": ["web/admin/vulnerabilities.js", "text/javascript; charset=utf-8"],
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],

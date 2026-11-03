@@ -274,6 +274,7 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var q = req && req.query || {};
+            if (asset === "vulnerabilities-all") return context.vulnerabilities.readAllHosts(user);
             if (asset === "tree" || asset === "scripts") return { ok: true, tree: visibleTree(user), scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
             if (asset === "script") {
                 requireScriptAccess(user, q.path);

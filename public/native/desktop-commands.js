@@ -65,7 +65,7 @@
             vuln_host_unmatched: "Nie znaleziono hosta w danych Nessus. Stan podatności jest nieznany.",
             vuln_ambiguous: "Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.",
             vuln_stale: "Ostatni skan jest nieaktualny.", vuln_no_findings: "Ostatni skan nie wykazał podatności.",
-            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnRequestFailed: "Nie można odczytać podatności"
+            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnColScore: "Score", vulnColExploit: "Exploit", vulnExcluded: "wykluczone", vulnFix: "Napraw", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnRequestFailed: "Nie można odczytać podatności"
         },
         en: {
             title: "Quick commands", scripts: "Scripts", search: "Search commands…",
@@ -86,7 +86,7 @@
             vuln_host_unmatched: "This host was not found in the Nessus data. Vulnerability state is unknown.",
             vuln_ambiguous: "The host name matches several Nessus entries. No unambiguous match.",
             vuln_stale: "The latest scan is stale.", vuln_no_findings: "The latest scan reported no vulnerabilities.",
-            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnRequestFailed: "Cannot read vulnerabilities"
+            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnColScore: "Score", vulnColExploit: "Exploit", vulnExcluded: "excluded", vulnFix: "Fix", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnRequestFailed: "Cannot read vulnerabilities"
         }
     };
 
@@ -553,20 +553,52 @@
             summary.appendChild(element("div", "", text("vulnScan") + ": " + (host.generationDate || "—")));
         }
         tree.appendChild(summary);
-        (host && host.findings || []).forEach(function (finding) {
-            var fields = finding.fields || {};
-            var button = element("button", "sirk-quick-vuln-item");
-            button.type = "button";
-            button.title = fields["Plugin Name"] || "";
-            var copy = element("span", "sirk-quick-command-copy");
-            copy.appendChild(element("strong", "sirk-quick-command-label", (text(finding.risk) || finding.risk) + " · " + (fields["Plugin Name"] || "")));
-            copy.appendChild(element("span", "sirk-quick-command-label", "ID " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + " · Exploit " + (finding.exploit ? "✓" : "—")));
-            button.appendChild(copy);
-            button.onclick = function () { vuln.selected = finding; render(panel); };
-            applyQuickNav(button, vuln.selected === finding);
-            tree.appendChild(button);
-        });
+        // Compact table (risk | name | score | exploit); excluded findings stay visible but muted.
+        var findings = host && host.findings || [];
+        if (findings.length) {
+            var table = element("table", "sirk-quick-vuln-table");
+            var head = element("tr");
+            ["vulnColRisk", "vulnColName", "vulnColScore", "vulnColExploit"].forEach(function (key) { head.appendChild(element("th", "", text(key))); });
+            table.appendChild(element("thead")).appendChild(head);
+            var body = table.appendChild(element("tbody"));
+            findings.forEach(function (finding) {
+                var fields = finding.fields || {};
+                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded ? " is-excluded" : "") + (vuln.selected === finding ? " is-active" : ""));
+                row.tabIndex = 0;
+                row.title = fields["Plugin Name"] || "";
+                row.setAttribute("aria-selected", vuln.selected === finding ? "true" : "false");
+                row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
+                var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
+                if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
+                row.appendChild(name);
+                row.appendChild(element("td", "sirk-quick-vuln-score", finding.score == null ? "—" : String(finding.score)));
+                row.appendChild(element("td", "sirk-quick-vuln-exploit", finding.exploit ? "✓" : "—"));
+                function select() { vuln.selected = finding; render(panel); }
+                row.onclick = select;
+                row.onkeydown = function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } };
+                body.appendChild(row);
+            });
+            tree.appendChild(table);
+        }
         if (vuln.selected) {
+            var remediation = !vuln.selected.excluded && vuln.selected.remediation;
+            if (remediation) {
+                // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
+                var item = state.data ? flattenScripts(state.data.tree, []).filter(function (candidate) { return candidate.path === remediation.scriptPath; })[0] : null;
+                var fix = element("button", "btn btn-primary btn-sm sirk-quick-vuln-fix", text("vulnFix") + ": " + (item ? item.label : remediation.scriptPath));
+                fix.type = "button";
+                fix.disabled = !item;
+                if (!item) fix.title = text("vulnFixUnavailable");
+                fix.onclick = function () {
+                    if (!item) return;
+                    state.category = "scripts";
+                    selectItem(panel, item, fix);
+                };
+                details.appendChild(fix);
+            }
+            if (vuln.selected.excluded && vuln.selected.exclusion) {
+                details.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (vuln.selected.exclusion.reason ? ": " + vuln.selected.exclusion.reason : "") + (vuln.selected.exclusion.expires ? " (" + vuln.selected.exclusion.expires + ")" : "")));
+            }
             var fields = vuln.selected.fields || {};
             Object.keys(fields).forEach(function (name) {
                 var line = element("div", "sirk-quick-vuln-field");

@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.144`](0.1.144.md) — vulnerability exclusions/remediation rules, Fix actions, Quick table and My Scripts all-host table after first smoke; pending real smoke;
 - [`0.1.141`](0.1.141.md) — adds the Nessus vulnerability dataset (#422) with Commands/Quick views, Desktop alert and an all-host My Script report (#423–#425); pending real smoke;
 - [`0.1.139`](0.1.139.md) — fixes the real Quick concurrency regression with a server-resolved execution marker while keeping ordinary per-node guard; pending real smoke;
 - [`0.1.138`](0.1.138.md) — adds explicit MeshCentral actor attribution to Jira Assets object comments after successful confirmation (Cloud Comments endpoint unsupported; real smoke required);
