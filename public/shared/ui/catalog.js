@@ -22,22 +22,29 @@
 
     }
 
-    function createResultsButton(host, active, onClick) {
+    var RESULTS_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
+
+    // One nav-item factory for Results and module-provided entries placed
+    // directly below it (e.g. Commands -> Vulnerabilities, #423).
+    function createResultsButton(host, active, onClick, spec) {
+        spec = spec || {};
+        var text = spec.label || "Results";
         var button = document.createElement("button");
         button.type = "button";
-        button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item";
-        button.title = "Results";
-        button.setAttribute("aria-label", "Results");
+        button.className = "mc-shared-nav-item mc-portal-nav-item sirk-management-item mc-catalog-results sirk-shared-list-item" + (spec.key ? " mc-catalog-extra" : "");
+        if (spec.key) button.setAttribute("data-sirk-catalog-item", spec.key);
+        button.title = text;
+        button.setAttribute("aria-label", text);
 
         var icon = document.createElement("span");
         icon.className = "mc-tree-fallback-icon sirk-management-item-icon mc-portal-nav-icon sirk-shared-list-icon";
-        icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8"/></svg>';
+        icon.innerHTML = spec.iconMarkup || RESULTS_ICON;
 
         var copy = document.createElement("span");
         copy.className = "sirk-shared-list-copy";
         var label = document.createElement("span");
         label.className = "mc-tree-label mc-portal-nav-label sirk-shared-list-label";
-        label.textContent = "Results";
+        label.textContent = text;
         copy.appendChild(label);
 
         button.appendChild(icon);
@@ -93,9 +100,16 @@
             host.classList.add("sirk-shared-catalog-primary");
             var anchor = document.createComment("catalog-roots");
             var resultsButton = null;
+            var extraButtons = [];
+            var extraItems = Array.isArray(options.extraItems) ? options.extraItems : [];
+            var extraActive = extraItems.some(function (item) { return item && item.active === true; });
 
             function addResults() {
-                resultsButton = createResultsButton(host, options.resultsActive, options.onResults);
+                resultsButton = createResultsButton(host, options.resultsActive && !extraActive, options.onResults);
+                extraItems.forEach(function (item) {
+                    if (!item || !item.key) return;
+                    extraButtons.push(createResultsButton(host, item.active === true, item.onClick, item));
+                });
             }
 
             if (options.resultsPosition !== "end") addResults();
@@ -114,12 +128,13 @@
                 scriptActions: options.scriptActions,
                 onRootSelect: function (root) {
                     setSelected(resultsButton, false);
+                    extraButtons.forEach(function (button) { setSelected(button, false); });
                     if (typeof options.onRootSelect === "function") options.onRootSelect(root);
                 },
                 onScript: options.onScript
             });
 
-            if (options.resultsActive) {
+            if (options.resultsActive || extraActive) {
                 Array.prototype.slice.call(host.children || []).forEach(function (button) {
                     if (button && button.getAttribute && button.getAttribute("data-sirk-catalog-root") === "1") setSelected(button, false);
                 });

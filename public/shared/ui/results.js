@@ -399,7 +399,7 @@
         },
         mountStatus: function (host, options) {
             options = options || {};
-            window.SharedStatusNav.mount(host, { selected: options.selected || "", counts: options.counts, onSelect: options.onSelect });
+            window.SharedStatusNav.mount(host, { selected: options.selected || "", counts: options.counts, items: options.items, onSelect: options.onSelect });
         },
         mountTable: function (host, options) {
             options = options || {};
