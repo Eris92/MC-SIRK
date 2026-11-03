@@ -2,14 +2,23 @@
 
 var assert = require("assert");
 var guard = require("../server/core/agent-command-guard.js");
+var QUICK_DIRECT_CONTEXT = Symbol.for("sirk.platform.quick.direct");
 
 var sent = [];
 var captured = [];
 var device = {
     sendRunCommands: function (context, command, responseId) {
-        sent.push({ nodeId: context.nodeId, command: command, responseId: responseId });
+        sent.push({ nodeId: context.nodeId, command: command, responseId: responseId, direct: context[QUICK_DIRECT_CONTEXT] === true });
         return Promise.resolve({ state: "sent" });
     }
+};
+device.resolveNode = function (user, nodeId, options) {
+    assert.strictEqual(options.requireCommandRights, true, "Quick must resolve device with command rights.");
+    return new Promise(function (resolve) {
+        setImmediate(function () {
+            resolve({ nodeId: String(nodeId || ""), node: { agent: { id: 4 } }, rights: 24 });
+        });
+    });
 };
 var runtime = {
     context: { device: device },
@@ -18,25 +27,29 @@ var runtime = {
             apiPost: function (asset, req) {
                 var body = req && req.body || {};
                 if (asset !== "execute") return Promise.resolve({ ok: true });
-                return device.sendRunCommands(
-                    { nodeId: String(body.nodeId || "") },
-                    { cmd: String(body.command || "quick"), runAsUser: Number(body.runAsUser) || 0 },
-                    String(body.responseId || ""),
-                    null
-                );
+                return device.resolveNode({}, body.nodeId, { requireCommandRights: true }).then(function (node) {
+                    if (body.desktopDirect === true) Object.defineProperty(node, QUICK_DIRECT_CONTEXT, { value: true });
+                    return device.sendRunCommands(
+                        node,
+                        { cmd: String(body.command || "quick"), runAsUser: Number(body.runAsUser) || 0 },
+                        String(body.responseId || ""),
+                        null
+                    );
+                });
             }
         }
     },
     captureAgentData: function (command) { captured.push(command); }
 };
 var plugin = { runtime: runtime };
+var originalApiPost = runtime.modules.mycommands.apiPost;
 
 guard.apply(plugin, { timeoutMs: 30000 });
 
 assert.ok(device.__sirkAgentCommandGuard,
     "Applying the policy must install guard state on the device service.");
-assert.strictEqual(runtime.modules.mycommands.__sirkQuickParallelGuardBypass, true,
-    "The guard must scope a concurrency bypass to the existing My Commands API owner.");
+assert.strictEqual(runtime.modules.mycommands.apiPost, originalApiPost,
+    "The guard must not wrap the asynchronous API request lifecycle.");
 assert.strictEqual(guard.responseId({ result: { responseId: "nested-1" } }), "nested-1",
     "Result envelope response IDs must be recognized so a terminal result cannot leave a stale lock.");
 assert.strictEqual(guard.isRunCommandsResult({ action: "runcommands" }), true,
@@ -78,6 +91,9 @@ Promise.resolve()
     .then(function () {
         assert.strictEqual(sent.length, 3,
             "Two native Quick direct commands must bypass the existing guarded command without replacing its lock.");
+        assert.strictEqual(sent[0].direct, false, "Ordinary execution must not have a direct marker.");
+        assert.strictEqual(sent[1].direct, true, "Direct execution must carry a resolved-context marker.");
+        assert.strictEqual(sent[2].direct, true, "Second direct execution must carry its own resolved-context marker.");
         assert.strictEqual(device.__sirkAgentCommandGuard.activeByNode["node/domain/a"].responseId, "response-1",
             "Quick direct commands must not clear or replace an existing guarded command lock.");
         assert.deepStrictEqual(Object.keys(sent[1].command).sort(), ["cmd", "runAsUser"],
