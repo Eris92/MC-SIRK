@@ -100,7 +100,7 @@ module.exports.admin = function (plugin) {
         try {
             context.approval.getRequest(user, requestId);
             var artifact = service.resolve(requestId, artifactId);
-            var disposition = String(req && req.query && req.query.mode || "download").toLowerCase() === "open"
+            var disposition = artifact.type === "pdf" && String(req && req.query && req.query.mode || "download").toLowerCase() === "open"
                 ? "inline"
                 : "attachment";
             var fileName = path.basename(artifact.fileName).replace(/[\r\n"]/g, "_");

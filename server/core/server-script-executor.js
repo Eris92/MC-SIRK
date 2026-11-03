@@ -3,6 +3,8 @@
 var childProcess = require("child_process");
 var crypto = require("crypto");
 var shared = require("./shared.js");
+var artifactFactory = require("./artifact-service.js");
+var csrService = require("./csr-service.js");
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000);
@@ -48,6 +50,74 @@ module.exports.createServerScriptExecutor = function (options) {
     var assignmentNamespace = String(options.assignmentNamespace || "script-secrets.myscripts.system-credentials");
     var queue = Promise.resolve();
     var activeExecutions = Object.create(null);
+    var artifactStore = options.artifacts || null;
+
+    function artifacts() {
+        if (!artifactStore) {
+            artifactStore = artifactFactory.createArtifactService({
+                fs: context.fs,
+                path: context.nativePath || context.path,
+                dataRoot: context.dataRoot
+            });
+        }
+        return artifactStore;
+    }
+
+    function fileVariables(script) {
+        return (script && script.variables || []).filter(function (variable) { return variable && variable.control === "file"; });
+    }
+
+    // #407: resolve server-staged uploads bound to requester, script and variable.
+    // The variable value becomes a server-controlled path; CSR content is re-validated.
+    function resolveFileInputs(script, payload, request) {
+        var variables = fileVariables(script);
+        var result = { values: {}, tokens: [], csr: null };
+        if (!variables.length) return result;
+        var supplied = payload && payload.variableValues || {};
+        var ownerId = text(request && request.requester && request.requester.id, 300).trim();
+        variables.forEach(function (variable) {
+            var token = text(supplied[variable.name], 200).trim();
+            if (!token) {
+                if (variable.required) throw new Error((variable.label || variable.name) + " is required.");
+                result.values[variable.name] = "";
+                return;
+            }
+            var upload = artifacts().resolveUpload(token, { ownerId: ownerId, scriptPath: script.path, variable: variable.name });
+            result.tokens.push(upload.token);
+            if (variable.fileFormat === "csr") {
+                if (result.csr) throw new Error("Only one CSR file input is supported.");
+                result.csr = csrService.parseCsr(context.fs.readFileSync(upload.path));
+            }
+            result.values[variable.name] = upload.path;
+        });
+        return result;
+    }
+
+    function expectedIssuer() {
+        var ca = context.integrations && typeof context.integrations.get === "function" ? context.integrations.get("ca") : null;
+        var config = String(ca && ca.config || "");
+        var separator = config.indexOf("\\");
+        return separator >= 0 ? config.slice(separator + 1).trim() : "";
+    }
+
+    // Only verified certificates for the submitted CSR become downloadable artifacts.
+    function collectArtifacts(workspace, files, request) {
+        if (!workspace) return [];
+        var names = context.fs.readdirSync(workspace).filter(function (name) { return /\.(cer|crt)$/i.test(name); });
+        if (!names.length) return [];
+        if (!files.csr) throw new Error("Certificate output requires a CSR input.");
+        if (names.length > 1) throw new Error("The script produced more than one certificate.");
+        var requestId = text(request && request.id, 128).trim();
+        if (!requestId) throw new Error("Certificate artifacts require a request.");
+        var verified = csrService.verifyIssued(context.fs.readFileSync((context.nativePath || context.path).join(workspace, names[0])), files.csr, expectedIssuer());
+        var serial = verified.serialNumber.replace(/[^0-9A-Fa-f]/g, "") || "issued";
+        return [artifacts().create(requestId, {
+            type: "certificate",
+            data: verified.der,
+            fileName: "certificate-" + serial + ".cer",
+            label: "Download certificate"
+        })];
+    }
 
     function timeoutMs() {
         var current = context.settings.read();
@@ -306,13 +376,23 @@ module.exports.createServerScriptExecutor = function (options) {
         }
 
         executionOptions = executionOptions && typeof executionOptions === "object" ? executionOptions : {};
+        var files = { values: {}, tokens: [], csr: null };
+        var workspace = "";
+        function release() {
+            files.tokens.forEach(function (token) { artifacts().discardUpload(token); });
+            if (workspace) artifacts().removeWorkspace(workspace);
+        }
         var values;
-        try { values = validateValues(script, payload.variableValues, executionOptions.skipSystemEnvironment === true); }
-        catch (error) { return Promise.reject(error); }
-
         var plan;
-        try { plan = buildPlan(script, values); }
-        catch (error) { return Promise.reject(error); }
+        try {
+            files = resolveFileInputs(script, payload, request);
+            values = validateValues(script, Object.assign({}, payload.variableValues, files.values), executionOptions.skipSystemEnvironment === true);
+            if (fileVariables(script).length) workspace = artifacts().createWorkspace();
+            plan = buildPlan(script, values);
+        } catch (error) {
+            release();
+            return Promise.reject(error);
+        }
 
         var environment = Object.assign(
             {},
@@ -324,6 +404,7 @@ module.exports.createServerScriptExecutor = function (options) {
                 MYSCRIPTS_REQUESTER: request && request.requester && request.requester.name || "",
                 MYSCRIPTS_PLUGIN_ROOT: context.pluginRoot,
                 MYSCRIPTS_SCRIPTS_ROOT: context.nativePath.join(context.pluginRoot, "seed", "MyScripts"),
+                MYSCRIPTS_OUTPUT_DIR: workspace,
                 DIRECTORYTOOLS_PLUGIN_ROOT: context.pluginRoot
             }
         );
@@ -339,13 +420,26 @@ module.exports.createServerScriptExecutor = function (options) {
             }, function (error, stdout, stderr) {
                 var raw = text(String(stdout || "") + (stderr ? "\n" + stderr : ""), 1000000).trim();
                 if (error) {
+                    release();
                     var failure = new Error(raw || error.message || "Script failed.");
                     failure.code = error.code;
                     reject(failure);
                     return;
                 }
+                var produced;
+                try { produced = collectArtifacts(workspace, files, request); }
+                catch (artifactError) {
+                    release();
+                    reject(artifactError);
+                    return;
+                }
+                release();
+                if (files.csr && !produced.length) {
+                    reject(new Error(raw ? raw + "\nNo certificate was issued." : "No certificate was issued."));
+                    return;
+                }
                 var parsed = parseData(raw);
-                resolve({
+                var result = {
                     message: raw || "Script completed without output.",
                     output: raw,
                     rawOutput: raw,
@@ -353,7 +447,9 @@ module.exports.createServerScriptExecutor = function (options) {
                     exitCode: 0,
                     scriptPath: script.path,
                     label: script.label || script.name || "Script"
-                });
+                };
+                if (produced.length) result.artifacts = produced;
+                resolve(result);
             });
         });
     }

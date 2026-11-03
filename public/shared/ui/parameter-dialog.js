@@ -18,7 +18,7 @@
     }
     function controlKind(variable) {
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
-        return ["select", "switch", "user", "asset", "assetmulti"].indexOf(kind) >= 0 ? kind : "text";
+        return ["select", "switch", "user", "asset", "assetmulti", "file"].indexOf(kind) >= 0 ? kind : "text";
     }
     function allowCustom(item, variable) {
         var name = text(variable && variable.name).trim().toLowerCase();
@@ -121,10 +121,21 @@
             list.appendChild(node);
         });
     }
+    // #407: file inputs are bounded single files; the browser never sends them before submit.
+    var FILE_FORMATS = {
+        csr: { accept: ".csr,.req,.pem,.der,.p10,.txt", maxBytes: 32 * 1024 }
+    };
+    function fileFormat(variable) {
+        return FILE_FORMATS[text(variable && variable.fileFormat).trim().toLowerCase()] || null;
+    }
+    function selectedFile(record) {
+        var files = record && record.control && record.control.files;
+        return files && files.length === 1 ? files[0] : null;
+    }
     function currentValues(records) {
         var values = {};
         records.forEach(function (record) {
-            values[record.variable.name] = record.kind === "switch" ? record.control.checked : record.control.value;
+            values[record.variable.name] = record.kind === "switch" ? record.control.checked : record.kind === "file" ? selectedFile(record) : record.control.value;
         });
         return values;
     }
@@ -164,6 +175,22 @@
         records.forEach(function (record) { record.control.removeAttribute("aria-invalid"); });
         for (var index = 0; index < records.length; index++) {
             var record = records[index];
+            if (record.kind === "file") {
+                var file = selectedFile(record);
+                var format = fileFormat(record.variable);
+                var fileError = "";
+                if (record.control.files && record.control.files.length > 1) fileError = "Select exactly one file.";
+                else if (!file && record.variable.required) fileError = (localized(record.variable, "label") || record.variable.name) + " is required.";
+                else if (file && format && Number(file.size) > format.maxBytes) fileError = "The selected file is larger than " + (format.maxBytes / 1024) + " KB.";
+                else if (file && !Number(file.size)) fileError = "The selected file is empty.";
+                if (fileError) {
+                    record.control.setAttribute("aria-invalid", "true");
+                    setStatus(status, fileError, true);
+                    if (typeof record.control.focus === "function") record.control.focus();
+                    return null;
+                }
+                continue;
+            }
             if (!record.variable.required || record.kind === "switch") continue;
             var value = text(record.control.value).trim();
             if (!value) {
@@ -222,6 +249,12 @@
                 if ((kind === "assetmulti" && Array.isArray(variable.options)) || (listMode && kind === "select")) {
                     setChecklistOptions(optionHost, control, variable.options || [], listMode);
                 }
+            } else if (kind === "file") {
+                control.type = "file";
+                var accepted = fileFormat(variable);
+                if (accepted) control.setAttribute("accept", accepted.accept);
+                if (variable.required) control.setAttribute("aria-required", "true");
+                row.appendChild(control);
             } else if (kind === "switch") {
                 control.type = "checkbox";
                 control.checked = checkedDefault(variable);
@@ -649,6 +682,7 @@
         assetUserDependency: assetUserDependency,
         controlKind: controlKind,
         currentValues: currentValues,
+        fileFormat: fileFormat,
         optionProvider: function () { return sharedOptionProvider; },
         validate: validate
     };

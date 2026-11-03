@@ -84,9 +84,19 @@
         return resultHost;
     }
 
-    function pdfArtifacts(request) {
+    function requestArtifacts(request, type) {
         var artifacts = request && request.result && Array.isArray(request.result.artifacts) ? request.result.artifacts : [];
-        return artifacts.filter(function (artifact) { return artifact && artifact.type === "pdf" && artifact.id && artifact.requestId; });
+        return artifacts.filter(function (artifact) { return artifact && artifact.type === type && artifact.id && artifact.requestId; });
+    }
+    function pdfArtifacts(request) { return requestArtifacts(request, "pdf"); }
+    function certificateArtifacts(request) { return requestArtifacts(request, "certificate"); }
+    function certificateButton(artifact, className) {
+        var download = document.createElement("button");
+        download.type = "button";
+        download.className = className;
+        download.textContent = "Download certificate";
+        download.onclick = function () { window.location.href = artifactUrl(artifact, "download"); };
+        return download;
     }
 
     function artifactUrl(artifact, modeValue) {
@@ -99,7 +109,8 @@
 
     function appendArtifactActions(host, request) {
         var artifacts = pdfArtifacts(request);
-        if (!artifacts.length) return;
+        var certificates = certificateArtifacts(request);
+        if (!artifacts.length && !certificates.length) return;
         var actions = host.querySelector(".mc-results-inline-actions");
         if (!actions) {
             actions = document.createElement("div");
@@ -120,6 +131,9 @@
             download.textContent = "Download PDF";
             download.onclick = function () { window.location.href = artifactUrl(artifact, "download"); };
             actions.appendChild(download);
+        });
+        certificates.forEach(function (artifact) {
+            actions.appendChild(certificateButton(artifact, "btn btn-secondary btn-sm mc-results-download-button"));
         });
     }
 
@@ -240,6 +254,38 @@
         });
     }
 
+    // #407: File values chosen in the shared parameter dialog are read only now, on submit,
+    // and sent as bounded base64 next to the ordinary values; the server validates them again.
+    function isFileValue(value) {
+        return !!value && typeof value === "object" && typeof value.name === "string" && typeof value.size === "number" && typeof value.slice === "function";
+    }
+    function readFile(file) {
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var result = String(reader.result || "");
+                var comma = result.indexOf(",");
+                resolve({ name: String(file.name || "upload"), data: comma >= 0 ? result.slice(comma + 1) : "" });
+            };
+            reader.onerror = function () { reject(new Error("The selected file could not be read.")); };
+            reader.readAsDataURL(file);
+        });
+    }
+    function splitFileValues(values) {
+        var plain = {};
+        var names = [];
+        Object.keys(values || {}).forEach(function (name) {
+            var value = values[name];
+            if (isFileValue(value)) names.push(name);
+            else if (value !== null) plain[name] = value;
+        });
+        return Promise.all(names.map(function (name) { return readFile(values[name]); })).then(function (contents) {
+            var files = {};
+            names.forEach(function (name, index) { files[name] = contents[index]; });
+            return { values: plain, files: files };
+        });
+    }
+
     function submit(shell, script, button, values, detailsHost, resultHost, errorHost) {
         var executionKey = String(script && script.path || "");
         if (executionKey && executionsInFlight[executionKey]) return executionsInFlight[executionKey];
@@ -251,11 +297,14 @@
 
             var sequence = ++progressSequence;
             var protocolPending = false;
-            return shell.post("request", {
-                scriptPath: script.path,
-                variableValues: values || {},
-                confirmedExecution: script.confirmExecution === true,
-                note: ""
+            return splitFileValues(values).then(function (prepared) {
+                return shell.post("request", {
+                    scriptPath: script.path,
+                    variableValues: prepared.values,
+                    files: prepared.files,
+                    confirmedExecution: script.confirmExecution === true,
+                    note: ""
+                });
             }).then(function (response) {
                 var request = response.request || {};
                 outputs[script.path] = request;
@@ -464,6 +513,9 @@
     }
 
     function resultActions(cell, row) {
+        certificateArtifacts(row).forEach(function (artifact) {
+            cell.appendChild(certificateButton(artifact, "btn btn-secondary btn-sm"));
+        });
         var artifacts = pdfArtifacts(row);
         if (!artifacts.length) return;
         artifacts.forEach(function (artifact) {

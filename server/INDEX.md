@@ -22,7 +22,7 @@ server/core/runtime.js
 | zdarzenia SIRK w natywnym MeshCentral Events | `mesh-events.js` |
 | folder permissions | `folder-access.js` |
 | HTTP clients i integracje | `http-client.js`, `integration-service.js`, `sms-service.js`, `ad-directory-service.js` -> `ad-directory-query.ps1`, `sms-external-api.js` |
-| skrypty i wykonanie | `script-admin-service.js`, `server-script-executor.js`, `script-confirmation-library.js` |
+| skrypty i wykonanie | `script-admin-service.js`, `server-script-executor.js`, `script-confirmation-library.js`, `csr-service.js` (CSR/cert verify), `artifact-service.js` (request artifacts + upload staging) |
 | współdzielone helpery | `shared.js` |
 
 `ad-directory-service.js` pozostaje ownerem opcji/matchingu AD; `ad-directory-query.ps1` jest jego bezpośrednim, machine-readable Windows bridge do bounded `System.DirectoryServices` lookup i nie stanowi osobnego cache ani publicznego API.

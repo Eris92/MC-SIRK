@@ -37,4 +37,10 @@ $missing = $false
 try { Get-SigningCertificate ('0' * 40) | Out-Null } catch { $missing = $_.Exception.Message -match 'not installed' }
 if (-not $missing) { throw 'Missing signing certificate must fail closed.' }
 
-Write-Host 'Windows PowerShell signed RDP helper smoke: OK'
+# #407: Sign CSR must parse under Windows PowerShell 5.1.
+$signPath = Join-Path $root 'seed\MyScripts\CA\Sign CSR.ps1'
+$signErrors = $null
+[System.Management.Automation.Language.Parser]::ParseFile($signPath, [ref]$null, [ref]$signErrors) | Out-Null
+if ($signErrors.Count -gt 0) { $signErrors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+
+Write-Host 'Windows PowerShell signed RDP helper and Sign CSR parse smoke: OK'

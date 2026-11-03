@@ -14,6 +14,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | wspólny wygląd wierszy Approval, Commands, My Scripts i Quick | `shared-list-quick-style.test.js` |
 | bezpośrednia struktura pierwszej kolumny Commands i My Scripts | `shared-catalog-direct-columns.test.js` |
 | lekkie wcięcie kolejnych poziomów folderów i skryptów | `tree-indent.test.js` |
+| parametr pliku, upload CSR, podpis Enterprise CA i pobranie certyfikatu | `csr-signing.test.js` |
 | integracja CA, profil `SirkSystemCredential: CA` i podpisany plik RDP (Windows: `windows-ca-rdp-smoke.ps1`) | `ca-integration.test.js` |
 
 Po teście celowanym uruchom `npm test`, jeżeli zmiana wpływa na wiele warstw albo wspólny kontrakt.

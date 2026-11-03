@@ -3,7 +3,9 @@
 var crypto = require("crypto");
 var shared = require("./shared.js");
 
-var VARIABLE_DIRECTIVE = /^(VariableSelectRequired|VariableSelect|VariableSwitchRequired|VariableSwitch|VariableUserRequired|VariableUser|VariableAssetRequired|VariableAsset|VariableRequired|Variable|SaveSecretRequired|SaveSecret)(PL|EN)?$/i;
+var VARIABLE_DIRECTIVE = /^(VariableSelectRequired|VariableSelect|VariableSwitchRequired|VariableSwitch|VariableUserRequired|VariableUser|VariableAssetRequired|VariableAsset|VariableFileRequired|VariableFile|VariableRequired|Variable|SaveSecretRequired|SaveSecret)(PL|EN)?$/i;
+
+var FILE_FORMATS = ["csr"];
 
 function yes(value) {
     return /^(1|y|yes|t|tak|true)$/i.test(
@@ -71,6 +73,15 @@ function parseVariable(text, required, control) {
         defaultValue = yes(defaultValue) ? "true" : "false";
     }
 
+    // #407: file inputs declare their server-validated format in the default slot
+    // (`$CsrFile=csr`); a file input never has a client-visible default value.
+    var fileFormat = "";
+    if (control === "file") {
+        fileFormat = String(defaultValue || "").trim().toLowerCase();
+        if (FILE_FORMATS.indexOf(fileFormat) < 0) return null;
+        defaultValue = "";
+    }
+
     return {
         name: name,
         label: shared.cleanText(label, 200),
@@ -78,7 +89,8 @@ function parseVariable(text, required, control) {
         required: required === true,
         control: control || "text",
         defaultValue: shared.cleanText(defaultValue, 4000),
-        options: choices
+        options: choices,
+        fileFormat: fileFormat || undefined
     };
 }
 
@@ -122,6 +134,7 @@ function mergeVariableRecords(records, secret) {
                 },
                 options: Object.create(null)
             };
+            if (record.parsed.fileFormat) item.runtime.fileFormat = record.parsed.fileFormat;
             order.push(item);
         }
         var language = record.language;
@@ -219,6 +232,8 @@ function parseScript(path, text, fileName) {
                         ? "user"
                         : kind.indexOf("asset") >= 0
                             ? "asset"
+                            : kind.indexOf("variablefile") === 0
+                                ? "file"
                             : kind.indexOf("savesecret") >= 0
                                 ? "secret"
                                 : "text";
