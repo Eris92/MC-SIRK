@@ -17,15 +17,19 @@ $matches = @($ast.FindAll({
 if ($matches.Count -ne 1) { throw 'Expected exactly one CSV cell protection function.' }
 . ([ScriptBlock]::Create($matches[0].Extent.Text))
 
-$cases = @(
-    @{ Input='=HYPERLINK("https://example.com","open")'; Expected="'=HYPERLINK(`"https://example.com`",`"open`")" },
-    @{ Input=' +SUM(A1:A2)'; Expected="' +SUM(A1:A2)" },
-    @{ Input='-1+2'; Expected="'-1+2" },
-    @{ Input='@SUM(A1)'; Expected="'@SUM(A1)" },
-    @{ Input=([string][char]9 + '=cmd'); Expected=("'" + [string][char]9 + '=cmd') },
-    @{ Input='Safe display name'; Expected='Safe display name' },
-    @{ Input=''; Expected='' }
+$formulaSamples = @(
+    '=HYPERLINK("https://example.com","open")',
+    ' +SUM(A1:A2)',
+    '-1+2',
+    '@SUM(A1)',
+    ([string][char]9 + '=cmd')
 )
+$cases = @()
+foreach ($inputValue in $formulaSamples) {
+    $cases += @{ Input=$inputValue; Expected=("'" + $inputValue) }
+}
+$cases += @{ Input='Safe display name'; Expected='Safe display name' }
+$cases += @{ Input=''; Expected='' }
 foreach ($case in $cases) {
     $actual = Protect-CsvCell $case.Input
     if ($actual -cne $case.Expected) {
