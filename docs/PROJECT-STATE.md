@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.139`
+Current version: `0.1.141`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -80,7 +80,8 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/modules/automation/index.js` — My Scripts renderer i browser-side per-script single-flight guard zapobiegający równoległym duplicate submitom tej samej ścieżki;
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
-- `admin.js` — mapa assetów i chroniony download CSV.
+- `server/core/vulnerability-service.js` — jedyny owner importu Nessus CSV (#422): plik `;`/UTF-8 z 17 kolumnami eksportera wrzucany przez zewnętrzny harmonogram do `sirk-platform-data/nessus/inbox`, leniwie (throttled stat przy odczycie, bez timera/pollingu) walidowany w całości i atomowo publikowany jako `nessus/snapshot.json`; błędny/ucięty plik nie zastępuje ostatniego poprawnego snapshotu. Per host aktywna jest tylko najnowsza generacja, `Plugin ID=0` oznacza brak wykryć, duplikaty append są zliczane jako occurrences. Odczyt per MeshCentral `nodeId` (server-side `resolveNode`, dopasowanie exact Host → exact Host Original → short name, kolizja = `ambiguous`) oraz all-host read tylko dla Site Admin;
+- `admin.js` — mapa assetów i chroniony download CSV; pliki pod segmentem `_siteadmin-reports` pobiera wyłącznie Site Admin.
 
 `public/shared/ui/page.js` nie normalizuje ani nie podmienia left menu po pierwszym paint. Rodzina/source ikon, natywne klasy, active state i finalna geometria left menu należą do `SirkIconMode -> core.ensureMenu()`.
 
@@ -114,6 +115,7 @@ Moduły renderują do odłączonych elementów i wykonują atomic commit. `rende
 - launcher ma stałą geometrię 38 px;
 - native Desktop Quick direct calls mogą być wysyłane współbieżnie do tego samego urządzenia; bypass jest scoped do konkretnego async request lifecycle i nie zwalnia existing guarded ordinary command;
 - ukrycie Output używa klasy `is-details-collapsed`.
+- #424: przy nowej sesji Desktop (nodeId + `desktop.startTime`) jeden odczyt summary podatności; aktywne findings (status `available`) pokazują nieblokujący alert `SirkDesktopVulnerabilityAlert`, zamknięcie jest pamiętane per sesja; `stale`/`host_unmatched`/`ambiguous`/`not_imported`/`no_findings` nie alarmują; natywny hook `onDesktopDisconnect` usuwa alert; lista Podatności w Quick pobiera detale dopiero po otwarciu.
 
 ## Zdarzenia i security
 
@@ -146,15 +148,15 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.139
-config.json  -> 0.1.139
+package.json -> 0.1.141
+config.json  -> 0.1.141
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.
 
 Nie kontynuować numeracji `1.8.x`. Szczegóły: `docs/agent/14-Agent-Wersjonowanie-Pre1.md`.
 
-Aktualne development notes: `docs/releases/0.1.139.md`.
+Aktualne development notes: `docs/releases/0.1.141.md`.
 
 Nie tworzyć taga/GitHub Release ani `1.0.0` bez jawnej decyzji użytkownika i spełnienia release gate.
 

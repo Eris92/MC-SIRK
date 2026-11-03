@@ -79,7 +79,10 @@
             if (/^Run as:/i.test(trimmed)) return;
             visible.push(line);
         });
-        visible = compactCsvVisible(visible, downloadPath);
+        // A structured (meshTable) report keeps its table next to Download CSV;
+        // only plain-text CSV outputs are compacted to the file/count lines.
+        var structured = downloadPath ? parseJsonSuffix(visible.join("\n").trim()) : null;
+        if (!(structured && structured.meshTable === true && Array.isArray(structured.rows))) visible = compactCsvVisible(visible, downloadPath);
         return { raw: raw, visible: visible.join("\n").trim(), downloadPath: downloadPath };
     }
 

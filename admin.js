@@ -152,6 +152,12 @@ module.exports.admin = function (plugin) {
             shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
             return;
         }
+        // Reports with all-host data (e.g. Nessus #425) are written below a
+        // `_siteadmin-reports` folder and are downloadable by Site Admin only.
+        if (target.split(/[\\/]+/).some(function (part) { return part.toLowerCase() === "_siteadmin-reports"; }) && !shared.isSiteAdmin(user)) {
+            shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
+            return;
+        }
 
         fs.stat(target, function (error, stat) {
             if (error || !stat.isFile()) {

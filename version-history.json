@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.141",
+    "date": "2026-11-03",
+    "summary": "Add Nessus CSV import, Commands and Quick vulnerability views, Desktop alert and Site Admin all-host My Script report.",
+    "notes": "docs/releases/0.1.141.md"
+  },
+  {
     "version": "0.1.139",
     "date": "2026-11-03",
     "summary": "Fix native Quick concurrency through a server-owned resolved execution context marker, preserving ordinary command guard.",

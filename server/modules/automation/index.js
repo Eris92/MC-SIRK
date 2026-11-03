@@ -16,7 +16,17 @@ module.exports.createModule = function (context) {
     var root = rootResolver.resolve(context);
     var library = libraryFactory.createScriptLibrary({ fs: context.fs, path: context.nativePath || context.path, root: root, readOnly: true, allowWrite: true });
     var admin = adminFactory.createScriptAdminService({ context: context, library: library, namespace: "script-secrets.myscripts" });
-    var executor = executorFactory.createServerScriptExecutor({ context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials" });
+    var executor = executorFactory.createServerScriptExecutor({
+        context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials",
+        dataFeeds: {
+            nessus: function () {
+                return {
+                    SIRK_NESSUS_SNAPSHOT: context.vulnerabilities ? context.vulnerabilities.snapshotPath : "",
+                    SIRK_NESSUS_STALE_DAYS: String(context.vulnerabilities ? context.vulnerabilities.staleDays : 14)
+                };
+            }
+        }
+    });
     var jiraAssets = jiraAssetFactory.createJiraAssetService({
         fs: context.fs,
         path: context.nativePath || context.path,
@@ -112,6 +122,13 @@ module.exports.createModule = function (context) {
             value = match[1].trim(); return true;
         });
         return value;
+    }
+    // #425: the all-host Nessus feed is stronger than per-device reads; it is
+    // restricted to Site Admin both when requesting and right before execution.
+    function requireDataFeedAccess(user, script) {
+        if (executor.dataFeedName(script) === "nessus" && !shared.isSiteAdmin(user)) {
+            throw new Error("Permission denied. The all-host Nessus report requires Site Admin.");
+        }
     }
     function cacheWorkflow(script) {
         if (workflow(script, "JiraUsersCache")) return "users";
@@ -224,6 +241,10 @@ module.exports.createModule = function (context) {
                 if (!admin.hasSystemCredential(script.path, "jira")) throw new Error("Assign the configured Jira integration to this script first.");
                 signalProtocolStart(payload, request);
                 return jiraProtocol.execute(script, payload, request);
+            }
+            requireDataFeedAccess(requester, script);
+            if (executor.dataFeedName(script) === "nessus" && context.vulnerabilities) {
+                return context.vulnerabilities.ensureFresh(true).then(function () { return executor.execute(payload, request); });
             }
             return executor.execute(payload, request);
         }
@@ -348,6 +369,7 @@ module.exports.createModule = function (context) {
                 var requestedScript = library.getScript(value.scriptPath, false);
                 if (!requestedScript) throw new Error("Script not found.");
                 if (requestedScript.confirmExecution === true && value.confirmedExecution !== true) throw new Error("Execution confirmation is required for this script.");
+                requireDataFeedAccess(user, requestedScript);
                 var levels = normalizeApprovalLevels(requestedScript.approvalLevels);
                 if (!levels.length && !defaultDirectWorkflow(requestedScript) && !allowNoApproval()) levels = [1];
                 var language = String(value.language || "en").toLowerCase() === "pl" ? "pl" : "en";

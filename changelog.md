@@ -1,3 +1,13 @@
+## 0.1.141 - 2026-11-03
+
+- #422: import Nessus CSV (separator `;`, UTF-8/BOM, dokładnie 17 kolumn eksportera) z katalogu `sirk-platform-data/nessus/inbox` zasilanego przez harmonogram zadań; walidacja całego pliku, atomowa publikacja snapshotu, brak częściowej podmiany, wybór najnowszej generacji per host, deduplikacja append i obsługa `Plugin ID=0`; node-scoped read API z kontrolą uprawnień MeshCentral oraz zdarzenie importu bez payloadu.
+- #423: pozycja Podatności bezpośrednio pod Wynikami w Commands: liczniki, status świeżości, filtry Risk/Exploit/tekst, sortowanie, paginacja, pełne 17 pól w natywnym podglądzie, odrzucanie spóźnionych odpowiedzi po zmianie hosta.
+- #424: duży, nieblokujący alert przy połączeniu Desktop z hostem mającym aktywne podatności (raz na sesję) oraz lista Podatności w Quick.
+- #425: edytowalny My Script `Security/Nessus - All Hosts.ps1` z filtrami jako zmiennymi skryptu, raportem wszystkich hostów i CSV do pobrania; dostęp tylko dla Site Admin (request, wykonanie i download).
+- Real MeshCentral smoke wymagany. Brak tagu/GitHub Release.
+
+Current development notes: `docs/releases/0.1.141.md`.
+
 ## 0.1.139 - 2026-11-03
 
 - Fix native Desktop Quick concurrency after real 0.1.134 smoke still returned SIRK_AGENT_COMMAND_BUSY: mark only the server-resolved direct execution context after device-rights verification, rather than relying on AsyncLocalStorage across the MeshCentral callback chain.
