@@ -49,3 +49,7 @@ jobs:
       - name: Validate AD selector bridge
         shell: powershell
         run: .\test\windows-ad-selector-bridge-smoke.ps1
+
+      - name: Validate Entra SMS Voice report parser and CSV protection
+        shell: powershell
+        run: .\test\windows-entra-sms-voice-report-smoke.ps1
