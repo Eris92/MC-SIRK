@@ -1,3 +1,12 @@
+## 0.1.140 - 2026-11-03
+
+- Add editable Entra ID My Scripts SMS/Voice policy scope report using the existing global Entra app-only credentials and Microsoft Graph REST; no interactive sign-in or Microsoft.Graph module.
+- Report authentication-method include/exclude targets, resolve group names with ID fallback, emit UTF-8 CSV and the existing Results `CSV_DOWNLOAD:` marker; generate unique per-execution filenames and a valid empty-scope header-only CSV.
+- Sanitize spreadsheet formula-like values, avoid hard-coded policy retirement claims and check the Windows PowerShell syntax and formula protection in CI.
+- Real MeshCentral + Entra application-permission and download smoke remains required for Issue #418. No tag/GitHub Release.
+
+Current development notes: `docs/releases/0.1.140.md`.
+
 ## 0.1.139 - 2026-11-03
 
 - Fix native Desktop Quick concurrency after real 0.1.134 smoke still returned SIRK_AGENT_COMMAND_BUSY: mark only the server-resolved direct execution context after device-rights verification, rather than relying on AsyncLocalStorage across the MeshCentral callback chain.
