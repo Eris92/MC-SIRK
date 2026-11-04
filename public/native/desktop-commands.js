@@ -572,6 +572,7 @@
         if (!panel || !desktopConnected()) return;
         state.category = VULN_CATEGORY;
         state.vuln.selected = null;
+        invalidateVulnerabilityDetail();
         panel.hidden = false;
         if (toggle) toggle.setAttribute("aria-expanded", "true");
         load(panel);
@@ -597,6 +598,11 @@
         actions.appendChild(dismiss);
         alert.appendChild(actions);
         wrapper.appendChild(alert);
+    }
+    // Rules (assigned Fix/Undo scripts, notes, exclusions) can change in settings during a
+    // Desktop session: each explicit open of the category re-reads the detail once.
+    function invalidateVulnerabilityDetail() {
+        if (state.vuln.sessionKey && !state.vuln.detailLoading) state.vuln.detail = null;
     }
     function loadVulnerabilityDetail(panel) {
         var vuln = state.vuln;
@@ -940,7 +946,7 @@
         vulnButton.title = text("vulnerabilities");
         addIcon(vulnButton, null, "secpol", "other");
         vulnButton.appendChild(element("span", "sirk-quick-command-label", text("vulnerabilities") + (hasActiveVulnerabilities(state.vuln.summary) ? " (" + VULN_RISKS.reduce(function (sum, risk) { return sum + (Number(vulnCounts(state.vuln.summary)[risk]) || 0); }, 0) + ")" : "")));
-        vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; render(panel); };
+        vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; invalidateVulnerabilityDetail(); render(panel); };
         applyQuickNav(vulnButton, state.category === VULN_CATEGORY);
         nav.appendChild(vulnButton);
 
