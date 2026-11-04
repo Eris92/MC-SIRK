@@ -608,8 +608,11 @@
             var cell = element("td", "");
             cell.colSpan = 2;
             if (finding.excluded && finding.exclusion) cell.appendChild(exclusionNote(finding));
+            // Rule "description": its text only, no buttons.
+            else if (!finding.remediation && finding.note) cell.appendChild(element("div", "sirk-quick-vuln-action-description sirk-quick-vuln-note", finding.note.reason));
             else if (!finding.remediation) cell.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnNoFix")));
             else {
+                if (finding.note) cell.appendChild(element("div", "sirk-quick-vuln-action-description sirk-quick-vuln-note", finding.note.reason));
                 var fix = remediationItem(finding);
                 if (finding.remediation.reason) cell.appendChild(element("div", "sirk-quick-vuln-action-description", finding.remediation.reason));
                 // Rule "Reboot request" (or a script declaring RebootRequired).
@@ -652,6 +655,7 @@
                 if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
                 else if (finding.repaired) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnRepaired")));
                 if (!finding.excluded && !finding.repaired && finding.remediation) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "🔧"));
+                else if (!finding.excluded && !finding.repaired && finding.note) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "ℹ"));
                 row.appendChild(name);
                 function toggle() { vuln.selected = open ? null : finding; render(panel); }
                 row.onclick = toggle;

@@ -1,3 +1,11 @@
+## 0.1.155 - 2026-11-04
+
+- Reguły podatności: trzeci typ „Opis” obok wykluczenia i naprawy (przycisk „Dodaj opis” w ustawieniach Vulnerabilities). Pokazuje sam tekst z pola „Powód” przy podatności, bez przycisków „Napraw”/„Cofnij”, np. „Brak wsparcia aplikacji, zaproponuj przejście na inne oprogramowanie”. Podatność nadal liczy się do liczników i alertu.
+- Quick: rozwinięty wiersz pokazuje tekst opisu (ikona ℹ przy nazwie). Commands i My Scripts pokazują opis w kolumnie naprawy i w szczegółach.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.155.md`.
+
 ## 0.1.154 - 2026-11-04
 
 - Ustawienia → Podatności: w tabeli reguł nowa kolumna z checkboxem „Reboot request” (tylko dla napraw).
