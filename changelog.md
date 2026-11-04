@@ -3,6 +3,7 @@
 - Okno Napraw/Cofnij (Quick): podczas wykonywania pokazuje upływający czas i stan z serwera (np. „Wykonywanie… (12 s, wysłano do agenta)”), więc widać, że okno czeka na agenta, a nie zawiesiło się.
 - Przycisk w trakcie wykonywania to „Zamknij”: zamyka okno, polecenie działa dalej, wynik zostaje w My Commands → Wyniki.
 - Po 2 minutach bez wyniku okno pokazuje czytelny komunikat zamiast samego kręciołka.
+- Reguła z „Reboot request”: po udanym Napraw/Cofnij okno ma obok OK czerwony przycisk „Restart”. Oba zamykają okno; Restart wysyła natywną akcję zasilania MeshCentral (serwer sprawdza prawo restartu urządzenia i sam zapisuje zdarzenie).
 - Bez tagu i release; wymagany test na żywym Meshu.
 
 Current development notes: `docs/releases/0.1.160.md`.

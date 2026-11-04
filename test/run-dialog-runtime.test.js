@@ -36,10 +36,12 @@ function find(node, cls) {
 
 var ok = makeElement("button"); ok.textContent = "OK";
 var cancel = makeElement("button");
+var danger = makeElement("button"); danger.textContent = "Delete"; danger.style.display = "none";
+cancel.click = function () { hidden++; modal.fire("hidden.bs.modal"); };
 var modal = makeElement("div");
 var status = makeElement("div"); status.hidden = true; // the real DOM gets it from the serialized hidden attribute
 var okHandler = null, hidden = 0, shown = 0;
-var elements = { idx_dlgOkButton: ok, idx_dlgCancelButton: cancel, xxAddAgentModal: modal, xxAddAgentModalConf: makeElement("div"), dialog2: makeElement("div"), mcRunDialogStatus: status };
+var elements = { idx_dlgOkButton: ok, idx_dlgCancelButton: cancel, idx_dlgDeleteButton: danger, xxAddAgentModal: modal, xxAddAgentModalConf: makeElement("div"), dialog2: makeElement("div"), mcRunDialogStatus: status };
 var document = {
     activeElement: null,
     documentElement: { lang: "pl" },
@@ -97,7 +99,9 @@ setImmediate(function () {
             assert.strictEqual(openFlag(), false, "isOpen() turns false after close");
             assert.strictEqual(ok.textContent, "OK", "original OK label restored");
             assert.notStrictEqual(cancel.style.display, "none", "cancel restored");
-            runBackgroundCase();
+            assert.strictEqual(danger.style.display, "none", "no Restart button without an extra action");
+        runBackgroundCase();
+        runRestartCase();
         console.log("Run dialog: confirm, spinner, result and OK in one native modal: OK");
         }).catch(function (error) { console.error(error); process.exit(1); });
     });
@@ -111,4 +115,38 @@ function runBackgroundCase() {
     okHandler();
     assert.strictEqual(hidden, before + 1, "Zamknij during a run closes the dialog");
     return done.then(function () { assert.strictEqual(isOpenFn(), false, "polling stops after closing"); });
+}
+
+function runRestartCase() {
+    var restarted = 0, finish;
+    var done = tools.openRunDialog({
+        primaryLabel: "Uruchom", item: { rebootRequired: true },
+        extraAction: { label: "Restart", run: function () { restarted++; return true; } },
+        run: function () { return new Promise(function (resolve) { finish = resolve; }); }
+    });
+    okHandler();
+    assert.strictEqual(danger.style.display, "none", "Restart is hidden while running");
+    setImmediate(function () { finish({ label: "OK", output: "done" }); setImmediate(afterFinish); });
+    function afterFinish() {
+        assert.strictEqual(danger.style.display, "", "Restart appears after a successful run");
+        assert.strictEqual(danger.textContent, "Restart");
+        var before = hidden;
+        danger.fire("click");
+        assert.strictEqual(restarted, 1, "Restart runs the power action once");
+        assert.strictEqual(hidden, before + 1, "Restart also closes the dialog");
+        done.then(function (result) {
+            assert.strictEqual(result.extraAction, true);
+            assert.strictEqual(danger.style.display, "none", "danger button hidden again");
+            assert.strictEqual(danger.textContent, "Delete", "original label restored");
+            var failedFinish;
+            tools.openRunDialog({ extraAction: { run: function () {} }, run: function () { return new Promise(function (r) { failedFinish = r; }); } });
+            okHandler();
+            setImmediate(function () { failedFinish({ failed: true, output: "x" }); setImmediate(afterFailed); });
+            function afterFailed() {
+                assert.strictEqual(danger.style.display, "none", "no Restart after a failed run");
+                okHandler();
+                console.log("Run dialog Restart button: OK");
+            }
+        }).catch(function (error) { console.error(error); process.exit(1); });
+    }
 }
