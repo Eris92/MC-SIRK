@@ -586,7 +586,8 @@
         function actionButton(host, item, label, style) {
             if (!item) return;
             // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
-            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix", label + ": " + item.label);
+            // The theme adapter owns btn-*/style10 classes; sirk-primary-action marks Fix as primary.
+            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix" + (style === "btn-primary" ? " sirk-primary-action" : ""), label + ": " + item.label);
             button.type = "button";
             button.disabled = item.missing === true;
             if (item.missing) button.title = text("vulnFixUnavailable");
