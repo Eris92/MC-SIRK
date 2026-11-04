@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.160",
+    "date": "2026-11-04",
+    "summary": "Quick Fix/Undo dialog shows elapsed time and server status, can be closed while running, explains a 2-minute timeout.",
+    "notes": "docs/releases/0.1.160.md"
+  },
+  {
     "version": "0.1.159",
     "date": "2026-11-04",
     "summary": "Quick vulnerability Fix/Undo run in one dialog (confirm, spinner, result, OK); admin settings readable in light and dark theme.",

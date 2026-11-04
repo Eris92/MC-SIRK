@@ -1,3 +1,12 @@
+## 0.1.160 - 2026-11-04
+
+- Okno Napraw/Cofnij (Quick): podczas wykonywania pokazuje upływający czas i stan z serwera (np. „Wykonywanie… (12 s, wysłano do agenta)”), więc widać, że okno czeka na agenta, a nie zawiesiło się.
+- Przycisk w trakcie wykonywania to „Zamknij”: zamyka okno, polecenie działa dalej, wynik zostaje w My Commands → Wyniki.
+- Po 2 minutach bez wyniku okno pokazuje czytelny komunikat zamiast samego kręciołka.
+- Bez tagu i release; wymagany test na żywym Meshu.
+
+Current development notes: `docs/releases/0.1.160.md`.
+
 ## 0.1.159 - 2026-11-04
 
 - Quick → Podatności: Napraw/Cofnij nie przełączają już widoku na Skrypty. Otwierają jedno natywne okno MeshCentral: potwierdzenie (z ostrzeżeniem o restarcie), kręciołek „Wykonywanie…”, wynik agenta i OK do zamknięcia. Oczekiwanie na wynik jest ograniczone (~2 min) i kończy się po zamknięciu okna; po sukcesie znacznik „naprawione” jest odczytywany ponownie.

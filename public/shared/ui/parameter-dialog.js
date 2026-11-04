@@ -771,12 +771,18 @@
                 resolve(result);
             }
             function isOpen() { return !cleaned; }
+            function progress(detail) {
+                if (cleaned || phase !== "running") return;
+                showStatus("running", text(options.runningText || "Running…") + (detail ? " " + text(detail) : ""));
+            }
             function start() {
                 phase = "running";
-                submit.disabled = true;
+                // While running OK becomes "close": the command keeps running on the agent
+                // and its result stays available in the regular results view.
+                writeButtonText(submit, text(options.backgroundLabel || "Close"));
                 if (cancel) cancel.style.display = "none";
                 showStatus("running", text(options.runningText || "Running…"));
-                Promise.resolve().then(function () { return options.run(isOpen); }).then(function (value) {
+                Promise.resolve().then(function () { return options.run(isOpen, progress); }).then(function (value) {
                     result = value || {};
                     if (cleaned) return;
                     var kind = result.failed ? "failed" : (result.pending ? "pending" : "done");
@@ -794,11 +800,10 @@
             // Modern: returning false keeps the modal open for the running/result phases.
             function onModernOk() {
                 if (phase === "confirm") { start(); return false; }
-                if (phase === "running") return false;
                 return true;
             }
             function onClassicOk(event) {
-                if (phase === "done") { cleanup(); return; }
+                if (phase !== "confirm") { cleanup(); return; }
                 if (event) {
                     if (event.preventDefault) event.preventDefault();
                     if (event.stopImmediatePropagation) event.stopImmediatePropagation();

@@ -55,6 +55,8 @@
             pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.",
             disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.",
             timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", running: "Wykonywanie…",
+            runInBackground: "Zamknij", runTimeout: "Agent nie zwrócił wyniku w ciągu 2 minut. Polecenie może nadal działać; wynik pojawi się w My Commands → Wyniki.",
+            status_submitting: "wysyłanie", status_sent: "wysłano do agenta", status_executing: "agent wykonuje", status_missing: "brak wpisu",
             required: "Uzupełnij wymagane pola.", collapse: "Zwiń kategorie", expand: "Rozwiń kategorie",
             hideDetails: "Ukryj wynik", showDetails: "Pokaż wynik",
             favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij",
@@ -76,6 +78,8 @@
             pending: "Command is waiting for approval.", failed: "Command execution failed.",
             disconnected: "Quick commands require an active Desktop connection.",
             timeout: "The agent did not confirm command execution.", confirm: "Run command", running: "Running…",
+            runInBackground: "Close", runTimeout: "The agent returned no result within 2 minutes. The command may still be running; the result will appear in My Commands → Results.",
+            status_submitting: "submitting", status_sent: "sent to the agent", status_executing: "agent is running it", status_missing: "no entry",
             required: "Complete the required fields.", collapse: "Collapse categories", expand: "Expand categories",
             hideDetails: "Hide output", showDetails: "Show output",
             favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close",
@@ -394,7 +398,13 @@
     }
 
     // Runs one command and waits (bounded) for the agent result; never touches the panel.
-    function executeAndWait(item, values, isOpen) {
+    function executeAndWait(item, values, isOpen, progress) {
+        progress = typeof progress === "function" ? progress : function () {};
+        var started = Date.now();
+        function elapsed(status) {
+            var seconds = Math.round((Date.now() - started) / 1000);
+            return "(" + seconds + " s" + (status ? ", " + (TEXT[language()]["status_" + status] || status) : "") + ")";
+        }
         if (!desktopConnected()) return Promise.resolve({ failed: true, label: text("failed"), output: text("disconnected") });
         var node = currentNode();
         var payload = {
@@ -404,11 +414,13 @@
         if (!payload.nodeId) return Promise.resolve({ failed: true, label: text("failed"), output: "Device is not ready." });
         if (item.kind === "command") payload.commandId = item.commandId;
         else payload.scriptPath = item.path;
+        progress(elapsed());
         return window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
             var request = response.request || {};
             var result = request.result || {};
             if (request.status === "pending") return { pending: true, label: text("pending") };
             if (!result.id) return { label: text("sent") };
+            progress(elapsed(result.status));
             return new Promise(function (resolve) {
                 function poll(attempt) {
                     window.setTimeout(function () {
@@ -417,8 +429,8 @@
                             if (response.ready) {
                                 var failed = ["failed", "error"].indexOf(String(response.status || "").toLowerCase()) >= 0;
                                 resolve({ failed: failed, label: text(failed ? "failed" : "completed"), output: response.output || "" });
-                            } else if (attempt < RUN_DIALOG_ATTEMPTS) poll(attempt + 1);
-                            else resolve({ failed: true, label: text("timeout") });
+                            } else if (attempt < RUN_DIALOG_ATTEMPTS) { progress(elapsed(response.status)); poll(attempt + 1); }
+                            else resolve({ failed: true, label: text("runTimeout") });
                         }).catch(function (error) {
                             resolve({ failed: true, label: text("failed"), output: error && error.message || String(error) });
                         });
@@ -452,8 +464,8 @@
                 return tools.openRunDialog({
                     title: value.label, item: value, trigger: button,
                     message: text("confirm") + " \u201e" + value.label + "\u201d" + (currentNode().name ? " (" + currentNode().name + ")" : "") + "?",
-                    primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK",
-                    run: function (isOpen) { return executeAndWait(value, variableValues, isOpen); }
+                    primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK", backgroundLabel: text("runInBackground"),
+                    run: function (isOpen, progress) { return executeAndWait(value, variableValues, isOpen, progress); }
                 });
             });
         }).then(function (result) {

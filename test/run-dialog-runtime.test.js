@@ -61,10 +61,12 @@ assert.strictEqual(typeof tools.openRunDialog, "function");
 
 var finishRun;
 var openFlag = null;
+var progressFn = null;
 var closed = tools.openRunDialog({
     title: "Napraw", message: "Uruchomić?", primaryLabel: "Uruchom", runningText: "Wykonywanie…", closeLabel: "OK",
     item: { rebootRequired: true },
-    run: function (isOpen) { openFlag = isOpen; return new Promise(function (resolve) { finishRun = resolve; }); }
+    backgroundLabel: "Zamknij",
+    run: function (isOpen, progress) { openFlag = isOpen; progressFn = progress; return new Promise(function (resolve) { finishRun = resolve; }); }
 });
 assert.strictEqual(shown, 1);
 assert.strictEqual(ok.textContent, "Uruchom", "confirm phase shows the run label");
@@ -72,14 +74,14 @@ assert.ok(status.hidden, "no status before confirmation");
 
 okHandler();
 assert.strictEqual(hidden, 0, "confirming keeps the modal open");
-assert.ok(ok.disabled, "OK is disabled while running");
+assert.strictEqual(ok.textContent, "Zamknij", "while running OK closes the dialog and leaves the command running");
 assert.strictEqual(cancel.style.display, "none", "cancel hidden while running");
 
 setImmediate(function () {
     assert.ok(find(status, "mc-run-dialog-spinner"), "spinner shown while running");
     assert.ok(allText(status).indexOf("Wykonywanie") >= 0);
-    okHandler();
-    assert.strictEqual(hidden, 0, "OK while running does nothing");
+    progressFn("(12 s, wysłano do agenta)");
+    assert.ok(allText(status).indexOf("12 s, wysłano do agenta") >= 0 && find(status, "mc-run-dialog-spinner"), "progress shows elapsed time and server status");
     assert.strictEqual(openFlag(), true);
     finishRun({ label: "Polecenie zostało wykonane.", output: "TLS 1.0 disabled" });
     setImmediate(function () {
@@ -95,7 +97,18 @@ setImmediate(function () {
             assert.strictEqual(openFlag(), false, "isOpen() turns false after close");
             assert.strictEqual(ok.textContent, "OK", "original OK label restored");
             assert.notStrictEqual(cancel.style.display, "none", "cancel restored");
-            console.log("Run dialog: confirm, spinner, result and OK in one native modal: OK");
+            runBackgroundCase();
+        console.log("Run dialog: confirm, spinner, result and OK in one native modal: OK");
         }).catch(function (error) { console.error(error); process.exit(1); });
     });
 });
+
+function runBackgroundCase() {
+    var isOpenFn;
+    var done = tools.openRunDialog({ primaryLabel: "Uruchom", backgroundLabel: "Zamknij", run: function (isOpen) { isOpenFn = isOpen; return new Promise(function () {}); } });
+    okHandler();
+    var before = hidden;
+    okHandler();
+    assert.strictEqual(hidden, before + 1, "Zamknij during a run closes the dialog");
+    return done.then(function () { assert.strictEqual(isOpenFn(), false, "polling stops after closing"); });
+}
