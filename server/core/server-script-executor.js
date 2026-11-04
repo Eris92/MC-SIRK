@@ -143,6 +143,12 @@ module.exports.createServerScriptExecutor = function (options) {
         requireConfiguredProfiles(selected);
         function enabled(name) { return selected.indexOf(name) >= 0; }
 
+        if (enabled("ca")) {
+            var ca = context.integrations.get("ca");
+            environment.MYSCRIPTS_CA_CONFIG = String(ca.config || "");
+            environment.MYSCRIPTS_CA_TEMPLATE = String(ca.template || "");
+            environment.MYSCRIPTS_RDP_SIGNING_THUMBPRINT = String(ca.rdpSigningThumbprint || "");
+        }
         if (enabled("ad")) {
             var ad = context.integrations.get("ad");
             environment.MYSCRIPTS_AD_DOMAIN = String(ad.domain || "");

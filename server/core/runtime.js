@@ -36,7 +36,8 @@ var DEFAULTS = {
         entra: { tenantId: "", clientId: "" },
         sms: { url: "https://api.smsapi.pl", sender: "", vmsLector: "ewa", verifyTls: true },
         smtp: { host: "", port: 25, defaultFrom: "", enableSsl: false, attachmentRoot: "", maxAttachmentMb: 25 },
-        zabbix: { url: "", username: "", verifyTls: true }
+        zabbix: { url: "", username: "", verifyTls: true },
+        ca: { config: "", template: "", rdpSigningThumbprint: "" }
     }
 };
 

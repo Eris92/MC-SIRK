@@ -32,6 +32,7 @@ function profileName(value) {
     if (key === "smtp" || key === "smtprelay") return "smtp";
     if (key === "defender" || key === "defenderxdr") return "defender";
     if (key === "zabbix") return "zabbix";
+    if (key === "ca" || key === "certificateauthority" || key === "enterpriseca") return "ca";
     return "";
 }
 
@@ -75,7 +76,8 @@ module.exports.createScriptAdminService = function (options) {
         sms: "SMSAPI",
         smtp: "SMTP Relay",
         defender: "Defender XDR",
-        zabbix: "Zabbix"
+        zabbix: "Zabbix",
+        ca: "Certificate Authority"
     };
 
     function requireAdmin(user) {
@@ -149,6 +151,8 @@ module.exports.createScriptAdminService = function (options) {
                 available = configured.smtp === true;
             } else if (name === "defender") {
                 available = configured.defender === true;
+            } else if (name === "ca") {
+                available = configured.ca === true;
             } else if (name === "zabbix") {
                 available = !!(values.zabbix && values.zabbix.url && (configured.zabbixPassword || configured.zabbixToken));
             }
@@ -242,6 +246,20 @@ module.exports.createScriptAdminService = function (options) {
         return getSecretState(user, value.path);
     }
 
+    // Non-secret CA values for agent-side My Commands scripts declaring
+    // `SirkSystemCredential: CA`. AD passwords are never sent to agents.
+    function caVariables(relativePath) {
+        var value = script(relativePath);
+        if (selectedProfilesForScript(value).indexOf("ca") < 0) return {};
+        if (context.integrations.configured().ca !== true) throw new Error("System credential profile 'ca' is assigned but not configured globally.");
+        var ca = context.integrations.get("ca");
+        return {
+            SirkCaConfig: String(ca.config || ""),
+            SirkCaTemplate: String(ca.template || ""),
+            SirkRdpSigningThumbprint: String(ca.rdpSigningThumbprint || "")
+        };
+    }
+
     function secretValues(relativePath) {
         var value = script(relativePath);
         var store = readStore();
@@ -303,6 +321,7 @@ module.exports.createScriptAdminService = function (options) {
         saveDefinition: saveDefinition,
         getSecretState: getSecretState,
         saveSecrets: saveSecrets,
+        caVariables: caVariables,
         secretValues: secretValues,
         getSystemCredentialState: getSystemCredentialState,
         saveSystemCredentials: saveSystemCredentials,

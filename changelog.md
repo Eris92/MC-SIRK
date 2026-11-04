@@ -1,3 +1,12 @@
+## 0.1.156 - 2026-11-04
+
+- Add a shared, Site Admin-managed Certificate Authority integration (`host\\CA name`, certificate template, RDP signing thumbprint) validated server-side; no password or private key is stored (Issue #405).
+- Add `CA` folders to the bundled My Scripts/My Commands seeds and the `SirkSystemCredential: CA` profile. My Commands receive only the non-secret `$SirkCaConfig`, `$SirkCaTemplate`, `$SirkRdpSigningThumbprint`; My Scripts receive `MYSCRIPTS_CA_*`. A missing configuration fails closed before execution.
+- Add `CA/Generate signed RDP file.ps1`: resolves the interactive user's Desktop (with folder redirection), validates the host name, selects the configured certificate in `LocalMachine\\My` (private key, validity, EKU), signs with system `rdpsign.exe`, verifies the signature and only then overwrites `<host>.rdp` on the Desktop; temporary files are always removed (Issue #406).
+- Add `test/ca-integration.test.js` and Windows smoke `test/windows-ca-rdp-smoke.ps1`. CSR workflow (#407) is not included. Real device smoke is required; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.156.md`.
+
 ## 0.1.155 - 2026-11-04
 
 - Reguły podatności: trzeci typ „Opis” obok wykluczenia i naprawy (przycisk „Dodaj opis” w ustawieniach Vulnerabilities). Pokazuje sam tekst z pola „Powód” przy podatności, bez przycisków „Napraw”/„Cofnij”, np. „Brak wsparcia aplikacji, zaproponuj przejście na inne oprogramowanie”. Podatność nadal liczy się do liczników i alertu.

@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.156",
+    "date": "2026-11-04",
+    "summary": "Add shared Certificate Authority integration (CA config, template, RDP signing thumbprint), CA script category and signed RDP file command for the logged-on user's Desktop.",
+    "notes": "docs/releases/0.1.156.md"
+
+  },
+  {
     "version": "0.1.155",
     "date": "2026-11-04",
     "summary": "Third vulnerability rule type: description shown with the finding, without Fix/Undo buttons.",
