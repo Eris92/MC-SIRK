@@ -707,7 +707,7 @@
         var content = document.createElement("div");
         content.className = "mc-parameter-dialog-content mc-run-dialog";
         var message = document.createElement("p");
-        message.className = "mc-shared-muted";
+        message.className = "mc-run-dialog-message"; // full contrast: Modern modals can be translucent over the desktop view
         message.textContent = text(options.message || "Confirm execution.");
         content.appendChild(message);
         appendRebootNotice(content, options.item);

@@ -1,3 +1,10 @@
+## 0.1.162 - 2026-11-04
+
+- Okno Napraw/Cofnij: pytanie „Uruchomić…?” ma pełny kontrast (bez przygaszenia `mc-shared-muted`, pogrubione), a ostrzeżenie o restarcie mocniejsze tło i pogrubienie. W jasnym motywie modal MeshCentral jest półprzezroczysty i nad szarym obszarem pulpitu tekst był słabo widoczny; tło okna bez zmian.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.162.md`.
+
 ## 0.1.161 - 2026-11-04
 
 - Poprawka: w nowym UI MeshCentral przyciski okien wtyczki (OK, Uruchom, Zamknij, Restart) dostawały napis w `value`, którego `<button>` nie wyświetla. Czerwony Restart w oknie Napraw/Cofnij pokazywał przez to „Usuń” (natywny napis MeshCentral), a pozostałe przyciski zostawały przy „OK”. Napis jest teraz ustawiany jako tekst przycisku; w klasycznym UI (`<input>`) bez zmian.
