@@ -13,6 +13,7 @@ module.exports.admin = function (plugin) {
         "admin.css": ["web/admin/admin.css", "text/css; charset=utf-8"],
         "admin.js": ["web/admin/admin.js", "text/javascript; charset=utf-8"],
         "integrations-admin.js": ["web/admin/integrations.js", "text/javascript; charset=utf-8"],
+        "vulnerabilities-admin.js": ["web/admin/vulnerabilities.js", "text/javascript; charset=utf-8"],
         "core.js": ["public/shared/core.js", "text/javascript; charset=utf-8"],
         "runtime.js": ["public/shared/runtime.js", "text/javascript; charset=utf-8"],
         "module-shell.js": ["public/shared/module-shell.js", "text/javascript; charset=utf-8"],
@@ -149,6 +150,12 @@ module.exports.admin = function (plugin) {
         var allowedRoots = [path.join(root, "seed", "MyScripts"), path.join(root, "seed", "MyCommands")];
         var allowed = allowedRoots.some(function (allowedRoot) { return isInside(allowedRoot, target); });
         if (!allowed || path.extname(target).toLowerCase() !== ".csv") {
+            shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
+            return;
+        }
+        // Reports with all-host data (e.g. Nessus #425) are written below a
+        // `_siteadmin-reports` folder and are downloadable by Site Admin only.
+        if (target.split(/[\\/]+/).some(function (part) { return part.toLowerCase() === "_siteadmin-reports"; }) && !shared.isSiteAdmin(user)) {
             shared.send(res, 403, "text/plain; charset=utf-8", "File download is not allowed");
             return;
         }

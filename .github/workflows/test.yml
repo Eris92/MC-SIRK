@@ -54,3 +54,6 @@ jobs:
       - name: Validate signed RDP command helpers
         shell: powershell
         run: .\test\windows-ca-rdp-smoke.ps1
+      - name: Validate Nessus all-host report script
+        shell: powershell
+        run: .\test\windows-nessus-report-smoke.ps1

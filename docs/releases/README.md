@@ -4,8 +4,21 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
-- [`0.1.143`](0.1.143.md) — CSR upload, Enterprise CA signing and verified certificate download (#407); pending real CA smoke;
-- [`0.1.142`](0.1.142.md) — shared CA integration, CA script category and signed RDP file command (#405, #406); pending real device smoke;
+- [`0.1.157`](0.1.157.md) — CSR upload, Enterprise CA signing and verified certificate download (#407); pending real CA smoke;
+- [`0.1.156`](0.1.156.md) — shared CA integration, CA script category and signed RDP file command (#405, #406; integrated after 0.1.155); pending real device smoke;
+- [`0.1.155`](0.1.155.md) — vulnerability rule type "Description" (text only, no Fix buttons); pending real smoke;
+- [`0.1.154`](0.1.154.md) — Reboot request checkbox in vulnerability rules, red restart notice in Quick; pending real smoke;
+- [`0.1.153`](0.1.153.md) — Vulnerabilities is the first Quick category; pending real smoke;
+- [`0.1.152`](0.1.152.md) — Quick: rule reason, Fix/Undo side by side, repaired findings stay visible; pending real smoke;
+- [`0.1.151`](0.1.151.md) — Quick Fix/Undo buttons styled in both MeshCentral UI themes; pending real smoke;
+- [`0.1.150`](0.1.150.md) — Quick vulnerability row: actions only, fields in the details column; pending real smoke;
+- [`0.1.149`](0.1.149.md) — Nessus hosts matched by host name without domain, never by IP; pending real smoke;
+- [`0.1.148`](0.1.148.md) — Nessus CSV Repair column; repaired findings hidden until a newer scan; pending real smoke;
+- [`0.1.147`](0.1.147.md) — Quick vulnerability buttons no longer squeezed by the tree icon grid; pending real smoke;
+- [`0.1.146`](0.1.146.md) — expandable Quick vulnerability rows, collapsed scan summary behind View in Quick and Commands; pending real smoke;
+- [`0.1.145`](0.1.145.md) — rules table in settings, rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag; pending real smoke;
+- [`0.1.144`](0.1.144.md) — vulnerability exclusions/remediation rules, Fix actions, Quick table and My Scripts all-host table after first smoke; pending real smoke;
+- [`0.1.141`](0.1.141.md) — adds the Nessus vulnerability dataset (#422) with Commands/Quick views, Desktop alert and an all-host My Script report (#423–#425); pending real smoke;
 - [`0.1.139`](0.1.139.md) — fixes the real Quick concurrency regression with a server-resolved execution marker while keeping ordinary per-node guard; pending real smoke;
 - [`0.1.138`](0.1.138.md) — adds explicit MeshCentral actor attribution to Jira Assets object comments after successful confirmation (Cloud Comments endpoint unsupported; real smoke required);
 - [`0.1.134`](0.1.134.md) — allows concurrent native Desktop Quick direct launches on one device while preserving the ordinary per-node agent command guard;

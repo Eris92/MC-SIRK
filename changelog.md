@@ -1,4 +1,4 @@
-## 0.1.143 - 2026-11-03
+## 0.1.157 - 2026-11-04
 
 - Add a typed file parameter (`VariableFile`/`VariableFileRequired`, format declared as `$Name=csr`) to the shared parameter dialog: exactly one file, 32 KB limit, read only on submit (Issue #407).
 - The My Scripts request API validates the CSR server-side (PEM or DER PKCS#10, supported RSA/ECDSA SHA-256+ or Ed25519 signature, proof of possession), stores a normalized copy in the existing request artifact store under a server-generated, owner/script/variable-bound token and never puts the CSR body in the request, events or output.
@@ -6,16 +6,131 @@
 - Add `CA/Sign CSR.ps1` (certreq `-submit` with the CA config/template from #405 as separate arguments). Results offers "Download certificate" as an attachment.
 - Add `test/csr-signing.test.js` with OpenSSL fixtures and a PowerShell test double. Real Enterprise CA smoke is required; no tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.143.md`.
+Current development notes: `docs/releases/0.1.157.md`.
 
-## 0.1.142 - 2026-11-03
+## 0.1.156 - 2026-11-04
 
 - Add a shared, Site Admin-managed Certificate Authority integration (`host\\CA name`, certificate template, RDP signing thumbprint) validated server-side; no password or private key is stored (Issue #405).
 - Add `CA` folders to the bundled My Scripts/My Commands seeds and the `SirkSystemCredential: CA` profile. My Commands receive only the non-secret `$SirkCaConfig`, `$SirkCaTemplate`, `$SirkRdpSigningThumbprint`; My Scripts receive `MYSCRIPTS_CA_*`. A missing configuration fails closed before execution.
 - Add `CA/Generate signed RDP file.ps1`: resolves the interactive user's Desktop (with folder redirection), validates the host name, selects the configured certificate in `LocalMachine\\My` (private key, validity, EKU), signs with system `rdpsign.exe`, verifies the signature and only then overwrites `<host>.rdp` on the Desktop; temporary files are always removed (Issue #406).
 - Add `test/ca-integration.test.js` and Windows smoke `test/windows-ca-rdp-smoke.ps1`. CSR workflow (#407) is not included. Real device smoke is required; no tag or GitHub Release.
 
-Current development notes: `docs/releases/0.1.142.md`.
+Current development notes: `docs/releases/0.1.156.md`.
+
+## 0.1.155 - 2026-11-04
+
+- Reguły podatności: trzeci typ „Opis” obok wykluczenia i naprawy (przycisk „Dodaj opis” w ustawieniach Vulnerabilities). Pokazuje sam tekst z pola „Powód” przy podatności, bez przycisków „Napraw”/„Cofnij”, np. „Brak wsparcia aplikacji, zaproponuj przejście na inne oprogramowanie”. Podatność nadal liczy się do liczników i alertu.
+- Quick: rozwinięty wiersz pokazuje tekst opisu (ikona ℹ przy nazwie). Commands i My Scripts pokazują opis w kolumnie naprawy i w szczegółach.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.155.md`.
+
+## 0.1.154 - 2026-11-04
+
+- Ustawienia → Podatności: w tabeli reguł nowa kolumna z checkboxem „Reboot request” (tylko dla napraw).
+- Quick → Podatności: gdy reguła naprawy ma zaznaczony „Reboot request” (albo skrypt ma RebootRequired), pod powodem pojawia się czerwony komunikat „Wymagany restart”.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.154.md`.
+
+## 0.1.153 - 2026-11-04
+
+- Quick: przycisk „Podatności” jest pierwszy na liście kategorii (na górze), przed kategoriami skryptów.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.153.md`.
+
+## 0.1.152 - 2026-11-04
+
+- Quick → Podatności: rozwinięty wiersz pokazuje tylko treść pola „Powód” z reguły naprawy (bez etykiety) i przyciski „Napraw” i „Cofnij” obok siebie, bez nazw skryptów (nazwa w podpowiedzi). Informacja o wymaganym restarcie zostaje.
+- Naprawione podatności są w Quick dalej widoczne (wyszarzone, etykieta „naprawione”, w szczegółach data i kto), żeby można było później użyć „Cofnij”. Nie liczą się do liczników ani alertu.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.152.md`.
+
+## 0.1.151 - 2026-11-04
+
+- Quick → Podatności: „Napraw” (niebieski) i „Cofnij” (szary) są przyciskami także w klasycznym UI MeshCentral. Adapter motywu zamienia tam klasy `btn-*` na `style10`, więc wyróżnienie idzie przez klasę `sirk-primary-action`, a kolory mają `!important`.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.151.md`.
+
+## 0.1.150 - 2026-11-04
+
+- Quick → Podatności: rozwinięty wiersz pokazuje tylko akcje — „Napraw” i „Cofnij” z opisem skryptu (i informacją o wymaganym restarcie) albo komunikat „Brak przypisanego skryptu naprawy.”; wszystkie pola Nessus są w trzeciej kolumnie (szczegóły). Drugie kliknięcie zwija wiersz.
+- „Napraw” (niebieski) i „Cofnij” (szary) mają własny wygląd przycisku z ramką i tłem, niezależnie od stylów strony MeshCentral, zamiast wyglądać jak klikalny tekst.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.150.md`.
+
+## 0.1.149 - 2026-11-04
+
+- Nessus: host z CSV jest rozpoznawany wyłącznie po nazwie bez domeny (`pc01.firma.local` = `pc01`). Wiersze tej samej maszyny zapisane raz jako FQDN, raz jako krótka nazwa, są łączone w jeden host, więc znika komunikat „Nazwa hosta pasuje do wielu wpisów Nessus”.
+- Adresy IP nie są używane do dopasowania (DHCP zmienia adresy). Gdy kolumna Host zawiera IP, nazwa jest brana z Host Original; wiersz znany tylko po IP nie jest przypisywany do żadnego urządzenia.
+- Dopasowanie urządzenia: najpierw nazwa komputera zgłoszona przez agenta, potem nazwa urządzenia w MeshCentral; pierwsza znaleziona wygrywa.
+- Zapisany snapshot ze starszej wersji jest automatycznie importowany ponownie.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.149.md`.
+
+## 0.1.148 - 2026-11-04
+
+- Nessus CSV: opcjonalna 18. kolumna „Repair” (ostatnia). Wartość z datą (np. `2026-11-02` lub `2026-11-02 14:30`) albo `tak/yes/true` oznacza naprawę; puste/`nie`/`no`/`false` = otwarta. Plik z 17 kolumnami działa jak dotąd.
+- Naprawiona podatność jest ukryta (Quick, Commands, My Scripts) i nie liczy się do liczników ani alertu Desktop, dopóki nowszy skan (wygenerowany po dacie naprawy) znowu jej nie zgłosi. Data bez godziny obejmuje cały dzień.
+- Udane uruchomienie z portalu przypiętego polecenia naprawy na hoście (agent zwrócił wynik bez statusu failed/error) zapisuje naprawę w `nessus/repairs.json` (z kim i kiedy, zdarzenie audytu „repair”); udany rollback ją cofa. Nieudany skrypt albo agent offline niczego nie oznacza.
+- Commands: przełącznik „Wykluczone / naprawione” pokazuje ukryte wiersze, kolumna naprawy pokazuje „naprawione” i „Cofnij”. My Scripts: filtr „Naprawione” i kolumna „Repair” w eksporcie CSV (wartość z CSV albo data naprawy z portalu).
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.148.md`.
+
+## 0.1.147 - 2026-11-03
+
+- Quick → Podatności: przyciski „Napraw”, „Cofnij” i „View” nie dziedziczą już siatki 24 px przycisków drzewa Quick, przez którą tekst łamał się po kilka liter („Nap/raw”). Sprawdzone renderem w przeglądarce.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.147.md`.
+
+## 0.1.146 - 2026-11-03
+
+- Quick → Podatności: bez przycisku „Napraw” w tabeli. Kliknięcie wiersza rozwija go (szczegóły, „Napraw”/„Cofnij”, powód wykluczenia), drugie kliknięcie zwija; ikona 🔧 przy nazwie oznacza przypiętą naprawę.
+- Podsumowanie skanu w Quick i Commands pokazuje tylko nazwę hosta i datę skanu; status, liczniki i dane importu są pod przyciskiem „View” (Quick: rozwinięcie, Commands: okno szczegółów). Statusy błędów nadal są widoczne od razu.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.146.md`.
+
+## 0.1.145 - 2026-11-03
+
+- Poprawki po drugim smoke #422–#425.
+- Quick: tabela podatności Ryzyko | Nazwa | bardzo mały przycisk „Napraw” (bez Score i Exploit, które są w podpowiedzi wiersza i szczegółach); szersza kolumna Ryzyko.
+- Ustawienia „Vulnerabilities”: reguły edytowane w tabeli zamiast kart (Typ, Plugin ID, Nazwa, Dopasowanie, Host, Polecenie naprawy, Polecenie rollback, Powód, Wygasa, Wł.).
+- Reguła naprawy ma opcjonalne polecenie rollback (np. ponowne włączenie TLS 1.0), walidowane jak polecenie naprawy.
+- Commands → Podatności: kolumna „Naprawa” ma w każdym wierszu przyciski „Napraw” i „Cofnij” zamiast opisu; usunięta osobna karta napraw.
+- Skrypty: nowa opcja „Reboot required” w edytorze definicji (`# RebootRequired: true`); informacja o wymaganym restarcie jest widoczna w karcie skryptu (Commands, My Scripts), w oknie parametrów i potwierdzenia oraz w szczegółach Quick.
+- Nowy test `test/script-reboot-required.test.js`, rozszerzony `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.145.md`.
+
+## 0.1.144 - 2026-11-03
+
+- Poprawki po pierwszym smoke #422–#425 na lokalnym MeshCentral.
+- Quick: podatności jako zwarta tabela (Ryzyko | Nazwa | Score | Exploit) zamiast przycisków drzewa, których układ ikony 24 px łamał tekst w pionie.
+- Reguły podatności w `sirk-platform-data/nessus/rules.json` (edytowalne ręcznie lub z harmonogramu) i w nowej zakładce ustawień „Vulnerabilities” (tylko Site Admin): wykluczenia i przypięte polecenia naprawy z My Commands, dopasowanie po Plugin ID i/lub nazwie (zawiera/dokładnie), opcjonalny wzorzec hosta z `*`, powód, data wygaśnięcia, włącz/wyłącz. Reguły są stosowane przy odczycie bez ponownego importu; wykluczenie wygrywa z naprawą; wykluczone pozycje nie liczą się do liczników ani alertu w Desktop; niepoprawny plik nie ukrywa niczego i jest raportowany. Zapis reguł generuje zdarzenie MeshCentral bez treści reguł.
+- „Napraw” w Commands (lista napraw dla urządzenia) i w Quick (szczegóły podatności) uruchamia przypięte polecenie przez zwykły przepływ uruchomienia (uprawnienia, parametry, potwierdzenie).
+- My Scripts: widok „Podatności” dla Site Admina z tabelą wszystkich hostów, filtrami w nagłówku (Host, Plugin ID, Nazwa, Score od, Exploit, Naprawa/wykluczone), sortowaniem, stronicowaniem i eksportem CSV przefiltrowanych wierszy.
+- Windows smoke Nessus zapisany wyłącznie w ASCII (PowerShell 5.1 czyta pliki bez BOM jako ANSI).
+- Nowy test `test/vulnerability-rules.test.js`. Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.144.md`.
+
+## 0.1.141 - 2026-11-03
+
+- #422: import Nessus CSV (separator `;`, UTF-8/BOM, dokładnie 17 kolumn eksportera) z katalogu `sirk-platform-data/nessus/inbox` zasilanego przez harmonogram zadań; walidacja całego pliku, atomowa publikacja snapshotu, brak częściowej podmiany, wybór najnowszej generacji per host, deduplikacja append i obsługa `Plugin ID=0`; node-scoped read API z kontrolą uprawnień MeshCentral oraz zdarzenie importu bez payloadu.
+- #423: pozycja Podatności bezpośrednio pod Wynikami w Commands: liczniki, status świeżości, filtry Risk/Exploit/tekst, sortowanie, paginacja, pełne 17 pól w natywnym podglądzie, odrzucanie spóźnionych odpowiedzi po zmianie hosta.
+- #424: duży, nieblokujący alert przy połączeniu Desktop z hostem mającym aktywne podatności (raz na sesję) oraz lista Podatności w Quick.
+- #425: edytowalny My Script `Security/Nessus - All Hosts.ps1` z filtrami jako zmiennymi skryptu, raportem wszystkich hostów i CSV do pobrania; dostęp tylko dla Site Admin (request, wykonanie i download).
+- Real MeshCentral smoke wymagany. Brak tagu/GitHub Release.
+
+Current development notes: `docs/releases/0.1.141.md`.
 
 ## 0.1.139 - 2026-11-03
 

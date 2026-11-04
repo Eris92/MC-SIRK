@@ -38,7 +38,7 @@
         mount: function (host, options) {
             host.innerHTML = "";
             options = options || {};
-            this.list(options.counts).forEach(function (item) {
+            (Array.isArray(options.items) ? options.items : this.list(options.counts)).forEach(function (item) {
                 var key = item.key || "all";
                 var button = document.createElement("button");
                 button.type = "button";

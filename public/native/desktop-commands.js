@@ -38,8 +38,12 @@
         detail: null,
         output: "",
         outputError: false,
-        refreshing: false
+        refreshing: false,
+        // #424: one vulnerability summary per Desktop session (node + connect time).
+        vuln: { sessionKey: "", nodeId: "", sequence: 0, summary: null, detail: null, detailLoading: false, error: "", dismissed: {}, selected: null }
     };
+    var VULN_CATEGORY = "__sirk-vulnerabilities";
+    var VULN_RISKS = ["critical", "high", "medium", "low"];
 
     var TEXT = {
         pl: {
@@ -52,7 +56,16 @@
             timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie",
             required: "Uzupełnij wymagane pola.", collapse: "Zwiń kategorie", expand: "Rozwiń kategorie",
             hideDetails: "Ukryj wynik", showDetails: "Pokaż wynik",
-            favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij"
+            favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij",
+            vulnerabilities: "Podatności", vulnAlertTitle: "Wykryto podatności wymagające załatania",
+            vulnAlertOpen: "Zobacz podatności", vulnAlertClose: "Zamknij", vulnLoading: "Wczytywanie podatności…",
+            critical: "Krytyczne", high: "Wysokie", medium: "Średnie", low: "Niskie",
+            vuln_not_imported: "Brak zaimportowanych danych Nessus. Stan podatności jest nieznany.",
+            vuln_error: "Import danych Nessus nie powiódł się. Stan podatności jest nieznany.",
+            vuln_host_unmatched: "Nie znaleziono hosta w danych Nessus. Stan podatności jest nieznany.",
+            vuln_ambiguous: "Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.",
+            vuln_stale: "Ostatni skan jest nieaktualny.", vuln_no_findings: "Ostatni skan nie wykazał podatności.",
+            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnRepaired: "naprawione", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnNoFix: "Brak przypisanego skryptu naprawy.", vulnRebootRequired: "Wymagany restart", vulnRequestFailed: "Nie można odczytać podatności"
         },
         en: {
             title: "Quick commands", scripts: "Scripts", search: "Search commands…",
@@ -64,7 +77,16 @@
             timeout: "The agent did not confirm command execution.", confirm: "Run command",
             required: "Complete the required fields.", collapse: "Collapse categories", expand: "Expand categories",
             hideDetails: "Hide output", showDetails: "Show output",
-            favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close"
+            favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close",
+            vulnerabilities: "Vulnerabilities", vulnAlertTitle: "Vulnerabilities requiring patching were detected",
+            vulnAlertOpen: "View vulnerabilities", vulnAlertClose: "Close", vulnLoading: "Loading vulnerabilities…",
+            critical: "Critical", high: "High", medium: "Medium", low: "Low",
+            vuln_not_imported: "No Nessus data has been imported. Vulnerability state is unknown.",
+            vuln_error: "Nessus data import failed. Vulnerability state is unknown.",
+            vuln_host_unmatched: "This host was not found in the Nessus data. Vulnerability state is unknown.",
+            vuln_ambiguous: "The host name matches several Nessus entries. No unambiguous match.",
+            vuln_stale: "The latest scan is stale.", vuln_no_findings: "The latest scan reported no vulnerabilities.",
+            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnRepaired: "repaired", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnNoFix: "No remediation script assigned.", vulnRebootRequired: "Restart required", vulnRequestFailed: "Cannot read vulnerabilities"
         }
     };
 
@@ -204,6 +226,7 @@
                     label: localized(child, "label") || child.name || child.path,
                     description: localized(child, "description"), iconData: child.iconData || "",
                     requiresApproval: false, confirmExecution: child.confirmExecution === true,
+                    rebootRequired: child.rebootRequired === true,
                     variables: child.variables || []
                 });
             } else flattenScripts(child, output);
@@ -340,6 +363,7 @@
             title: text("confirm"),
             message: text("confirm") + ' "' + item.label + '"?',
             trigger: trigger,
+            item: item,
             primaryLabel: item.requiresApproval ? "Request" : text("run")
         }).then(function (confirmed) {
             if (confirmed !== true) return false;
@@ -409,12 +433,239 @@
                 label: localized(script, "label") || script.label || script.name,
                 description: localized(script, "description") || script.description || "",
                 variables: script.variables || [], requiresApproval: false,
-                confirmExecution: script.confirmExecution === true
+                confirmExecution: script.confirmExecution === true,
+                rebootRequired: script.rebootRequired === true
             });
         }).catch(function (error) {
             button.disabled = false;
             setOutput(panel, error.message || String(error), true, false);
         });
+    }
+
+    function desktopSessionKey() {
+        if (!desktopConnected()) return "";
+        var started = window.desktop && window.desktop.startTime;
+        var time = started && typeof started.getTime === "function" ? started.getTime() : 0;
+        return nodeId() + "|" + time;
+    }
+    function vulnCounts(summary) {
+        return summary && summary.host && summary.host.counts || {};
+    }
+    function hasActiveVulnerabilities(summary) {
+        if (!summary || summary.status !== "available") return false;
+        var counts = vulnCounts(summary);
+        return VULN_RISKS.some(function (risk) { return Number(counts[risk]) > 0; });
+    }
+    function countsText(summary) {
+        var counts = vulnCounts(summary);
+        return VULN_RISKS.map(function (risk) { return text(risk) + ": " + (Number(counts[risk]) || 0); }).join(" · ");
+    }
+    function removeVulnerabilityAlert() {
+        var existing = document.getElementById("SirkDesktopVulnerabilityAlert");
+        if (existing) existing.remove();
+    }
+    function openVulnerabilities(wrapper) {
+        var panel = wrapper && wrapper.querySelector(".sirk-desktop-commands-panel");
+        var toggle = wrapper && wrapper.querySelector(".sirk-desktop-commands-toggle");
+        if (!panel || !desktopConnected()) return;
+        state.category = VULN_CATEGORY;
+        state.vuln.selected = null;
+        panel.hidden = false;
+        if (toggle) toggle.setAttribute("aria-expanded", "true");
+        load(panel);
+    }
+    function showVulnerabilityAlert(wrapper) {
+        var key = state.vuln.sessionKey;
+        if (!key || state.vuln.dismissed[key] || !hasActiveVulnerabilities(state.vuln.summary)) return;
+        if (document.getElementById("SirkDesktopVulnerabilityAlert")) return;
+        var alert = element("div", "sirk-desktop-vuln-alert");
+        alert.id = "SirkDesktopVulnerabilityAlert";
+        alert.setAttribute("role", "alert");
+        alert.appendChild(element("strong", "sirk-desktop-vuln-alert-title", "⚠ " + text("vulnAlertTitle")));
+        alert.appendChild(element("div", "sirk-desktop-vuln-alert-counts", countsText(state.vuln.summary)));
+        var actions = element("div", "sirk-desktop-vuln-alert-actions");
+        var open = element("button", "btn btn-primary", text("vulnAlertOpen"));
+        open.type = "button";
+        var dismiss = element("button", "btn btn-secondary", text("vulnAlertClose"));
+        dismiss.type = "button";
+        function close() { state.vuln.dismissed[key] = true; removeVulnerabilityAlert(); }
+        open.onclick = function () { close(); openVulnerabilities(wrapper); };
+        dismiss.onclick = close;
+        actions.appendChild(open);
+        actions.appendChild(dismiss);
+        alert.appendChild(actions);
+        wrapper.appendChild(alert);
+    }
+    function loadVulnerabilityDetail(panel) {
+        var vuln = state.vuln;
+        if (!vuln.sessionKey || vuln.detail || vuln.detailLoading) return;
+        var sequence = vuln.sequence, key = vuln.sessionKey;
+        vuln.detailLoading = true;
+        window.SirkPlatformCore.api("mycommands", "vulnerabilities", null, { nodeId: vuln.nodeId, detail: "1" }).then(function (response) {
+            if (sequence !== state.vuln.sequence || key !== state.vuln.sessionKey) return;
+            vuln.detailLoading = false; vuln.detail = response; vuln.summary = response; vuln.error = "";
+            if (!panel.hidden && state.category === VULN_CATEGORY) render(panel);
+        }).catch(function (error) {
+            if (sequence !== state.vuln.sequence || key !== state.vuln.sessionKey) return;
+            vuln.detailLoading = false; vuln.error = error && error.message || String(error);
+            if (!panel.hidden && state.category === VULN_CATEGORY) render(panel);
+        });
+    }
+    // Bound to the existing Quick lifecycle refresh: one summary read per new
+    // Desktop session; same-session re-renders/refreshes never re-alert.
+    function syncVulnerabilities(wrapper, forceReload) {
+        var key = desktopSessionKey();
+        var vuln = state.vuln;
+        if (!key) {
+            if (vuln.sessionKey) { vuln.sequence++; vuln.sessionKey = ""; vuln.nodeId = ""; vuln.summary = null; vuln.detail = null; vuln.detailLoading = false; vuln.error = ""; vuln.selected = null; }
+            removeVulnerabilityAlert();
+            return;
+        }
+        if (key === vuln.sessionKey && forceReload !== true) return;
+        if (key !== vuln.sessionKey) removeVulnerabilityAlert();
+        var sequence = ++vuln.sequence;
+        vuln.sessionKey = key; vuln.nodeId = nodeId(); vuln.summary = null; vuln.detail = null; vuln.detailLoading = false; vuln.error = ""; vuln.selected = null;
+        if (!window.SirkPlatformCore || typeof window.SirkPlatformCore.api !== "function") return;
+        window.SirkPlatformCore.api("mycommands", "vulnerabilities", null, { nodeId: vuln.nodeId }).then(function (response) {
+            if (sequence !== state.vuln.sequence || key !== state.vuln.sessionKey || key !== desktopSessionKey()) return;
+            vuln.summary = response;
+            showVulnerabilityAlert(wrapper);
+            var panel = wrapper.querySelector(".sirk-desktop-commands-panel");
+            if (panel && !panel.hidden) render(panel);
+        }).catch(function (error) {
+            if (sequence !== state.vuln.sequence || key !== state.vuln.sessionKey) return;
+            vuln.error = error && error.message || String(error);
+        });
+    }
+    function renderVulnerabilities(panel, tree, details) {
+        var vuln = state.vuln, data = vuln.detail || vuln.summary, host = data && data.host;
+        loadVulnerabilityDetail(panel);
+        if (vuln.error && !data) {
+            tree.appendChild(element("p", "sirk-quick-command-empty is-error", text("vulnRequestFailed") + ": " + vuln.error));
+            return;
+        }
+        if (!data || (!vuln.detail && vuln.detailLoading)) {
+            tree.appendChild(element("p", "sirk-quick-command-empty", text("vulnLoading")));
+            return;
+        }
+        // Summary shows host and scan date; "View" toggles status and counts.
+        var summary = element("div", "sirk-quick-vuln-summary");
+        var summaryHead = element("div", "sirk-quick-vuln-summary-head");
+        var summaryTitle = element("div", "sirk-quick-vuln-summary-title");
+        summaryTitle.appendChild(element("strong", "", host && host.host || data.nodeName || text("vulnerabilities")));
+        if (host) summaryTitle.appendChild(element("span", "", text("vulnScan") + ": " + (host.generationDate || "—")));
+        summaryHead.appendChild(summaryTitle);
+        var summaryToggle = element("button", "btn btn-secondary btn-sm sirk-quick-vuln-view", "View");
+        summaryToggle.type = "button";
+        summaryToggle.setAttribute("aria-expanded", vuln.summaryOpen ? "true" : "false");
+        summaryToggle.onclick = function () { vuln.summaryOpen = !vuln.summaryOpen; render(panel); };
+        summaryHead.appendChild(summaryToggle);
+        summary.appendChild(summaryHead);
+        if (vuln.summaryOpen || !host) {
+            summary.appendChild(element("div", "", text("vuln_" + data.status) || data.status));
+            if (host) summary.appendChild(element("div", "", countsText(data)));
+        }
+        tree.appendChild(summary);
+        // Compact table (risk | name). A click expands the row with the rule reason
+        // and Fix/Undo; a second click collapses it. Excluded and repaired findings
+        // stay listed but muted, so a fix can still be undone later.
+        var findings = host && host.findings || [];
+        var quickScripts = state.data ? flattenScripts(state.data.tree, []) : [];
+        function remediationItem(finding, rollback) {
+            var remediation = !finding.excluded && finding.remediation;
+            var scriptPath = remediation && (rollback ? remediation.rollbackScriptPath : remediation.scriptPath);
+            if (!scriptPath) return null;
+            return quickScripts.filter(function (candidate) { return candidate.path === scriptPath; })[0] || { missing: true, label: scriptPath };
+        }
+        function launchFix(item, trigger) {
+            if (!item || item.missing) return;
+            state.category = "scripts";
+            selectItem(panel, item, trigger);
+        }
+        function actionButton(host, item, label, style) {
+            if (!item) return;
+            // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
+            // The theme adapter owns btn-*/style10 classes; sirk-primary-action marks Fix as primary.
+            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix" + (style === "btn-primary" ? " sirk-primary-action" : ""), label);
+            button.type = "button";
+            button.disabled = item.missing === true;
+            button.title = item.missing ? text("vulnFixUnavailable") : item.label;
+            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button); };
+            host.appendChild(button);
+        }
+        function exclusionNote(finding) {
+            return element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (finding.exclusion.reason ? ": " + finding.exclusion.reason : "") + (finding.exclusion.expires ? " (" + finding.exclusion.expires + ")" : ""));
+        }
+        function repairNote(finding) {
+            var repair = finding.repair || {};
+            var at = repair.repairedAt ? new Date(repair.repairedAt).toLocaleString() : repair.value || "";
+            return element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnRepaired") + (at ? ": " + at : "") + (repair.by ? " — " + repair.by : ""));
+        }
+        // The expanded row holds the remediation rule reason (plain text) and the
+        // Fix/Undo buttons side by side; all Nessus fields go to the details column.
+        function appendExpanded(body, finding) {
+            var row = element("tr", "sirk-quick-vuln-expand");
+            var cell = element("td", "");
+            cell.colSpan = 2;
+            if (finding.excluded && finding.exclusion) cell.appendChild(exclusionNote(finding));
+            // Rule "description": its text only, no buttons.
+            else if (!finding.remediation && finding.note) cell.appendChild(element("div", "sirk-quick-vuln-action-description sirk-quick-vuln-note", finding.note.reason));
+            else if (!finding.remediation) cell.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnNoFix")));
+            else {
+                if (finding.note) cell.appendChild(element("div", "sirk-quick-vuln-action-description sirk-quick-vuln-note", finding.note.reason));
+                var fix = remediationItem(finding);
+                if (finding.remediation.reason) cell.appendChild(element("div", "sirk-quick-vuln-action-description", finding.remediation.reason));
+                // Rule "Reboot request" (or a script declaring RebootRequired).
+                if (finding.remediation.rebootRequired || (fix && fix.rebootRequired)) cell.appendChild(element("div", "sirk-quick-vuln-reboot", text("vulnRebootRequired")));
+                var actions = element("div", "sirk-quick-vuln-expand-actions");
+                actionButton(actions, fix, text("vulnFix"), "btn-primary");
+                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
+                cell.appendChild(actions);
+            }
+            row.appendChild(cell);
+            body.appendChild(row);
+        }
+        function appendDetails(finding) {
+            var fields = finding.fields || {};
+            details.appendChild(element("strong", "sirk-quick-vuln-details-title", (text(finding.risk) || finding.risk) + " · " + (fields["Plugin Name"] || "")));
+            if (finding.excluded && finding.exclusion) details.appendChild(exclusionNote(finding));
+            if (finding.repaired) details.appendChild(repairNote(finding));
+            Object.keys(fields).forEach(function (name) {
+                var line = element("div", "sirk-quick-vuln-field");
+                line.appendChild(element("strong", "", name + ": "));
+                line.appendChild(document.createTextNode(String(fields[name] == null ? "" : fields[name])));
+                details.appendChild(line);
+            });
+        }
+        if (findings.length) {
+            var table = element("table", "sirk-quick-vuln-table");
+            var head = element("tr");
+            ["vulnColRisk", "vulnColName"].forEach(function (key) { head.appendChild(element("th", "", text(key))); });
+            table.appendChild(element("thead")).appendChild(head);
+            var body = table.appendChild(element("tbody"));
+            findings.forEach(function (finding) {
+                var fields = finding.fields || {};
+                var open = vuln.selected === finding;
+                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded || finding.repaired ? " is-excluded" : "") + (open ? " is-active" : ""));
+                row.tabIndex = 0;
+                row.title = (fields["Plugin Name"] || "") + " · Plugin " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + (finding.exploit ? " · Exploit" : "");
+                row.setAttribute("aria-expanded", open ? "true" : "false");
+                row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
+                var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
+                if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
+                else if (finding.repaired) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnRepaired")));
+                if (!finding.excluded && !finding.repaired && finding.remediation) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "🔧"));
+                else if (!finding.excluded && !finding.repaired && finding.note) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "ℹ"));
+                row.appendChild(name);
+                function toggle() { vuln.selected = open ? null : finding; render(panel); }
+                row.onclick = toggle;
+                row.onkeydown = function (event) { if (event.target === row && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); toggle(); } };
+                body.appendChild(row);
+                if (open) appendExpanded(body, finding);
+            });
+            tree.appendChild(table);
+            if (vuln.selected && findings.indexOf(vuln.selected) >= 0) appendDetails(vuln.selected);
+        }
     }
 
     function closePanel(panel) {
@@ -424,6 +675,12 @@
     }
 
     function refresh(panel) {
+        if (state.category === VULN_CATEGORY) {
+            state.vuln.detail = null;
+            state.vuln.selected = null;
+            render(panel);
+            return;
+        }
         if (state.refreshing) return;
         state.refreshing = true;
         setOutput(panel, text("loading"), false, false);
@@ -551,7 +808,7 @@
 
     function render(panel) {
         var all = categories(state.data || {});
-        if (!all.some(function (category) { return category.key === state.category; })) {
+        if (state.category !== VULN_CATEGORY && !all.some(function (category) { return category.key === state.category; })) {
             state.category = all[0] && all[0].key || "";
         }
         var selected = all.find(function (category) { return category.key === state.category; });
@@ -574,6 +831,16 @@
         var tree = element("nav", "sirk-quick-command-tree mc-shared-secondary");
         var details = element("section", "sirk-quick-command-details mc-shared-details");
 
+        // Vulnerabilities is the first Quick category.
+        var vulnButton = element("button", "sirk-quick-vuln-nav");
+        vulnButton.type = "button";
+        vulnButton.title = text("vulnerabilities");
+        addIcon(vulnButton, null, "secpol", "other");
+        vulnButton.appendChild(element("span", "sirk-quick-command-label", text("vulnerabilities") + (hasActiveVulnerabilities(state.vuln.summary) ? " (" + VULN_RISKS.reduce(function (sum, risk) { return sum + (Number(vulnCounts(state.vuln.summary)[risk]) || 0); }, 0) + ")" : "")));
+        vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; render(panel); };
+        applyQuickNav(vulnButton, state.category === VULN_CATEGORY);
+        nav.appendChild(vulnButton);
+
         all.forEach(function (category) {
             var activeCategory = category.key === state.category;
             var button = element("button", "");
@@ -593,6 +860,15 @@
             applyQuickNav(button, activeCategory);
             nav.appendChild(button);
         });
+
+        if (state.category === VULN_CATEGORY) {
+            renderVulnerabilities(panel, tree, details);
+            browser.appendChild(nav);
+            browser.appendChild(tree);
+            browser.appendChild(details);
+            panel.appendChild(browser);
+            return;
+        }
 
         function matches(item) {
             return !query || (item.label + " " + item.description).toLowerCase().indexOf(query) >= 0;
@@ -645,6 +921,9 @@
         else (selected && selected.items || []).forEach(function (item) { appendItem(item, 0); });
         if (!tree.children.length) tree.appendChild(element("p", "sirk-quick-command-empty", text(state.favoritesOnly ? "emptyFavorites" : "empty")));
 
+        if (state.detail && window.SharedScriptTools && typeof window.SharedScriptTools.appendRebootNotice === "function") {
+            window.SharedScriptTools.appendRebootNotice(details, state.detail);
+        }
         var status = element("div", "sirk-quick-command-status", state.output);
         status.classList.toggle("is-error", state.outputError);
         details.appendChild(status);
@@ -689,6 +968,7 @@
         var existing = document.getElementById("SirkDesktopCommands");
         if (existing) {
             syncAvailability(existing);
+            syncVulnerabilities(existing, false);
             return true;
         }
         if (!stage) return false;
@@ -716,6 +996,7 @@
             if (!panel.hidden) load(panel);
         };
         syncAvailability(wrapper);
+        syncVulnerabilities(wrapper, false);
         return true;
     }
 
@@ -732,6 +1013,7 @@
         var existing = document.getElementById("SirkDesktopCommands");
         if (!existing) return install();
         syncAvailability(existing);
+        syncVulnerabilities(existing, false);
         return true;
     }
 

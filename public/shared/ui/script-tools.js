@@ -507,6 +507,13 @@
                 confirmLabel.appendChild(confirmExecution);
                 confirmLabel.appendChild(document.createTextNode(" Require confirmation before execution"));
                 execution.appendChild(confirmLabel);
+                var rebootLabel = element("label", "mc-definition-check");
+                var rebootRequired = element("input");
+                rebootRequired.type = "checkbox";
+                rebootRequired.checked = value.rebootRequired === true;
+                rebootLabel.appendChild(rebootRequired);
+                rebootLabel.appendChild(document.createTextNode(" Reboot required for the change to take effect"));
+                execution.appendChild(rebootLabel);
                 var desktopLabel = element("label", "mc-definition-check");
                 var showOnDesktop = element("input");
                 showOnDesktop.type = "checkbox";
@@ -582,6 +589,7 @@
                                 runAsUser: Number(runAs.value) || 0,
                                 multiHost: multi.checked,
                                 confirmExecution: confirmExecution.checked,
+                                rebootRequired: rebootRequired.checked,
                                 showOnDesktop: showOnDesktop.checked,
                                 showWithoutDesktop: showWithoutDesktop.checked,
                                 body: source.value

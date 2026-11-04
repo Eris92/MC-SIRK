@@ -16,6 +16,23 @@
         var locale = item && item.locales && item.locales[language()];
         return text(locale && locale[field] || item && item[field] || "");
     }
+    // Scripts marked "# RebootRequired: true" only take effect after a restart;
+    // the notice is shown wherever the script is described or confirmed.
+    function rebootNotice(item) {
+        if (!item || item.rebootRequired !== true) return "";
+        return language() === "en"
+            ? "Reboot required: the change takes effect only after the device restarts."
+            : "Wymagany restart: zmiana zadziała dopiero po ponownym uruchomieniu urządzenia.";
+    }
+    function appendRebootNotice(host, item) {
+        var notice = rebootNotice(item);
+        if (!host || !notice) return null;
+        var line = document.createElement("p");
+        line.className = "mc-reboot-notice";
+        line.textContent = "⟳ " + notice;
+        host.appendChild(line);
+        return line;
+    }
     function controlKind(variable) {
         var kind = text(variable && variable.control || "text").trim().toLowerCase();
         return ["select", "switch", "user", "asset", "assetmulti", "file"].indexOf(kind) >= 0 ? kind : "text";
@@ -215,6 +232,7 @@
             intro.textContent = description;
             content.appendChild(intro);
         }
+        appendRebootNotice(content, item);
         var definitions = [];
         (item.variables || []).forEach(function (variable, index) {
             var kind = controlKind(variable);
@@ -602,6 +620,7 @@
         message.className = "mc-shared-muted";
         message.textContent = text(options.message || "Confirm execution.");
         content.appendChild(message);
+        appendRebootNotice(content, options.item);
 
         var title = text(options.title || "Confirm execution");
         if (manager.mode === "modern") manager.setContent("xxAddAgent", title, content.innerHTML);
@@ -676,6 +695,8 @@
     };
     tools.openParameterDialog = openParameterDialog;
     tools.openConfirmationDialog = openConfirmationDialog;
+    tools.rebootNotice = rebootNotice;
+    tools.appendRebootNotice = appendRebootNotice;
     tools.parameterDialogContract = {
         allowCustom: allowCustom,
         assetDependsOnUser: assetDependsOnUser,
@@ -698,6 +719,8 @@
                 instance.openConfirmationDialog = function (dialogOptions) {
                     return tools.openConfirmationDialog(dialogOptions);
                 };
+                instance.rebootNotice = rebootNotice;
+                instance.appendRebootNotice = appendRebootNotice;
                 instance.setParameterOptionProvider = function (provider) {
                     return tools.setParameterOptionProvider(provider);
                 };

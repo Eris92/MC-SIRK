@@ -1,15 +1,93 @@
 [
   {
-    "version": "0.1.143",
-    "date": "2026-11-03",
+    "version": "0.1.157",
+    "date": "2026-11-04",
     "summary": "Add CSR file input, Enterprise CA signing script and verified certificate download artifact for My Scripts.",
-    "notes": "docs/releases/0.1.143.md"
+    "notes": "docs/releases/0.1.157.md"
   },
   {
-    "version": "0.1.142",
-    "date": "2026-11-03",
+    "version": "0.1.156",
+    "date": "2026-11-04",
     "summary": "Add shared Certificate Authority integration (CA config, template, RDP signing thumbprint), CA script category and signed RDP file command for the logged-on user's Desktop.",
-    "notes": "docs/releases/0.1.142.md"
+    "notes": "docs/releases/0.1.156.md"
+  },
+  {
+    "version": "0.1.155",
+    "date": "2026-11-04",
+    "summary": "Third vulnerability rule type: description shown with the finding, without Fix/Undo buttons.",
+    "notes": "docs/releases/0.1.155.md"
+  },
+  {
+    "version": "0.1.154",
+    "date": "2026-11-04",
+    "summary": "Vulnerability rules: Reboot request checkbox; Quick shows a red Restart required next to the fix.",
+    "notes": "docs/releases/0.1.154.md"
+  },
+  {
+    "version": "0.1.153",
+    "date": "2026-11-04",
+    "summary": "Vulnerabilities moved to the top of the Quick category list.",
+    "notes": "docs/releases/0.1.153.md"
+  },
+  {
+    "version": "0.1.152",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerabilities: rule reason and unlabeled Fix/Undo side by side; repaired findings stay listed (muted) so a fix can be undone.",
+    "notes": "docs/releases/0.1.152.md"
+  },
+  {
+    "version": "0.1.151",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerability Fix/Undo render as buttons in the classic and modern MeshCentral UI.",
+    "notes": "docs/releases/0.1.151.md"
+  },
+  {
+    "version": "0.1.150",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerabilities: expanded row shows only Fix/Undo with script description (or no-fix note); all Nessus fields move to the details column.",
+    "notes": "docs/releases/0.1.150.md"
+  },
+  {
+    "version": "0.1.149",
+    "date": "2026-11-04",
+    "summary": "Nessus hosts matched by host name without the domain, never by IP address.",
+    "notes": "docs/releases/0.1.149.md"
+  },
+  {
+    "version": "0.1.148",
+    "date": "2026-11-04",
+    "summary": "Optional Nessus CSV Repair column and portal-recorded fixes hide repaired findings until a newer scan.",
+    "notes": "docs/releases/0.1.148.md"
+  },
+  {
+    "version": "0.1.147",
+    "date": "2026-11-03",
+    "summary": "Quick vulnerability Fix/Undo/View buttons opt out of the tree icon grid.",
+    "notes": "docs/releases/0.1.147.md"
+  },
+  {
+    "version": "0.1.146",
+    "date": "2026-11-03",
+    "summary": "Expandable Quick vulnerability rows with Fix/Undo, scan summary collapsed behind View in Quick and Commands.",
+    "notes": "docs/releases/0.1.146.md"
+  },
+  {
+    "version": "0.1.145",
+    "date": "2026-11-03",
+    "summary": "Rules table with rollback command, per-row Fix/Undo in Commands, compact Quick table, reboot-required script flag.",
+    "notes": "docs/releases/0.1.145.md"
+  },
+  {
+    "version": "0.1.144",
+    "date": "2026-11-03",
+    "summary": "Vulnerability exclusions and pinned remediation rules (settings + rules.json), Fix actions, Quick table and My Scripts all-host table with header filters.",
+    "notes": "docs/releases/0.1.144.md"
+  },
+  {
+    "version": "0.1.141",
+    "date": "2026-11-03",
+    "summary": "Add Nessus CSV import, Commands and Quick vulnerability views, Desktop alert and Site Admin all-host My Script report.",
+    "notes": "docs/releases/0.1.141.md"
   },
   {
     "version": "0.1.139",
