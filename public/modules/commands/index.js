@@ -297,7 +297,7 @@
     function vulnerabilityRows() {
         var host = vuln.data && vuln.data.host;
         var rows = host && Array.isArray(host.findings) ? host.findings.slice() : [];
-        if (!vuln.showExcluded) rows = rows.filter(function (row) { return row.excluded !== true; });
+        if (!vuln.showExcluded) rows = rows.filter(function (row) { return row.excluded !== true && row.repaired !== true; });
         if (vuln.risk) rows = rows.filter(function (row) { return row.risk === vuln.risk; });
         if (vuln.exploit) rows = rows.filter(function (row) { return (row.exploit === true) === (vuln.exploit === "yes"); });
         if (vuln.sort === "score") rows.sort(function (a, b) { return (b.score || 0) - (a.score || 0) || RISK_ORDER.indexOf(a.risk) - RISK_ORDER.indexOf(b.risk); });
@@ -316,6 +316,7 @@
     function vulnerabilityDetails(row) {
         var fields = row.fields || {};
         return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }])
+            .concat(row.repaired && row.repair ? [{ Field: msg("Naprawione", "Repaired"), Value: (row.repair.value || (row.repair.repairedAt ? formatDate(row.repair.repairedAt) : "—")) + (row.repair.by ? " (" + row.repair.by + ")" : "") + (row.repair.source === "portal" ? msg(" — z portalu, ukryte do następnego skanu", " — from the portal, hidden until the next scan") : msg(" — z CSV", " — from CSV")) }] : [])
             .concat(row.excluded ? [{ Field: msg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") }] : [])
             .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : [])
             .concat(row.remediation && row.remediation.rollbackScriptPath ? [{ Field: msg("Rollback", "Rollback"), Value: row.remediation.rollbackScriptPath }] : []) });
@@ -344,6 +345,11 @@
     function renderRemediation(shell, cell, row) {
         cell.classList.add("mc-vuln-actions");
         if (row.excluded) { cell.textContent = msg("wykluczone", "excluded"); return; }
+        if (row.repaired) {
+            cell.appendChild(document.createTextNode(msg("naprawione ", "repaired ")));
+            if (row.remediation && row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
+            return;
+        }
         if (!row.remediation) { cell.textContent = "—"; return; }
         appendRemediationButton(shell, cell, row.remediation.scriptPath, msg("Napraw", "Fix"), true);
         if (row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
@@ -390,7 +396,8 @@
         if (!host || !host.findingsCount) { sync(shell); return; }
         var controls = shell.element("div", "mc-script-manage-actions");
         controls.appendChild(vulnerabilitySelect(shell, "Exploit", vuln.exploit, [["", msg("Wszystkie", "All")], ["yes", msg("Tak", "Yes")], ["no", msg("Nie", "No")]], function (value) { vuln.exploit = value; vuln.page = 1; shell.render(); }));
-        if (host.excludedCount) controls.appendChild(vulnerabilitySelect(shell, msg("Wykluczone", "Excluded"), vuln.showExcluded ? "show" : "", [["", msg("Ukryj", "Hide") + " (" + host.excludedCount + ")"], ["show", msg("Pokaż", "Show")]], function (value) { vuln.showExcluded = value === "show"; vuln.page = 1; shell.render(); }));
+        var hiddenCount = (host.excludedCount || 0) + (host.repairedCount || 0);
+        if (hiddenCount) controls.appendChild(vulnerabilitySelect(shell, msg("Wykluczone / naprawione", "Excluded / repaired"), vuln.showExcluded ? "show" : "", [["", msg("Ukryj", "Hide") + " (" + hiddenCount + ")"], ["show", msg("Pokaż", "Show")]], function (value) { vuln.showExcluded = value === "show"; vuln.page = 1; shell.render(); }));
         controls.appendChild(vulnerabilitySelect(shell, msg("Sortuj", "Sort"), vuln.sort, [["severity", msg("Ważność", "Severity")], ["score", "Score"]], function (value) { vuln.sort = value; vuln.page = 1; shell.render(); }));
         details.appendChild(controls);
         var rows = vulnerabilityRows();
@@ -410,7 +417,7 @@
                 { title: "Plugin ID", value: function (row) { return row.fields && row.fields["Plugin ID"] || "—"; } },
                 { title: "Score", value: function (row) { return row.score == null ? "—" : String(row.score); } },
                 { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } },
-                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
+                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.repaired ? msg("naprawione", "repaired") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
             ]
         });
         if (pages > 1 || (host.truncated === true)) {
