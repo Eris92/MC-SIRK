@@ -70,12 +70,17 @@
         if (classic) return { mode: "classic", show: classicSetDialog };
         return null;
     }
+    // Classic MeshCentral uses <input type=button> (label in value); Modern uses
+    // <button>, whose .value is "" and whose label is its text.
+    function isInputButton(button) {
+        return !!button && String(button.tagName || "").toUpperCase() === "INPUT";
+    }
     function readButtonText(button) {
-        return text(button && (button.value != null ? button.value : button.textContent));
+        return text(button && (isInputButton(button) ? button.value : button.textContent));
     }
     function writeButtonText(button, value) {
         if (!button) return;
-        if (button.value != null) button.value = value;
+        if (isInputButton(button)) button.value = value;
         else button.textContent = value;
     }
     function appendOption(select, option) {

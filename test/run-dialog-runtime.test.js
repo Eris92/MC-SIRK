@@ -13,6 +13,9 @@ function makeElement(tag) {
     var node = {
         tagName: tag, children: [], attributes: {}, listeners: {}, hidden: false, disabled: false,
         className: "", textContent: "", style: {}, id: "",
+        // A real <button> exposes value "" (live smoke 2026-11-04: labels were written to
+        // .value, so Modern showed MeshCentral's own "Delete"/"Usuń" on the Restart button).
+        value: tag === "button" ? "" : undefined,
         appendChild: function (child) { this.children.push(child); child.parentNode = this; return child; },
         removeChild: function (child) { this.children.splice(this.children.indexOf(child), 1); },
         setAttribute: function (name, value) { this.attributes[name] = String(value); },
@@ -34,7 +37,7 @@ function find(node, cls) {
     return null;
 }
 
-var ok = makeElement("button"); ok.textContent = "OK";
+var ok = makeElement("BUTTON"); ok.tagName = "BUTTON"; ok.value = ""; ok.textContent = "OK";
 var cancel = makeElement("button");
 var danger = makeElement("button"); danger.textContent = "Delete"; danger.style.display = "none";
 cancel.click = function () { hidden++; modal.fire("hidden.bs.modal"); };

@@ -1,3 +1,10 @@
+## 0.1.161 - 2026-11-04
+
+- Poprawka: w nowym UI MeshCentral przyciski okien wtyczki (OK, Uruchom, Zamknij, Restart) dostawały napis w `value`, którego `<button>` nie wyświetla. Czerwony Restart w oknie Napraw/Cofnij pokazywał przez to „Usuń” (natywny napis MeshCentral), a pozostałe przyciski zostawały przy „OK”. Napis jest teraz ustawiany jako tekst przycisku; w klasycznym UI (`<input>`) bez zmian.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.161.md`.
+
 ## 0.1.160 - 2026-11-04
 
 - Okno Napraw/Cofnij (Quick): podczas wykonywania pokazuje upływający czas i stan z serwera (np. „Wykonywanie… (12 s, wysłano do agenta)”), więc widać, że okno czeka na agenta, a nie zawiesiło się.
