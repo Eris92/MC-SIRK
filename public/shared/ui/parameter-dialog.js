@@ -690,6 +690,136 @@
         });
     }
 
+    // One native dialog for a single run: confirm -> spinner -> result -> OK.
+    // options.run() returns a Promise of { output, failed, pending }; it receives
+    // isOpen() so a caller can stop waiting once the dialog was closed.
+    function openRunDialog(options) {
+        options = options || {};
+        var manager = hostDialogManager();
+        if (!manager) return Promise.reject(new Error("Native MeshCentral dialog manager is unavailable."));
+        if (typeof options.run !== "function") return Promise.reject(new Error("Run callback is required."));
+
+        var content = document.createElement("div");
+        content.className = "mc-parameter-dialog-content mc-run-dialog";
+        var message = document.createElement("p");
+        message.className = "mc-shared-muted";
+        message.textContent = text(options.message || "Confirm execution.");
+        content.appendChild(message);
+        appendRebootNotice(content, options.item);
+        var statusHost = document.createElement("div");
+        statusHost.id = "mcRunDialogStatus";
+        statusHost.className = "mc-run-dialog-status";
+        statusHost.hidden = true;
+        content.appendChild(statusHost);
+
+        var title = text(options.title || "Confirm execution");
+        if (manager.mode === "modern") manager.setContent("xxAddAgent", title, content.innerHTML);
+        else manager.show(2, title, 3, null, content.innerHTML);
+
+        var submit = document.getElementById("idx_dlgOkButton");
+        var cancel = document.getElementById("idx_dlgCancelButton");
+        var close = document.getElementById("id_dialogclose");
+        var status = document.getElementById("mcRunDialogStatus");
+        if (!submit || !status) return Promise.reject(new Error("Native MeshCentral confirmation controls are unavailable."));
+
+        var trigger = options.trigger || document.activeElement;
+        var originalSubmitText = readButtonText(submit);
+        var originalSubmitDisabled = !!submit.disabled;
+        var cancelWasHidden = cancel ? cancel.style.display : "";
+        var modernModal = document.getElementById("xxAddAgentModal");
+        var phase = "confirm"; // confirm -> running -> done
+        var cleaned = false;
+        var result = null;
+
+        function showStatus(kind, label, output) {
+            while (status.firstChild) status.removeChild(status.firstChild);
+            status.hidden = false;
+            status.className = "mc-run-dialog-status is-" + kind;
+            var line = document.createElement("div");
+            line.className = "mc-run-dialog-line";
+            if (kind === "running") {
+                var spinner = document.createElement("span");
+                spinner.className = "mc-run-dialog-spinner";
+                spinner.setAttribute("aria-hidden", "true");
+                line.appendChild(spinner);
+            }
+            var caption = document.createElement("span");
+            caption.textContent = label;
+            line.appendChild(caption);
+            status.appendChild(line);
+            if (output) {
+                var pre = document.createElement("pre");
+                pre.className = "mc-run-dialog-output";
+                pre.textContent = output;
+                status.appendChild(pre);
+            }
+            status.setAttribute("role", kind === "failed" ? "alert" : "status");
+        }
+
+        return new Promise(function (resolve) {
+            function cleanup() {
+                if (cleaned) return;
+                cleaned = true;
+                if (manager.mode === "classic") submit.removeEventListener("click", onClassicOk, true);
+                if (cancel) cancel.removeEventListener("click", onClose, true);
+                if (close) close.removeEventListener("click", onClose, true);
+                if (modernModal) modernModal.removeEventListener("hidden.bs.modal", onClose);
+                if (cancel) cancel.style.display = cancelWasHidden;
+                writeButtonText(submit, originalSubmitText);
+                submit.disabled = originalSubmitDisabled;
+                if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
+                resolve(result);
+            }
+            function isOpen() { return !cleaned; }
+            function start() {
+                phase = "running";
+                submit.disabled = true;
+                if (cancel) cancel.style.display = "none";
+                showStatus("running", text(options.runningText || "Running…"));
+                Promise.resolve().then(function () { return options.run(isOpen); }).then(function (value) {
+                    result = value || {};
+                    if (cleaned) return;
+                    var kind = result.failed ? "failed" : (result.pending ? "pending" : "done");
+                    showStatus(kind, text(result.label || ""), text(result.output || ""));
+                }).catch(function (error) {
+                    result = { failed: true, output: error && error.message || String(error) };
+                    if (!cleaned) showStatus("failed", text(options.failedText || "Failed."), result.output);
+                }).then(function () {
+                    if (cleaned) return;
+                    phase = "done";
+                    writeButtonText(submit, text(options.closeLabel || "OK"));
+                    submit.disabled = false;
+                });
+            }
+            // Modern: returning false keeps the modal open for the running/result phases.
+            function onModernOk() {
+                if (phase === "confirm") { start(); return false; }
+                if (phase === "running") return false;
+                return true;
+            }
+            function onClassicOk(event) {
+                if (phase === "done") { cleanup(); return; }
+                if (event) {
+                    if (event.preventDefault) event.preventDefault();
+                    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+                    else if (event.stopPropagation) event.stopPropagation();
+                }
+                if (phase === "confirm") start();
+            }
+            function onClose() { cleanup(); }
+
+            writeButtonText(submit, text(options.primaryLabel || "Run"));
+            submit.disabled = false;
+            if (cancel) cancel.addEventListener("click", onClose, true);
+            if (close) close.addEventListener("click", onClose, true);
+            if (manager.mode === "modern") {
+                if (modernModal) modernModal.addEventListener("hidden.bs.modal", onClose);
+                manager.show("xxAddAgentModal", "idx_dlgOkButton", onModernOk);
+            } else submit.addEventListener("click", onClassicOk, true);
+        });
+    }
+
+    tools.openRunDialog = openRunDialog;
     tools.setParameterOptionProvider = function (provider) {
         sharedOptionProvider = typeof provider === "function" ? provider : null;
     };

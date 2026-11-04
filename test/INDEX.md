@@ -19,6 +19,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | reguły podatności: wykluczenia, naprawy, ustawienia, tabele Quick/My Scripts | `vulnerability-rules.test.js` |
 | My Scripts Entra ID: raport polityki SMS/Voice do CSV (#418) | `entra-sms-voice-policy-report.test.js`, `windows-entra-sms-voice-report-smoke.ps1` |
 | kolumna Repair w CSV, naprawy z portalu, ukrywanie do następnego skanu | `vulnerability-repair.test.js` |
+| okno Napraw/Cofnij w Quick: potwierdzenie, kręciołek, wynik, OK | `run-dialog-runtime.test.js` |
 | flaga „wymagany restart” skryptu i jej informacja w UI | `script-reboot-required.test.js` |
 | import Nessus CSV, snapshot i dopasowanie hostów | `vulnerability-import.test.js`, `vulnerability-route.test.js` |
 | Podatności w Commands i alert/lista w Quick | `commands-vulnerabilities.test.js`, `quick-vulnerability-alert.test.js` |

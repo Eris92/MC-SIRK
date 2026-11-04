@@ -91,8 +91,9 @@ assert.ok(adminJs.indexOf('var theme = hostIsDark() ? "dark" : "light"') >= 0 &&
     "Administration must derive its live state from the parent MeshCentral host theme.");
 assert.ok(adminCss.indexOf("background:transparent!important") >= 0,
     "Administration must expose the host surface instead of painting a private theme.");
-assert.strictEqual(adminCss.indexOf("--sirk-admin"), -1,
-    "Administration CSS must not own a private color palette.");
+// Live smoke 2026-11-04: the admin iframe owns only a theme-keyed text/fallback surface.
+assert.strictEqual(adminCss.replace(/var\(--sirk-admin-surface,#[0-9a-f]+\)/g, "").indexOf("--sirk-admin"), -1,
+    "Administration CSS may only reference the synced --sirk-admin-surface variable.");
 assert.ok(adminRouter.indexOf("req.query.action") >= 0 && adminRouter.indexOf("req.body.action") >= 0,
     "Admin POST routing must accept the action from query or form body.");
 

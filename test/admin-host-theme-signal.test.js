@@ -66,19 +66,24 @@ assert.strictEqual(admin.indexOf("observedStylesheet"), -1,
 assert.strictEqual(admin.indexOf("observedSurface"), -1,
     "Theme owner must not maintain speculative page-43 surface state.");
 
-assert.ok(admin.indexOf('root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";') >= 0 &&
-    admin.indexOf('root.parentElement.style.color = hostStyle.color || "";') >= 0,
-    "The iframe body must copy effective host body colors instead of owning a private palette.");
+// Live smoke 2026-11-04: copying host computed colours left light text on the white
+// admin frame (transparent host paint). Text now comes from the admin palette; only an
+// opaque host surface that agrees with the theme is reused, via a CSS variable.
+assert.strictEqual(admin.indexOf("style.color = hostStyle.color"), -1,
+    "Host text colour must never be copied into the admin frame.");
+assert.ok(admin.indexOf("function hostSurface(theme)") >= 0 &&
+    admin.indexOf('target.style.setProperty("--sirk-admin-surface", surface)') >= 0 &&
+    admin.indexOf('target.style.removeProperty("--sirk-admin-surface")') >= 0,
+    "Host surface is reused only through the --sirk-admin-surface variable.");
 assert.ok(admin.indexOf('root.setAttribute("data-host-theme", theme)') >= 0 &&
-    admin.indexOf('root.parentElement.setAttribute("data-sirk-host-theme", theme)') >= 0,
-    "Theme synchronization must keep semantic theme attributes current.");
-
-assert.strictEqual(adminCss.indexOf('.sirk-admin-host{background-color:'), -1,
-    "Admin CSS must not force a separate background palette.");
-assert.ok(adminCss.indexOf('[data-sirk-host-theme="dark"]') >= 0 &&
-    adminCss.indexOf('color-scheme:dark') >= 0 &&
-    adminCss.indexOf('color-scheme:light') >= 0,
-    "Admin may retain color-scheme semantics without a separate light/dark palette.");
+    admin.indexOf('target.setAttribute("data-sirk-host-theme", theme)') >= 0 &&
+    admin.indexOf("if (hostWindow !== window && document.documentElement) targets.push(document.documentElement);") >= 0,
+    "Theme attributes reach the admin root, its host element and only the plugin's own frame document.");
+assert.ok(adminCss.indexOf('html[data-sirk-host-theme="light"] body') >= 0 &&
+    adminCss.indexOf('background:var(--sirk-admin-surface,#fff)!important;color:#212529!important') >= 0 &&
+    adminCss.indexOf('background:var(--sirk-admin-surface,#1f2226)!important;color:#e3e6ea!important') >= 0 &&
+    adminCss.indexOf('color-scheme:dark') >= 0 && adminCss.indexOf('color-scheme:light') >= 0,
+    "Admin CSS owns readable light/dark text and a fallback surface.");
 assert.strictEqual(admin.indexOf('setInterval('), -1,
     "Admin host theme synchronization must not poll.");
 

@@ -66,17 +66,30 @@
     function syncHostTheme() {
         var theme = hostIsDark() ? "dark" : "light";
         root.setAttribute("data-host-theme", theme);
-        if (root.parentElement) {
-            root.parentElement.classList.add("sirk-admin-host");
-            root.parentElement.setAttribute("data-sirk-host-theme", theme);
-            try {
-                var hostStyle = hostBodyStyle();
-                if (hostStyle) {
-                    root.parentElement.style.backgroundColor = hostStyle.backgroundColor || "";
-                    root.parentElement.style.color = hostStyle.color || "";
-                }
-            } catch (error) {}
-        }
+        // admin.css owns text/background per theme. The host body surface is reused only
+        // when it is opaque and agrees with the theme; host text colour is never copied,
+        // so a transparent/stale host paint cannot leave light text on the white frame.
+        var surface = hostSurface(theme);
+        var targets = [root.parentElement];
+        // Only the plugin's own frame page; never restyle a host document.
+        if (hostWindow !== window && document.documentElement) targets.push(document.documentElement);
+        targets.forEach(function (target) {
+            if (!target) return;
+            if (target === root.parentElement) target.classList.add("sirk-admin-host");
+            target.setAttribute("data-sirk-host-theme", theme);
+            if (target.style && typeof target.style.setProperty === "function") {
+                if (surface) target.style.setProperty("--sirk-admin-surface", surface);
+                else target.style.removeProperty("--sirk-admin-surface");
+            }
+        });
+    }
+
+    function hostSurface(theme) {
+        var bodyStyle = hostBodyStyle();
+        var background = bodyStyle && colorParts(bodyStyle.backgroundColor);
+        if (!background) return "";
+        var dark = ((background[0] * 299 + background[1] * 587 + background[2] * 114) / 1000) < 145;
+        return dark === (theme === "dark") ? bodyStyle.backgroundColor : "";
     }
 
     function observeHostTheme() {
