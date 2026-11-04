@@ -318,6 +318,7 @@
         return JSON.stringify({ meshTable: true, title: msg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(fields).map(function (key) { return { Field: key, Value: String(fields[key] == null ? "" : fields[key]) }; }).concat([{ Field: "Occurrences", Value: String(row.occurrences || 1) }])
             .concat(row.repaired && row.repair ? [{ Field: msg("Naprawione", "Repaired"), Value: (row.repair.value || (row.repair.repairedAt ? formatDate(row.repair.repairedAt) : "—")) + (row.repair.by ? " (" + row.repair.by + ")" : "") + (row.repair.source === "portal" ? msg(" — z portalu, ukryte do następnego skanu", " — from the portal, hidden until the next scan") : msg(" — z CSV", " — from CSV")) }] : [])
             .concat(row.excluded ? [{ Field: msg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") }] : [])
+            .concat(row.note ? [{ Field: msg("Opis", "Description"), Value: row.note.reason }] : [])
             .concat(row.remediation ? [{ Field: msg("Naprawa", "Remediation"), Value: row.remediation.scriptPath }] : [])
             .concat(row.remediation && row.remediation.rollbackScriptPath ? [{ Field: msg("Rollback", "Rollback"), Value: row.remediation.rollbackScriptPath }] : []) });
     }
@@ -350,7 +351,7 @@
             if (row.remediation && row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
             return;
         }
-        if (!row.remediation) { cell.textContent = "—"; return; }
+        if (!row.remediation) { cell.textContent = row.note ? row.note.reason : "—"; return; }
         appendRemediationButton(shell, cell, row.remediation.scriptPath, msg("Napraw", "Fix"), true);
         if (row.remediation.rollbackScriptPath) appendRemediationButton(shell, cell, row.remediation.rollbackScriptPath, msg("Cofnij", "Undo"), false);
     }
@@ -417,7 +418,7 @@
                 { title: "Plugin ID", value: function (row) { return row.fields && row.fields["Plugin ID"] || "—"; } },
                 { title: "Score", value: function (row) { return row.score == null ? "—" : String(row.score); } },
                 { title: "Exploit", value: function (row) { return row.exploit ? msg("Tak", "Yes") : msg("Nie", "No"); } },
-                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.repaired ? msg("naprawione", "repaired") : row.remediation ? remediationLabel(row.remediation.scriptPath) : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
+                { title: msg("Naprawa", "Fix"), value: function (row) { return row.excluded ? msg("wykluczone", "excluded") : row.repaired ? msg("naprawione", "repaired") : row.remediation ? remediationLabel(row.remediation.scriptPath) : row.note ? row.note.reason : "—"; }, render: function (cell, row) { renderRemediation(shell, cell, row); } }
             ]
         });
         if (pages > 1 || (host.truncated === true)) {

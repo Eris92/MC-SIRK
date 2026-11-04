@@ -73,8 +73,8 @@
         var card = element("section", "mc-admin-card");
         card.appendChild(element("h3", "", msg("Podatności", "Vulnerabilities")));
         card.appendChild(element("p", "mc-admin-card-description", msg(
-            "Reguły dla danych Nessus. Wykluczenie ukrywa pasującą podatność z liczników i alertu w Desktop (nadal jest widoczna jako „wykluczona”). Naprawa przypina polecenie z My Commands, które pojawia się jako „Napraw” w Commands i Quick, oraz opcjonalnie polecenie rollback („Cofnij”), np. ponowne włączenie TLS 1.0. Dopasowanie: Plugin ID i/lub nazwa, opcjonalnie host (wzorzec z *). Wykluczenie ma pierwszeństwo przed naprawą.",
-            "Rules for Nessus data. An exclusion removes a matching vulnerability from counts and the Desktop alert (it stays visible as \"excluded\"). A remediation pins a My Commands script shown as \"Fix\" in Commands and Quick, plus an optional rollback command (\"Undo\"), e.g. re-enabling TLS 1.0. Match by Plugin ID and/or name, optionally a host pattern with *. Exclusions win over remediation."
+            "Reguły dla danych Nessus. Wykluczenie ukrywa pasującą podatność z liczników i alertu w Desktop (nadal jest widoczna jako „wykluczona”). Naprawa przypina polecenie z My Commands, które pojawia się jako „Napraw” w Commands i Quick, oraz opcjonalnie polecenie rollback („Cofnij”), np. ponowne włączenie TLS 1.0. Dopasowanie: Plugin ID i/lub nazwa, opcjonalnie host (wzorzec z *). Opis pokazuje sam tekst z pola „Powód” przy podatności, bez przycisków naprawy (np. „Brak wsparcia aplikacji, zaproponuj przejście na inne oprogramowanie”); podatność nadal się liczy. Wykluczenie ma pierwszeństwo przed naprawą.",
+            "Rules for Nessus data. An exclusion removes a matching vulnerability from counts and the Desktop alert (it stays visible as \"excluded\"). A remediation pins a My Commands script shown as \"Fix\" in Commands and Quick, plus an optional rollback command (\"Undo\"), e.g. re-enabling TLS 1.0. Match by Plugin ID and/or name, optionally a host pattern with *. A description shows only the Reason text with the vulnerability, without Fix buttons (e.g. \"Application no longer supported, propose moving to other software\"); the vulnerability still counts. Exclusions win over remediation."
         )));
         if (state.path) card.appendChild(element("p", "mc-admin-card-description", msg("Plik reguł (można go też edytować ręcznie): ", "Rules file (may also be edited by hand): ") + state.path));
         if (state.error) card.appendChild(element("p", "mc-admin-error", msg("Plik reguł jest niepoprawny i nie jest stosowany: ", "The rules file is invalid and is not applied: ") + state.error.reason));
@@ -114,7 +114,7 @@
             var row = list.insertRow();
             row.className = "mc-admin-vuln-rule";
             function cell() { return row.insertCell(); }
-            var action = control(cell(), msg("Typ", "Type"), rule.action || "exclude", { options: [["exclude", msg("Wykluczenie", "Exclusion")], ["remediate", msg("Naprawa", "Remediation")]] });
+            var action = control(cell(), msg("Typ", "Type"), rule.action || "exclude", { options: [["exclude", msg("Wykluczenie", "Exclusion")], ["remediate", msg("Naprawa", "Remediation")], ["note", msg("Opis", "Description")]] });
             var pluginId = control(cell(), "Plugin ID", rule.pluginId, { placeholder: "156860", maxLength: 12 });
             var name = control(cell(), msg("Nazwa pluginu", "Plugin name"), rule.name, { placeholder: "Google Chrome <", maxLength: 200 });
             var nameMode = control(cell(), msg("Dopasowanie nazwy", "Name match"), rule.nameMode || "contains", { options: [["contains", msg("zawiera", "contains")], ["exact", msg("dokładnie", "exact")]] });
@@ -153,6 +153,7 @@
                 script.disabled = rollback.disabled = reboot.disabled = !remediate;
                 script.hidden = rollback.hidden = reboot.hidden = !remediate;
                 row.classList.toggle("is-remediation", remediate);
+                row.classList.toggle("is-note", action.value === "note");
             }
             action.onchange = syncAction;
             syncAction();
@@ -192,11 +193,15 @@
         var addFix = element("button", "mc-admin-secondary", msg("Dodaj naprawę", "Add remediation"));
         addFix.type = "button";
         addFix.onclick = function () { addRule({ action: "remediate" }); };
+        var addNote = element("button", "mc-admin-secondary", msg("Dodaj opis", "Add description"));
+        addNote.type = "button";
+        addNote.onclick = function () { addRule({ action: "note" }); };
         var saveButton = element("button", "mc-admin-primary", msg("Zapisz reguły", "Save rules"));
         saveButton.type = "button";
         var status = element("span", "mc-admin-save-status", "");
         actions.appendChild(addExclusion);
         actions.appendChild(addFix);
+        actions.appendChild(addNote);
         actions.appendChild(saveButton);
         actions.appendChild(status);
         card.appendChild(actions);

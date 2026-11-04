@@ -568,6 +568,7 @@
                     repaired: finding.repaired === true,
                     repair: finding.repair || null,
                     remediation: finding.remediation || null,
+                    note: finding.note || null,
                     pluginId: String(fields["Plugin ID"] || ""),
                     name: String(fields["Plugin Name"] || ""),
                     occurrences: finding.occurrences || 1,
@@ -635,6 +636,7 @@
     function vulnerabilityDetail(row) {
         var extra = [{ Field: "Occurrences", Value: String(row.occurrences) }];
         if (row.excluded) extra.push({ Field: vulnMsg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") });
+        if (row.note) extra.push({ Field: vulnMsg("Opis", "Description"), Value: row.note.reason });
         if (row.remediation) extra.push({ Field: vulnMsg("Naprawa", "Remediation"), Value: row.remediation.scriptPath });
         if (row.repaired) extra.push({ Field: vulnMsg("Naprawione", "Repaired"), Value: repairText(row) + (row.repair && row.repair.by ? " (" + row.repair.by + ")" : "") + (row.repair && row.repair.source === "portal" ? vulnMsg(" — z portalu, ukryte do następnego skanu", " — from the portal, hidden until the next scan") : "") });
         return JSON.stringify({ meshTable: true, title: vulnMsg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(row.fields).map(function (key) { return { Field: key, Value: String(row.fields[key] == null ? "" : row.fields[key]) }; }).concat(extra) });
@@ -698,7 +700,7 @@
                 tr.className = "mc-vuln-row" + (row.excluded || row.repaired ? " is-excluded" : "");
                 tr.tabIndex = 0;
                 [row.host + (row.stale ? vulnMsg(" (nieaktualny)", " (stale)") : ""), vulnRiskLabel(row.risk), row.pluginId, row.name, row.score == null ? "—" : String(row.score), row.exploit ? vulnMsg("Tak", "Yes") : vulnMsg("Nie", "No"),
-                    row.excluded ? vulnMsg("wykluczone", "excluded") : row.repaired ? vulnMsg("naprawione ", "repaired ") + repairText(row) : row.remediation ? row.remediation.scriptPath : "—", row.scan].forEach(function (value, index) {
+                    row.excluded ? vulnMsg("wykluczone", "excluded") : row.repaired ? vulnMsg("naprawione ", "repaired ") + repairText(row) : row.remediation ? row.remediation.scriptPath : row.note ? row.note.reason : "—", row.scan].forEach(function (value, index) {
                     var cell = tr.insertCell();
                     cell.textContent = value;
                     if (index === 1) cell.className = "mc-vulnerability-risk mc-vulnerability-risk-" + row.risk;
