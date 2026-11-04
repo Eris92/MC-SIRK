@@ -1,3 +1,13 @@
+## 0.1.149 - 2026-11-04
+
+- Nessus: host z CSV jest rozpoznawany wyłącznie po nazwie bez domeny (`pc01.firma.local` = `pc01`). Wiersze tej samej maszyny zapisane raz jako FQDN, raz jako krótka nazwa, są łączone w jeden host, więc znika komunikat „Nazwa hosta pasuje do wielu wpisów Nessus”.
+- Adresy IP nie są używane do dopasowania (DHCP zmienia adresy). Gdy kolumna Host zawiera IP, nazwa jest brana z Host Original; wiersz znany tylko po IP nie jest przypisywany do żadnego urządzenia.
+- Dopasowanie urządzenia: najpierw nazwa komputera zgłoszona przez agenta, potem nazwa urządzenia w MeshCentral; pierwsza znaleziona wygrywa.
+- Zapisany snapshot ze starszej wersji jest automatycznie importowany ponownie.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.149.md`.
+
 ## 0.1.148 - 2026-11-04
 
 - Nessus CSV: opcjonalna 18. kolumna „Repair” (ostatnia). Wartość z datą (np. `2026-11-02` lub `2026-11-02 14:30`) albo `tak/yes/true` oznacza naprawę; puste/`nie`/`no`/`false` = otwarta. Plik z 17 kolumnami działa jak dotąd.

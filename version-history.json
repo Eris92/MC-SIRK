@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.149",
+    "date": "2026-11-04",
+    "summary": "Nessus hosts matched by host name without the domain, never by IP address.",
+    "notes": "docs/releases/0.1.149.md"
+  },
+  {
     "version": "0.1.148",
     "date": "2026-11-04",
     "summary": "Optional Nessus CSV Repair column and portal-recorded fixes hide repaired findings until a newer scan.",
