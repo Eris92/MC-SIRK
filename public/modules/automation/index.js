@@ -565,6 +565,8 @@
                     exploit: finding.exploit === true,
                     excluded: finding.excluded === true,
                     exclusion: finding.exclusion || null,
+                    repaired: finding.repaired === true,
+                    repair: finding.repair || null,
                     remediation: finding.remediation || null,
                     pluginId: String(fields["Plugin ID"] || ""),
                     name: String(fields["Plugin Name"] || ""),
@@ -586,9 +588,10 @@
             if (name && row.name.toLowerCase().indexOf(name) < 0) return false;
             if (minScore != null && !isNaN(minScore) && !(Number(row.score) >= minScore)) return false;
             if (f.exploit && row.exploit !== (f.exploit === "yes")) return false;
-            if (f.fix === "active" && row.excluded) return false;
-            if (f.fix === "fix" && (row.excluded || !row.remediation)) return false;
+            if (f.fix === "active" && (row.excluded || row.repaired)) return false;
+            if (f.fix === "fix" && (row.excluded || row.repaired || !row.remediation)) return false;
             if (f.fix === "excluded" && !row.excluded) return false;
+            if (f.fix === "repaired" && !row.repaired) return false;
             return true;
         });
         var direction = vulnState.desc ? -1 : 1;
@@ -608,9 +611,9 @@
         return '"' + textValue.replace(/"/g, '""') + '"';
     }
     function exportVulnerabilities(rows) {
-        var header = ["Host", "Risk", "Plugin ID", "Plugin Name", "Score", "Exploit", "Excluded", "Remediation", "Host OS", "Scan", "Occurrences"];
+        var header = ["Host", "Risk", "Plugin ID", "Plugin Name", "Score", "Exploit", "Excluded", "Remediation", "Host OS", "Scan", "Occurrences", "Repair"];
         var lines = [header.map(csvCell).join(";")].concat(rows.map(function (row) {
-            return [row.host, row.risk, row.pluginId, row.name, row.score == null ? "" : row.score, row.exploit ? "True" : "False", row.excluded ? "True" : "False", row.remediation ? row.remediation.scriptPath : "", row.hostOs, row.scan, row.occurrences].map(csvCell).join(";");
+            return [row.host, row.risk, row.pluginId, row.name, row.score == null ? "" : row.score, row.exploit ? "True" : "False", row.excluded ? "True" : "False", row.remediation ? row.remediation.scriptPath : "", row.hostOs, row.scan, row.occurrences, repairText(row)].map(csvCell).join(";");
         }));
         var blob = new Blob(["﻿" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
         var link = document.createElement("a");
@@ -621,16 +624,25 @@
         link.remove();
         setTimeout(function () { URL.revokeObjectURL(link.href); }, 0);
     }
+    // "Repair" value: the exporter's CSV value, or the time a pinned remediation
+    // was run from the portal (hidden until a newer scan reports it again).
+    function repairText(row) {
+        var repair = row.repaired && row.repair;
+        if (!repair) return "";
+        if (repair.source === "csv") return repair.value || repair.repairedAt || "True";
+        return repair.repairedAt ? new Date(repair.repairedAt).toISOString().replace("T", " ").slice(0, 19) : "True";
+    }
     function vulnerabilityDetail(row) {
         var extra = [{ Field: "Occurrences", Value: String(row.occurrences) }];
         if (row.excluded) extra.push({ Field: vulnMsg("Wykluczenie", "Exclusion"), Value: (row.exclusion && row.exclusion.reason || "—") + (row.exclusion && row.exclusion.expires ? " (" + row.exclusion.expires + ")" : "") });
         if (row.remediation) extra.push({ Field: vulnMsg("Naprawa", "Remediation"), Value: row.remediation.scriptPath });
+        if (row.repaired) extra.push({ Field: vulnMsg("Naprawione", "Repaired"), Value: repairText(row) + (row.repair && row.repair.by ? " (" + row.repair.by + ")" : "") + (row.repair && row.repair.source === "portal" ? vulnMsg(" — z portalu, ukryte do następnego skanu", " — from the portal, hidden until the next scan") : "") });
         return JSON.stringify({ meshTable: true, title: vulnMsg("Szczegóły podatności", "Vulnerability details"), columns: ["Field", "Value"], rows: Object.keys(row.fields).map(function (key) { return { Field: key, Value: String(row.fields[key] == null ? "" : row.fields[key]) }; }).concat(extra) });
     }
     function vulnerabilities(shell) {
         primary(shell, document.createElement("div"));
         loadAllVulnerabilities(shell, false);
-        var all = allVulnerabilityRows().filter(function (row) { return !row.excluded; });
+        var all = allVulnerabilityRows().filter(function (row) { return !row.excluded && !row.repaired; });
         var counts = {};
         all.forEach(function (row) { counts[row.risk] = (counts[row.risk] || 0) + 1; });
         var items = [{ key: "", title: vulnMsg("Wszystkie", "All"), icon: VULN_ICON, badge: vulnState.data ? all.length : null }].concat(VULN_RISKS.map(function (risk) {
@@ -683,10 +695,10 @@
             body.innerHTML = "";
             rows.slice((vulnState.page - 1) * VULN_PAGE_SIZE, vulnState.page * VULN_PAGE_SIZE).forEach(function (row) {
                 var tr = body.insertRow();
-                tr.className = "mc-vuln-row" + (row.excluded ? " is-excluded" : "");
+                tr.className = "mc-vuln-row" + (row.excluded || row.repaired ? " is-excluded" : "");
                 tr.tabIndex = 0;
                 [row.host + (row.stale ? vulnMsg(" (nieaktualny)", " (stale)") : ""), vulnRiskLabel(row.risk), row.pluginId, row.name, row.score == null ? "—" : String(row.score), row.exploit ? vulnMsg("Tak", "Yes") : vulnMsg("Nie", "No"),
-                    row.excluded ? vulnMsg("wykluczone", "excluded") : row.remediation ? row.remediation.scriptPath : "—", row.scan].forEach(function (value, index) {
+                    row.excluded ? vulnMsg("wykluczone", "excluded") : row.repaired ? vulnMsg("naprawione ", "repaired ") + repairText(row) : row.remediation ? row.remediation.scriptPath : "—", row.scan].forEach(function (value, index) {
                     var cell = tr.insertCell();
                     cell.textContent = value;
                     if (index === 1) cell.className = "mc-vulnerability-risk mc-vulnerability-risk-" + row.risk;
@@ -729,7 +741,7 @@
                 control = document.createElement("select");
                 var options = column.filter === "exploit"
                     ? [["", vulnMsg("Wszystkie", "All")], ["yes", vulnMsg("Tak", "Yes")], ["no", vulnMsg("Nie", "No")]]
-                    : [["active", vulnMsg("Aktywne", "Active")], ["fix", vulnMsg("Z naprawą", "With fix")], ["excluded", vulnMsg("Wykluczone", "Excluded")], ["all", vulnMsg("Wszystkie", "All")]];
+                    : [["active", vulnMsg("Aktywne", "Active")], ["fix", vulnMsg("Z naprawą", "With fix")], ["excluded", vulnMsg("Wykluczone", "Excluded")], ["repaired", vulnMsg("Naprawione", "Repaired")], ["all", vulnMsg("Wszystkie", "All")]];
                 options.forEach(function (option) { var item = document.createElement("option"); item.value = option[0]; item.textContent = option[1]; control.appendChild(item); });
                 control.onchange = function () { vulnState.filters[column.filter] = control.value; vulnState.page = 1; fill(); };
             } else if (column.filter) {

@@ -567,7 +567,9 @@
         tree.appendChild(summary);
         // Compact table (risk | name). A click expands the row with details and
         // Fix/Undo; a second click collapses it. Excluded findings stay muted.
-        var findings = host && host.findings || [];
+        // Findings already repaired (CSV "Repair" column or a portal-run fix) stay
+        // hidden until a newer scan reports them again.
+        var findings = (host && host.findings || []).filter(function (finding) { return finding.repaired !== true; });
         var quickScripts = state.data ? flattenScripts(state.data.tree, []) : [];
         function remediationItem(finding, rollback) {
             var remediation = !finding.excluded && finding.remediation;

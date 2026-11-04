@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.147`
+Current version: `0.1.148`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -80,7 +80,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `public/modules/automation/index.js` — My Scripts renderer i browser-side per-script single-flight guard zapobiegający równoległym duplicate submitom tej samej ścieżki;
 - `public/native/desktop-commands.js` — jedyny owner stanu/lifecycle Quick;
 - `public/native/desktop-commands.css` — geometria Quick;
-- `server/core/vulnerability-service.js` — jedyny owner importu Nessus CSV (#422): plik `;`/UTF-8 z 17 kolumnami eksportera wrzucany przez zewnętrzny harmonogram do `sirk-platform-data/nessus/inbox`, leniwie (throttled stat przy odczycie, bez timera/pollingu) walidowany w całości i atomowo publikowany jako `nessus/snapshot.json`; błędny/ucięty plik nie zastępuje ostatniego poprawnego snapshotu. Per host aktywna jest tylko najnowsza generacja, `Plugin ID=0` oznacza brak wykryć, duplikaty append są zliczane jako occurrences. Odczyt per MeshCentral `nodeId` (server-side `resolveNode`, dopasowanie exact Host → exact Host Original → short name, kolizja = `ambiguous`) oraz all-host read tylko dla Site Admin; reguły `nessus/rules.json` (wykluczenia i przypięte polecenia naprawy z My Commands, edycja w zakładce ustawień „Vulnerabilities” lub ręcznie) są stosowane przy odczycie, wykluczenia nie liczą się do liczników ani alertu, niepoprawny plik nie ukrywa niczego; reguła naprawy może mieć opcjonalne polecenie rollback (`rollbackScriptPath`), a Commands/Quick pokazują per wiersz „Napraw”/„Cofnij” przez zwykły przepływ uruchomienia;
+- `server/core/vulnerability-service.js` — jedyny owner importu Nessus CSV (#422): plik `;`/UTF-8 z 17 kolumnami eksportera (opcjonalna 18. kolumna `Repair`) wrzucany przez zewnętrzny harmonogram do `sirk-platform-data/nessus/inbox`, leniwie (throttled stat przy odczycie, bez timera/pollingu) walidowany w całości i atomowo publikowany jako `nessus/snapshot.json`; błędny/ucięty plik nie zastępuje ostatniego poprawnego snapshotu. Per host aktywna jest tylko najnowsza generacja, `Plugin ID=0` oznacza brak wykryć, duplikaty append są zliczane jako occurrences. Odczyt per MeshCentral `nodeId` (server-side `resolveNode`, dopasowanie exact Host → exact Host Original → short name, kolizja = `ambiguous`) oraz all-host read tylko dla Site Admin; reguły `nessus/rules.json` (wykluczenia i przypięte polecenia naprawy z My Commands, edycja w zakładce ustawień „Vulnerabilities” lub ręcznie) są stosowane przy odczycie, wykluczenia nie liczą się do liczników ani alertu, niepoprawny plik nie ukrywa niczego; reguła naprawy może mieć opcjonalne polecenie rollback (`rollbackScriptPath`), a Commands/Quick pokazują per wiersz „Napraw”/„Cofnij” przez zwykły przepływ uruchomienia; podatność naprawiona (wartość `Repair` w CSV: data/tak, albo uruchomienie przypiętej naprawy z portalu zapisane w `nessus/repairs.json`) jest ukryta i nie liczy się do liczników/alertu, dopóki nowszy skan jej ponownie nie zgłosi; rollback czyści znacznik;
 - `server/core/script-library.js` — dyrektywa `# RebootRequired: true` (checkbox w edytorze definicji) ustawia `rebootRequired`; `public/shared/ui/parameter-dialog.js` (`appendRebootNotice`) pokazuje informację o wymaganym restarcie w karcie skryptu, oknie parametrów/potwierdzenia i szczegółach Quick;
 - `admin.js` — mapa assetów i chroniony download CSV; pliki pod segmentem `_siteadmin-reports` pobiera wyłącznie Site Admin.
 
@@ -149,8 +149,8 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.147
-config.json  -> 0.1.147
+package.json -> 0.1.148
+config.json  -> 0.1.148
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.

@@ -337,6 +337,11 @@ module.exports.createModule = function (context) {
                     row = saved;
                 }
                 context.device.auditCommand(node, user, command);
+                // A dispatched pinned remediation marks the host's finding as repaired
+                // until the next scan; the pinned rollback command clears it.
+                if (payload.scriptPath && context.vulnerabilities && typeof context.vulnerabilities.recordScriptRun === "function") {
+                    context.vulnerabilities.recordScriptRun(user, node.node, payload.scriptPath);
+                }
                 return row;
             }).catch(function (error) {
                 var rows = executionRows();
