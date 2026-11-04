@@ -826,6 +826,16 @@
         var tree = element("nav", "sirk-quick-command-tree mc-shared-secondary");
         var details = element("section", "sirk-quick-command-details mc-shared-details");
 
+        // Vulnerabilities is the first Quick category.
+        var vulnButton = element("button", "sirk-quick-vuln-nav");
+        vulnButton.type = "button";
+        vulnButton.title = text("vulnerabilities");
+        addIcon(vulnButton, null, "secpol", "other");
+        vulnButton.appendChild(element("span", "sirk-quick-command-label", text("vulnerabilities") + (hasActiveVulnerabilities(state.vuln.summary) ? " (" + VULN_RISKS.reduce(function (sum, risk) { return sum + (Number(vulnCounts(state.vuln.summary)[risk]) || 0); }, 0) + ")" : "")));
+        vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; render(panel); };
+        applyQuickNav(vulnButton, state.category === VULN_CATEGORY);
+        nav.appendChild(vulnButton);
+
         all.forEach(function (category) {
             var activeCategory = category.key === state.category;
             var button = element("button", "");
@@ -845,15 +855,6 @@
             applyQuickNav(button, activeCategory);
             nav.appendChild(button);
         });
-
-        var vulnButton = element("button", "sirk-quick-vuln-nav");
-        vulnButton.type = "button";
-        vulnButton.title = text("vulnerabilities");
-        addIcon(vulnButton, null, "secpol", "other");
-        vulnButton.appendChild(element("span", "sirk-quick-command-label", text("vulnerabilities") + (hasActiveVulnerabilities(state.vuln.summary) ? " (" + VULN_RISKS.reduce(function (sum, risk) { return sum + (Number(vulnCounts(state.vuln.summary)[risk]) || 0); }, 0) + ")" : "")));
-        vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; render(panel); };
-        applyQuickNav(vulnButton, state.category === VULN_CATEGORY);
-        nav.appendChild(vulnButton);
 
         if (state.category === VULN_CATEGORY) {
             renderVulnerabilities(panel, tree, details);

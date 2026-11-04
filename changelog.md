@@ -1,3 +1,10 @@
+## 0.1.153 - 2026-11-04
+
+- Quick: przycisk „Podatności” jest pierwszy na liście kategorii (na górze), przed kategoriami skryptów.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.153.md`.
+
 ## 0.1.152 - 2026-11-04
 
 - Quick → Podatności: rozwinięty wiersz pokazuje tylko treść pola „Powód” z reguły naprawy (bez etykiety) i przyciski „Napraw” i „Cofnij” obok siebie, bez nazw skryptów (nazwa w podpowiedzi). Informacja o wymaganym restarcie zostaje.

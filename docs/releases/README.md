@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.153`](0.1.153.md) — Vulnerabilities is the first Quick category; pending real smoke;
 - [`0.1.152`](0.1.152.md) — Quick: rule reason, Fix/Undo side by side, repaired findings stay visible; pending real smoke;
 - [`0.1.151`](0.1.151.md) — Quick Fix/Undo buttons styled in both MeshCentral UI themes; pending real smoke;
 - [`0.1.150`](0.1.150.md) — Quick vulnerability row: actions only, fields in the details column; pending real smoke;
