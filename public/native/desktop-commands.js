@@ -398,7 +398,7 @@
     }
 
     // Runs one command and waits (bounded) for the agent result; never touches the panel.
-    function executeAndWait(item, values, isOpen, progress) {
+    function executeAndWait(item, values, isOpen, progress, vulnIntent) {
         progress = typeof progress === "function" ? progress : function () {};
         var started = Date.now();
         function elapsed(status) {
@@ -414,6 +414,7 @@
         if (!payload.nodeId) return Promise.resolve({ failed: true, label: text("failed"), output: "Device is not ready." });
         if (item.kind === "command") payload.commandId = item.commandId;
         else payload.scriptPath = item.path;
+        if (vulnIntent) payload.vulnIntent = vulnIntent; // Fix/Undo button pressed; server validates the value
         progress(elapsed());
         return window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
             var request = response.request || {};
@@ -453,7 +454,7 @@
         return true;
     }
 
-    function runInDialog(panel, item, button, rebootRequired) {
+    function runInDialog(panel, item, button, rebootRequired, rollback) {
         var tools = window.SharedScriptTools;
         if (!tools || typeof tools.openRunDialog !== "function") {
             setOutput(panel, "Native MeshCentral dialog is unavailable.", true, false);
@@ -475,7 +476,7 @@
                     title: value.label, item: value, trigger: button,
                     message: text("confirm") + " \u201e" + value.label + "\u201d" + (currentNode().name ? " (" + currentNode().name + ")" : "") + "?",
                     primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK", backgroundLabel: text("runInBackground"),
-                    run: function (isOpen, progress) { return executeAndWait(value, variableValues, isOpen, progress); },
+                    run: function (isOpen, progress) { return executeAndWait(value, variableValues, isOpen, progress, rollback ? "rollback" : "fix"); },
                     extraAction: value.rebootRequired ? { label: text("restartNow"), run: restartDevice } : null
                 });
             });
@@ -678,11 +679,11 @@
             if (!scriptPath) return null;
             return quickScripts.filter(function (candidate) { return candidate.path === scriptPath; })[0] || { missing: true, label: scriptPath };
         }
-        function launchFix(item, trigger, rebootRequired) {
+        function launchFix(item, trigger, rebootRequired, rollback) {
             if (!item || item.missing) return;
-            runInDialog(panel, item, trigger, rebootRequired === true);
+            runInDialog(panel, item, trigger, rebootRequired === true, rollback === true);
         }
-        function actionButton(host, item, label, style, rebootRequired) {
+        function actionButton(host, item, label, style, rebootRequired, rollback) {
             if (!item) return;
             // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
             // The theme adapter owns btn-*/style10 classes; sirk-primary-action marks Fix as primary.
@@ -690,7 +691,7 @@
             button.type = "button";
             button.disabled = item.missing === true;
             button.title = item.missing ? text("vulnFixUnavailable") : item.label;
-            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button, rebootRequired); };
+            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button, rebootRequired, rollback); };
             host.appendChild(button);
         }
         function exclusionNote(finding) {
@@ -721,7 +722,7 @@
                 // Rule "Reboot request": after a successful run the dialog offers a red Restart.
                 var reboot = finding.remediation.rebootRequired === true;
                 actionButton(actions, fix, text("vulnFix"), "btn-primary", reboot);
-                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary", reboot);
+                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary", reboot, true);
                 cell.appendChild(actions);
             }
             row.appendChild(cell);

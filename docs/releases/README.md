@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.163`](0.1.163.md) — Quick Undo clears the repaired mark (Fix/Undo intent);
 - [`0.1.162`](0.1.162.md) — run dialog text contrast in light theme;
 - [`0.1.161`](0.1.161.md) — Modern dialog button labels (Restart showed „Usuń”);
 - [`0.1.160`](0.1.160.md) — Quick run dialog progress (elapsed time, status), close while running, timeout message; pending live smoke;

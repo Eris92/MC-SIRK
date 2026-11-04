@@ -1,3 +1,10 @@
+## 0.1.163 - 2026-11-04
+
+- Poprawka: Cofnij w Quick zdejmuje znacznik „naprawione” także wtedy, gdy reguła ma ten sam skrypt dla naprawy i cofnięcia. Przycisk przekazuje intencję (`vulnIntent`: fix/rollback; serwer przyjmuje tylko te dwie wartości), a zapis napraw rozpoznaje Cofnij po niej zamiast tylko po ścieżce skryptu. Uruchomienia z My Commands/My Scripts działają jak dotąd.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.163.md`.
+
 ## 0.1.162 - 2026-11-04
 
 - Okno Napraw/Cofnij: pytanie „Uruchomić…?” ma pełny kontrast (bez przygaszenia `mc-shared-muted`, pogrubione), a ostrzeżenie o restarcie mocniejsze tło i pogrubienie. W jasnym motywie modal MeshCentral jest półprzezroczysty i nad szarym obszarem pulpitu tekst był słabo widoczny; tło okna bez zmian.

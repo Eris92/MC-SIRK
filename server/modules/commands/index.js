@@ -327,7 +327,7 @@ module.exports.createModule = function (context) {
             var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: "submitting", requester: request.requester, createdAt: now, updatedAt: now, output: "" };
             // Script runs carry what the vulnerability service needs to mark a
             // pinned remediation as repaired once the agent reports success.
-            if (payload.scriptPath) row.vulnRun = { scriptPath: String(payload.scriptPath), userId: String(user && user._id || ""), userName: String(user && user.name || ""), node: { rname: node.node && node.node.rname || "", name: node.node && node.node.name || "", host: node.node && node.node.host || "" } };
+            if (payload.scriptPath) row.vulnRun = { scriptPath: String(payload.scriptPath), intent: payload.vulnIntent === "fix" || payload.vulnIntent === "rollback" ? payload.vulnIntent : "", userId: String(user && user._id || ""), userName: String(user && user.name || ""), node: { rname: node.node && node.node.rname || "", name: node.node && node.node.name || "", host: node.node && node.node.host || "" } };
             saveExecution(row);
             return context.device.sendRunCommands(node, command, id, null).then(function (state) {
                 var rows = executionRows();
@@ -365,7 +365,7 @@ module.exports.createModule = function (context) {
             var script = library.getScript(value.scriptPath, true);
             if (!script) return Promise.reject(new Error("Script not found."));
             if (script.confirmExecution === true && value.confirmedExecution !== true) return Promise.reject(new Error("Execution confirmation is required for this script."));
-            payload = { nodeId: value.nodeId, nodeName: value.nodeName, scriptPath: script.path, scriptHash: script.hash, label: script.label || script.name, description: script.description || "", approvalLevels: [], variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? value.variableValues : {}, confirmedExecution: script.confirmExecution === true };
+            payload = { nodeId: value.nodeId, nodeName: value.nodeName, scriptPath: script.path, scriptHash: script.hash, label: script.label || script.name, description: script.description || "", approvalLevels: [], variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? value.variableValues : {}, confirmedExecution: script.confirmExecution === true, vulnIntent: value.vulnIntent === "fix" || value.vulnIntent === "rollback" ? value.vulnIntent : "" };
         } else {
             payload = normalizePayload(value);
             if (payload.approvalLevels.length) return Promise.reject(new Error("This command requires approval."));
@@ -518,7 +518,7 @@ module.exports.createModule = function (context) {
             if (repairRun) row.vulnRunRecorded = true;
             writeRows(rows);
             if (repairRun && context.vulnerabilities && typeof context.vulnerabilities.recordScriptRun === "function") {
-                context.vulnerabilities.recordScriptRun({ _id: repairRun.userId, name: repairRun.userName }, repairRun.node, repairRun.scriptPath);
+                context.vulnerabilities.recordScriptRun({ _id: repairRun.userId, name: repairRun.userName }, repairRun.node, repairRun.scriptPath, repairRun.intent || "");
             }
         },
         apiGet: function (asset, req, user) {
