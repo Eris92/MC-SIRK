@@ -325,6 +325,9 @@ module.exports.createModule = function (context) {
             var id = "sirk-platform-" + shared.randomId(10);
             var now = Date.now();
             var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: "submitting", requester: request.requester, createdAt: now, updatedAt: now, output: "" };
+            // Script runs carry what the vulnerability service needs to mark a
+            // pinned remediation as repaired once the agent reports success.
+            if (payload.scriptPath) row.vulnRun = { scriptPath: String(payload.scriptPath), userId: String(user && user._id || ""), userName: String(user && user.name || ""), node: { rname: node.node && node.node.rname || "", name: node.node && node.node.name || "", host: node.node && node.node.host || "" } };
             saveExecution(row);
             return context.device.sendRunCommands(node, command, id, null).then(function (state) {
                 var rows = executionRows();
@@ -337,11 +340,6 @@ module.exports.createModule = function (context) {
                     row = saved;
                 }
                 context.device.auditCommand(node, user, command);
-                // A dispatched pinned remediation marks the host's finding as repaired
-                // until the next scan; the pinned rollback command clears it.
-                if (payload.scriptPath && context.vulnerabilities && typeof context.vulnerabilities.recordScriptRun === "function") {
-                    context.vulnerabilities.recordScriptRun(user, node.node, payload.scriptPath);
-                }
                 return row;
             }).catch(function (error) {
                 var rows = executionRows();
@@ -513,7 +511,15 @@ module.exports.createModule = function (context) {
             row.status = String(command.status || command.state || "completed");
             row.output = shared.cleanText(output == null ? "" : output, 1000000);
             row.updatedAt = Date.now();
+            // A pinned remediation counts as repaired (and its rollback as undone)
+            // only after the agent returns a result that is not failed/error;
+            // a failed run or an offline agent leaves the finding visible.
+            var repairRun = row.vulnRun && !row.vulnRunRecorded && ["failed", "error"].indexOf(row.status.toLowerCase()) < 0 ? row.vulnRun : null;
+            if (repairRun) row.vulnRunRecorded = true;
             writeRows(rows);
+            if (repairRun && context.vulnerabilities && typeof context.vulnerabilities.recordScriptRun === "function") {
+                context.vulnerabilities.recordScriptRun({ _id: repairRun.userId, name: repairRun.userName }, repairRun.node, repairRun.scriptPath);
+            }
         },
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");

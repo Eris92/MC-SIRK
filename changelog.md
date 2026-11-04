@@ -2,7 +2,7 @@
 
 - Nessus CSV: opcjonalna 18. kolumna „Repair” (ostatnia). Wartość z datą (np. `2026-11-02` lub `2026-11-02 14:30`) albo `tak/yes/true` oznacza naprawę; puste/`nie`/`no`/`false` = otwarta. Plik z 17 kolumnami działa jak dotąd.
 - Naprawiona podatność jest ukryta (Quick, Commands, My Scripts) i nie liczy się do liczników ani alertu Desktop, dopóki nowszy skan (wygenerowany po dacie naprawy) znowu jej nie zgłosi. Data bez godziny obejmuje cały dzień.
-- Uruchomienie z portalu przypiętego polecenia naprawy na hoście zapisuje naprawę w `nessus/repairs.json` (z kim i kiedy, zdarzenie audytu „repair”); uruchomienie polecenia rollback ją cofa.
+- Udane uruchomienie z portalu przypiętego polecenia naprawy na hoście (agent zwrócił wynik bez statusu failed/error) zapisuje naprawę w `nessus/repairs.json` (z kim i kiedy, zdarzenie audytu „repair”); udany rollback ją cofa. Nieudany skrypt albo agent offline niczego nie oznacza.
 - Commands: przełącznik „Wykluczone / naprawione” pokazuje ukryte wiersze, kolumna naprawy pokazuje „naprawione” i „Cofnij”. My Scripts: filtr „Naprawione” i kolumna „Repair” w eksporcie CSV (wartość z CSV albo data naprawy z portalu).
 - Real smoke wymagany; bez tagu i release.
 
