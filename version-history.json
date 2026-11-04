@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.153",
+    "date": "2026-11-04",
+    "summary": "Vulnerabilities moved to the top of the Quick category list.",
+    "notes": "docs/releases/0.1.153.md"
+  },
+  {
     "version": "0.1.152",
     "date": "2026-11-04",
     "summary": "Quick vulnerabilities: rule reason and unlabeled Fix/Undo side by side; repaired findings stay listed (muted) so a fix can be undone.",
