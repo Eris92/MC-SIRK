@@ -1,10 +1,15 @@
 [
   {
+    "version": "0.1.157",
+    "date": "2026-11-04",
+    "summary": "Add CSR file input, Enterprise CA signing script and verified certificate download artifact for My Scripts.",
+    "notes": "docs/releases/0.1.157.md"
+  },
+  {
     "version": "0.1.156",
     "date": "2026-11-04",
     "summary": "Add shared Certificate Authority integration (CA config, template, RDP signing thumbprint), CA script category and signed RDP file command for the logged-on user's Desktop.",
     "notes": "docs/releases/0.1.156.md"
-
   },
   {
     "version": "0.1.155",

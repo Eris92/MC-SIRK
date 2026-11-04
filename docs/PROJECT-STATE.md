@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.156`
+Current version: `0.1.157`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -60,6 +60,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `server/core/script-admin-service.js` — owner per-script secret/system-credential metadata; deklarowane `SirkSystemCredential` dependencies oraz kanoniczny namespace `Entra ID` są traktowane jako wymagane profile integracji, a odpowiadające im Entra tenant/client secret variables nie są oferowane jako duplikowane per-script secrets;
 - `server/core/server-script-executor.js` — server-side wykonanie My Scripts, globalna kolejka child-process oraz single-flight zwykłych aktywnych wykonań po requester/script/effective values; specjalne executionOptions zachowują odrębny lifecycle; dla profilu `entra` executor wstrzykuje globalne `tenantId`/`clientId`/`clientSecret` do `MYSCRIPTS_ENTRA_*` oraz kompatybilnych legacy PowerShell variables wyłącznie w child process i fail-closed, jeśli integracja jest niekompletna;
 - `server/core/integration-service.js` — globalne integracje Site Admina, w tym `integrations.ca` (`host\\CA name`, template, RDP signing thumbprint); profil `SirkSystemCredential: CA` przekazuje do My Commands tylko jawne `$SirkCa*`/`$SirkRdpSigningThumbprint`, a do My Scripts `MYSCRIPTS_CA_*`, fail-closed przy braku konfiguracji (#405/#406, real smoke wymagany);
+- `server/core/csr-service.js` + `server/core/artifact-service.js` — walidacja CSR (PEM/DER PKCS#10 z weryfikacją podpisu) oraz staging uploadów `upload-*` i workspace `work-*` w istniejącym magazynie artefaktów żądań; executor My Scripts udostępnia pobranie certyfikatu tylko po weryfikacji klucza i wystawcy (#407, real CA smoke wymagany);
 - `server/core/jira-asset-service.js` — jeden server-side owner Jira users cache (24h freshness/stale fallback), Jira user options i dynamic Jira Assets options; token nie trafia do cache;
 - `server/core/jira-protocol-service.js` — kanoniczny Jira Asset Protocol owner: stable asset identity, przygotowanie PDF, expected final inventory i przejście do shared requester confirmation;
 - `server/core/jira-asset-confirmation-service.js` — bounded live ownership/schema snapshot, stale-state verification i finalne Jira Assets writes po confirmation;
@@ -150,8 +151,8 @@ sirkPlatform.layout.shared-script-columns.collapsed
 Aktualne źródła wersji:
 
 ```text
-package.json -> 0.1.156
-config.json  -> 0.1.156
+package.json -> 0.1.157
+config.json  -> 0.1.157
 ```
 
 Od rewizji 125 trzeci segment `0.1.X` jest numerem development. Poprzednie `0.1.1-dev.X` są historyczne, ponieważ bieżący updater MeshCentral usuwa suffix po `-` przed porównaniem wersji i nie rozróżniał kolejnych `dev.X`.

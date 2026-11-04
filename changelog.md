@@ -1,3 +1,13 @@
+## 0.1.157 - 2026-11-04
+
+- Add a typed file parameter (`VariableFile`/`VariableFileRequired`, format declared as `$Name=csr`) to the shared parameter dialog: exactly one file, 32 KB limit, read only on submit (Issue #407).
+- The My Scripts request API validates the CSR server-side (PEM or DER PKCS#10, supported RSA/ECDSA SHA-256+ or Ed25519 signature, proof of possession), stores a normalized copy in the existing request artifact store under a server-generated, owner/script/variable-bound token and never puts the CSR body in the request, events or output.
+- The executor passes the staged path and a private `MYSCRIPTS_OUTPUT_DIR`, then turns an issued `.cer` into a request-scoped `certificate` artifact only after verifying that its public key matches the CSR and its issuer is the configured CA; pending, denied, empty or mismatched answers fail closed. Uploads and workspaces are removed after every execution, otherwise by the existing 24 h retention.
+- Add `CA/Sign CSR.ps1` (certreq `-submit` with the CA config/template from #405 as separate arguments). Results offers "Download certificate" as an attachment.
+- Add `test/csr-signing.test.js` with OpenSSL fixtures and a PowerShell test double. Real Enterprise CA smoke is required; no tag or GitHub Release.
+
+Current development notes: `docs/releases/0.1.157.md`.
+
 ## 0.1.156 - 2026-11-04
 
 - Add a shared, Site Admin-managed Certificate Authority integration (`host\\CA name`, certificate template, RDP signing thumbprint) validated server-side; no password or private key is stored (Issue #405).

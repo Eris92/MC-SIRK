@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.157`](0.1.157.md) — CSR upload, Enterprise CA signing and verified certificate download (#407); pending real CA smoke;
 - [`0.1.156`](0.1.156.md) — shared CA integration, CA script category and signed RDP file command (#405, #406; integrated after 0.1.155); pending real device smoke;
 - [`0.1.155`](0.1.155.md) — vulnerability rule type "Description" (text only, no Fix buttons); pending real smoke;
 - [`0.1.154`](0.1.154.md) — Reboot request checkbox in vulnerability rules, red restart notice in Quick; pending real smoke;

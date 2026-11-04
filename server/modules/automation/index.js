@@ -11,13 +11,16 @@ var adDirectoryFactory = require("../../core/ad-directory-service.js");
 var smsExternalApi = require("../../core/sms-external-api.js");
 var rootResolver = require("../../core/automation-root.js");
 var folderAccess = require("../../core/folder-access.js");
+var artifactFactory = require("../../core/artifact-service.js");
+var csrService = require("../../core/csr-service.js");
 
 module.exports.createModule = function (context) {
     var root = rootResolver.resolve(context);
     var library = libraryFactory.createScriptLibrary({ fs: context.fs, path: context.nativePath || context.path, root: root, readOnly: true, allowWrite: true });
     var admin = adminFactory.createScriptAdminService({ context: context, library: library, namespace: "script-secrets.myscripts" });
+    var artifacts = artifactFactory.createArtifactService({ fs: context.fs, path: context.nativePath || context.path, dataRoot: context.dataRoot });
     var executor = executorFactory.createServerScriptExecutor({
-        context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials",
+        context: context, library: library, admin: admin, assignmentNamespace: "script-secrets.myscripts.system-credentials", artifacts: artifacts,
         dataFeeds: {
             nessus: function () {
                 return {
@@ -122,6 +125,44 @@ module.exports.createModule = function (context) {
             value = match[1].trim(); return true;
         });
         return value;
+    }
+    // #407: one bounded file per declared file variable, validated before staging.
+    // Client file names and MIME types are never used for paths or format decisions.
+    function stageFileInputs(user, script, files, variableValues) {
+        files = files && typeof files === "object" && !Array.isArray(files) ? files : {};
+        var variables = (script.variables || []).filter(function (variable) { return variable && variable.control === "file"; });
+        Object.keys(files).forEach(function (name) {
+            if (!variables.some(function (variable) { return variable.name === name; })) throw new Error("Unexpected file input.");
+        });
+        var staged = [];
+        try {
+            variables.forEach(function (variable) {
+                var label = variable.label || variable.name;
+                variableValues[variable.name] = "";
+                var file = files[variable.name];
+                if (file == null) {
+                    if (variable.required) throw new Error(label + " is required.");
+                    return;
+                }
+                if (typeof file !== "object" || Array.isArray(file)) throw new Error("Select exactly one file for " + label + ".");
+                var name = String(file.name || "");
+                if (!name || name.length > 255 || /[\u0000-\u001f\u007f\/\\]/.test(name) || /^\.+$/.test(name)) throw new Error("Invalid file name for " + label + ".");
+                var encoded = String(file.data || "");
+                var maxBytes = csrService.MAX_CSR_BYTES;
+                if (encoded.length > Math.ceil(maxBytes / 3) * 4) throw new Error(label + " is larger than " + (maxBytes / 1024) + " KB.");
+                if (!encoded || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error("Invalid file data for " + label + ".");
+                var data = Buffer.from(encoded, "base64");
+                if (variable.fileFormat !== "csr") throw new Error("Unsupported file input format.");
+                data = Buffer.from(csrService.parseCsr(data).pem, "utf8");
+                var token = artifacts.stageUpload({ ownerId: user && user._id, scriptPath: script.path, variable: variable.name, format: variable.fileFormat, data: data });
+                staged.push(token);
+                variableValues[variable.name] = token;
+            });
+        } catch (error) {
+            staged.forEach(function (token) { artifacts.discardUpload(token); });
+            throw error;
+        }
+        return staged;
     }
     // #425: the all-host Nessus feed is stronger than per-device reads; it is
     // restricted to Site Admin both when requesting and right before execution.
@@ -389,8 +430,12 @@ module.exports.createModule = function (context) {
                     confirmedExecution: requestedScript.confirmExecution === true,
                     variableValues: value.variableValues && typeof value.variableValues === "object" && !Array.isArray(value.variableValues) ? shared.copy(value.variableValues) : {}
                 };
+                var stagedFiles = stageFileInputs(user, requestedScript, value.files, payload.variableValues);
                 if (!protocol) {
-                    return context.approval.submit("myscripts", user, payload, value.note).then(function (request) { return { ok: true, request: request }; });
+                    return context.approval.submit("myscripts", user, payload, value.note).then(function (request) { return { ok: true, request: request }; }, function (error) {
+                        stagedFiles.forEach(function (token) { artifacts.discardUpload(token); });
+                        throw error;
+                    });
                 }
 
                 var nonce = shared.randomId(12);

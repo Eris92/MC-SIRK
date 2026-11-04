@@ -5,8 +5,11 @@ var shared = require("./shared.js");
 var DEFAULT_RETENTION_MS = 24 * 60 * 60 * 1000;
 var MAX_CLEANUP_ENTRIES = 200;
 var TYPES = {
-    pdf: { extension: ".pdf", contentType: "application/pdf" }
+    pdf: { extension: ".pdf", contentType: "application/pdf" },
+    certificate: { extension: ".cer", contentType: "application/pkix-cert" }
 };
+var UPLOAD_PATTERN = /^upload-[a-f0-9]{48}$/;
+var WORKSPACE_PATTERN = /^work-[a-f0-9]{32}$/;
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 1000).trim();
@@ -33,7 +36,9 @@ module.exports.createArtifactService = function (options) {
     fs.mkdirSync(root, { recursive: true });
 
     function requestRoot(requestId) {
-        return path.join(root, safeId(requestId));
+        requestId = safeId(requestId);
+        if (UPLOAD_PATTERN.test(requestId) || WORKSPACE_PATTERN.test(requestId)) throw new Error("Invalid artifact identifier.");
+        return path.join(root, requestId);
     }
 
     function artifactPaths(requestId, artifactId, type) {
@@ -109,7 +114,7 @@ module.exports.createArtifactService = function (options) {
             id: metadata.id,
             requestId: metadata.requestId,
             type: metadata.type,
-            label: text(value.label, 160) || (type === "pdf" ? "Open PDF" : "Open artifact"),
+            label: text(value.label, 160) || (type === "pdf" ? "Open PDF" : type === "certificate" ? "Download certificate" : "Open artifact"),
             fileName: metadata.fileName,
             autoOpen: value.autoOpen === true
         };
@@ -141,10 +146,82 @@ module.exports.createArtifactService = function (options) {
         };
     }
 
+    // #407: request-independent upload staging inside the same bounded store.
+    // Directory names are server-generated; client file names never reach a path.
+    function stageUpload(value) {
+        value = value || {};
+        var data = Buffer.isBuffer(value.data) ? value.data : null;
+        if (!data || !data.length) throw new Error("Uploaded file is empty.");
+        var token = "upload-" + shared.randomId(24);
+        var directory = path.join(root, token);
+        fs.mkdirSync(directory, { recursive: false, mode: 448 });
+        try {
+            writeAtomic(path.join(directory, "input.bin"), data, { mode: 384 });
+            writeAtomic(path.join(directory, "upload.json"), JSON.stringify({
+                schemaVersion: 1,
+                token: token,
+                ownerId: text(value.ownerId, 300),
+                scriptPath: text(value.scriptPath, 1000),
+                variable: text(value.variable, 100),
+                format: text(value.format, 32),
+                size: data.length,
+                createdAt: Date.now()
+            }), { encoding: "utf8", mode: 384 });
+        } catch (error) {
+            try { fs.rmSync(directory, { recursive: true, force: true }); } catch (ignore) {}
+            throw error;
+        }
+        cleanup(Date.now());
+        return token;
+    }
+
+    function resolveUpload(token, expected) {
+        expected = expected || {};
+        token = String(token || "");
+        if (!UPLOAD_PATTERN.test(token)) throw new Error("Uploaded file not found.");
+        var directory = path.join(root, token);
+        var metadata;
+        try { metadata = JSON.parse(fs.readFileSync(path.join(directory, "upload.json"), "utf8")); }
+        catch (error) { throw new Error("Uploaded file not found or expired."); }
+        var matches = metadata && metadata.token === token &&
+            metadata.ownerId === text(expected.ownerId, 300) &&
+            metadata.scriptPath === text(expected.scriptPath, 1000) &&
+            metadata.variable === text(expected.variable, 100) &&
+            Number(metadata.createdAt) >= Date.now() - retentionMs;
+        if (!matches) throw new Error("Uploaded file not found or expired.");
+        var file = path.join(directory, "input.bin");
+        var stat;
+        try { stat = fs.statSync(file); } catch (error) { throw new Error("Uploaded file not found or expired."); }
+        if (!stat.isFile()) throw new Error("Uploaded file not found or expired.");
+        return { token: token, path: file, format: String(metadata.format || ""), size: stat.size };
+    }
+
+    function discardUpload(token) {
+        if (!UPLOAD_PATTERN.test(String(token || ""))) return;
+        try { fs.rmSync(path.join(root, String(token)), { recursive: true, force: true }); } catch (error) {}
+    }
+
+    function createWorkspace() {
+        var directory = path.join(root, "work-" + shared.randomId(16));
+        fs.mkdirSync(directory, { recursive: false, mode: 448 });
+        return directory;
+    }
+
+    function removeWorkspace(directory) {
+        var resolved = path.resolve(String(directory || ""));
+        if (path.dirname(resolved) !== path.resolve(root) || !WORKSPACE_PATTERN.test(path.basename(resolved))) return;
+        try { fs.rmSync(resolved, { recursive: true, force: true }); } catch (error) {}
+    }
+
     return {
         cleanup: cleanup,
         create: create,
+        createWorkspace: createWorkspace,
+        discardUpload: discardUpload,
+        removeWorkspace: removeWorkspace,
         resolve: resolve,
-        root: root
+        resolveUpload: resolveUpload,
+        root: root,
+        stageUpload: stageUpload
     };
 };
