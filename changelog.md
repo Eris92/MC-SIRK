@@ -1,3 +1,11 @@
+## 0.1.159 - 2026-11-04
+
+- Quick → Podatności: Napraw/Cofnij nie przełączają już widoku na Skrypty. Otwierają jedno natywne okno MeshCentral: potwierdzenie (z ostrzeżeniem o restarcie), kręciołek „Wykonywanie…”, wynik agenta i OK do zamknięcia. Oczekiwanie na wynik jest ograniczone (~2 min) i kończy się po zamknięciu okna; po sukcesie znacznik „naprawione” jest odczytywany ponownie.
+- Ustawienia wtyczki (Wtyczki → SIRK): własna paleta jasna/ciemna zamiast kopiowania kolorów z MeshCentral, które zostawiało jasny tekst na białym tle; tło hosta jest używane tylko, gdy jest nieprzezroczyste i zgodne z motywem. Zmiana motywu działa bez przeładowania.
+- Bez tagu i release; wymagany test na żywym Meshu.
+
+Current development notes: `docs/releases/0.1.159.md`.
+
 ## 0.1.158 - 2026-11-04
 
 - My Scripts → Entra ID: raport „Get-SmsVoicePolicyUsers” — zakres polityki metod uwierzytelniania SMS/Voice (uwzględnieni/wykluczeni użytkownicy i grupy) do CSV z przyciskiem Download CSV w Wynikach (#418).

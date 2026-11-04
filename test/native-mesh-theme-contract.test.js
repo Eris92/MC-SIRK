@@ -52,7 +52,6 @@ assert.strictEqual(config.indexOf("data-native-theme-sanitized"), -1,
     [quick, "--sdc-text", "private Quick text palette"],
     [quick, "--sdc-active", "private Quick active palette"],
     [quick, "--sdc-hover", "private Quick hover palette"],
-    [admin, "--sirk-admin", "private administration palette"],
     [admin, "prefers-color-scheme", "administration system-theme emulation"],
     [status, "--sirk-status", "private semantic status palette"],
     [status, "#198754", "hard-coded approval success color"],
@@ -66,6 +65,11 @@ assert.strictEqual(config.indexOf("data-native-theme-sanitized"), -1,
         "Native theme contract forbids " + entry[2] + ".");
 });
 
+// Exception (live smoke 2026-11-04): the admin page is an iframe without MeshCentral CSS;
+// copying host colours left light text on a white frame. It may own only a light/dark
+// text + fallback surface keyed by the synced host theme, never system-theme emulation.
+assert.ok(admin.indexOf('html[data-sirk-host-theme="dark"]') >= 0 && admin.indexOf("var(--sirk-admin-surface,") >= 0,
+    "Admin frame palette must follow the synchronized host theme attribute.");
 assert.ok(shared.indexOf("background:transparent!important") >= 0,
     "Shared pages must expose the host MeshCentral surface instead of creating their own background.");
 assert.ok(quick.indexOf("grid-template-columns") >= 0 && quick.indexOf("sirk-desktop-commands-panel") >= 0,

@@ -27,8 +27,13 @@ var rootParent = {
     classList: { add: function () {} },
     setAttribute: parentAttrs.setAttribute,
     getAttribute: parentAttrs.getAttribute,
-    style: {}
+    style: {
+        props: {},
+        setProperty: function (name, value) { this.props[name] = value; },
+        removeProperty: function (name) { delete this.props[name]; }
+    }
 };
+function surface() { return rootParent.style.props["--sirk-admin-surface"]; }
 var adminRoot = {
     parentElement: rootParent,
     setAttribute: rootAttrs.setAttribute,
@@ -36,6 +41,7 @@ var adminRoot = {
 };
 
 var dark = false;
+var transparentHost = false;
 var bodyAttrs = attributes();
 var htmlAttrs = attributes();
 var hostBody = {
@@ -64,6 +70,7 @@ var hostWindow = {
     getComputedStyle: function (target) {
         if (target === stalePage43Surface) return { backgroundColor: "rgb(255, 255, 255)", color: "rgb(0, 0, 0)" };
         assert.strictEqual(target, hostBody, "Admin must copy the canonical host body style, not an arbitrary page-43 ancestor.");
+        if (transparentHost) return { backgroundColor: "rgba(0, 0, 0, 0)", color: "rgb(222, 226, 230)" };
         return dark
             ? { backgroundColor: "rgb(0, 0, 0)", color: "rgb(255, 255, 255)" }
             : { backgroundColor: "rgb(211, 217, 214)", color: "rgb(0, 0, 0)" };
@@ -85,8 +92,8 @@ vm.runInNewContext(themeSource + "\nobserveHostTheme();", context, { filename: "
 
 assert.strictEqual(rootAttrs.values["data-host-theme"], "light", "Initial parent light state must reach the Admin iframe.");
 assert.strictEqual(parentAttrs.values["data-sirk-host-theme"], "light", "Initial parent light state must reach the Admin host surface.");
-assert.strictEqual(rootParent.style.backgroundColor, "rgb(211, 217, 214)", "Iframe body must copy the actual MeshCentral body surface.");
-assert.strictEqual(rootParent.style.color, "rgb(0, 0, 0)");
+assert.strictEqual(surface(), "rgb(211, 217, 214)", "An opaque host surface that agrees with the theme is reused.");
+assert.strictEqual(rootParent.style.color, undefined, "Host text colour is never copied.");
 assert.strictEqual(observerCallbacks.length, 1, "Exactly one parent theme observer must be installed.");
 assert.strictEqual(observed.length, 2, "Only the canonical host html/body theme owners must be observed.");
 assert.ok(observed.some(function (item) {
@@ -99,8 +106,8 @@ htmlAttrs.setAttribute("data-bs-theme", "dark");
 observerCallbacks[0]();
 assert.strictEqual(rootAttrs.values["data-host-theme"], "dark", "Light -> dark must update without iframe reload.");
 assert.strictEqual(parentAttrs.values["data-sirk-host-theme"], "dark");
-assert.strictEqual(rootParent.style.backgroundColor, "rgb(0, 0, 0)", "A stale opaque page-43 ancestor must not keep the iframe white.");
-assert.strictEqual(rootParent.style.color, "rgb(255, 255, 255)");
+assert.strictEqual(surface(), "rgb(0, 0, 0)", "A stale opaque page-43 ancestor must not keep the iframe white.");
+assert.strictEqual(rootParent.style.color, undefined);
 assert.strictEqual(draft.value, "unsaved-change", "Theme synchronization must not touch unsaved form state.");
 
 hostWindow.nightMode = false;
@@ -109,9 +116,20 @@ htmlAttrs.setAttribute("data-bs-theme", "light");
 observerCallbacks[0]();
 assert.strictEqual(rootAttrs.values["data-host-theme"], "light", "Dark -> light must update without iframe reload.");
 assert.strictEqual(parentAttrs.values["data-sirk-host-theme"], "light");
-assert.strictEqual(rootParent.style.backgroundColor, "rgb(211, 217, 214)");
-assert.strictEqual(rootParent.style.color, "rgb(0, 0, 0)");
+assert.strictEqual(surface(), "rgb(211, 217, 214)");
+assert.strictEqual(rootParent.style.color, undefined);
 assert.strictEqual(observerCallbacks.length, 1, "Repeated switches must not create additional observers.");
+
+// Live smoke 2026-11-04: dark host with a transparent body paint. The admin must fall
+// back to its own dark palette instead of keeping a light/white surface.
+dark = true; transparentHost = true;
+htmlAttrs.setAttribute("data-bs-theme", "dark");
+observerCallbacks[0]();
+assert.strictEqual(parentAttrs.values["data-sirk-host-theme"], "dark");
+assert.strictEqual(surface(), undefined, "Transparent host paint must not become the admin surface.");
+dark = false; transparentHost = false;
+htmlAttrs.setAttribute("data-bs-theme", "light");
+observerCallbacks[0]();
 assert.strictEqual(draft.value, "unsaved-change");
 
 console.log("Admin theme sync follows canonical MeshCentral body state and ignores stale page-43 ancestor paint: OK");

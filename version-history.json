@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.159",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerability Fix/Undo run in one dialog (confirm, spinner, result, OK); admin settings readable in light and dark theme.",
+    "notes": "docs/releases/0.1.159.md"
+  },
+  {
     "version": "0.1.158",
     "date": "2026-11-04",
     "summary": "Entra ID My Script: SMS/Voice authentication method policy scope report with downloadable CSV (#418).",

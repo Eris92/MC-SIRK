@@ -44,6 +44,7 @@
     };
     var VULN_CATEGORY = "__sirk-vulnerabilities";
     var VULN_RISKS = ["critical", "high", "medium", "low"];
+    var RUN_DIALOG_ATTEMPTS = 120; // ~2 min of 1 s result checks, then "timeout"
 
     var TEXT = {
         pl: {
@@ -53,7 +54,7 @@
             sent: "Polecenie wysłano do agenta…", completed: "Polecenie zostało wykonane.",
             pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.",
             disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.",
-            timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie",
+            timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", running: "Wykonywanie…",
             required: "Uzupełnij wymagane pola.", collapse: "Zwiń kategorie", expand: "Rozwiń kategorie",
             hideDetails: "Ukryj wynik", showDetails: "Pokaż wynik",
             favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij",
@@ -74,7 +75,7 @@
             sent: "Command sent to the agent…", completed: "Command executed.",
             pending: "Command is waiting for approval.", failed: "Command execution failed.",
             disconnected: "Quick commands require an active Desktop connection.",
-            timeout: "The agent did not confirm command execution.", confirm: "Run command",
+            timeout: "The agent did not confirm command execution.", confirm: "Run command", running: "Running…",
             required: "Complete the required fields.", collapse: "Collapse categories", expand: "Expand categories",
             hideDetails: "Hide output", showDetails: "Show output",
             favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close",
@@ -392,6 +393,82 @@
         }, attempt ? 750 : 250);
     }
 
+    // Runs one command and waits (bounded) for the agent result; never touches the panel.
+    function executeAndWait(item, values, isOpen) {
+        if (!desktopConnected()) return Promise.resolve({ failed: true, label: text("failed"), output: text("disconnected") });
+        var node = currentNode();
+        var payload = {
+            nodeId: nodeId(), nodeName: node.name || "", variableValues: values || {},
+            confirmedExecution: true, desktopDirect: true, note: ""
+        };
+        if (!payload.nodeId) return Promise.resolve({ failed: true, label: text("failed"), output: "Device is not ready." });
+        if (item.kind === "command") payload.commandId = item.commandId;
+        else payload.scriptPath = item.path;
+        return window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
+            var request = response.request || {};
+            var result = request.result || {};
+            if (request.status === "pending") return { pending: true, label: text("pending") };
+            if (!result.id) return { label: text("sent") };
+            return new Promise(function (resolve) {
+                function poll(attempt) {
+                    window.setTimeout(function () {
+                        if (!isOpen()) { resolve({ label: text("sent") }); return; }
+                        window.SirkPlatformCore.api("mycommands", "output", null, { id: result.id }).then(function (response) {
+                            if (response.ready) {
+                                var failed = ["failed", "error"].indexOf(String(response.status || "").toLowerCase()) >= 0;
+                                resolve({ failed: failed, label: text(failed ? "failed" : "completed"), output: response.output || "" });
+                            } else if (attempt < RUN_DIALOG_ATTEMPTS) poll(attempt + 1);
+                            else resolve({ failed: true, label: text("timeout") });
+                        }).catch(function (error) {
+                            resolve({ failed: true, label: text("failed"), output: error && error.message || String(error) });
+                        });
+                    }, attempt ? 1000 : 300);
+                }
+                poll(0);
+            });
+        });
+    }
+
+    // Quick vulnerability Fix/Undo: parameters (if any) -> one dialog with
+    // confirmation, spinner and the agent result; the Quick view stays in place.
+    function runInDialog(panel, item, button) {
+        var tools = window.SharedScriptTools;
+        if (!tools || typeof tools.openRunDialog !== "function") {
+            setOutput(panel, "Native MeshCentral dialog is unavailable.", true, false);
+            return;
+        }
+        if (button) button.disabled = true;
+        window.SirkPlatformCore.api("mycommands", "script", null, { path: item.path }).then(function (response) {
+            var script = response.script || item;
+            var value = {
+                kind: "script", path: script.path,
+                label: localized(script, "label") || script.label || script.name || item.label,
+                variables: script.variables || [], requiresApproval: false,
+                rebootRequired: script.rebootRequired === true || item.rebootRequired === true
+            };
+            var values = !value.variables.length ? Promise.resolve({}) : tools.openParameterDialog({ item: value, trigger: button, primaryLabel: text("run") });
+            return values.then(function (variableValues) {
+                if (variableValues == null) return null;
+                return tools.openRunDialog({
+                    title: value.label, item: value, trigger: button,
+                    message: text("confirm") + " \u201e" + value.label + "\u201d" + (currentNode().name ? " (" + currentNode().name + ")" : "") + "?",
+                    primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK",
+                    run: function (isOpen) { return executeAndWait(value, variableValues, isOpen); }
+                });
+            });
+        }).then(function (result) {
+            // A finished fix/rollback changes the repaired mark: re-read the detail once.
+            if (result && !result.failed && !result.pending && state.vuln.sessionKey) {
+                state.vuln.detail = null;
+                loadVulnerabilityDetail(panel);
+            }
+        }).catch(function (error) {
+            setOutput(panel, text("failed") + " " + (error && error.message || String(error)), true, true);
+        }).then(function () {
+            if (button) button.disabled = false;
+        });
+    }
+
     function selectItem(panel, item, button) {
         function use(value) {
             state.detail = value;
@@ -579,8 +656,7 @@
         }
         function launchFix(item, trigger) {
             if (!item || item.missing) return;
-            state.category = "scripts";
-            selectItem(panel, item, trigger);
+            runInDialog(panel, item, trigger);
         }
         function actionButton(host, item, label, style) {
             if (!item) return;

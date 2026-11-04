@@ -25,3 +25,5 @@ Nie zapisuj tu historii pojedynczego zadania — stan zadania, próby i handoff 
 ## Aktualizacja
 
 Dodawaj wpis tylko wtedy, gdy decyzja ma pozostać prawdziwa po zamknięciu bieżącego Issue.
+
+- 2026-11-04 (0.1.159): wyjątek od „native theme” dla ramki ustawień (iframe bez CSS MeshCentral). Kopiowanie kolorów body hosta dawało jasny tekst na białej ramce w trybie ciemnym (live smoke). Ramka ma teraz własny tekst/tło jasne/ciemne sterowane `data-sirk-host-theme`; tło hosta tylko przez `--sirk-admin-surface`, gdy jest nieprzezroczyste i zgodne z motywem. Reszta UI nadal bez prywatnej palety.
