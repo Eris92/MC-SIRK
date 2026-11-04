@@ -1,3 +1,10 @@
+## 0.1.150 - 2026-11-04
+
+- Quick → Podatności: rozwinięty wiersz pokazuje tylko akcje — „Napraw” i „Cofnij” z opisem skryptu (i informacją o wymaganym restarcie) albo komunikat „Brak przypisanego skryptu naprawy.”; wszystkie pola Nessus są w trzeciej kolumnie (szczegóły). Drugie kliknięcie zwija wiersz.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.150.md`.
+
 ## 0.1.149 - 2026-11-04
 
 - Nessus: host z CSV jest rozpoznawany wyłącznie po nazwie bez domeny (`pc01.firma.local` = `pc01`). Wiersze tej samej maszyny zapisane raz jako FQDN, raz jako krótka nazwa, są łączone w jeden host, więc znika komunikat „Nazwa hosta pasuje do wielu wpisów Nessus”.
