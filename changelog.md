@@ -1,6 +1,7 @@
 ## 0.1.150 - 2026-11-04
 
 - Quick → Podatności: rozwinięty wiersz pokazuje tylko akcje — „Napraw” i „Cofnij” z opisem skryptu (i informacją o wymaganym restarcie) albo komunikat „Brak przypisanego skryptu naprawy.”; wszystkie pola Nessus są w trzeciej kolumnie (szczegóły). Drugie kliknięcie zwija wiersz.
+- „Napraw” (niebieski) i „Cofnij” (szary) mają własny wygląd przycisku z ramką i tłem, niezależnie od stylów strony MeshCentral, zamiast wyglądać jak klikalny tekst.
 - Real smoke wymagany; bez tagu i release.
 
 Current development notes: `docs/releases/0.1.150.md`.
