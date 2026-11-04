@@ -8,6 +8,7 @@ var deviceFactory = require("./device-service.js");
 var integrationFactory = require("./integration-service.js");
 var eventFactory = require("./mesh-events.js");
 var folderAccess = require("./folder-access.js");
+var vulnerabilityFactory = require("./vulnerability-service.js");
 
 var VERSION = require("../../config.json").version;
 var DEFAULTS = {
@@ -124,6 +125,13 @@ module.exports.createRuntime = function (options) {
     };
 
     context.device = deviceFactory.createDeviceService({ parent: parent, source: options.source });
+    context.vulnerabilities = vulnerabilityFactory.createVulnerabilityService({
+        fs: fs,
+        path: nativePath,
+        dataRoot: dataRoot,
+        eventLog: eventLog,
+        device: context.device
+    });
     context.approval = approvalFactory.createApprovalService({
         fs: fs,
         path: nativePath,

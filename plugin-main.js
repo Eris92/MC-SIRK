@@ -229,7 +229,7 @@ function createPlugin(parent, shortName) {
         parent: parent,
         meshServer: parent && parent.parent,
         shortName: shortName || "SIRKPortal",
-        exports: ["onWebUIStartupEnd", "goPageStart", "goPageEnd", "onDeviceRefreshEnd", "commandResult"]
+        exports: ["onWebUIStartupEnd", "goPageStart", "goPageEnd", "onDeviceRefreshEnd", "onDesktopDisconnect", "commandResult"]
     };
 
     try {
@@ -289,6 +289,11 @@ function createPlugin(parent, shortName) {
         window.__SIRK_LAST_NATIVE_PAGE_END__ = view;
         var runtime = window.SirkPlatformRuntime || null;
         if (runtime && typeof runtime.onNativePageEnd === "function") runtime.onNativePageEnd(view);
+    };
+    obj.onDesktopDisconnect = function () {
+        if (typeof window === "undefined") return;
+        var quick = window.SirkDesktopCommands || null;
+        if (quick && typeof quick.refresh === "function") quick.refresh();
     };
     obj.onDeviceRefreshEnd = function (nodeId) {
         if (typeof window === "undefined") return;

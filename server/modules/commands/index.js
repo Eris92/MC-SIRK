@@ -109,6 +109,17 @@ module.exports.createModule = function (context) {
         });
     }
     function requireAdmin(user) { if (!shared.isSiteAdmin(user)) throw new Error("Permission denied."); }
+    // My Commands scripts offered as pinned remediation for vulnerability rules.
+    function remediationCommands() {
+        var result = [];
+        (function walk(node) {
+            (node && node.children || []).forEach(function (child) {
+                if (child.type === "script") result.push({ path: child.path, label: child.label || child.name });
+                else walk(child);
+            });
+        }(library.getTree()));
+        return result.sort(function (a, b) { return a.path.localeCompare(b.path); });
+    }
     function approvalLevels(levels) {
         levels = Array.isArray(levels) ? levels.map(Number) : [];
         return [1, 2, 3].filter(function (level) { return levels.indexOf(level) >= 0; });
@@ -314,6 +325,9 @@ module.exports.createModule = function (context) {
             var id = "sirk-platform-" + shared.randomId(10);
             var now = Date.now();
             var row = { id: id, requestId: request.id || "", nodeId: node.nodeId, nodeName: node.node && node.node.name || payload.nodeName || payload.nodeId, command: command.label, status: "submitting", requester: request.requester, createdAt: now, updatedAt: now, output: "" };
+            // Script runs carry what the vulnerability service needs to mark a
+            // pinned remediation as repaired once the agent reports success.
+            if (payload.scriptPath) row.vulnRun = { scriptPath: String(payload.scriptPath), userId: String(user && user._id || ""), userName: String(user && user.name || ""), node: { rname: node.node && node.node.rname || "", name: node.node && node.node.name || "", host: node.node && node.node.host || "" } };
             saveExecution(row);
             return context.device.sendRunCommands(node, command, id, null).then(function (state) {
                 var rows = executionRows();
@@ -497,7 +511,15 @@ module.exports.createModule = function (context) {
             row.status = String(command.status || command.state || "completed");
             row.output = shared.cleanText(output == null ? "" : output, 1000000);
             row.updatedAt = Date.now();
+            // A pinned remediation counts as repaired (and its rollback as undone)
+            // only after the agent returns a result that is not failed/error;
+            // a failed run or an offline agent leaves the finding visible.
+            var repairRun = row.vulnRun && !row.vulnRunRecorded && ["failed", "error"].indexOf(row.status.toLowerCase()) < 0 ? row.vulnRun : null;
+            if (repairRun) row.vulnRunRecorded = true;
             writeRows(rows);
+            if (repairRun && context.vulnerabilities && typeof context.vulnerabilities.recordScriptRun === "function") {
+                context.vulnerabilities.recordScriptRun({ _id: repairRun.userId, name: repairRun.userName }, repairRun.node, repairRun.scriptPath);
+            }
         },
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
@@ -510,6 +532,14 @@ module.exports.createModule = function (context) {
             if (asset === "script-secrets") { requireScriptAccess(user); return { ok: true, secrets: admin.getSecretState(user, query.path) }; }
             if (asset === "system-credentials") { requireScriptAccess(user); return { ok: true, systemCredentials: admin.getSystemCredentialState(user, query.path) }; }
             if (asset === "command-definition") { requireAdmin(user); var found = requireCommandAccess(user, query.id); return { ok: true, definition: { id: found.command.id, label: found.command.label, description: found.command.description, confirmExecution: found.command.confirmExecution === true, showOnDesktop: found.command.showOnDesktop === true, showWithoutDesktop: found.command.showWithoutDesktop === true } }; }
+            if (asset === "vulnerabilities") return context.vulnerabilities.readForNode(user, query.nodeId, query.detail === "1" || query.detail === "true");
+            if (asset === "vulnerability-rules") {
+                requireAdmin(user);
+                var rulesState = context.vulnerabilities.readRules(user);
+                rulesState.commands = remediationCommands();
+                return rulesState;
+            }
+            if (asset === "vulnerabilities-status") { requireAdmin(user); return context.vulnerabilities.ensureFresh(true).then(function () { return { ok: true, import: context.vulnerabilities.importState(), inbox: context.vulnerabilities.inboxPath }; }); }
             if (asset === "output") return outputForUser(user, query.id);
             if (asset === "results") return approvalResults(user, query);
             if (asset === "settings") return { ok: true, settings: context.settings.read().modules.mycommands || {}, scriptsRoot: root };
@@ -518,6 +548,14 @@ module.exports.createModule = function (context) {
         apiPost: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var value = req && req.body || {};
+            if (asset === "vulnerability-rules") {
+                requireAdmin(user);
+                var savedRules = context.vulnerabilities.saveRules(user, value.rules, function (scriptPath) {
+                    if (!library.getScript(scriptPath, true)) throw new Error("Remediation command not found: " + scriptPath);
+                });
+                savedRules.commands = remediationCommands();
+                return savedRules;
+            }
             if (asset === "execute") {
                 if (value.scriptPath) {
                     requireScriptAccess(user);
