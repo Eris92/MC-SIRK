@@ -1,3 +1,11 @@
+## 0.1.152 - 2026-11-04
+
+- Quick → Podatności: rozwinięty wiersz pokazuje tylko treść pola „Powód” z reguły naprawy (bez etykiety) i przyciski „Napraw” i „Cofnij” obok siebie, bez nazw skryptów (nazwa w podpowiedzi). Informacja o wymaganym restarcie zostaje.
+- Naprawione podatności są w Quick dalej widoczne (wyszarzone, etykieta „naprawione”, w szczegółach data i kto), żeby można było później użyć „Cofnij”. Nie liczą się do liczników ani alertu.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.152.md`.
+
 ## 0.1.151 - 2026-11-04
 
 - Quick → Podatności: „Napraw” (niebieski) i „Cofnij” (szary) są przyciskami także w klasycznym UI MeshCentral. Adapter motywu zamienia tam klasy `btn-*` na `style10`, więc wyróżnienie idzie przez klasę `sirk-primary-action`, a kolory mają `!important`.

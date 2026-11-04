@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.152",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerabilities: rule reason and unlabeled Fix/Undo side by side; repaired findings stay listed (muted) so a fix can be undone.",
+    "notes": "docs/releases/0.1.152.md"
+  },
+  {
     "version": "0.1.151",
     "date": "2026-11-04",
     "summary": "Quick vulnerability Fix/Undo render as buttons in the classic and modern MeshCentral UI.",
