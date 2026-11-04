@@ -65,7 +65,7 @@
             vuln_host_unmatched: "Nie znaleziono hosta w danych Nessus. Stan podatności jest nieznany.",
             vuln_ambiguous: "Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.",
             vuln_stale: "Ostatni skan jest nieaktualny.", vuln_no_findings: "Ostatni skan nie wykazał podatności.",
-            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnNoFix: "Brak przypisanego skryptu naprawy.", vulnRebootRequired: "Po wykonaniu wymagany restart komputera.", vulnRequestFailed: "Nie można odczytać podatności"
+            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnRepaired: "naprawione", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnNoFix: "Brak przypisanego skryptu naprawy.", vulnRebootRequired: "Po wykonaniu wymagany restart komputera.", vulnRequestFailed: "Nie można odczytać podatności"
         },
         en: {
             title: "Quick commands", scripts: "Scripts", search: "Search commands…",
@@ -86,7 +86,7 @@
             vuln_host_unmatched: "This host was not found in the Nessus data. Vulnerability state is unknown.",
             vuln_ambiguous: "The host name matches several Nessus entries. No unambiguous match.",
             vuln_stale: "The latest scan is stale.", vuln_no_findings: "The latest scan reported no vulnerabilities.",
-            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnNoFix: "No remediation script assigned.", vulnRebootRequired: "A restart is required after it runs.", vulnRequestFailed: "Cannot read vulnerabilities"
+            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnRepaired: "repaired", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnNoFix: "No remediation script assigned.", vulnRebootRequired: "A restart is required after it runs.", vulnRequestFailed: "Cannot read vulnerabilities"
         }
     };
 
@@ -566,11 +566,10 @@
             if (host) summary.appendChild(element("div", "", countsText(data)));
         }
         tree.appendChild(summary);
-        // Compact table (risk | name). A click expands the row with details and
-        // Fix/Undo; a second click collapses it. Excluded findings stay muted.
-        // Findings already repaired (CSV "Repair" column or a portal-run fix) stay
-        // hidden until a newer scan reports them again.
-        var findings = (host && host.findings || []).filter(function (finding) { return finding.repaired !== true; });
+        // Compact table (risk | name). A click expands the row with the rule reason
+        // and Fix/Undo; a second click collapses it. Excluded and repaired findings
+        // stay listed but muted, so a fix can still be undone later.
+        var findings = host && host.findings || [];
         var quickScripts = state.data ? flattenScripts(state.data.tree, []) : [];
         function remediationItem(finding, rollback) {
             var remediation = !finding.excluded && finding.remediation;
@@ -587,27 +586,23 @@
             if (!item) return;
             // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
             // The theme adapter owns btn-*/style10 classes; sirk-primary-action marks Fix as primary.
-            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix" + (style === "btn-primary" ? " sirk-primary-action" : ""), label + ": " + item.label);
+            var button = element("button", "btn " + style + " btn-sm sirk-quick-vuln-fix" + (style === "btn-primary" ? " sirk-primary-action" : ""), label);
             button.type = "button";
             button.disabled = item.missing === true;
-            if (item.missing) button.title = text("vulnFixUnavailable");
+            button.title = item.missing ? text("vulnFixUnavailable") : item.label;
             button.onclick = function (event) { event.stopPropagation(); launchFix(item, button); };
             host.appendChild(button);
         }
         function exclusionNote(finding) {
             return element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnExcluded") + (finding.exclusion.reason ? ": " + finding.exclusion.reason : "") + (finding.exclusion.expires ? " (" + finding.exclusion.expires + ")" : ""));
         }
-        // One pinned command (Fix or Undo): button plus the script description.
-        function appendAction(host, item, label, style) {
-            if (!item) return;
-            var block = element("div", "sirk-quick-vuln-action");
-            actionButton(block, item, label, style);
-            if (item.description) block.appendChild(element("div", "sirk-quick-vuln-action-description", item.description));
-            if (item.rebootRequired) block.appendChild(element("div", "sirk-quick-vuln-action-description", text("vulnRebootRequired")));
-            host.appendChild(block);
+        function repairNote(finding) {
+            var repair = finding.repair || {};
+            var at = repair.repairedAt ? new Date(repair.repairedAt).toLocaleString() : repair.value || "";
+            return element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnRepaired") + (at ? ": " + at : "") + (repair.by ? " — " + repair.by : ""));
         }
-        // The expanded row holds only the actions; all Nessus fields go to the
-        // details column.
+        // The expanded row holds the remediation rule reason (plain text) and the
+        // Fix/Undo buttons side by side; all Nessus fields go to the details column.
         function appendExpanded(body, finding) {
             var row = element("tr", "sirk-quick-vuln-expand");
             var cell = element("td", "");
@@ -615,10 +610,13 @@
             if (finding.excluded && finding.exclusion) cell.appendChild(exclusionNote(finding));
             else if (!finding.remediation) cell.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnNoFix")));
             else {
+                if (finding.remediation.reason) cell.appendChild(element("div", "sirk-quick-vuln-action-description", finding.remediation.reason));
+                var fix = remediationItem(finding);
                 var actions = element("div", "sirk-quick-vuln-expand-actions");
-                appendAction(actions, remediationItem(finding), text("vulnFix"), "btn-primary");
-                appendAction(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
+                actionButton(actions, fix, text("vulnFix"), "btn-primary");
+                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
                 cell.appendChild(actions);
+                if (fix && fix.rebootRequired) cell.appendChild(element("div", "sirk-quick-vuln-action-description", text("vulnRebootRequired")));
             }
             row.appendChild(cell);
             body.appendChild(row);
@@ -627,6 +625,7 @@
             var fields = finding.fields || {};
             details.appendChild(element("strong", "sirk-quick-vuln-details-title", (text(finding.risk) || finding.risk) + " · " + (fields["Plugin Name"] || "")));
             if (finding.excluded && finding.exclusion) details.appendChild(exclusionNote(finding));
+            if (finding.repaired) details.appendChild(repairNote(finding));
             Object.keys(fields).forEach(function (name) {
                 var line = element("div", "sirk-quick-vuln-field");
                 line.appendChild(element("strong", "", name + ": "));
@@ -643,14 +642,15 @@
             findings.forEach(function (finding) {
                 var fields = finding.fields || {};
                 var open = vuln.selected === finding;
-                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded ? " is-excluded" : "") + (open ? " is-active" : ""));
+                var row = element("tr", "sirk-quick-vuln-row risk-" + String(finding.risk || "none") + (finding.excluded || finding.repaired ? " is-excluded" : "") + (open ? " is-active" : ""));
                 row.tabIndex = 0;
                 row.title = (fields["Plugin Name"] || "") + " · Plugin " + (fields["Plugin ID"] || "—") + " · Score " + (finding.score == null ? "—" : finding.score) + (finding.exploit ? " · Exploit" : "");
                 row.setAttribute("aria-expanded", open ? "true" : "false");
                 row.appendChild(element("td", "sirk-quick-vuln-risk", text(finding.risk) || finding.risk));
                 var name = element("td", "sirk-quick-vuln-name", fields["Plugin Name"] || "");
                 if (finding.excluded) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnExcluded")));
-                if (!finding.excluded && finding.remediation) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "🔧"));
+                else if (finding.repaired) name.appendChild(element("span", "sirk-quick-vuln-excluded", text("vulnRepaired")));
+                if (!finding.excluded && !finding.repaired && finding.remediation) name.appendChild(element("span", "sirk-quick-vuln-has-fix", "🔧"));
                 row.appendChild(name);
                 function toggle() { vuln.selected = open ? null : finding; render(panel); }
                 row.onclick = toggle;
