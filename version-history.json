@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.154",
+    "date": "2026-11-04",
+    "summary": "Vulnerability rules: Reboot request checkbox; Quick shows a red Restart required next to the fix.",
+    "notes": "docs/releases/0.1.154.md"
+  },
+  {
     "version": "0.1.153",
     "date": "2026-11-04",
     "summary": "Vulnerabilities moved to the top of the Quick category list.",

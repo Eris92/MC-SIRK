@@ -98,7 +98,7 @@
         var wrap = element("div", "mc-admin-table-wrap");
         var table = element("table", "mc-admin-table mc-admin-vuln-table");
         var headRow = table.createTHead().insertRow();
-        [msg("Typ", "Type"), "Plugin ID", msg("Nazwa pluginu", "Plugin name"), msg("Dopasowanie", "Match"), msg("Host (wzorzec)", "Host (pattern)"), msg("Polecenie naprawy", "Remediation command"), msg("Polecenie rollback", "Rollback command"), msg("Powód", "Reason"), msg("Wygasa", "Expires"), msg("Wł.", "On"), ""].forEach(function (title) {
+        [msg("Typ", "Type"), "Plugin ID", msg("Nazwa pluginu", "Plugin name"), msg("Dopasowanie", "Match"), msg("Host (wzorzec)", "Host (pattern)"), msg("Polecenie naprawy", "Remediation command"), msg("Polecenie rollback", "Rollback command"), "Reboot request", msg("Powód", "Reason"), msg("Wygasa", "Expires"), msg("Wł.", "On"), ""].forEach(function (title) {
             headRow.appendChild(element("th", "", title));
         });
         var list = table.createTBody();
@@ -123,6 +123,15 @@
             var script = commandSelect(scriptCell, msg("Polecenie naprawy", "Remediation command"), rule.scriptPath, commandOptions);
             var rollbackCell = cell();
             var rollback = commandSelect(rollbackCell, msg("Polecenie rollback (opcjonalne)", "Rollback command (optional)"), rule.rollbackScriptPath, rollbackOptions);
+            // Reboot request: Quick shows a red "Wymagany restart" next to the fix.
+            var rebootCell = cell();
+            rebootCell.className = "mc-admin-vuln-center";
+            var reboot = document.createElement("input");
+            reboot.type = "checkbox";
+            reboot.checked = rule.rebootRequired === true;
+            reboot.setAttribute("aria-label", msg("Wymagany restart po naprawie", "Restart required after the fix"));
+            reboot.title = reboot.getAttribute("aria-label");
+            rebootCell.appendChild(reboot);
             var reason = control(cell(), msg("Powód", "Reason"), rule.reason, { maxLength: 500 });
             var expires = control(cell(), msg("Wygasa", "Expires"), rule.expires, { type: "date" });
             var enabledCell = cell();
@@ -141,8 +150,8 @@
             removeCell.appendChild(remove);
             function syncAction() {
                 var remediate = action.value === "remediate";
-                script.disabled = rollback.disabled = !remediate;
-                script.hidden = rollback.hidden = !remediate;
+                script.disabled = rollback.disabled = reboot.disabled = !remediate;
+                script.hidden = rollback.hidden = reboot.hidden = !remediate;
                 row.classList.toggle("is-remediation", remediate);
             }
             action.onchange = syncAction;
@@ -159,6 +168,7 @@
                         host: host.value.trim(),
                         scriptPath: action.value === "remediate" ? script.value : "",
                         rollbackScriptPath: action.value === "remediate" ? rollback.value : "",
+                        rebootRequired: action.value === "remediate" && reboot.checked,
                         reason: reason.value.trim(),
                         expires: expires.value,
                         enabled: enabled.checked,

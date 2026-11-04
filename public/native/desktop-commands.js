@@ -65,7 +65,7 @@
             vuln_host_unmatched: "Nie znaleziono hosta w danych Nessus. Stan podatności jest nieznany.",
             vuln_ambiguous: "Nazwa hosta pasuje do wielu wpisów Nessus. Brak jednoznacznego dopasowania.",
             vuln_stale: "Ostatni skan jest nieaktualny.", vuln_no_findings: "Ostatni skan nie wykazał podatności.",
-            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnRepaired: "naprawione", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnNoFix: "Brak przypisanego skryptu naprawy.", vulnRebootRequired: "Po wykonaniu wymagany restart komputera.", vulnRequestFailed: "Nie można odczytać podatności"
+            vuln_available: "Podatności z ostatniego skanu.", vulnScan: "Skan", vulnColRisk: "Ryzyko", vulnColName: "Nazwa", vulnExcluded: "wykluczone", vulnRepaired: "naprawione", vulnFix: "Napraw", vulnUndo: "Cofnij", vulnFixUnavailable: "Polecenie naprawy jest niedostępne dla Ciebie w Desktop.", vulnNoFix: "Brak przypisanego skryptu naprawy.", vulnRebootRequired: "Wymagany restart", vulnRequestFailed: "Nie można odczytać podatności"
         },
         en: {
             title: "Quick commands", scripts: "Scripts", search: "Search commands…",
@@ -86,7 +86,7 @@
             vuln_host_unmatched: "This host was not found in the Nessus data. Vulnerability state is unknown.",
             vuln_ambiguous: "The host name matches several Nessus entries. No unambiguous match.",
             vuln_stale: "The latest scan is stale.", vuln_no_findings: "The latest scan reported no vulnerabilities.",
-            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnRepaired: "repaired", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnNoFix: "No remediation script assigned.", vulnRebootRequired: "A restart is required after it runs.", vulnRequestFailed: "Cannot read vulnerabilities"
+            vuln_available: "Vulnerabilities from the latest scan.", vulnScan: "Scan", vulnColRisk: "Risk", vulnColName: "Name", vulnExcluded: "excluded", vulnRepaired: "repaired", vulnFix: "Fix", vulnUndo: "Undo", vulnFixUnavailable: "The remediation command is not available to you in Desktop.", vulnNoFix: "No remediation script assigned.", vulnRebootRequired: "Restart required", vulnRequestFailed: "Cannot read vulnerabilities"
         }
     };
 
@@ -610,13 +610,14 @@
             if (finding.excluded && finding.exclusion) cell.appendChild(exclusionNote(finding));
             else if (!finding.remediation) cell.appendChild(element("div", "sirk-quick-vuln-field sirk-quick-vuln-excluded-note", text("vulnNoFix")));
             else {
-                if (finding.remediation.reason) cell.appendChild(element("div", "sirk-quick-vuln-action-description", finding.remediation.reason));
                 var fix = remediationItem(finding);
+                if (finding.remediation.reason) cell.appendChild(element("div", "sirk-quick-vuln-action-description", finding.remediation.reason));
+                // Rule "Reboot request" (or a script declaring RebootRequired).
+                if (finding.remediation.rebootRequired || (fix && fix.rebootRequired)) cell.appendChild(element("div", "sirk-quick-vuln-reboot", text("vulnRebootRequired")));
                 var actions = element("div", "sirk-quick-vuln-expand-actions");
                 actionButton(actions, fix, text("vulnFix"), "btn-primary");
                 actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
                 cell.appendChild(actions);
-                if (fix && fix.rebootRequired) cell.appendChild(element("div", "sirk-quick-vuln-action-description", text("vulnRebootRequired")));
             }
             row.appendChild(cell);
             body.appendChild(row);
