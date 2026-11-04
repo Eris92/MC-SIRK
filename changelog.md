@@ -1,3 +1,12 @@
+## 0.1.158 - 2026-11-04
+
+- My Scripts → Entra ID: raport „Get-SmsVoicePolicyUsers” — zakres polityki metod uwierzytelniania SMS/Voice (uwzględnieni/wykluczeni użytkownicy i grupy) do CSV z przyciskiem Download CSV w Wynikach (#418).
+- Używa globalnej integracji Entra (app-only Microsoft Graph, `SirkSystemCredential: Entra`), bez modułu Microsoft.Graph i bez interaktywnego logowania; brak integracji = błąd przed wykonaniem.
+- Unikalna nazwa CSV na wykonanie, nagłówek dla pustego zakresu, ochrona przed formułami w arkuszu; smoke PowerShell w CI Windows.
+- Real smoke (tenant Entra + MeshCentral) wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.158.md`.
+
 ## 0.1.157 - 2026-11-04
 
 - Add a typed file parameter (`VariableFile`/`VariableFileRequired`, format declared as `$Name=csr`) to the shared parameter dialog: exactly one file, 32 KB limit, read only on submit (Issue #407).

@@ -57,3 +57,6 @@ jobs:
       - name: Validate Nessus all-host report script
         shell: powershell
         run: .\test\windows-nessus-report-smoke.ps1
+      - name: Validate Entra SMS Voice report parser and CSV protection
+        shell: powershell
+        run: .\test\windows-entra-sms-voice-report-smoke.ps1
