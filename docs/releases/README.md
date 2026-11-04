@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.151`](0.1.151.md) — Quick Fix/Undo buttons styled in both MeshCentral UI themes; pending real smoke;
 - [`0.1.150`](0.1.150.md) — Quick vulnerability row: actions only, fields in the details column; pending real smoke;
 - [`0.1.149`](0.1.149.md) — Nessus hosts matched by host name without domain, never by IP; pending real smoke;
 - [`0.1.148`](0.1.148.md) — Nessus CSV Repair column; repaired findings hidden until a newer scan; pending real smoke;
