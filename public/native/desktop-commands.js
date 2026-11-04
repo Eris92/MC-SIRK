@@ -55,6 +55,8 @@
             pending: "Polecenie oczekuje na akceptację.", failed: "Nie udało się wykonać polecenia.",
             disconnected: "Quick commands wymagają aktywnego połączenia z pulpitem.",
             timeout: "Agent nie potwierdził wykonania polecenia.", confirm: "Uruchomić polecenie", running: "Wykonywanie…",
+            runInBackground: "Zamknij", restartNow: "Restart", restartUnavailable: "Restart urządzenia jest niedostępny w tym widoku.", runTimeout: "Agent nie zwrócił wyniku w ciągu 2 minut. Polecenie może nadal działać; wynik pojawi się w My Commands → Wyniki.",
+            status_submitting: "wysyłanie", status_sent: "wysłano do agenta", status_executing: "agent wykonuje", status_missing: "brak wpisu",
             required: "Uzupełnij wymagane pola.", collapse: "Zwiń kategorie", expand: "Rozwiń kategorie",
             hideDetails: "Ukryj wynik", showDetails: "Pokaż wynik",
             favorites: "Pokaż ulubione", showAll: "Pokaż wszystkie", refresh: "Odśwież", close: "Zamknij",
@@ -76,6 +78,8 @@
             pending: "Command is waiting for approval.", failed: "Command execution failed.",
             disconnected: "Quick commands require an active Desktop connection.",
             timeout: "The agent did not confirm command execution.", confirm: "Run command", running: "Running…",
+            runInBackground: "Close", restartNow: "Restart", restartUnavailable: "Device restart is not available in this view.", runTimeout: "The agent returned no result within 2 minutes. The command may still be running; the result will appear in My Commands → Results.",
+            status_submitting: "submitting", status_sent: "sent to the agent", status_executing: "agent is running it", status_missing: "no entry",
             required: "Complete the required fields.", collapse: "Collapse categories", expand: "Expand categories",
             hideDetails: "Hide output", showDetails: "Show output",
             favorites: "Show favorites", showAll: "Show all", refresh: "Refresh", close: "Close",
@@ -394,7 +398,13 @@
     }
 
     // Runs one command and waits (bounded) for the agent result; never touches the panel.
-    function executeAndWait(item, values, isOpen) {
+    function executeAndWait(item, values, isOpen, progress) {
+        progress = typeof progress === "function" ? progress : function () {};
+        var started = Date.now();
+        function elapsed(status) {
+            var seconds = Math.round((Date.now() - started) / 1000);
+            return "(" + seconds + " s" + (status ? ", " + (TEXT[language()]["status_" + status] || status) : "") + ")";
+        }
         if (!desktopConnected()) return Promise.resolve({ failed: true, label: text("failed"), output: text("disconnected") });
         var node = currentNode();
         var payload = {
@@ -404,11 +414,13 @@
         if (!payload.nodeId) return Promise.resolve({ failed: true, label: text("failed"), output: "Device is not ready." });
         if (item.kind === "command") payload.commandId = item.commandId;
         else payload.scriptPath = item.path;
+        progress(elapsed());
         return window.SirkPlatformCore.post("mycommands", "execute", payload).then(function (response) {
             var request = response.request || {};
             var result = request.result || {};
             if (request.status === "pending") return { pending: true, label: text("pending") };
             if (!result.id) return { label: text("sent") };
+            progress(elapsed(result.status));
             return new Promise(function (resolve) {
                 function poll(attempt) {
                     window.setTimeout(function () {
@@ -417,8 +429,8 @@
                             if (response.ready) {
                                 var failed = ["failed", "error"].indexOf(String(response.status || "").toLowerCase()) >= 0;
                                 resolve({ failed: failed, label: text(failed ? "failed" : "completed"), output: response.output || "" });
-                            } else if (attempt < RUN_DIALOG_ATTEMPTS) poll(attempt + 1);
-                            else resolve({ failed: true, label: text("timeout") });
+                            } else if (attempt < RUN_DIALOG_ATTEMPTS) { progress(elapsed(response.status)); poll(attempt + 1); }
+                            else resolve({ failed: true, label: text("runTimeout") });
                         }).catch(function (error) {
                             resolve({ failed: true, label: text("failed"), output: error && error.message || String(error) });
                         });
@@ -431,7 +443,17 @@
 
     // Quick vulnerability Fix/Undo: parameters (if any) -> one dialog with
     // confirmation, spinner and the agent result; the Quick view stays in place.
-    function runInDialog(panel, item, button) {
+    // Restart through MeshCentral's own power action: the server checks the
+    // user's RESET/OFF right for the device and records the event itself.
+    function restartDevice() {
+        var server = window.meshserver;
+        var id = nodeId();
+        if (!server || typeof server.send !== "function" || !id) throw new Error(text("restartUnavailable"));
+        server.send({ action: "poweraction", nodeids: [id], actiontype: 3 });
+        return true;
+    }
+
+    function runInDialog(panel, item, button, rebootRequired) {
         var tools = window.SharedScriptTools;
         if (!tools || typeof tools.openRunDialog !== "function") {
             setOutput(panel, "Native MeshCentral dialog is unavailable.", true, false);
@@ -444,7 +466,7 @@
                 kind: "script", path: script.path,
                 label: localized(script, "label") || script.label || script.name || item.label,
                 variables: script.variables || [], requiresApproval: false,
-                rebootRequired: script.rebootRequired === true || item.rebootRequired === true
+                rebootRequired: rebootRequired === true || script.rebootRequired === true || item.rebootRequired === true
             };
             var values = !value.variables.length ? Promise.resolve({}) : tools.openParameterDialog({ item: value, trigger: button, primaryLabel: text("run") });
             return values.then(function (variableValues) {
@@ -452,11 +474,13 @@
                 return tools.openRunDialog({
                     title: value.label, item: value, trigger: button,
                     message: text("confirm") + " \u201e" + value.label + "\u201d" + (currentNode().name ? " (" + currentNode().name + ")" : "") + "?",
-                    primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK",
-                    run: function (isOpen) { return executeAndWait(value, variableValues, isOpen); }
+                    primaryLabel: text("run"), runningText: text("running"), failedText: text("failed"), closeLabel: "OK", backgroundLabel: text("runInBackground"),
+                    run: function (isOpen, progress) { return executeAndWait(value, variableValues, isOpen, progress); },
+                    extraAction: value.rebootRequired ? { label: text("restartNow"), run: restartDevice } : null
                 });
             });
         }).then(function (result) {
+            if (result && result.extraError) setOutput(panel, result.extraError, true, true);
             // A finished fix/rollback changes the repaired mark: re-read the detail once.
             if (result && !result.failed && !result.pending && state.vuln.sessionKey) {
                 state.vuln.detail = null;
@@ -654,11 +678,11 @@
             if (!scriptPath) return null;
             return quickScripts.filter(function (candidate) { return candidate.path === scriptPath; })[0] || { missing: true, label: scriptPath };
         }
-        function launchFix(item, trigger) {
+        function launchFix(item, trigger, rebootRequired) {
             if (!item || item.missing) return;
-            runInDialog(panel, item, trigger);
+            runInDialog(panel, item, trigger, rebootRequired === true);
         }
-        function actionButton(host, item, label, style) {
+        function actionButton(host, item, label, style, rebootRequired) {
             if (!item) return;
             // Pinned remediation reuses the normal Quick script launch (rights, parameters, confirmation).
             // The theme adapter owns btn-*/style10 classes; sirk-primary-action marks Fix as primary.
@@ -666,7 +690,7 @@
             button.type = "button";
             button.disabled = item.missing === true;
             button.title = item.missing ? text("vulnFixUnavailable") : item.label;
-            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button); };
+            button.onclick = function (event) { event.stopPropagation(); launchFix(item, button, rebootRequired); };
             host.appendChild(button);
         }
         function exclusionNote(finding) {
@@ -694,8 +718,10 @@
                 // Rule "Reboot request" (or a script declaring RebootRequired).
                 if (finding.remediation.rebootRequired || (fix && fix.rebootRequired)) cell.appendChild(element("div", "sirk-quick-vuln-reboot", text("vulnRebootRequired")));
                 var actions = element("div", "sirk-quick-vuln-expand-actions");
-                actionButton(actions, fix, text("vulnFix"), "btn-primary");
-                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary");
+                // Rule "Reboot request": after a successful run the dialog offers a red Restart.
+                var reboot = finding.remediation.rebootRequired === true;
+                actionButton(actions, fix, text("vulnFix"), "btn-primary", reboot);
+                actionButton(actions, remediationItem(finding, true), text("vulnUndo"), "btn-secondary", reboot);
                 cell.appendChild(actions);
             }
             row.appendChild(cell);

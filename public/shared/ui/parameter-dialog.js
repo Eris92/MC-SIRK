@@ -726,6 +726,11 @@
         var originalSubmitText = readButtonText(submit);
         var originalSubmitDisabled = !!submit.disabled;
         var cancelWasHidden = cancel ? cancel.style.display : "";
+        // Optional second closing action after a successful run (e.g. a red "Restart"):
+        // the host dialog's own danger button, hidden again on cleanup.
+        var extra = options.extraAction && typeof options.extraAction.run === "function" ? options.extraAction : null;
+        var extraButton = extra ? document.getElementById("idx_dlgDeleteButton") : null;
+        var extraOriginal = extraButton ? { text: readButtonText(extraButton), display: extraButton.style.display } : null;
         var modernModal = document.getElementById("xxAddAgentModal");
         var phase = "confirm"; // confirm -> running -> done
         var cleaned = false;
@@ -765,18 +770,29 @@
                 if (close) close.removeEventListener("click", onClose, true);
                 if (modernModal) modernModal.removeEventListener("hidden.bs.modal", onClose);
                 if (cancel) cancel.style.display = cancelWasHidden;
+                if (extraButton) {
+                    extraButton.removeEventListener("click", onExtra, true);
+                    writeButtonText(extraButton, extraOriginal.text);
+                    extraButton.style.display = extraOriginal.display || "none";
+                }
                 writeButtonText(submit, originalSubmitText);
                 submit.disabled = originalSubmitDisabled;
                 if (trigger && trigger.isConnected !== false && typeof trigger.focus === "function") trigger.focus();
                 resolve(result);
             }
             function isOpen() { return !cleaned; }
+            function progress(detail) {
+                if (cleaned || phase !== "running") return;
+                showStatus("running", text(options.runningText || "Running…") + (detail ? " " + text(detail) : ""));
+            }
             function start() {
                 phase = "running";
-                submit.disabled = true;
+                // While running OK becomes "close": the command keeps running on the agent
+                // and its result stays available in the regular results view.
+                writeButtonText(submit, text(options.backgroundLabel || "Close"));
                 if (cancel) cancel.style.display = "none";
                 showStatus("running", text(options.runningText || "Running…"));
-                Promise.resolve().then(function () { return options.run(isOpen); }).then(function (value) {
+                Promise.resolve().then(function () { return options.run(isOpen, progress); }).then(function (value) {
                     result = value || {};
                     if (cleaned) return;
                     var kind = result.failed ? "failed" : (result.pending ? "pending" : "done");
@@ -788,17 +804,22 @@
                     if (cleaned) return;
                     phase = "done";
                     writeButtonText(submit, text(options.closeLabel || "OK"));
+                    if (extraButton && result && !result.failed && !result.pending && (typeof extra.when !== "function" || extra.when(result))) {
+                        writeButtonText(extraButton, text(extra.label || "Restart"));
+                        extraButton.style.display = "";
+                        extraButton.disabled = false;
+                        extraButton.addEventListener("click", onExtra, true);
+                    }
                     submit.disabled = false;
                 });
             }
             // Modern: returning false keeps the modal open for the running/result phases.
             function onModernOk() {
                 if (phase === "confirm") { start(); return false; }
-                if (phase === "running") return false;
                 return true;
             }
             function onClassicOk(event) {
-                if (phase === "done") { cleanup(); return; }
+                if (phase !== "confirm") { cleanup(); return; }
                 if (event) {
                     if (event.preventDefault) event.preventDefault();
                     if (event.stopImmediatePropagation) event.stopImmediatePropagation();
@@ -807,6 +828,14 @@
                 if (phase === "confirm") start();
             }
             function onClose() { cleanup(); }
+            // Both OK and the extra action close the dialog.
+            function onExtra() {
+                if (phase !== "done" || cleaned) return;
+                try { result = Object.assign({}, result, { extraAction: extra.run() !== false }); }
+                catch (error) { result = Object.assign({}, result, { extraAction: false, extraError: error && error.message || String(error) }); }
+                if (manager.mode === "modern" && cancel) cancel.click();
+                else cleanup();
+            }
 
             writeButtonText(submit, text(options.primaryLabel || "Run"));
             submit.disabled = false;
