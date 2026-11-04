@@ -1,3 +1,11 @@
+## 0.1.154 - 2026-11-04
+
+- Ustawienia → Podatności: w tabeli reguł nowa kolumna z checkboxem „Reboot request” (tylko dla napraw).
+- Quick → Podatności: gdy reguła naprawy ma zaznaczony „Reboot request” (albo skrypt ma RebootRequired), pod powodem pojawia się czerwony komunikat „Wymagany restart”.
+- Real smoke wymagany; bez tagu i release.
+
+Current development notes: `docs/releases/0.1.154.md`.
+
 ## 0.1.153 - 2026-11-04
 
 - Quick: przycisk „Podatności” jest pierwszy na liście kategorii (na górze), przed kategoriami skryptów.
