@@ -853,7 +853,8 @@
         vulnButton.appendChild(element("span", "sirk-quick-command-label", text("vulnerabilities") + (hasActiveVulnerabilities(state.vuln.summary) ? " (" + VULN_RISKS.reduce(function (sum, risk) { return sum + (Number(vulnCounts(state.vuln.summary)[risk]) || 0); }, 0) + ")" : "")));
         vulnButton.onclick = function () { state.category = VULN_CATEGORY; state.vuln.selected = null; state.detail = null; render(panel); };
         applyQuickNav(vulnButton, state.category === VULN_CATEGORY);
-        nav.appendChild(vulnButton);
+        // Vulnerabilities is the first entry of the Quick navigation.
+        nav.insertBefore(vulnButton, nav.firstChild);
 
         if (state.category === VULN_CATEGORY) {
             renderVulnerabilities(panel, tree, details);

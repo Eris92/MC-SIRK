@@ -1,6 +1,7 @@
 ## 0.1.152 - 2026-11-04
 
 - Quick → Podatności: rozwinięty wiersz pokazuje tylko treść pola „Powód” z reguły naprawy (bez etykiety) i przyciski „Napraw” i „Cofnij” obok siebie, bez nazw skryptów (nazwa w podpowiedzi). Informacja o wymaganym restarcie zostaje.
+- Pozycja „Podatności” jest pierwsza w menu Quick (na górze).
 - Naprawione podatności są w Quick dalej widoczne (wyszarzone, etykieta „naprawione”, w szczegółach data i kto), żeby można było później użyć „Cofnij”. Nie liczą się do liczników ani alertu.
 - Real smoke wymagany; bez tagu i release.
 
