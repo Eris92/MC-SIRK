@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.151",
+    "date": "2026-11-04",
+    "summary": "Quick vulnerability Fix/Undo render as buttons in the classic and modern MeshCentral UI.",
+    "notes": "docs/releases/0.1.151.md"
+  },
+  {
     "version": "0.1.150",
     "date": "2026-11-04",
     "summary": "Quick vulnerabilities: expanded row shows only Fix/Undo with script description (or no-fix note); all Nessus fields move to the details column.",
