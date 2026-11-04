@@ -4,6 +4,7 @@
 - Naprawiona podatność jest ukryta (Quick, Commands, My Scripts) i nie liczy się do liczników ani alertu Desktop, dopóki nowszy skan (wygenerowany po dacie naprawy) znowu jej nie zgłosi. Data bez godziny obejmuje cały dzień.
 - Udane uruchomienie z portalu przypiętego polecenia naprawy na hoście (agent zwrócił wynik bez statusu failed/error) zapisuje naprawę w `nessus/repairs.json` (z kim i kiedy, zdarzenie audytu „repair”); udany rollback ją cofa. Nieudany skrypt albo agent offline niczego nie oznacza.
 - Commands: przełącznik „Wykluczone / naprawione” pokazuje ukryte wiersze, kolumna naprawy pokazuje „naprawione” i „Cofnij”. My Scripts: filtr „Naprawione” i kolumna „Repair” w eksporcie CSV (wartość z CSV albo data naprawy z portalu).
+- Dopasowanie hostów Nessus tylko po nazwie hosta bez domeny (FQDN z CSV = sama nazwa hosta z MeshCentral); adresy IP nie są używane (DHCP). Ten sam komputer pod kilkoma nazwami w CSV nie daje już „wiele wpisów Nessus”.
 - Real smoke wymagany; bez tagu i release.
 
 Current development notes: `docs/releases/0.1.148.md`.
