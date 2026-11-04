@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.163",
+    "date": "2026-11-04",
+    "summary": "Quick Undo clears the repaired mark using the pressed button's intent (also when fix and rollback share a script).",
+    "notes": "docs/releases/0.1.163.md"
+  },
+  {
     "version": "0.1.162",
     "date": "2026-11-04",
     "summary": "Run dialog text contrast in light theme over the Desktop view.",

@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.162
+# SIRK Management Platform 0.1.163
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
