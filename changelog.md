@@ -1,3 +1,10 @@
+## 0.1.164 - 2026-11-04
+
+- Quick → Podatności: każde kliknięcie kategorii (lub „Zobacz podatności” w alercie) raz ponownie odczytuje podatności z regułami. Wcześniej szczegóły były trzymane przez całą sesję pulpitu, więc zmiana przypisanego skryptu, opisu lub wykluczenia w ustawieniach była widoczna dopiero po nowym połączeniu. Bez odpytywania w tle.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.164.md`.
+
 ## 0.1.163 - 2026-11-04
 
 - Poprawka: Cofnij w Quick zdejmuje znacznik „naprawione” także wtedy, gdy reguła ma ten sam skrypt dla naprawy i cofnięcia. Przycisk przekazuje intencję (`vulnIntent`: fix/rollback; serwer przyjmuje tylko te dwie wartości), a zapis napraw rozpoznaje Cofnij po niej zamiast tylko po ścieżce skryptu. Uruchomienia z My Commands/My Scripts działają jak dotąd.
