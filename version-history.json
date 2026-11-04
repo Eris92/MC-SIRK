@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.161",
+    "date": "2026-11-04",
+    "summary": "Fix native dialog button labels in Modern UI (Restart showed MeshCentral's Delete label).",
+    "notes": "docs/releases/0.1.161.md"
+  },
+  {
     "version": "0.1.160",
     "date": "2026-11-04",
     "summary": "Quick Fix/Undo dialog: elapsed time and status, close while running, timeout message, red Restart for Reboot request rules.",

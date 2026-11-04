@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.161`](0.1.161.md) — Modern dialog button labels (Restart showed „Usuń”);
 - [`0.1.160`](0.1.160.md) — Quick run dialog progress (elapsed time, status), close while running, timeout message; pending live smoke;
 - [`0.1.159`](0.1.159.md) — Quick vulnerability Fix/Undo dialog with result; admin light/dark palette; pending live smoke;
 - [`0.1.158`](0.1.158.md) — Entra SMS/Voice policy scope CSV report (#418); pending real Entra smoke;
