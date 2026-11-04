@@ -17,6 +17,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | parametr pliku, upload CSR, podpis Enterprise CA i pobranie certyfikatu | `csr-signing.test.js` |
 | integracja CA, profil `SirkSystemCredential: CA` i podpisany plik RDP (Windows: `windows-ca-rdp-smoke.ps1`) | `ca-integration.test.js` |
 | reguły podatności: wykluczenia, naprawy, ustawienia, tabele Quick/My Scripts | `vulnerability-rules.test.js` |
+| My Scripts Entra ID: raport polityki SMS/Voice do CSV (#418) | `entra-sms-voice-policy-report.test.js`, `windows-entra-sms-voice-report-smoke.ps1` |
 | kolumna Repair w CSV, naprawy z portalu, ukrywanie do następnego skanu | `vulnerability-repair.test.js` |
 | flaga „wymagany restart” skryptu i jej informacja w UI | `script-reboot-required.test.js` |
 | import Nessus CSV, snapshot i dopasowanie hostów | `vulnerability-import.test.js`, `vulnerability-route.test.js` |
