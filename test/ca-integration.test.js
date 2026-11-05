@@ -18,7 +18,8 @@ var adminFactory = require(path.join(root, "server/core/script-admin-service.js"
 var executorFactory = require(path.join(root, "server/core/server-script-executor.js"));
 
 var rdpPath = "CA/Generate signed RDP file.ps1";
-var rdpSource = fs.readFileSync(path.join(root, "seed", "MyCommands", rdpPath), "utf8");
+var rdpAgentSource = fs.readFileSync(path.join(root, "seed", "MyCommands", rdpPath), "utf8");
+var rdpSource = fs.readFileSync(path.join(root, "seed", "MyScripts", "CA", "_Sign RDP file.ps1"), "utf8");
 var commandsSource = fs.readFileSync(path.join(root, "server", "modules", "commands", "index.js"), "utf8");
 
 // Bundled CA folders are part of the canonical seed roots.
@@ -89,14 +90,18 @@ save({ config: "bad value without backslash" }).then(function () {
     assert.throws(function () { commandsAdmin.caVariables(rdpPath); }, /not configured/, "missing CA config blocks execution before signing");
 
     // RDP command contract (#406).
-    assert.ok(/^# SirkSystemCredential: CA$/m.test(rdpSource));
+    assert.ok(/^# SirkSystemCredential: CA$/m.test(rdpAgentSource));
+    assert.ok(/^# SirkServerStage: CA\/_Sign RDP file\.ps1$/m.test(rdpAgentSource), "agent script runs the signing stage on the server");
+    assert.ok(/^# SirkStageFor: MyCommands$/m.test(rdpSource), "server stage opts in");
+    assert.ok(rdpAgentSource.indexOf("rdpsign") < 0 && rdpAgentSource.indexOf("Cert:\\") < 0, "agent never signs or touches certificate stores");
+    assert.ok(rdpAgentSource.indexOf("Test-SignedRdpFile $fileName $bytes") < rdpAgentSource.indexOf("WriteAllBytes"), "file checked before delivery");
     assert.ok(rdpSource.indexOf("System32\\rdpsign.exe") >= 0, "system rdpsign.exe is used");
     assert.ok(!/ExecutionPolicy\s+Bypass|C:\\Investa|Read-Host|explorer\.exe/i.test(rdpSource), "reference script anti-patterns removed");
     assert.ok(!/Export-PfxCertificate|Export\(/.test(rdpSource), "private key is never exported");
     assert.ok(rdpSource.indexOf("HasPrivateKey") >= 0 && rdpSource.indexOf("EnhancedKeyUsageList") >= 0, "certificate private key and EKU are checked");
     assert.ok(rdpSource.indexOf("$LASTEXITCODE -ne 0") >= 0 && rdpSource.indexOf("signature:s:") >= 0, "signer exit code and signature are verified before delivery");
     assert.ok(/finally \{\s*if \(Test-Path -LiteralPath \$work\)/.test(rdpSource), "temporary directory is removed on success and failure");
-    assert.ok(rdpSource.indexOf("Copy-Item -LiteralPath $temporaryFile") > rdpSource.indexOf("signature:s:"), "file reaches the Desktop only after verification");
+    assert.ok(rdpSource.indexOf("Copy-Item -LiteralPath $temporaryFile") > rdpSource.indexOf("signature:s:"), "file leaves the server stage only after verification");
     assert.ok(rdpSource.indexOf("[\\x00-\\x1F\\x7F]") >= 0, "control characters in host names are rejected");
     assert.ok(!/^\s*param\s*\(/m.test(rdpSource), "no param block (variables are injected before the body)");
 

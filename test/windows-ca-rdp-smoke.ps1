@@ -3,7 +3,9 @@ $ErrorActionPreference = 'Stop'
 # #406: validate the pure helpers of the signed RDP command without signing,
 # touching certificate stores or writing to any Desktop.
 $root = Split-Path -Parent $PSScriptRoot
-$scriptPath = Join-Path $root 'seed\MyCommands\CA\Generate signed RDP file.ps1'
+# Mixed mode: signing helpers live in the server stage, delivery in the agent script.
+$scriptPath = Join-Path $root 'seed\MyScripts\CA\_Sign RDP file.ps1'
+$agentPath = Join-Path $root 'seed\MyCommands\CA\Generate signed RDP file.ps1'
 $tokens = $null
 $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
@@ -55,6 +57,21 @@ if ($templateNames -notcontains 'RDP Signing' -or $templateNames -notcontains '1
 $v1 = [pscustomobject]@{ Extensions = @((New-FakeExtension '1.3.6.1.4.1.311.20.2' 'WebServer')) }
 if (@(Get-CertificateTemplateNames $v1) -notcontains 'WebServer') { throw 'V1 template name not parsed.' }
 if ($content -notmatch '(?m)^alternate full address:s:pc01\.corp\.local\r?$') { throw 'RDP content must carry the alternate address.' }
+
+# Agent stage: parses and only accepts a signed .rdp with a safe file name.
+$agentErrors = $null
+$agentAst = [System.Management.Automation.Language.Parser]::ParseFile($agentPath, [ref]$null, [ref]$agentErrors)
+if ($agentErrors.Count -gt 0) { $agentErrors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+$agentFunction = $agentAst.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Test-SignedRdpFile' }, $false)
+if ($agentFunction.Count -ne 1) { throw 'Test-SignedRdpFile not found in the agent script.' }
+. ([scriptblock]::Create($agentFunction[0].Extent.Text))
+$signedBytes = [System.Text.Encoding]::Unicode.GetBytes("full address:s:pc01`r`nsignscope:s:Full Address`r`nsignature:s:AAAA`r`n")
+[void](Test-SignedRdpFile 'pc01.rdp' $signedBytes)
+foreach ($case in @(@('..\evil.rdp', $signedBytes), @('pc01.exe', $signedBytes), @('pc01.rdp', [System.Text.Encoding]::Unicode.GetBytes("full address:s:pc01`r`n")))) {
+    $rejected = $false
+    try { [void](Test-SignedRdpFile $case[0] $case[1]) } catch { $rejected = $true }
+    if (-not $rejected) { throw ("Agent accepted an unsafe or unsigned file: " + $case[0]) }
+}
 
 # #407: Sign CSR must parse under Windows PowerShell 5.1.
 $signPath = Join-Path $root 'seed\MyScripts\CA\Sign CSR.ps1'

@@ -1,3 +1,11 @@
+## 0.1.169 - 2026-11-05
+
+- Tryb mieszany w My Commands: skrypt może wskazać w nagłówku skrypt wstępny `# SirkServerStage: <ścieżka My Scripts>`. Najpierw wykonuje się on na serwerze MeshCentral, a jedyny plik, który wytworzy (≤256 KB), trafia do skryptu na hoście jako `$SirkStageFileName` / `$SirkStageFileBase64`. Skrypt wstępny musi być wewnętrzny (nazwa z `_`) i mieć `# SirkStageFor: MyCommands`.
+- Podpisany plik RDP działa w tym trybie: serwer tworzy i podpisuje plik certyfikatem ze swojego `LocalMachine\My` (odcisk albo szablon / autoenroll), a host tylko sprawdza podpis i zapisuje plik na pulpicie zalogowanego użytkownika.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.169.md`.
+
 ## 0.1.168 - 2026-11-05
 
 - Podpisany plik RDP: gdy żaden certyfikat nie pasuje do szablonu, błąd pokazuje nazwę komputera i listę certyfikatów z `LocalMachine\My` (podmiot, rozpoznane nazwy szablonu, klucz prywatny, ważność, odcisk), żeby było widać różnicę w nazwie szablonu. Gdy Windows pokazuje tylko OID szablonu, skrypt dopytuje o jego nazwę (CryptoAPI/AD).
