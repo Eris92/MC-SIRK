@@ -1,3 +1,10 @@
+## 0.1.167 - 2026-11-05
+
+- Edycja skryptu: nowa sekcja „Certificate Authority - this script” z polami „Certificate template (SirkCaTemplate)” i „RDP signing thumbprint (SirkRdpSigningThumbprint)”. Wartości są czytane z nagłówka skryptu i zapisywane do niego (puste pole usuwa linię, wtedy działa wartość globalna). Walidacja jak w ustawieniach CA; błędna wartość nic nie zapisuje.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.167.md`.
+
 ## 0.1.166 - 2026-11-05
 
 - Podpisany plik RDP: certyfikat do podpisu wybierany po odcisku (`SirkRdpSigningThumbprint`) albo, gdy odcisku brak, po szablonie (`SirkCaTemplate`: nazwa, nazwa wyświetlana lub OID). Przy szablonie skrypt bierze najnowszy ważny certyfikat z kluczem prywatnym z `LocalMachine\My`, więc certyfikat z autoenrollmentu i jego odnowienia są używane bez zmiany konfiguracji. Działa też na polskim Windows (zlokalizowany opis rozszerzenia).

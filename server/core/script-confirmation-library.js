@@ -2,6 +2,7 @@
 
 var baseFactory = require("./script-library.js");
 var shared = require("./shared.js");
+var integrationService = require("./integration-service.js");
 
 var CONFIRM_DIRECTIVE = /^\s*#\s*ConfirmExecution\s*:\s*(true|false)\s*$/i;
 var RUN_AS_DIRECTIVE = /^\s*#\s*runAsUser\s*:\s*([012])\s*$/i;
@@ -176,6 +177,42 @@ function updateMultiHostDirective(sourceText, enabled) {
     );
 }
 
+// Per-script CA header lines edited from the script definition form.
+var CA_HEADER_FIELDS = { caTemplate: "SirkCaTemplate", rdpSigningThumbprint: "SirkRdpSigningThumbprint" };
+
+function headerValue(sourceText, name) {
+    var pattern = new RegExp("^\\s*#\\s*" + name + "\\s*:(.*)$", "i");
+    var lines = splitHeader(sourceText).header;
+    for (var index = 0; index < lines.length; index++) {
+        var match = pattern.exec(String(lines[index] || ""));
+        if (match) return String(match[1] || "").trim();
+    }
+    return "";
+}
+
+// Replaces the `# Name: value` header line in place; a new line goes at the end of
+// the first directive block (before the first blank line). Empty value removes it.
+function updateTextDirective(sourceText, name, value) {
+    var pattern = new RegExp("^\\s*#\\s*" + name + "\\s*:", "i");
+    var parts = splitHeader(sourceText);
+    var header = parts.header.slice();
+    var line = "# " + name + ": " + value;
+    var existing = -1;
+    for (var index = 0; index < header.length; index++) {
+        if (pattern.test(String(header[index] || ""))) { existing = index; break; }
+    }
+    if (existing >= 0) {
+        header = header.filter(function (item, position) { return position === existing || !pattern.test(String(item || "")); });
+        if (value) header[existing] = line;
+        else header.splice(existing, 1);
+    } else if (value) {
+        var insertAt = 0;
+        while (insertAt < header.length && String(header[insertAt] || "").trim()) insertAt++;
+        header.splice(insertAt, 0, line);
+    }
+    return header.concat(parts.body).join(parts.newline);
+}
+
 function decorateScript(base, script) {
     if (!script || script.type !== "script") return script;
     var result = shared.copy(script);
@@ -287,6 +324,9 @@ module.exports.createScriptLibrary = function (options) {
         definition.confirmExecution = parseEnabled(source);
         definition.multiHost = parseMultiHost(source);
         definition.runAsUser = normalizeRunAsUser(definition.runAsUser);
+        Object.keys(CA_HEADER_FIELDS).forEach(function (field) {
+            definition[field] = headerValue(source && source.text || "", CA_HEADER_FIELDS[field]);
+        });
         return definition;
     };
 
@@ -302,6 +342,14 @@ module.exports.createScriptLibrary = function (options) {
         var runAsUser = normalizeRunAsUser(definition.runAsUser);
         var multiHost = definition.multiHost !== false;
         definition = shared.copy(definition);
+        var caFields = {};
+        Object.keys(CA_HEADER_FIELDS).forEach(function (field) {
+            if (!Object.prototype.hasOwnProperty.call(definition, field)) return;
+            caFields[field] = shared.cleanText(definition[field] == null ? "" : definition[field], 200).trim();
+            delete definition[field];
+        });
+        // Same validation as the global CA settings (throws before anything is written).
+        integrationService.caScriptOverrides(Object.keys(caFields).map(function (field) { return CA_HEADER_FIELDS[field] + ": " + caFields[field]; }));
         definition.runAsUser = runAsUser;
         definition.multiHost = multiHost;
 
@@ -312,6 +360,10 @@ module.exports.createScriptLibrary = function (options) {
         var updated = updateConfirmDirective(source.text, enabled);
         updated = updateRunAsDirective(updated, runAsUser);
         updated = updateMultiHostDirective(updated, multiHost);
+        Object.keys(caFields).forEach(function (field) {
+            var value = field === "rdpSigningThumbprint" ? caFields[field].replace(/[\s:\u200e\u200f]/g, "").toUpperCase() : caFields[field];
+            updated = updateTextDirective(updated, CA_HEADER_FIELDS[field], value);
+        });
         base.saveSource(relativePath, updated);
         invalidateDecoratedTree();
 
@@ -328,3 +380,5 @@ module.exports.normalizeRunAsUser = normalizeRunAsUser;
 module.exports.parseMultiHost = parseMultiHost;
 module.exports.updateRunAsDirective = updateRunAsDirective;
 module.exports.updateMultiHostDirective = updateMultiHostDirective;
+module.exports.updateTextDirective = updateTextDirective;
+module.exports.headerValue = headerValue;
