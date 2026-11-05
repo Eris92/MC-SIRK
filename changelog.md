@@ -1,3 +1,10 @@
+## 0.1.165 - 2026-11-05
+
+- CA: szablon certyfikatu i odcisk certyfikatu RDP signing można ustawić w nagłówku skryptu (`# SirkCaTemplate: <nazwa>`, `# SirkRdpSigningThumbprint: <sha1>`). Wartość z nagłówka zastępuje domyślną z konfiguracji CA tylko dla tego skryptu; pola w konfiguracji są teraz domyślnymi (opcjonalnymi). CA config (host\CA name) zostaje globalne. Nagłówki są walidowane tak jak ustawienia globalne.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.165.md`.
+
 ## 0.1.164 - 2026-11-04
 
 - Quick → Podatności: każde kliknięcie kategorii (lub „Zobacz podatności” w alercie) raz ponownie odczytuje podatności z regułami. Wcześniej szczegóły były trzymane przez całą sesję pulpitu, więc zmiana przypisanego skryptu, opisu lub wykluczenia w ustawieniach była widoczna dopiero po nowym połączeniu. Bez odpytywania w tle.

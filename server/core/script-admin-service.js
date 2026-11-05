@@ -1,6 +1,7 @@
 "use strict";
 
 var shared = require("./shared.js");
+var integrationService = require("./integration-service.js");
 
 function keyFor(value) {
     return String(value || "")
@@ -252,12 +253,18 @@ module.exports.createScriptAdminService = function (options) {
         var value = script(relativePath);
         if (selectedProfilesForScript(value).indexOf("ca") < 0) return {};
         if (context.integrations.configured().ca !== true) throw new Error("System credential profile 'ca' is assigned but not configured globally.");
-        var ca = context.integrations.get("ca");
+        var ca = integrationService.caForScript(context.integrations.get("ca"), value.extraHeaders);
         return {
             SirkCaConfig: String(ca.config || ""),
             SirkCaTemplate: String(ca.template || ""),
             SirkRdpSigningThumbprint: String(ca.rdpSigningThumbprint || "")
         };
+    }
+
+    // Effective CA values for a server-side script (global + header overrides).
+    function caSettings(relativePath) {
+        var value = script(relativePath);
+        return integrationService.caForScript(context.integrations.get("ca"), value.extraHeaders);
     }
 
     function secretValues(relativePath) {
@@ -322,6 +329,7 @@ module.exports.createScriptAdminService = function (options) {
         getSecretState: getSecretState,
         saveSecrets: saveSecrets,
         caVariables: caVariables,
+        caSettings: caSettings,
         secretValues: secretValues,
         getSystemCredentialState: getSystemCredentialState,
         saveSystemCredentials: saveSystemCredentials,
