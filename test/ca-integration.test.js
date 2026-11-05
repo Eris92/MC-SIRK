@@ -56,6 +56,22 @@ save({ config: "bad value without backslash" }).then(function () {
     assert.strictEqual(values.SirkCaConfig, "CA-SRV01.example.local\\Example Issuing CA");
     assert.ok(commandsSource.indexOf("admin.caVariables(script.path)") >= 0, "Commands inject CA variables into agent scripts");
     assert.strictEqual(JSON.stringify(values).indexOf("password"), -1);
+    assert.strictEqual(values.SirkRdpSigningThumbprint, "ABCDEF0123456789ABCDEF0123456789ABCDEF01", "empty header falls back to the global default");
+    assert.strictEqual(values.SirkCaTemplate, "WebServer");
+
+    // Per-script overrides: header values replace the global template/thumbprint.
+    var integrationModule = require(path.join(root, "server/core/integration-service.js"));
+    var globalCa = { config: "CA\\Name", template: "WebServer", rdpSigningThumbprint: "ABCDEF0123456789ABCDEF0123456789ABCDEF01" };
+    var merged = integrationModule.caForScript(globalCa, ["SirkCaTemplate: User Cert", "SirkRdpSigningThumbprint: 01 23 45 67 89 ab cd ef 01 23 45 67 89 ab cd ef 01 23 45 67"]);
+    assert.deepStrictEqual(merged, { config: "CA\\Name", template: "User Cert", rdpSigningThumbprint: "0123456789ABCDEF0123456789ABCDEF01234567" });
+    assert.deepStrictEqual(integrationModule.caForScript(globalCa, ["SirkCaTemplate:", "SirkSystemCredential: CA"]), globalCa, "empty header keeps the default");
+    assert.deepStrictEqual(integrationModule.caForScript({ config: "CA\\Name" }, ["SirkCaTemplate: Only"]).template, "Only", "template works without a global default");
+    assert.throws(function () { integrationModule.caForScript(globalCa, ["SirkCaTemplate: bad;name"]); }, /SirkCaTemplate/);
+    assert.throws(function () { integrationModule.caForScript(globalCa, ["SirkRdpSigningThumbprint: 1234"]); }, /SirkRdpSigningThumbprint/);
+    var executorSource = fs.readFileSync(path.join(root, "server/core/server-script-executor.js"), "utf8");
+    assert.ok(executorSource.indexOf("admin.caSettings(script.path)") >= 0, "My Scripts executor uses per-script CA settings");
+    assert.ok(typeof commandsAdmin.caSettings === "function");
+    assert.strictEqual(commandsAdmin.caSettings(rdpPath).template, "WebServer");
 
     // My Scripts executor: CA profile -> MYSCRIPTS_CA_* (fail closed when not configured).
     var executor = executorFactory.createServerScriptExecutor({

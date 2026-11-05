@@ -5,6 +5,7 @@ var crypto = require("crypto");
 var shared = require("./shared.js");
 var artifactFactory = require("./artifact-service.js");
 var csrService = require("./csr-service.js");
+var integrationService = require("./integration-service.js");
 
 function text(value, limit) {
     return shared.cleanText(value == null ? "" : value, limit || 4000);
@@ -214,7 +215,9 @@ module.exports.createServerScriptExecutor = function (options) {
         function enabled(name) { return selected.indexOf(name) >= 0; }
 
         if (enabled("ca")) {
-            var ca = context.integrations.get("ca");
+            var ca = admin && typeof admin.caSettings === "function"
+                ? admin.caSettings(script.path)
+                : integrationService.caForScript(context.integrations.get("ca"), script.extraHeaders);
             environment.MYSCRIPTS_CA_CONFIG = String(ca.config || "");
             environment.MYSCRIPTS_CA_TEMPLATE = String(ca.template || "");
             environment.MYSCRIPTS_RDP_SIGNING_THUMBPRINT = String(ca.rdpSigningThumbprint || "");

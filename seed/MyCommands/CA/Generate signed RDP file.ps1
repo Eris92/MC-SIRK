@@ -2,12 +2,14 @@
 # EN: Signed RDP file | Generates an .rdp file, signs it with the configured RDP signing certificate and saves it to the logged-on user's Desktop.
 # runAsUser: 0
 # SirkSystemCredential: CA
+# SirkRdpSigningThumbprint:
 # VariablePL: $TargetHost, Host docelowy | Nazwa lub FQDN hosta w pliku RDP (puste = ten komputer)
 # VariableEN: $TargetHost, Target host | Host name or FQDN written to the RDP file (empty = this computer)
 
 # #406. Runs on the selected Windows device through the MeshAgent (SYSTEM).
-# - The signing certificate is selected by the non-secret thumbprint from the
-#   global CA integration ($SirkRdpSigningThumbprint); nothing is hard-coded.
+# - The signing certificate is selected by the non-secret thumbprint
+#   ($SirkRdpSigningThumbprint): the SirkRdpSigningThumbprint header above when
+#   set, otherwise the global CA default; nothing is hard-coded.
 # - The private key never leaves the certificate store; the system rdpsign.exe is used.
 # - The Desktop of the interactive user is resolved from the console session
 #   owner's profile (honouring Desktop folder redirection), never from input.
@@ -50,7 +52,7 @@ function Get-InteractiveDesktop {
 
 function Get-SigningCertificate([string]$Thumbprint) {
     $normalized = ($Thumbprint -replace '[\s:\u200e\u200f]', '').ToUpperInvariant()
-    if ($normalized -notmatch '^[0-9A-F]{40}$') { throw 'RDP signing thumbprint is missing or invalid in the CA integration settings.' }
+    if ($normalized -notmatch '^[0-9A-F]{40}$') { throw 'RDP signing thumbprint is missing or invalid: set # SirkRdpSigningThumbprint in the script header or a default thumbprint in the CA integration.' }
     $certificate = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $normalized } | Select-Object -First 1
     if (-not $certificate) { throw 'The configured RDP signing certificate is not installed in LocalMachine\My on this device.' }
     if (-not $certificate.HasPrivateKey) { throw 'The configured RDP signing certificate has no private key on this device.' }

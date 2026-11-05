@@ -2,14 +2,16 @@
 # EN: Sign CSR | Submits the selected PKCS#10 CSR to the configured Enterprise CA and returns the issued certificate for download.
 # Approval: false
 # SirkSystemCredential: CA
+# SirkCaTemplate:
 # VariableFileRequiredPL: $CsrFile=csr, Plik CSR | Jeden plik PKCS#10 w formacie PEM lub DER, maks. 32 KB
 # VariableFileRequiredEN: $CsrFile=csr, CSR file | One PKCS#10 file in PEM or DER format, max 32 KB
 
 # #407. Runs server-side through the My Scripts executor.
 # - $CsrFile is a server-controlled path to a CSR already validated by the server
 #   (structure, supported algorithm, proof-of-possession signature).
-# - CA config and template come only from the global CA integration
-#   (MYSCRIPTS_CA_CONFIG / MYSCRIPTS_CA_TEMPLATE); nothing is hard-coded.
+# - CA config comes from the global CA integration (MYSCRIPTS_CA_CONFIG). The template
+#   (MYSCRIPTS_CA_TEMPLATE) is the SirkCaTemplate header above when set, otherwise the
+#   global default template; nothing is hard-coded.
 # - certreq.exe receives every value as a separate argument; no command string is built.
 # - The issued certificate is written to MYSCRIPTS_OUTPUT_DIR; the server verifies that its
 #   public key matches the CSR and that the issuer is the configured CA before offering it.
@@ -25,7 +27,7 @@ $outputDirectory = [string]$env:MYSCRIPTS_OUTPUT_DIR
 $csrPath = [string](Get-Variable -Name CsrFile -ValueOnly -ErrorAction SilentlyContinue)
 
 if ([string]::IsNullOrWhiteSpace($caConfig)) { throw 'The CA integration is not configured (CA config is empty).' }
-if ([string]::IsNullOrWhiteSpace($template)) { throw 'The CA integration has no certificate template configured.' }
+if ([string]::IsNullOrWhiteSpace($template)) { throw 'No certificate template: set # SirkCaTemplate in the script header or a default template in the CA integration.' }
 if ($template -notmatch '^[A-Za-z0-9][A-Za-z0-9 ._-]{0,127}$') { throw 'The configured certificate template name is invalid.' }
 if ([string]::IsNullOrWhiteSpace($outputDirectory) -or -not (Test-Path -LiteralPath $outputDirectory -PathType Container)) { throw 'The server did not provide an output directory.' }
 if ([string]::IsNullOrWhiteSpace($csrPath) -or -not (Test-Path -LiteralPath $csrPath -PathType Leaf)) { throw 'The uploaded CSR is not available.' }

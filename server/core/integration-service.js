@@ -44,6 +44,41 @@ function normalizeCa(value) {
     if (thumbprint && !/^[0-9A-F]{40}$/.test(thumbprint)) throw new Error("RDP signing thumbprint must be a 40-character SHA-1 hex value.");
     return { config: config, template: template, rdpSigningThumbprint: thumbprint };
 }
+
+// Per-script CA overrides: `# SirkCaTemplate: Name` and
+// `# SirkRdpSigningThumbprint: <sha1>` in the script header replace the global
+// template/thumbprint for that script only. CA config (host\CA name) stays global.
+function caScriptOverrides(headers) {
+    var result = {};
+    (Array.isArray(headers) ? headers : []).forEach(function (header) {
+        var match = /^Sirk(CaTemplate|RdpSigningThumbprint)\s*:\s*(.*)$/i.exec(String(header || "").trim());
+        if (!match) return;
+        var value = String(match[2] || "").trim();
+        if (!value) return;
+        if (/^catemplate$/i.test(match[1])) {
+            if (!CA_TEMPLATE_PATTERN.test(value)) throw new Error("Script header SirkCaTemplate is invalid.");
+            result.template = value;
+        } else {
+            var thumbprint = normalizeThumbprint(value);
+            if (!/^[0-9A-F]{40}$/.test(thumbprint)) throw new Error("Script header SirkRdpSigningThumbprint must be a 40-character SHA-1 hex value.");
+            result.rdpSigningThumbprint = thumbprint;
+        }
+    });
+    return result;
+}
+
+function caForScript(globalCa, headers) {
+    globalCa = object(globalCa);
+    var overrides = caScriptOverrides(headers);
+    return {
+        config: String(globalCa.config || ""),
+        template: overrides.template || String(globalCa.template || ""),
+        rdpSigningThumbprint: overrides.rdpSigningThumbprint || String(globalCa.rdpSigningThumbprint || "")
+    };
+}
+module.exports.caScriptOverrides = caScriptOverrides;
+module.exports.caForScript = caForScript;
+
 var HEALTH_NAMES = ["ad", "entra", "jira", "sms", "smtp", "defender", "zabbix"];
 
 function normalizeHealth(value) {
