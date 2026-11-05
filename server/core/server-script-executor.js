@@ -236,6 +236,7 @@ module.exports.createServerScriptExecutor = function (options) {
             environment.MYSCRIPTS_CA_CONFIG = String(ca.config || "");
             environment.MYSCRIPTS_CA_TEMPLATE = String(ca.template || "");
             environment.MYSCRIPTS_RDP_SIGNING_THUMBPRINT = String(ca.rdpSigningThumbprint || "");
+            environment.MYSCRIPTS_RDPSIGN_PATH = String(ca.rdpSignPath || "");
         }
         if (enabled("ad")) {
             var ad = context.integrations.get("ad");

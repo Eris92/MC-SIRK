@@ -29,6 +29,7 @@ var HEALTH_STATES = ["ok", "warning", "critical"];
 // CA workflows in My Scripts (server side) and My Commands (agent side).
 var CA_CONFIG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9.-]{0,252}\\[^\\"\u0000-\u001F]{1,128}$/;
 var CA_TEMPLATE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,127}$/;
+var RDPSIGN_PATH_PATTERN = /^[A-Za-z]:\\(?:[^\\/:*?"<>|\u0000-\u001F]+\\)*rdpsign\.exe$/i;
 
 function normalizeThumbprint(value) {
     return String(value == null ? "" : value).replace(/[\s:\u200e\u200f]/g, "").toUpperCase();
@@ -39,10 +40,13 @@ function normalizeCa(value) {
     var config = text(value.config, 400);
     var template = text(value.template, 128);
     var thumbprint = normalizeThumbprint(value.rdpSigningThumbprint);
+    var rdpSignPath = text(value.rdpSignPath, 260);
     if (config && !CA_CONFIG_PATTERN.test(config)) throw new Error("CA config must use the form host\\CA name.");
     if (template && !CA_TEMPLATE_PATTERN.test(template)) throw new Error("CA template name is invalid.");
     if (thumbprint && !/^[0-9A-F]{40}$/.test(thumbprint)) throw new Error("RDP signing thumbprint must be a 40-character SHA-1 hex value.");
-    return { config: config, template: template, rdpSigningThumbprint: thumbprint };
+    // Optional local path to rdpsign.exe (Windows Server without the RDS client tools).
+    if (rdpSignPath && !RDPSIGN_PATH_PATTERN.test(rdpSignPath)) throw new Error("rdpsign.exe path must be an absolute local path ending with \\rdpsign.exe.");
+    return { config: config, template: template, rdpSigningThumbprint: thumbprint, rdpSignPath: rdpSignPath };
 }
 
 // Per-script CA overrides: `# SirkCaTemplate: Name` and
@@ -73,7 +77,8 @@ function caForScript(globalCa, headers) {
     return {
         config: String(globalCa.config || ""),
         template: overrides.template || String(globalCa.template || ""),
-        rdpSigningThumbprint: overrides.rdpSigningThumbprint || String(globalCa.rdpSigningThumbprint || "")
+        rdpSigningThumbprint: overrides.rdpSigningThumbprint || String(globalCa.rdpSigningThumbprint || ""),
+        rdpSignPath: String(globalCa.rdpSignPath || "")
     };
 }
 module.exports.caScriptOverrides = caScriptOverrides;
