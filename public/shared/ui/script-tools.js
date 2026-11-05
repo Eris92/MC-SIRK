@@ -486,6 +486,23 @@
                 var systemCredentials = createSystemCredentialsSection(systemState);
                 card.appendChild(systemCredentials.element);
 
+                // Per-script CA values (# SirkCaTemplate / # SirkRdpSigningThumbprint);
+                // empty = global default from Settings -> Integrations -> CA.
+                var caSection = element("section", "mc-definition-section mc-definition-ca");
+                caSection.appendChild(element("h4", "", "Certificate Authority - this script"));
+                caSection.appendChild(element("div", "mc-shared-muted", "Used with the Certificate Authority profile. Leave empty to use the global default."));
+                var caTemplate = element("input", "mc-definition-input mc-definition-ca-template");
+                caTemplate.value = text(value.caTemplate);
+                caTemplate.placeholder = "WebServer";
+                caTemplate.maxLength = 128;
+                caSection.appendChild(field("Certificate template (SirkCaTemplate)", caTemplate));
+                var caThumbprint = element("input", "mc-definition-input mc-definition-ca-thumbprint");
+                caThumbprint.value = text(value.rdpSigningThumbprint);
+                caThumbprint.placeholder = "40 hex characters (SHA-1)";
+                caThumbprint.maxLength = 120;
+                caSection.appendChild(field("RDP signing thumbprint (SirkRdpSigningThumbprint)", caThumbprint));
+                card.appendChild(caSection);
+
                 var execution = element("section", "mc-definition-section");
                 execution.appendChild(element("h4", "", "Execution"));
                 var runAs = createSelect(["0", "2"], String(value.runAsUser || 0));
@@ -592,6 +609,8 @@
                                 rebootRequired: rebootRequired.checked,
                                 showOnDesktop: showOnDesktop.checked,
                                 showWithoutDesktop: showWithoutDesktop.checked,
+                                caTemplate: caTemplate.value,
+                                rdpSigningThumbprint: caThumbprint.value,
                                 body: source.value
                             }
                         }),

@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.167`](0.1.167.md) — script editor shows per-script CA template and RDP thumbprint;
 - [`0.1.166`](0.1.166.md) — signed RDP: certificate by thumbprint or template (autoenroll);
 - [`0.1.165`](0.1.165.md) — per-script CA template and RDP thumbprint;
 - [`0.1.164`](0.1.164.md) — Quick re-reads vulnerability rules on open;
