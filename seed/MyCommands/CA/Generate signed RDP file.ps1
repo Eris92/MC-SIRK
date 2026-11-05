@@ -1,15 +1,19 @@
-# PL: Podpisany plik RDP | Generuje plik .rdp, podpisuje go certyfikatem RDP signing z konfiguracji CA i zapisuje na pulpicie zalogowanego użytkownika.
-# EN: Signed RDP file | Generates an .rdp file, signs it with the configured RDP signing certificate and saves it to the logged-on user's Desktop.
+# PL: Podpisany plik RDP | Generuje plik .rdp, podpisuje go certyfikatem wskazanym odciskiem albo szablonem (autoenroll) i zapisuje na pulpicie zalogowanego użytkownika.
+# EN: Signed RDP file | Generates an .rdp file, signs it with the certificate selected by thumbprint or template (autoenroll) and saves it to the logged-on user's Desktop.
 # runAsUser: 0
 # SirkSystemCredential: CA
 # SirkRdpSigningThumbprint:
+# SirkCaTemplate:
 # VariablePL: $TargetHost, Host docelowy | Nazwa lub FQDN hosta w pliku RDP (puste = ten komputer)
 # VariableEN: $TargetHost, Target host | Host name or FQDN written to the RDP file (empty = this computer)
 
 # #406. Runs on the selected Windows device through the MeshAgent (SYSTEM).
-# - The signing certificate is selected by the non-secret thumbprint
-#   ($SirkRdpSigningThumbprint): the SirkRdpSigningThumbprint header above when
-#   set, otherwise the global CA default; nothing is hard-coded.
+# - Signing certificate (LocalMachine\My on this device), nothing is hard-coded:
+#   1. thumbprint ($SirkRdpSigningThumbprint: header above, else global CA default), or
+#   2. when no thumbprint is set, certificate template ($SirkCaTemplate: header above,
+#      else global CA default) - the newest valid certificate with a private key issued
+#      from that template is used, so an autoenrolled/renewed certificate is picked up
+#      automatically. Template = name, display name or OID.
 # - The private key never leaves the certificate store; the system rdpsign.exe is used.
 # - The Desktop of the interactive user is resolved from the console session
 #   owner's profile (honouring Desktop folder redirection), never from input.
@@ -50,37 +54,79 @@ function Get-InteractiveDesktop {
     return [pscustomobject]@{ Account = $account; Path = $desktop }
 }
 
-function Get-SigningCertificate([string]$Thumbprint) {
-    $normalized = ($Thumbprint -replace '[\s:\u200e\u200f]', '').ToUpperInvariant()
-    if ($normalized -notmatch '^[0-9A-F]{40}$') { throw 'RDP signing thumbprint is missing or invalid: set # SirkRdpSigningThumbprint in the script header or a default thumbprint in the CA integration.' }
-    $certificate = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $normalized } | Select-Object -First 1
-    if (-not $certificate) { throw 'The configured RDP signing certificate is not installed in LocalMachine\My on this device.' }
-    if (-not $certificate.HasPrivateKey) { throw 'The configured RDP signing certificate has no private key on this device.' }
+function Get-CertificateTemplateNames($Certificate) {
+    $names = @()
+    foreach ($extension in @($Certificate.Extensions)) {
+        $oid = [string]$extension.Oid.Value
+        if ($oid -ne '1.3.6.1.4.1.311.21.7' -and $oid -ne '1.3.6.1.4.1.311.20.2') { continue }
+        $text = [string]$extension.Format($false)
+        if ($oid -eq '1.3.6.1.4.1.311.21.7') {
+            # Format() is localized ("Template=" / "Szablon="), so match by the template OID arc.
+            if ($text -match '=\s*([^=,(]*?)\s*\((1\.3\.6\.1\.4\.1\.311\.21\.8\.[0-9.]+)\)') { $names += $Matches[1].Trim(); $names += $Matches[2] }
+            elseif ($text -match '(1\.3\.6\.1\.4\.1\.311\.21\.8\.[0-9.]+)') { $names += $Matches[1] }
+        } else {
+            $names += ($text -replace '[\x00-\x1F]', '').Trim()
+        }
+    }
+    return @($names | Where-Object { $_ })
+}
+
+function Test-SigningCertificate($Certificate, [string]$Label) {
+    if (-not $Certificate.HasPrivateKey) { throw "The $Label RDP signing certificate has no private key on this device." }
     $now = Get-Date
-    if ($certificate.NotBefore -gt $now -or $certificate.NotAfter -lt $now) { throw 'The configured RDP signing certificate is not currently valid.' }
+    if ($Certificate.NotBefore -gt $now -or $Certificate.NotAfter -lt $now) { throw "The $Label RDP signing certificate is not currently valid." }
     $allowedEku = @('1.3.6.1.5.5.7.3.1', '1.3.6.1.4.1.311.54.1.2', '1.3.6.1.5.5.7.3.3')
-    $eku = @($certificate.EnhancedKeyUsageList | ForEach-Object { $_.ObjectId })
-    if ($eku.Count -gt 0 -and -not ($eku | Where-Object { $allowedEku -contains $_ })) { throw 'The configured certificate does not allow Server Authentication, Remote Desktop Authentication or Code Signing.' }
-    return [pscustomobject]@{ Thumbprint = $normalized; Subject = $certificate.Subject; NotAfter = $certificate.NotAfter }
+    $eku = @($Certificate.EnhancedKeyUsageList | ForEach-Object { $_.ObjectId })
+    if ($eku.Count -gt 0 -and -not ($eku | Where-Object { $allowedEku -contains $_ })) { throw "The $Label certificate does not allow Server Authentication, Remote Desktop Authentication or Code Signing." }
+}
+
+function Get-SigningCertificate([string]$Thumbprint, [string]$Template) {
+    $normalized = ($Thumbprint -replace '[\s:\u200e\u200f]', '').ToUpperInvariant()
+    $templateName = ([string]$Template).Trim()
+    if ($normalized) {
+        if ($normalized -notmatch '^[0-9A-F]{40}$') { throw 'RDP signing thumbprint is invalid: it must be 40 hex characters (SHA-1).' }
+        $certificate = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $normalized } | Select-Object -First 1
+        if (-not $certificate) { throw 'The configured RDP signing certificate is not installed in LocalMachine\My on this device.' }
+        Test-SigningCertificate $certificate 'configured'
+        return [pscustomobject]@{ Thumbprint = $normalized; Subject = $certificate.Subject; NotAfter = $certificate.NotAfter; Source = 'thumbprint' }
+    }
+    if (-not $templateName) { throw 'No RDP signing certificate is configured: set # SirkRdpSigningThumbprint or # SirkCaTemplate in the script header, or a default in the CA integration.' }
+    if ($templateName -notmatch '^[A-Za-z0-9][A-Za-z0-9 ._-]{0,127}$') { throw 'The certificate template name is invalid.' }
+    $wanted = $templateName.ToLowerInvariant()
+    $compact = $wanted -replace ' ', ''
+    $now = Get-Date
+    $matching = @()
+    foreach ($item in @(Get-ChildItem -Path Cert:\LocalMachine\My)) {
+        if (-not $item.HasPrivateKey -or $item.NotBefore -gt $now -or $item.NotAfter -le $now) { continue }
+        foreach ($name in @(Get-CertificateTemplateNames $item)) {
+            $lower = $name.ToLowerInvariant()
+            if ($lower -eq $wanted -or ($lower -replace ' ', '') -eq $compact) { $matching += $item; break }
+        }
+    }
+    $candidates = @($matching | Sort-Object -Property NotAfter -Descending)
+    if ($candidates.Count -eq 0) { throw ("No valid certificate with a private key from template '{0}' is installed in LocalMachine\My on this device (check autoenrollment)." -f $templateName) }
+    $certificate = $candidates[0]
+    Test-SigningCertificate $certificate ('template ' + $templateName)
+    return [pscustomobject]@{ Thumbprint = $certificate.Thumbprint.ToUpperInvariant(); Subject = $certificate.Subject; NotAfter = $certificate.NotAfter; Source = ('template ' + $templateName) }
 }
 
 function New-RdpContent([string]$HostName) {
     @(
         "full address:s:$HostName",
-        'prompt for credentials:i:1',
-        'administrative session:i:0',
-        'screen mode id:i:2',
-        'use multimon:i:0',
-        'session bpp:i:32',
+        "alternate full address:s:$HostName",
+        'enablerdsaadauth:i:1',
         'authentication level:i:2',
+        'prompt for credentials:i:1',
         'enablecredsspsupport:i:1',
-        'negotiate security layer:i:1',
         'redirectclipboard:i:1',
+        'redirectwebauthn:i:1',
+        'redirectsmartcards:i:0',
         'redirectprinters:i:0',
-        'redirectsmartcards:i:1',
-        'redirectdrives:i:0',
-        'audiomode:i:0',
-        'autoreconnection enabled:i:1'
+        'drivestoredirect:s:',
+        'devicestoredirect:s:',
+        'usbdevicestoredirect:s:',
+        'use multimon:i:1',
+        'remoteapplicationmode:i:0'
     ) -join "`r`n"
 }
 
@@ -93,7 +139,7 @@ if (-not (Test-HostName $targetHost)) { throw 'Invalid target host name. Only DN
 
 $caConfig = Get-Setting 'SirkCaConfig'
 if (-not $caConfig) { throw 'The CA integration is not configured. Configure it in SIRK settings and assign the CA profile to this command.' }
-$signer = Get-SigningCertificate (Get-Setting 'SirkRdpSigningThumbprint')
+$signer = Get-SigningCertificate (Get-Setting 'SirkRdpSigningThumbprint') (Get-Setting 'SirkCaTemplate')
 $rdpsign = Join-Path $env:SystemRoot 'System32\rdpsign.exe'
 if (-not (Test-Path -LiteralPath $rdpsign -PathType Leaf)) { throw 'rdpsign.exe is not available on this device.' }
 $desktop = Get-InteractiveDesktop
@@ -112,7 +158,7 @@ try {
     $destination = Join-Path $desktop.Path $fileName
     Copy-Item -LiteralPath $temporaryFile -Destination $destination -Force
     Write-Output ("Signed RDP file delivered: {0}" -f $destination)
-    Write-Output ("Target: {0} | User: {1} | Signer: {2} (valid to {3:yyyy-MM-dd})" -f $targetHost, $desktop.Account, $signer.Subject, $signer.NotAfter)
+    Write-Output ("Target: {0} | User: {1} | Signer: {2} [{3}] (valid to {4:yyyy-MM-dd}, selected by {5})" -f $targetHost, $desktop.Account, $signer.Subject, $signer.Thumbprint, $signer.NotAfter, $signer.Source)
 } finally {
     if (Test-Path -LiteralPath $work) { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue }
 }
