@@ -260,13 +260,13 @@ module.exports.createModule = function (context) {
         return (names.length ? "@echo off\r\n" + names.map(function (name) { return "set \"" + name + "=" + cmdQuote(values[name]) + "\""; }).join("\r\n") + "\r\n" : "") + commandText;
     }
 
-    function buildCommand(payload) {
+    function buildCommand(payload, stageValues) {
         if (payload.scriptPath) {
             var script = library.getScript(payload.scriptPath, true);
             if (!script) throw new Error("Script not found.");
             if (payload.scriptHash && String(payload.scriptHash) !== String(script.hash)) throw new Error("The script changed after submission and was not executed.");
             var type = script.shell === "cmd" ? 1 : 2;
-            return { label: script.label || script.name, cmd: injectVariables(script.body, type, script.variables || [], payload.variableValues, Object.assign({}, admin.secretValues(script.path), admin.caVariables(script.path))), type: type, runAsUser: Number(script.runAsUser) || 0 };
+            return { label: script.label || script.name, cmd: injectVariables(script.body, type, script.variables || [], payload.variableValues, Object.assign({}, admin.secretValues(script.path), admin.caVariables(script.path), stageValues || {})), type: type, runAsUser: Number(script.runAsUser) || 0 };
         }
         if (payload.commandId) {
             var found = findCatalogCommand(payload.commandId);
@@ -312,6 +312,43 @@ module.exports.createModule = function (context) {
         payload.approvalLevels = approvalLevels(payload.approvalLevels || []);
         return payload;
     }
+    // `# SirkServerStage: <My Scripts path>`: the named server-side script runs first
+    // on the MeshCentral server; its single output file is passed to the agent script
+    // as $SirkStageFileName / $SirkStageFileBase64.
+    function serverStagePath(payload) {
+        if (!payload.scriptPath) return "";
+        var script = library.getScript(payload.scriptPath, true);
+        var found = "";
+        (script && script.extraHeaders || []).some(function (header) {
+            var match = /^SirkServerStage\s*:\s*(.+)$/i.exec(String(header || "").trim());
+            if (match) found = match[1].trim();
+            return !!match;
+        });
+        return found;
+    }
+
+    function runServerStage(stagePath, payload, node, request) {
+        if (!context.serverStage || typeof context.serverStage.run !== "function") return Promise.reject(new Error("Server stage is unavailable (enable the Automation / My Scripts module)."));
+        var script = library.getScript(payload.scriptPath, true);
+        var values = validateVariables(script.variables || [], payload.variableValues);
+        var ca = {};
+        try { ca = admin.caVariables(script.path); } catch (error) { return Promise.reject(error); }
+        var environment = {
+            SIRK_STAGE_VARIABLES_JSON: JSON.stringify(values),
+            SIRK_STAGE_NODE_JSON: JSON.stringify({ id: node.nodeId, name: node.node && node.node.name || "", rname: node.node && node.node.rname || "", host: node.node && node.node.host || "" }),
+            SIRK_STAGE_COMMAND_PATH: String(script.path || ""),
+            MYSCRIPTS_CA_CONFIG: String(ca.SirkCaConfig || ""),
+            MYSCRIPTS_CA_TEMPLATE: String(ca.SirkCaTemplate || ""),
+            MYSCRIPTS_RDP_SIGNING_THUMBPRINT: String(ca.SirkRdpSigningThumbprint || "")
+        };
+        return context.serverStage.run(stagePath, environment, { id: request && request.id || "", requester: request && request.requester || {} }).then(function (result) {
+            if (!result || !result.stageFile) throw new Error("The server stage produced no file.");
+            return { SirkStageFileName: result.stageFile.fileName, SirkStageFileBase64: result.stageFile.base64, SirkStageOutput: String(result.output || "").slice(0, 2000) };
+        }, function (error) {
+            throw new Error("Server stage failed: " + (error && error.message || error));
+        });
+    }
+
     function execute(payload, request, quickDirect) {
         var user = shared.findUser(context.parent, request.requester && request.requester.id) || { _id: request.requester && request.requester.id, name: request.requester && request.requester.name };
         var command;
@@ -320,7 +357,14 @@ module.exports.createModule = function (context) {
             if (payload.commandId) requireCommandAccess(user, payload.commandId);
             command = buildCommand(payload);
         } catch (error) { return Promise.reject(error); }
+        var stagePath = serverStagePath(payload);
         return context.device.resolveNode(user, payload.nodeId, { requireCommandRights: true }).then(function (node) {
+            if (!stagePath) return node;
+            return runServerStage(stagePath, payload, node, request).then(function (stageValues) {
+                command = buildCommand(payload, stageValues);
+                return node;
+            });
+        }).then(function (node) {
             if (quickDirect === true) Object.defineProperty(node, QUICK_DIRECT_CONTEXT, { value: true });
             var id = "sirk-platform-" + shared.randomId(10);
             var now = Date.now();

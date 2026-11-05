@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.169`](0.1.169.md) — My Commands mixed mode (server stage); RDP signed on the server;
 - [`0.1.168`](0.1.168.md) — signed RDP template mismatch diagnostics;
 - [`0.1.167`](0.1.167.md) — script editor shows per-script CA template and RDP thumbprint;
 - [`0.1.166`](0.1.166.md) — signed RDP: certificate by thumbprint or template (autoenroll);

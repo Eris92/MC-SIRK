@@ -121,6 +121,21 @@ module.exports.createServerScriptExecutor = function (options) {
         })];
     }
 
+    // Server stage of a My Commands script (SirkServerStage): exactly one small
+    // file from the workspace is handed to the agent-side script.
+    var STAGE_FILE_LIMIT = 256 * 1024;
+    function collectStageFile(workspace) {
+        var nodePath = context.nativePath || context.path;
+        var names = context.fs.readdirSync(workspace).filter(function (name) {
+            return context.fs.statSync(nodePath.join(workspace, name)).isFile();
+        });
+        if (names.length !== 1) throw new Error("The server stage must produce exactly one file (found " + names.length + ").");
+        if (!/^[A-Za-z0-9][A-Za-z0-9._ -]{0,119}$/.test(names[0])) throw new Error("The server stage produced an invalid file name.");
+        var data = context.fs.readFileSync(nodePath.join(workspace, names[0]));
+        if (!data.length || data.length > STAGE_FILE_LIMIT) throw new Error("The server stage file must be between 1 byte and 256 KB.");
+        return { fileName: names[0], base64: data.toString("base64"), size: data.length };
+    }
+
     function timeoutMs() {
         var current = context.settings.read();
         var moduleSettings = current.modules && current.modules.myscripts || {};
@@ -410,7 +425,7 @@ module.exports.createServerScriptExecutor = function (options) {
         try {
             files = resolveFileInputs(script, payload, request);
             values = validateValues(script, Object.assign({}, payload.variableValues, files.values), executionOptions.skipSystemEnvironment === true);
-            if (fileVariables(script).length) workspace = artifacts().createWorkspace();
+            if (fileVariables(script).length || executionOptions.stageFile === true) workspace = artifacts().createWorkspace();
             plan = buildPlan(script, values);
             feedEnvironment = dataFeedEnvironment(script);
         } catch (error) {
@@ -452,7 +467,11 @@ module.exports.createServerScriptExecutor = function (options) {
                     return;
                 }
                 var produced;
-                try { produced = collectArtifacts(workspace, files, request); }
+                var stageFile = null;
+                try {
+                    if (executionOptions.stageFile === true) stageFile = collectStageFile(workspace);
+                    produced = executionOptions.stageFile === true ? [] : collectArtifacts(workspace, files, request);
+                }
                 catch (artifactError) {
                     release();
                     reject(artifactError);
@@ -474,6 +493,7 @@ module.exports.createServerScriptExecutor = function (options) {
                     label: script.label || script.name || "Script"
                 };
                 if (produced.length) result.artifacts = produced;
+                if (stageFile) result.stageFile = stageFile;
                 resolve(result);
             });
         });

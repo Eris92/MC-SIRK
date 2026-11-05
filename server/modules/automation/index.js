@@ -30,6 +30,20 @@ module.exports.createModule = function (context) {
             }
         }
     });
+    // Server stage for My Commands (`# SirkServerStage: <My Scripts path>`): runs an
+    // internal (`_`-prefixed) My Scripts script that opts in with
+    // `# SirkStageFor: MyCommands` and returns the one file it produced.
+    context.serverStage = {
+        run: function (stagePath, environment, request) {
+            var normalized = String(stagePath || "").replace(/\\/g, "/").trim();
+            var script = normalized ? library.getScript(normalized, true) : null;
+            if (!script) return Promise.reject(new Error("Server stage script not found: " + normalized));
+            if (!internalScriptPath(script.path)) return Promise.reject(new Error("Server stage script must be internal (file or folder name starting with _)."));
+            var optIn = (script.extraHeaders || []).some(function (header) { return /^SirkStageFor\s*:\s*MyCommands\s*$/i.test(String(header || "").trim()); });
+            if (!optIn) return Promise.reject(new Error("Server stage script does not declare SirkStageFor: MyCommands."));
+            return executor.execute({ scriptPath: script.path, scriptHash: script.hash, variableValues: {} }, request || {}, { skipSystemEnvironment: true, stageFile: true, environment: environment || {} });
+        }
+    };
     var jiraAssets = jiraAssetFactory.createJiraAssetService({
         fs: context.fs,
         path: context.nativePath || context.path,
