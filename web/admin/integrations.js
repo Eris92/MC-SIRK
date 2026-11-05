@@ -155,7 +155,7 @@
         var caConfig = field(caBox, "CA config (host\\CA name)", ca.config || "", { placeholder: "CA-SRV01.example.local\\Example Issuing CA" });
         var caTemplate = field(caBox, "Default certificate template (optional)", ca.template || "", { placeholder: "WebServer" });
         var caThumbprint = field(caBox, "Default RDP signing certificate thumbprint (optional)", ca.rdpSigningThumbprint || "", { placeholder: "40 hex characters (SHA-1)" });
-        caBox.appendChild(element("p", "mc-admin-card-description", "Non-secret. Scripts declaring SirkSystemCredential: CA receive these values; AD credentials stay in the Active Directory profile. A script can set its own template or RDP thumbprint with the header lines # SirkCaTemplate: <name> and # SirkRdpSigningThumbprint: <sha1>, which replace the defaults above for that script only."));
+        caBox.appendChild(element("p", "mc-admin-card-description", "Non-secret. Scripts declaring SirkSystemCredential: CA receive these values; AD credentials stay in the Active Directory profile. A script can set its own template or RDP thumbprint with the header lines # SirkCaTemplate: <name> and # SirkRdpSigningThumbprint: <sha1>, which replace the defaults above for that script only. The signed RDP command uses the thumbprint when set; otherwise it picks the newest valid certificate issued from the template (autoenrollment)."));
 
         var actions = element("div", "mc-admin-actions");
         var save = element("button", "mc-admin-primary", "Save integrations");

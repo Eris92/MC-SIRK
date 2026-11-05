@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.166",
+    "date": "2026-11-05",
+    "summary": "Signed RDP command selects the signing certificate by thumbprint or by certificate template (autoenrollment).",
+    "notes": "docs/releases/0.1.166.md"
+  },
+  {
     "version": "0.1.165",
     "date": "2026-11-05",
     "summary": "Per-script CA template and RDP signing thumbprint via script headers (global values become defaults).",

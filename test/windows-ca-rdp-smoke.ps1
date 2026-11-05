@@ -9,7 +9,7 @@ $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
 if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
 
-$wanted = @('Test-HostName', 'New-RdpContent', 'Get-SigningCertificate')
+$wanted = @('Test-HostName', 'New-RdpContent', 'Get-SigningCertificate', 'Get-CertificateTemplateNames', 'Test-SigningCertificate')
 $functions = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $wanted -contains $node.Name }, $false)
 if ($functions.Count -ne $wanted.Count) { throw 'Expected RDP helper functions were not found.' }
 foreach ($function in $functions) { . ([scriptblock]::Create($function.Extent.Text)) }
@@ -36,6 +36,25 @@ foreach ($badThumbprint in @('', 'ABC', ('Z' * 40))) {
 $missing = $false
 try { Get-SigningCertificate ('0' * 40) | Out-Null } catch { $missing = $_.Exception.Message -match 'not installed' }
 if (-not $missing) { throw 'Missing signing certificate must fail closed.' }
+$noTemplate = $false
+try { Get-SigningCertificate '' 'SIRK-NoSuchTemplate-Smoke' | Out-Null } catch { $noTemplate = $_.Exception.Message -match 'No valid certificate' }
+if (-not $noTemplate) { throw 'Missing template certificate must fail closed.' }
+$badTemplate = $false
+try { Get-SigningCertificate '' 'bad;name' | Out-Null } catch { $badTemplate = $_.Exception.Message -match 'template name is invalid' }
+if (-not $badTemplate) { throw 'Invalid template name must be rejected.' }
+function New-FakeExtension([string]$Oid, [string]$Text) {
+    $extension = [pscustomobject]@{ Oid = [pscustomobject]@{ Value = $Oid }; Text = $Text }
+    $extension | Add-Member -MemberType ScriptMethod -Name Format -Value { param($multiLine) $this.Text } -PassThru
+}
+$fake = [pscustomobject]@{ Extensions = @(
+    (New-FakeExtension '1.3.6.1.4.1.311.21.7' 'Szablon=RDP Signing(1.3.6.1.4.1.311.21.8.123.456), Wersja glowna=100, Wersja pomocnicza=2'),
+    (New-FakeExtension '2.5.29.15' 'Digital Signature')
+) }
+$templateNames = @(Get-CertificateTemplateNames $fake)
+if ($templateNames -notcontains 'RDP Signing' -or $templateNames -notcontains '1.3.6.1.4.1.311.21.8.123.456') { throw ("Template names not parsed from a localized extension: " + ($templateNames -join ', ')) }
+$v1 = [pscustomobject]@{ Extensions = @((New-FakeExtension '1.3.6.1.4.1.311.20.2' 'WebServer')) }
+if (@(Get-CertificateTemplateNames $v1) -notcontains 'WebServer') { throw 'V1 template name not parsed.' }
+if ($content -notmatch '(?m)^alternate full address:s:pc01\.corp\.local\r?$') { throw 'RDP content must carry the alternate address.' }
 
 # #407: Sign CSR must parse under Windows PowerShell 5.1.
 $signPath = Join-Path $root 'seed\MyScripts\CA\Sign CSR.ps1'

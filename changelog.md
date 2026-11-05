@@ -1,3 +1,11 @@
+## 0.1.166 - 2026-11-05
+
+- Podpisany plik RDP: certyfikat do podpisu wybierany po odcisku (`SirkRdpSigningThumbprint`) albo, gdy odcisku brak, po szablonie (`SirkCaTemplate`: nazwa, nazwa wyświetlana lub OID). Przy szablonie skrypt bierze najnowszy ważny certyfikat z kluczem prywatnym z `LocalMachine\My`, więc certyfikat z autoenrollmentu i jego odnowienia są używane bez zmiany konfiguracji. Działa też na polskim Windows (zlokalizowany opis rozszerzenia).
+- Zawartość pliku .rdp zgodna z dotychczasowym skryptem (alternate full address, enablerdsaadauth, redirectwebauthn, bez dysków/drukarek/kart, multimon).
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.166.md`.
+
 ## 0.1.165 - 2026-11-05
 
 - CA: szablon certyfikatu i odcisk certyfikatu RDP signing można ustawić w nagłówku skryptu (`# SirkCaTemplate: <nazwa>`, `# SirkRdpSigningThumbprint: <sha1>`). Wartość z nagłówka zastępuje domyślną z konfiguracji CA tylko dla tego skryptu; pola w konfiguracji są teraz domyślnymi (opcjonalnymi). CA config (host\CA name) zostaje globalne. Nagłówki są walidowane tak jak ustawienia globalne.
