@@ -64,6 +64,11 @@ function Get-CertificateTemplateNames($Certificate) {
             # Format() is localized ("Template=" / "Szablon="), so match by the template OID arc.
             if ($text -match '=\s*([^=,(]*?)\s*\((1\.3\.6\.1\.4\.1\.311\.21\.8\.[0-9.]+)\)') { $names += $Matches[1].Trim(); $names += $Matches[2] }
             elseif ($text -match '(1\.3\.6\.1\.4\.1\.311\.21\.8\.[0-9.]+)') { $names += $Matches[1] }
+            # When Format() shows only the OID, ask CryptoAPI/AD for the template's friendly name.
+            foreach ($templateOid in @($names | Where-Object { $_ -match '^1\.3\.6\.1\.4\.1\.311\.21\.8\.' })) {
+                $friendly = try { [string](New-Object System.Security.Cryptography.Oid($templateOid)).FriendlyName } catch { '' }
+                if ($friendly -and $friendly -ne $templateOid) { $names += $friendly }
+            }
         } else {
             $names += ($text -replace '[\x00-\x1F]', '').Trim()
         }
@@ -104,7 +109,16 @@ function Get-SigningCertificate([string]$Thumbprint, [string]$Template) {
         }
     }
     $candidates = @($matching | Sort-Object -Property NotAfter -Descending)
-    if ($candidates.Count -eq 0) { throw ("No valid certificate with a private key from template '{0}' is installed in LocalMachine\My on this device (check autoenrollment)." -f $templateName) }
+    if ($candidates.Count -eq 0) {
+        # Show what is installed so a template name mismatch is visible (no secrets: subject, template, validity).
+        $found = @(Get-ChildItem -Path Cert:\LocalMachine\My | Sort-Object -Property NotAfter -Descending | Select-Object -First 10 | ForEach-Object {
+            $templates = @(Get-CertificateTemplateNames $_) -join ' / '
+            if (-not $templates) { $templates = 'no template' }
+            "{0} [{1}] key={2} valid {3:yyyy-MM-dd}..{4:yyyy-MM-dd} {5}" -f $_.Subject, $templates, $_.HasPrivateKey, $_.NotBefore, $_.NotAfter, $_.Thumbprint
+        })
+        $list = if ($found.Count) { "`r`nCertificates in LocalMachine\My on {0}:`r`n  {1}" -f $env:COMPUTERNAME, ($found -join "`r`n  ") } else { "`r`nLocalMachine\My on {0} is empty." -f $env:COMPUTERNAME }
+        throw ("No valid certificate with a private key from template '{0}' is installed in LocalMachine\My on {1} (check the template name and autoenrollment).{2}" -f $templateName, $env:COMPUTERNAME, $list)
+    }
     $certificate = $candidates[0]
     Test-SigningCertificate $certificate ('template ' + $templateName)
     return [pscustomobject]@{ Thumbprint = $certificate.Thumbprint.ToUpperInvariant(); Subject = $certificate.Subject; NotAfter = $certificate.NotAfter; Source = ('template ' + $templateName) }
