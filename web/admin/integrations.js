@@ -155,6 +155,7 @@
         var caConfig = field(caBox, "CA config (host\\CA name)", ca.config || "", { placeholder: "CA-SRV01.example.local\\Example Issuing CA" });
         var caTemplate = field(caBox, "Default certificate template (optional)", ca.template || "", { placeholder: "WebServer" });
         var caThumbprint = field(caBox, "Default RDP signing certificate thumbprint (optional)", ca.rdpSigningThumbprint || "", { placeholder: "40 hex characters (SHA-1)" });
+        var caRdpSign = field(caBox, "rdpsign.exe path on the MeshCentral server (optional)", ca.rdpSignPath || "", { placeholder: "C:\\Tools\\rdpsign.exe (empty = C:\\Windows\\System32\\rdpsign.exe)" });
         caBox.appendChild(element("p", "mc-admin-card-description", "Non-secret. Scripts declaring SirkSystemCredential: CA receive these values; AD credentials stay in the Active Directory profile. A script can set its own template or RDP thumbprint with the header lines # SirkCaTemplate: <name> and # SirkRdpSigningThumbprint: <sha1>, which replace the defaults above for that script only. The signed RDP command uses the thumbprint when set; otherwise it picks the newest valid certificate issued from the template (autoenrollment)."));
 
         var actions = element("div", "mc-admin-actions");
@@ -194,7 +195,7 @@
             });
             integrations.sms = Object.assign({}, sms, { url: smsUrl.value, sender: smsSender.value, vmsLector: smsLector.value, verifyTls: smsVerifyTls.checked });
             integrations.smtp = Object.assign({}, smtp, { host: smtpHost.value, port: Number(smtpPort.value), defaultFrom: smtpFrom.value, attachmentRoot: smtpAttachmentRoot.value, maxAttachmentMb: Number(smtpMaxAttachmentMb.value), enableSsl: smtpEnableSsl.checked });
-            integrations.ca = Object.assign({}, ca, { config: caConfig.value, template: caTemplate.value, rdpSigningThumbprint: caThumbprint.value });
+            integrations.ca = Object.assign({}, ca, { config: caConfig.value, template: caTemplate.value, rdpSigningThumbprint: caThumbprint.value, rdpSignPath: caRdpSign.value });
             integrations.entra = Object.assign({}, entra, {
                 tenantId: tenantId.value,
                 clientId: clientId.value

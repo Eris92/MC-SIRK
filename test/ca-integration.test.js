@@ -44,6 +44,18 @@ save({ config: "bad value without backslash" }).then(function () {
     assert.strictEqual(snapshot.values.ca.rdpSigningThumbprint, "ABCDEF0123456789ABCDEF0123456789ABCDEF01", "thumbprint normalized");
     return save({ config: "CA-SRV01\\Name\r\nInjected" }).then(function () { assert.fail("control characters rejected"); }, function () {});
 }).then(function () {
+    return save({ config: "CA-SRV01.example.local\\Example Issuing CA", template: "WebServer", rdpSigningThumbprint: "ABCDEF0123456789ABCDEF0123456789ABCDEF01", rdpSignPath: "C:\\Tools\\notepad.exe" }).then(function () { assert.fail("rdpsign path must end with rdpsign.exe"); }, function (error) {
+        assert.match(error.message, /rdpsign\.exe path/);
+        return save({ config: "CA-SRV01.example.local\\Example Issuing CA", template: "WebServer", rdpSigningThumbprint: "ABCDEF0123456789ABCDEF0123456789ABCDEF01", rdpSignPath: "\\\\srv\\share\\rdpsign.exe" }).then(function () { assert.fail("UNC rdpsign path rejected"); }, function () {});
+    }).then(function () {
+        return save({ config: "CA-SRV01.example.local\\Example Issuing CA", template: "WebServer", rdpSigningThumbprint: "ab cd ef 01 23 45 67 89 ab cd ef 01 23 45 67 89 ab cd ef 01", rdpSignPath: "C:\\Tools\\rdpsign.exe" });
+    }).then(function (saved) {
+        assert.strictEqual(saved.values.ca.rdpSignPath, "C:\\Tools\\rdpsign.exe", "rdpsign path stored");
+        var stage = fs.readFileSync(path.join(root, "seed", "MyScripts", "CA", "_Sign RDP file.ps1"), "utf8");
+        assert.ok(stage.indexOf("Get-RdpSignPath ([string]$env:MYSCRIPTS_RDPSIGN_PATH)") >= 0 && stage.indexOf("Get-AuthenticodeSignature") >= 0, "server stage uses the configured path and requires a Microsoft signature");
+        assert.ok(commandsSource.indexOf("MYSCRIPTS_RDPSIGN_PATH") >= 0, "commands pass the path to the server stage");
+    });
+}).then(function () {
     // My Commands: CA values are injected as non-secret variables; AD password never is.
     var commandsLibrary = libraryFactory.createScriptLibrary({ fs: fs, path: path, root: path.join(root, "seed", "MyCommands"), readOnly: true, allowWrite: false });
     var commandsAdmin = adminFactory.createScriptAdminService({ context: runtime.context, library: commandsLibrary, namespace: "script-secrets.mycommands" });
@@ -62,9 +74,9 @@ save({ config: "bad value without backslash" }).then(function () {
 
     // Per-script overrides: header values replace the global template/thumbprint.
     var integrationModule = require(path.join(root, "server/core/integration-service.js"));
-    var globalCa = { config: "CA\\Name", template: "WebServer", rdpSigningThumbprint: "ABCDEF0123456789ABCDEF0123456789ABCDEF01" };
+    var globalCa = { config: "CA\\Name", template: "WebServer", rdpSigningThumbprint: "ABCDEF0123456789ABCDEF0123456789ABCDEF01", rdpSignPath: "" };
     var merged = integrationModule.caForScript(globalCa, ["SirkCaTemplate: User Cert", "SirkRdpSigningThumbprint: 01 23 45 67 89 ab cd ef 01 23 45 67 89 ab cd ef 01 23 45 67"]);
-    assert.deepStrictEqual(merged, { config: "CA\\Name", template: "User Cert", rdpSigningThumbprint: "0123456789ABCDEF0123456789ABCDEF01234567" });
+    assert.deepStrictEqual(merged, { config: "CA\\Name", template: "User Cert", rdpSigningThumbprint: "0123456789ABCDEF0123456789ABCDEF01234567", rdpSignPath: "" });
     assert.deepStrictEqual(integrationModule.caForScript(globalCa, ["SirkCaTemplate:", "SirkSystemCredential: CA"]), globalCa, "empty header keeps the default");
     assert.deepStrictEqual(integrationModule.caForScript({ config: "CA\\Name" }, ["SirkCaTemplate: Only"]).template, "Only", "template works without a global default");
     assert.throws(function () { integrationModule.caForScript(globalCa, ["SirkCaTemplate: bad;name"]); }, /SirkCaTemplate/);

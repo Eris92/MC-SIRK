@@ -1,3 +1,10 @@
+## 0.1.171 - 2026-11-05
+
+- Konfiguracja CA: nowe pole „rdpsign.exe path on the MeshCentral server (optional)”. Windows Server często nie ma `rdpsign.exe`; można wskazać lokalną kopię (pełna ścieżka kończąca się na `\rdpsign.exe`, bez UNC). Puste pole = `C:\Windows\System32\rdpsign.exe`. Etap serwerowy RDP przed użyciem sprawdza, że plik ma ważny podpis Authenticode Microsoft. Plik nie jest dołączany do wtyczki (binarka Microsoft).
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.171.md`.
+
 ## 0.1.170 - 2026-11-05
 
 - Podpisany plik RDP: kontrola adresu w podpisanym pliku czyta linię `full address` niezależnie od końców linii i spacji zapisanych przez `rdpsign` (wcześniej poprawnie podpisany plik był odrzucany z błędem „does not contain the expected target”). Błąd pokazuje teraz wartość oczekiwaną i znalezioną.

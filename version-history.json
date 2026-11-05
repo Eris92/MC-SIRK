@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.171",
+    "date": "2026-11-05",
+    "summary": "CA integration: configurable rdpsign.exe path for the server stage (Microsoft signature required).",
+    "notes": "docs/releases/0.1.171.md"
+  },
+  {
     "version": "0.1.170",
     "date": "2026-11-05",
     "summary": "Signed RDP: target check tolerant of rdpsign line endings; error shows expected and found value.",

@@ -96,6 +96,23 @@ function Get-SigningCertificate([string]$Thumbprint, [string]$Template) {
     return [pscustomobject]@{ Thumbprint = $certificate.Thumbprint.ToUpperInvariant(); Subject = $certificate.Subject; NotAfter = $certificate.NotAfter; Source = ('template ' + $templateName) }
 }
 
+# rdpsign.exe: configured path (Settings -> Integrations -> CA) or System32. Windows Server
+# often lacks it; the binary is not shipped with the plugin (Microsoft file), so an
+# admin-provided copy must carry a valid Microsoft Authenticode signature.
+function Get-RdpSignPath([string]$Configured) {
+    $path = if ($Configured) { $Configured.Trim() } else { Join-Path $env:SystemRoot 'System32\rdpsign.exe' }
+    if ($path -notmatch '(?i)^[A-Za-z]:\\.*\\rdpsign\.exe$') { throw 'The configured rdpsign.exe path is invalid.' }
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        if ($Configured) { throw ("rdpsign.exe was not found at the configured path: {0}" -f $path) }
+        throw 'rdpsign.exe is not available on the MeshCentral server. Copy it from a Windows client and set its path in Settings > Integrations > CA.'
+    }
+    $signature = Get-AuthenticodeSignature -LiteralPath $path
+    if ($signature.Status -ne 'Valid' -or [string]$signature.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation') {
+        throw ("rdpsign.exe at {0} is not validly signed by Microsoft (status: {1})." -f $path, $signature.Status)
+    }
+    return $path
+}
+
 # rdpsign may rewrite line endings; read one setting line by line, ignoring CR/LF and padding.
 function Get-RdpSetting([string]$Text, [string]$Prefix) {
     foreach ($line in ($Text -split '[\r\n]+')) {
@@ -141,8 +158,7 @@ if (-not (Test-HostName $targetHost)) { throw ("Invalid target host name '{0}'. 
 
 if (-not [string]$env:MYSCRIPTS_CA_CONFIG) { throw 'The CA integration is not configured. Configure it in SIRK settings and assign the CA profile to this command.' }
 $signer = Get-SigningCertificate ([string]$env:MYSCRIPTS_RDP_SIGNING_THUMBPRINT) ([string]$env:MYSCRIPTS_CA_TEMPLATE)
-$rdpsign = Join-Path $env:SystemRoot 'System32\rdpsign.exe'
-if (-not (Test-Path -LiteralPath $rdpsign -PathType Leaf)) { throw 'rdpsign.exe is not available on the MeshCentral server.' }
+$rdpsign = Get-RdpSignPath ([string]$env:MYSCRIPTS_RDPSIGN_PATH)
 
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ('sirk-rdp-' + [guid]::NewGuid().ToString('N'))
 $fileName = ($targetHost -replace '[^A-Za-z0-9.-]', '_') + '.rdp'

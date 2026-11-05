@@ -339,7 +339,8 @@ module.exports.createModule = function (context) {
             SIRK_STAGE_COMMAND_PATH: String(script.path || ""),
             MYSCRIPTS_CA_CONFIG: String(ca.SirkCaConfig || ""),
             MYSCRIPTS_CA_TEMPLATE: String(ca.SirkCaTemplate || ""),
-            MYSCRIPTS_RDP_SIGNING_THUMBPRINT: String(ca.SirkRdpSigningThumbprint || "")
+            MYSCRIPTS_RDP_SIGNING_THUMBPRINT: String(ca.SirkRdpSigningThumbprint || ""),
+            MYSCRIPTS_RDPSIGN_PATH: String(context.integrations && typeof context.integrations.get === "function" && context.integrations.get("ca").rdpSignPath || "")
         };
         return context.serverStage.run(stagePath, environment, { id: request && request.id || "", requester: request && request.requester || {} }).then(function (result) {
             if (!result || !result.stageFile) throw new Error("The server stage produced no file.");
