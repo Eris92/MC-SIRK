@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.170",
+    "date": "2026-11-05",
+    "summary": "Signed RDP: target check tolerant of rdpsign line endings; error shows expected and found value.",
+    "notes": "docs/releases/0.1.170.md"
+  },
+  {
     "version": "0.1.169",
     "date": "2026-11-05",
     "summary": "My Commands mixed mode (SirkServerStage): server-side stage produces a file delivered by the agent script; signed RDP now signs on the MeshCentral server.",

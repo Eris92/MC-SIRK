@@ -1,3 +1,10 @@
+## 0.1.170 - 2026-11-05
+
+- Podpisany plik RDP: kontrola adresu w podpisanym pliku czyta linię `full address` niezależnie od końców linii i spacji zapisanych przez `rdpsign` (wcześniej poprawnie podpisany plik był odrzucany z błędem „does not contain the expected target”). Błąd pokazuje teraz wartość oczekiwaną i znalezioną.
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.170.md`.
+
 ## 0.1.169 - 2026-11-05
 
 - Tryb mieszany w My Commands: skrypt może wskazać w nagłówku skrypt wstępny `# SirkServerStage: <ścieżka My Scripts>`. Najpierw wykonuje się on na serwerze MeshCentral, a jedyny plik, który wytworzy (≤256 KB), trafia do skryptu na hoście jako `$SirkStageFileName` / `$SirkStageFileBase64`. Skrypt wstępny musi być wewnętrzny (nazwa z `_`) i mieć `# SirkStageFor: MyCommands`.

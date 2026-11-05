@@ -96,6 +96,15 @@ function Get-SigningCertificate([string]$Thumbprint, [string]$Template) {
     return [pscustomobject]@{ Thumbprint = $certificate.Thumbprint.ToUpperInvariant(); Subject = $certificate.Subject; NotAfter = $certificate.NotAfter; Source = ('template ' + $templateName) }
 }
 
+# rdpsign may rewrite line endings; read one setting line by line, ignoring CR/LF and padding.
+function Get-RdpSetting([string]$Text, [string]$Prefix) {
+    foreach ($line in ($Text -split '[\r\n]+')) {
+        $trimmed = $line.Trim([char[]]@([char]0, [char]0xFEFF, ' ', "`t"))
+        if ($trimmed.StartsWith($Prefix, [System.StringComparison]::OrdinalIgnoreCase)) { return $trimmed.Substring($Prefix.Length).Trim() }
+    }
+    return ''
+}
+
 function New-RdpContent([string]$HostName) {
     @(
         "full address:s:$HostName",
@@ -145,7 +154,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw ("rdpsign.exe failed with exit code {0}: {1}" -f $LASTEXITCODE, (($signOutput | Out-String).Trim())) }
     $signed = [System.IO.File]::ReadAllText($temporaryFile)
     if ($signed -notmatch '(?m)^signscope:s:' -or $signed -notmatch '(?m)^signature:s:\S+') { throw 'The RDP file was not signed.' }
-    if ($signed -notmatch ('(?m)^full address:s:' + [regex]::Escape($targetHost) + '\r?$')) { throw 'Signed RDP file does not contain the expected target.' }
+    $signedTarget = Get-RdpSetting $signed 'full address:s:'
+    if ($signedTarget -ne $targetHost) { throw ("Signed RDP file does not contain the expected target (expected '{0}', found '{1}')." -f $targetHost, $signedTarget) }
     Copy-Item -LiteralPath $temporaryFile -Destination (Join-Path $outputDirectory $fileName)
     Write-Output ("Signed on {0}: {1} | Signer: {2} [{3}] (valid to {4:yyyy-MM-dd}, selected by {5})" -f $env:COMPUTERNAME, $fileName, $signer.Subject, $signer.Thumbprint, $signer.NotAfter, $signer.Source)
 } finally {
