@@ -1,3 +1,10 @@
+## 0.1.168 - 2026-11-05
+
+- Podpisany plik RDP: gdy żaden certyfikat nie pasuje do szablonu, błąd pokazuje nazwę komputera i listę certyfikatów z `LocalMachine\My` (podmiot, rozpoznane nazwy szablonu, klucz prywatny, ważność, odcisk), żeby było widać różnicę w nazwie szablonu. Gdy Windows pokazuje tylko OID szablonu, skrypt dopytuje o jego nazwę (CryptoAPI/AD).
+- Bez tagu i release.
+
+Current development notes: `docs/releases/0.1.168.md`.
+
 ## 0.1.167 - 2026-11-05
 
 - Edycja skryptu: nowa sekcja „Certificate Authority - this script” z polami „Certificate template (SirkCaTemplate)” i „RDP signing thumbprint (SirkRdpSigningThumbprint)”. Wartości są czytane z nagłówka skryptu i zapisywane do niego (puste pole usuwa linię, wtedy działa wartość globalna). Walidacja jak w ustawieniach CA; błędna wartość nic nie zapisuje.

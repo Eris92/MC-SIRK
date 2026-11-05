@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.168",
+    "date": "2026-11-05",
+    "summary": "Signed RDP: template mismatch error lists installed certificates and their templates; OID-only templates resolved to names.",
+    "notes": "docs/releases/0.1.168.md"
+  },
+  {
     "version": "0.1.167",
     "date": "2026-11-05",
     "summary": "Script editor shows and saves SirkCaTemplate and SirkRdpSigningThumbprint.",
