@@ -11,7 +11,7 @@ $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
 if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
 
-$wanted = @('Test-HostName', 'New-RdpContent', 'Get-SigningCertificate', 'Get-CertificateTemplateNames', 'Test-SigningCertificate')
+$wanted = @('Test-HostName', 'New-RdpContent', 'Get-SigningCertificate', 'Get-CertificateTemplateNames', 'Test-SigningCertificate', 'Get-RdpSetting')
 $functions = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $wanted -contains $node.Name }, $false)
 if ($functions.Count -ne $wanted.Count) { throw 'Expected RDP helper functions were not found.' }
 foreach ($function in $functions) { . ([scriptblock]::Create($function.Extent.Text)) }
@@ -57,6 +57,12 @@ if ($templateNames -notcontains 'RDP Signing' -or $templateNames -notcontains '1
 $v1 = [pscustomobject]@{ Extensions = @((New-FakeExtension '1.3.6.1.4.1.311.20.2' 'WebServer')) }
 if (@(Get-CertificateTemplateNames $v1) -notcontains 'WebServer') { throw 'V1 template name not parsed.' }
 if ($content -notmatch '(?m)^alternate full address:s:pc01\.corp\.local\r?$') { throw 'RDP content must carry the alternate address.' }
+
+# rdpsign output variants: CR CR LF, LF only, padding.
+foreach ($variant in @("screen:i:1`r`r`nfull address:s:pc01.corp.local`r`r`nsignature:s:A", "full address:s:pc01.corp.local `nx:i:1", "x:i:1`r`nfull address:s:pc01.corp.local")) {
+    if ((Get-RdpSetting $variant 'full address:s:') -ne 'pc01.corp.local') { throw 'Get-RdpSetting failed on an rdpsign output variant.' }
+}
+if ((Get-RdpSetting "alternate full address:s:x`r`n" 'full address:s:') -ne '') { throw 'alternate full address must not count as the target.' }
 
 # Agent stage: parses and only accepts a signed .rdp with a safe file name.
 $agentErrors = $null
