@@ -4,6 +4,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 
 | Obszar | Test |
 |---|---|
+| kompletność indeksu śledzonych plików `scripts/` (w tym `scripts/ai/`) | `scripts-index.test.js` |
 | security | `security.test.js` |
 | lokalizacja skryptów | `script-localization.test.js` |
 | folder permissions | `folder-access.test.js` |
