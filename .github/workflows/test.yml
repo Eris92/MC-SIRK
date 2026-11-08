@@ -2,6 +2,7 @@ name: Test
 
 on:
   pull_request:
+  pull_request_target:
   workflow_dispatch:
 
 permissions:
@@ -9,12 +10,14 @@ permissions:
 
 jobs:
   test:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name != 'pull_request_target' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
@@ -26,12 +29,14 @@ jobs:
         run: npm test
 
   windows-interactive-shell-smoke:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event_name != 'pull_request_target' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Validate Git installer syntax
         shell: powershell
         run: |
@@ -60,3 +65,68 @@ jobs:
       - name: Validate Entra SMS Voice report parser and CSV protection
         shell: powershell
         run: .\test\windows-entra-sms-voice-report-smoke.ps1
+
+  security-review:
+    if: ${{ github.event_name != 'pull_request_target' }}
+    name: security-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Static security review
+        env:
+          SECURITY_REVIEW_BASE: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: node scripts/security-review.js
+      - name: Security regressions (full suite includes test/security.test.js)
+        run: npm test
+      # npm audit --omit=dev --audit-level=high: not applicable.
+      # package.json has no runtime dependencies or lockfile; no registry access needed.
+
+
+  security-review-trusted:
+    name: security-review-trusted
+    if: ${{ github.event_name == 'pull_request_target' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted base code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted-base
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout PR content as data only
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr-data
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: false
+          lfs: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      # Never execute scripts, install packages or load actions from pr-data.
+      - name: Review PR data with base scanner
+        env:
+          SECURITY_REVIEW_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node trusted-base/scripts/security-review.js --target pr-data
