@@ -6,18 +6,32 @@ var path = require("path");
 var cp = require("child_process");
 
 function git(root, args) {
-    return cp.execFileSync("git", args, { cwd: root, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+    return cp.execFileSync("git", ["-c", "core.fsmonitor=false"].concat(args), { cwd: root, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
 }
 function review(root, base, notice) {
     notice = notice || function (message) { console.log(message); };
+    root = fs.realpathSync(root);
+    function read(file) {
+        var full = path.resolve(root, file);
+        var relative = path.relative(root, full);
+        if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Target path escapes tree");
+        // PR symlinks must never redirect reads outside the data checkout.
+        var cursor = root;
+        relative.split(path.sep).forEach(function (part) {
+            cursor = path.join(cursor, part);
+            if (fs.lstatSync(cursor).isSymbolicLink()) throw new Error("Symlink in target tree: " + file);
+        });
+        return fs.readFileSync(full, "utf8");
+    }
     var errors = [];
     var files = git(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0");
     var secrets = /gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----|AKIA[A-Z0-9]{16}|(?:password|passwd|api[_-]?key|client[_-]?secret)\s*[:=]\s*["'][^"'\s]{12,}["']/i;
     new Set(files).forEach(function (file) {
         if (!file || file.startsWith("test/")) return;
         var full = path.join(root, file);
-        if (!fs.existsSync(full) || !fs.lstatSync(full).isFile()) return;
-        fs.readFileSync(full, "utf8").split(/\r?\n/).forEach(function (line, index) {
+        if (!fs.existsSync(full) && !fs.lstatSync(full, { throwIfNoEntry: false })) return;
+        if (!fs.lstatSync(full).isFile() && !fs.lstatSync(full).isSymbolicLink()) return;
+        read(file).split(/\r?\n/).forEach(function (line, index) {
             if (secrets.test(line)) errors.push(file + ":" + (index + 1) + ": possible credential (value redacted)");
         });
     });
@@ -26,7 +40,7 @@ function review(root, base, notice) {
     var receivers = new Set(["cp", "childProcess", "child_process", "processOwner"]);
     var serverFiles = files.filter(function (file) { return file.startsWith("server/") && fs.existsSync(path.join(root, file)); });
     serverFiles.forEach(function (file) {
-        var source = fs.readFileSync(path.join(root, file), "utf8");
+        var source = read(file);
         var binding = /\b(?:const|let|var)\s+(\w+)\s*=\s*require\s*\(\s*["'](?:node:)?child_process["']\s*\)|\bimport\s+\*\s+as\s+(\w+)\s+from\s*["'](?:node:)?child_process["']|\bimport\s+(\w+)\s+from\s*["'](?:node:)?child_process["']/g;
         var match;
         while ((match = binding.exec(source))) receivers.add(match[1] || match[2] || match[3]);
@@ -54,13 +68,22 @@ function review(root, base, notice) {
         else if (line.startsWith(" ")) number++;
     });
     git(root, ["ls-files", "--others", "--exclude-standard", "-z", "--", "server/"]).split("\0").filter(Boolean).forEach(function (file) {
-        fs.readFileSync(path.join(root, file), "utf8").split(/\r?\n/).forEach(function (line, index) { inspect(line, file, index + 1); });
+        read(file).split(/\r?\n/).forEach(function (line, index) { inspect(line, file, index + 1); });
     });
     return errors;
 }
 if (require.main === module) {
     try {
-        var errors = review(path.resolve(__dirname, ".."), process.env.SECURITY_REVIEW_BASE || "HEAD");
+        var target = path.resolve(__dirname, "..");
+        var base = process.env.SECURITY_REVIEW_BASE || "HEAD";
+        var args = process.argv.slice(2);
+        for (var i = 0; i < args.length; i += 2) {
+            if (!args[i + 1] || (args[i] !== "--target" && args[i] !== "--base")) throw new Error("Usage: security-review.js [--target <dir>] [--base <sha>]");
+            if (args[i] === "--target") target = path.resolve(args[i + 1]);
+            else base = args[i + 1];
+        }
+        if (!/^[a-zA-Z0-9][a-zA-Z0-9/_.~-]*$/.test(base)) throw new Error("Invalid base revision");
+        var errors = review(target, base);
         errors.forEach(function (error) { console.error(error); });
         if (errors.length) process.exitCode = 1;
         else console.log("Security static review: OK");

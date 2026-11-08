@@ -84,12 +84,66 @@ try {
     write("server/probe.js", "spawn(cmd, args)");
     assert(review(root, advancedBase).length > 0, "own PR changes still fail behind base");
     assert.throws(function () { review(root, "missing-base"); });
+    // Only the current trusted scanner executes; the target's replacement is data.
+    var sentinel = path.join(root, "EXECUTED");
+    write("scripts/security-review.js", "require('fs').writeFileSync(" + JSON.stringify(sentinel) + ", 'unsafe'); process.exit(0);");
+    write("package.json", JSON.stringify({ scripts: { test: "node scripts/security-review.js", preinstall: "node scripts/security-review.js" } }));
+    write(".github/workflows/test.yml", "jobs: {} # PR disables scanner");
+    var scanner = path.resolve(__dirname, "../scripts/security-review.js");
+    function trustedRun(extra) {
+        // Isolate CLI globals without launching another Node process (sandbox safe).
+        var result = { status: 0, stdout: "", stderr: "" };
+        var cliModule = { exports: {} };
+        var cliRequire = require("module").createRequire(scanner);
+        function trustedRequire(name) { return cliRequire(name); }
+        trustedRequire.main = cliModule;
+        var cliProcess = { argv: [process.execPath, scanner, "--target", root, "--base", advancedBase].concat(extra || []), env: {} };
+        require("vm").runInNewContext(fs.readFileSync(scanner, "utf8"), {
+            require: trustedRequire, module: cliModule, __dirname: path.dirname(scanner), process: cliProcess,
+            console: { log: function (s) { result.stdout += s + "\n"; }, error: function (s) { result.stderr += s + "\n"; } }
+        }, { filename: scanner });
+        result.status = cliProcess.exitCode || 0;
+        return result;
+    }
+    var rejected = trustedRun();
+    assert.strictEqual(rejected.status, 1, rejected.stderr);
+    assert(rejected.stderr.includes("primitive"), "neutered target scanner cannot bypass base scanner: " + JSON.stringify(rejected));
+    write("server/probe.js", "const safe = 1;");
+    write("config.txt", "gh" + "p_" + "x".repeat(36));
+    rejected = trustedRun();
+    assert.strictEqual(rejected.status, 1);
+    assert(rejected.stderr.includes("possible credential"));
+    write("config.txt", "safe");
+    write("server/probe.js", "spawn(cmd); // security-review-allow: validated fixture input");
+    var accepted = trustedRun();
+    assert.strictEqual(accepted.status, 0, accepted.stderr);
+    assert(accepted.stdout.includes("NOTICE server/probe.js:1:"));
+    assert(!fs.existsSync(sentinel), "no target script may execute");
+    assert.strictEqual(trustedRun(["--unknown", "value"]).status, 1);
+    assert.strictEqual(trustedRun(["--base", "missing-base"]).status, 1);
+    if (process.platform !== "win32") {
+        fs.symlinkSync(scanner, path.join(root, "linked.js"));
+        assert.strictEqual(trustedRun().status, 1, "symlinks fail closed");
+        fs.unlinkSync(path.join(root, "linked.js"));
+    }
     var workflow = fs.readFileSync(path.join(__dirname, "../.github/workflows/test.yml"), "utf8");
-    var job = workflow.split("\n  security-review:\n")[1];
+    function jobText(name) { return workflow.split("\n  " + name + ":\n")[1].split(/\n  [a-z][a-z-]*:\n/)[0]; }
+    var job = jobText("security-review");
     assert(job && job.includes("name: security-review"));
-    assert(!/^    if:/m.test(job), "fork PRs must not be skipped");
+    assert(job.includes("if: ${{ github.event_name != 'pull_request_target' }}"), "fork PRs remain enabled on pull_request");
     ["persist-credentials: false", "contents: read", "github.event.pull_request.head.sha", "github.event.pull_request.base.sha", "node scripts/security-review.js", "run: npm test"].forEach(function (contract) { assert(job.includes(contract), contract); });
     assert(workflow.includes("\n  pull_request:\n"));
+    assert(workflow.includes("\n  pull_request_target:\n"));
+    ["test", "windows-interactive-shell-smoke", "security-review"].forEach(function (name) {
+        assert(jobText(name).includes("github.event_name != 'pull_request_target'"), name);
+    });
+    var trusted = jobText("security-review-trusted");
+    ["name: security-review-trusted", "if: ${{ github.event_name == 'pull_request_target' }}", "contents: read", "ref: ${{ github.event.pull_request.base.sha }}", "ref: ${{ github.event.pull_request.head.sha }}", "path: trusted-base", "path: pr-data", "run: node trusted-base/scripts/security-review.js --target pr-data"].forEach(function (contract) { assert(trusted.includes(contract), contract); });
+    assert.strictEqual((trusted.match(/persist-credentials: false/g) || []).length, 2);
+    assert(!trusted.includes("secrets.") && !trusted.includes("npm "));
+    assert.strictEqual((trusted.match(/^        run:/gm) || []).length, 1);
+    assert(!/^        uses: (?!actions\/(?:checkout|setup-node)@v7$)/m.test(trusted));
+    console.log("Trusted security review tests: OK (target CLI, neutered scanner, no target execution, secrets, NOTICE, symlinks, workflow isolation)");
     console.log("Security review regression tests: OK (secrets, RegExp exec, process bindings, tracked/untracked execution, overrides/NOTICE, redaction, merge base, fail-closed base, PR contract)");
 } finally {
     fs.rmSync(root, { recursive: true, force: true });
