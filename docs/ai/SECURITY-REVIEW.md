@@ -58,8 +58,11 @@ Zwykły `security-review` z head pozostaje kontrolą regresji, ale nie stanowi
 zaufanego dowodu dla zmian narzędzi bezpieczeństwa.
 
 Interfejs: `node scripts/security-review.js --target <katalog> --base <sha>`.
-Cel musi być checkoutem Git z historią pozwalającą ustalić merge-base. Skaner
-odczytuje pliki i metadane Git; nie ładuje modułów z celu. Wyłącza fsmonitor
+Cel musi być checkoutem Git z historią pozwalającą ustalić merge-base.
+Dla PR z forka, gdy SHA bazy nie występuje w historii forka, `git merge-base`
+kończy się błędem, a zaufana kontrola kończy się niepowodzeniem (fail closed),
+nigdy nie przechodząc po cichu.
+Skaner odczytuje pliki i metadane Git; nie ładuje modułów z celu. Wyłącza fsmonitor
 w Git i odrzuca dowiązania symboliczne, aby odczyt nie wychodził poza drzewo.
 Obowiązują dotychczasowe reguły sekretów, merge-base i wyjątków NOTICE.
 Regresja uruchamia bazowy CLI na fixture z podmienionym skanerem, workflow
@@ -71,24 +74,3 @@ Sam PR #457 wymaga podpisanej przez właściciela zgody na zmiany security-tooli
 związanej z dokładnym SHA; wynik kontroli z head jej nie zastępuje. Ryzyko
 pozostaje wysokie. Przegląd QA/security, konfiguracja zewnętrznego Build_AI
 i decyzja o merge należą do managera.
-
-### Weryfikacja lokalna rework #2 (sandbox, 2026-11-08)
-
-- `node test/security-review.test.js` — exit 0; `Trusted security review tests: OK`
-  oraz `Security review regression tests: OK`. CLI kodu bazowego uruchamiany
-  jest w izolowanym kontekście VM z własnymi argv/console; moduły pochodzą
-  wyłącznie z bazowego skanera. Nie jest to uruchomienie kodu celu w VM.
-- `node scripts/security-review.js` — exit 0; `Security static review: OK`.
-- `node scripts/validate-repository-layout.js` — exit 0; między innymi
-  `Single maintained workflow validation: OK`.
-- `node scripts/validate-architecture.js` i `git diff --check` — exit 0.
-- `npm test` — exit 1: po przejściu regresji security-review test serwera
-  kończy się `Error: listen EPERM: operation not permitted 127.0.0.1`.
-  Także bezpośrednie `node test/security.test.js` zwraca ten błąd (exit 1).
-- `node scripts/ai/quiet-run.mjs -- node scripts/run-tests.js` — exit 1,
-  `FAIL node exit=1`; wrapper w tym sandboxie nie dostarczył diagnostyki
-  z powtórnego uruchomienia, dlatego użyto również bezpośredniego `npm test`.
-
-Nie potwierdzono pełnego zielonego suite, Windows smoke ani rzeczywistego
-check run na GitHub. Kontroler przekazuje zmiany do istniejącego draft PR;
-wymagane są trusted CI i niezależny przegląd managera/właściciela.
