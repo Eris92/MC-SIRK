@@ -15,49 +15,30 @@ key ID i długich literalnych przypisań credentials; raportuje ścieżkę i num
 linii bez wartości sekretu. Nie skanuje historii Git ani plików ignorowanych.
 Fixture sekretów wolno umieszczać tylko w `test/`.
 
-Dla `server/` skaner odrzuca nowe linie z `eval`, konstruktorem `Function`,
-`child_process` lub wywołaniami exec/spawn/fork, także w istniejących ownerach.
-Lokalna baza to HEAD; CI używa `SECURITY_REVIEW_BASE` (SHA base PR).
-Nie ma automatycznego wyjątku dla deklarowanej walidacji wejścia. To konserwatywna
-kontrola tekstowa, nie parser JS ani analiza przepływu danych: aliasy, składnia
-wieloliniowa i inne formy obfuskacji wymagają przeglądu człowieka; możliwe są też
-fałszywe alarmy. Brak bazy lub błąd Git powoduje niepowodzenie kontroli.
+Dla `server/` skaner odrzuca nowe linie z `eval(`, `new Function(`,
+każdą referencją `child_process` oraz wywołaniami exec/spawn/fork.
+Zwykłe `/x/.exec(s)` i `re.exec(line)` przechodzą. `.exec` jest wykrywane
+na odbiornikach cp, childProcess, child_process, processOwner oraz nazwach
+wiązanych przez proste require/import child_process; pozostałe metody procesu
+są wykrywane także na innych odbiornikach. Wywołania bez odbiornika są blokowane.
+
+Wyjątek dla prymitywu wymaga komentarza w tej samej linii:
+`// security-review-allow: uzasadnienie walidacji i przeglądu`.
+Niepuste uzasadnienie emituje NOTICE z plikiem, numerem linii i powodem.
+Puste uzasadnienie nie daje wyjątku. Sekretów nie można wyłączyć tym markerem.
+Marker pozostaje w diffie do oceny przez reviewera; nie zastępuje wymaganej
+zgody właściciela związanej z SHA.
+
+Lokalna baza to HEAD; CI używa merge base HEAD i `SECURITY_REVIEW_BASE`
+(SHA base PR), dzięki czemu zmiany wyłącznie na main nie należą do diffu PR.
+Kontrola uwzględnia również lokalne zmiany śledzone i nowe pliki.
+To kontrola tekstowa, nie parser JS ani analiza przepływu danych: aliasy,
+wiązania wieloliniowe, obliczane właściwości i obfuskacja wymagają przeglądu
+człowieka. Nazwy odbiorników są zbierane konserwatywnie dla całego server/;
+możliwe są kolizje nazw i fałszywe alarmy, również w komentarzach i literałach.
+Brak bazy lub błąd Git powoduje niepowodzenie kontroli.
 
 Job uruchamia pełne `npm test`, obejmujące `test/security.test.js` i wszystkie
 regresje `.test.js`. `npm audit --omit=dev --audit-level=high` nie ma zastosowania:
 package.json nie deklaruje zależności runtime, repo nie ma lockfile. Job nie
 potrzebuje instalowania pakietów ani dostępu do registry.
-
-## Lokalny handoff dla kontrolera
-
-Zmiany: workflow, `scripts/security-review.js`, `test/security-review.test.js`,
-ten dokument. Bez zmian runtime i wersji pluginu. Gałąź: `ai/issue-456`.
-
-Wykonane polecenia i rzeczywiste wyniki:
-
-- `node test/security-review.test.js` — exit 0:
-  `Security review regression tests: OK (secrets, tracked/untracked execution, redaction, fail-closed base, PR contract)`.
-  Fixture w tymczasowym repo potwierdzają odmowę dla tokenu i private key poza
-  testami, plików śledzonych i nowych, nowych prymitywów wykonania oraz zmian
-  istniejącego ownera. Testy nie tworzą commitów.
-- `node scripts/security-review.js` — exit 0: `Security static review: OK`.
-- `node scripts/validate-repository-layout.js` — exit 0; m.in.
-  `Final repository layout validation: OK`, `Single maintained workflow validation: OK`.
-- `git diff --check` — exit 0, brak wyjścia.
-- `node scripts/ai/quiet-run.mjs -- node scripts/run-tests.js` — exit 1:
-  `FAIL node exit=1`; logi tego uruchomienia puste. Bez uznawania tego za sukces.
-- `npm test` — exit 1; walidatory i poprzedzające testy (w tym nowe regresje)
-  przeszły, następnie `Error: listen EPERM: operation not permitted 127.0.0.1`.
-- `node test/security.test.js` — exit 1 z tym samym `listen EPERM`:
-  sandbox nie pozwala na wymagany lokalny listener.
-- `node scripts/ai/test-tools.mjs` — exit 1:
-  `AssertionError [ERR_ASSERTION]: Expected values to be strictly equal: 2 !== 0`
-  w linii 18 (wynik locatora w fixture). Nie zmieniano tych narzędzi.
-
-Windows smoke nie uruchomiono: środowisko Linux bez `pwsh` i Windows Shell.
-Status checka na GitHub, zgodność z aktualnym zdalnym main oraz pełny sukces
-jobów test/Windows pozostają do potwierdzenia przez zaufane CI. Brak sieci;
-nie utworzono commita, PR ani komentarza Issue zgodnie z instrukcją wykonawczą.
-Kontroler powinien utworzyć draft PR z linkiem `Refs #456` i przenieść ten handoff
-do PR i Issue. Nie scalać: wymagane są QA/security review managera oraz zgoda
-właściciela związana z dokładnym SHA. Sam zielony skaner nie zastępuje tej zgody.
