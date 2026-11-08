@@ -15,7 +15,7 @@ try{
  git("init","-q");git("config","user.email","test@example.invalid");git("config","user.name","Test");
  git("add",".");git("commit","-qm","fixture");
  const located=run(locator,["--repo",repo,"--scope","server","--text","FirstThing","--max","1"]);
- assert.equal(located.status,0,located.stderr);
+ assert.equal(located.status,0,`error.code=${located.error?.code}; error.message=${located.error?.message}; status=${located.status}; signal=${located.signal}; stderr=${located.stderr}`);
  const result=JSON.parse(located.stdout);assert.equal(result.matches.length,1);assert.equal(result.truncated,true);
  assert.equal(result.matches[0].line,2);assert.equal(located.stdout.includes("function FirstThing"),false);
  const read=run(locator,["--repo",repo,"--read","server/runtime.js","--from","2","--lines","1"]);
