@@ -1,3 +1,11 @@
+## 0.1.173 - 2026-11-13
+
+- Poprawka #460: ODBC (32-bit) korzysta teraz z tej samej natywnej sesji interaktywnej MeshAgent (`type: 1`, `runAsUser: 2`) co działający preset CMD. Poprzedni PowerShell w Scheduled Task uruchamiał GUI inną ścieżką; `start /WAIT` również nie przekazuje błędu procesu potomnego (potwierdzone testem Windows).
+- Zaufany preset ODBC wykorzystuje istniejący mechanizm `isNativeGuiLauncher` i jawny server-only marker, aby bez dodatkowego launchera wywołać synchronicznie `powershell.exe -NoProfile -Command` w sesji użytkownika. `Start-Process -Verb RunAs` uruchamia wyłącznie `SysWOW64\odbcad32.exe` i przekazuje kod błędu UAC/launch do Results.
+- Testy JS i Windows obejmują porównanie z CMD, odmowę UAC, brak EXE, brak unauthorized opt-in oraz propagację exit code. Development build; bez taga/release. Realny MeshCentral smoke pozostaje wymagany do zamknięcia #460.
+
+Current development notes: `docs/releases/0.1.173.md`.
+
 ## 0.1.172 - 2026-11-13
 
 - Commands → System: nowy preset `ODBC (32-bit)` (#460), uruchamiający `SysWOW64\odbcad32.exe` w sesji zalogowanego użytkownika z normalnym żądaniem UAC przez `Start-Process -Verb RunAs`. Sprawdzanie obecności EXE i czytelny błąd przy odmowie elevation lub nieudanym starcie.

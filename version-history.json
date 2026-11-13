@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.173",
+    "date": "2026-11-13",
+    "summary": "Fix ODBC (32-bit) native interactive GUI launch: use the same runAsUser=2 CMD route as working System commands without a noninteractive scheduled task or START-exit-code loss (#460).",
+    "notes": "docs/releases/0.1.173.md"
+  },
+  {
     "version": "0.1.172",
     "date": "2026-11-13",
     "summary": "Commands / System: add ODBC (32-bit) in the interactive Windows session with UAC request, SysWOW64 executable validation and safe failure reporting (#460).",
