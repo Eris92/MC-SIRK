@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$script = & node (Join-Path $PSScriptRoot 'server-time-sync.test.js') --print-script
+$script = (& node (Join-Path $PSScriptRoot 'server-time-sync.test.js') --print-script | Out-String)
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($script)) {
     throw 'Cannot generate the trusted Windows server time sync command.'
 }
