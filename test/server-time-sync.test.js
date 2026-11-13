@@ -93,7 +93,7 @@ assert.strictEqual(clockReads, 0, "Listing the catalog must never sample a serve
 
 async function run(value, node) {
     var result = mod.apiPost("execute", { body: Object.assign({
-        nodeId: "node/test/win", commandId: "sync-server-date-time", confirmedExecution: true
+        nodeId: "node/test/win", commandId: "sync-server-date-time", desktopDirect: true, confirmedExecution: true
     }, value || {}) }, user);
     if (!resolveTarget) return result;
     resolveTarget.resolve(node || windowsNode);
@@ -104,7 +104,7 @@ async function run(value, node) {
 (async function () {
     try {
         var first = mod.apiPost("execute", { body: {
-            nodeId: "node/test/win", commandId: "sync-server-date-time", confirmedExecution: true,
+            nodeId: "node/test/win", commandId: "sync-server-date-time", desktopDirect: true, confirmedExecution: true,
             serverUtc: "1990-01-01T00:00:00.000Z", timeZone: "UTC", command: "Set-Date -Date 1990", type: 1, runAsUser: 2
         } }, user);
         assert.strictEqual(clockReads, 0, "Timestamp may not be captured before rights resolution.");
@@ -126,7 +126,7 @@ async function run(value, node) {
         await assert.rejects(run({ confirmedExecution: false }), /confirmation is required/i);
         assert.strictEqual(clockReads, 2);
         await assert.rejects((function () {
-            var pending = mod.apiPost("execute", { body: { nodeId: "node/test/win", commandId: "sync-server-date-time", confirmedExecution: true } }, user);
+            var pending = mod.apiPost("execute", { body: { nodeId: "node/test/win", commandId: "sync-server-date-time", desktopDirect: true, confirmedExecution: true } }, user);
             resolveTarget.reject(new Error("You do not have permission to run commands on this device."));
             resolveTarget = null;
             return pending;
