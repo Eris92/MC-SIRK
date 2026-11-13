@@ -29,9 +29,9 @@ assert.strictEqual(odbc.runAsUser, existingCmd.runAsUser, "ODBC must use the sam
 assert.notStrictEqual(odbc.elevatedUserSession, true, "Do not silently elevate the scheduled task.");
 assert.ok(/^start "" \/B \/WAIT powershell\.exe -NoProfile -Command "/.test(odbc.cmd),
     "ODBC must use CMD-style native start with bounded wait for the UAC launcher.");
-assert.ok(/\r\nif errorlevel 1 \(echo ODBC 32-bit launch failed\. & exit \/b 1\)/.test(odbc.cmd),
+assert.ok(/ & if errorlevel 1 \(echo ODBC 32-bit launch failed\. & exit \/b 1\)/.test(odbc.cmd),
     "Denied UAC or failed launch must propagate nonzero status.");
-assert.ok(/\r\necho ODBC \(32-bit\) launched\.$/.test(odbc.cmd),
+assert.ok(/ & echo ODBC \(32-bit\) launched\.$/.test(odbc.cmd),
     "Success must be reported only after the native launch helper exits successfully.");
 assert.ok(odbc.cmd.indexOf(" -NonInteractive") < 0,
     "An interactive UAC prompt must not be launched from a NonInteractive PowerShell host.");
@@ -64,4 +64,5 @@ assert.ok(source.indexOf('result.showOnDesktop = override.showOnDesktop !== fals
     "The preset must retain standard desktop and no-desktop visibility defaults.");
 
 if (process.argv.indexOf("--print-script") >= 0) process.stdout.write(odbcPowerShell);
+else if (process.argv.indexOf("--print-cmd") >= 0) process.stdout.write(odbc.cmd);
 else console.log("ODBC 32-bit command catalog, UAC and negative-path contracts: OK");
