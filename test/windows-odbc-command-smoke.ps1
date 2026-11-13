@@ -66,4 +66,19 @@ if ($script:launchCalls -ne 2 -or $output -ne 'ODBC (32-bit) launched.') {
     throw 'Successful UAC launch did not return the expected result.'
 }
 
-Write-Output 'ODBC 32-bit PowerShell syntax, path, UAC refusal and success smoke: OK'
+
+# Validate native CMD start /B /WAIT and errorlevel propagation without invoking UAC.
+$cmdProbe = 'start "" /B /WAIT powershell.exe -NoProfile -Command "exit 19"' + [Environment]::NewLine +
+    'if errorlevel 1 (echo ODBC 32-bit launch failed. & exit /b 1)'
+& $env:ComSpec '/d' '/s' '/c' $cmdProbe | Out-Null
+if ($LASTEXITCODE -ne 1) {
+    throw ('CMD native launcher failed to propagate a PowerShell/UAC error. Exit code: ' + $LASTEXITCODE)
+}
+$cmdProbe = 'start "" /B /WAIT powershell.exe -NoProfile -Command "exit 0"' + [Environment]::NewLine +
+    'if errorlevel 1 (echo ODBC 32-bit launch failed. & exit /b 1)'
+& $env:ComSpec '/d' '/s' '/c' $cmdProbe | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw ('CMD native launcher incorrectly reported success as failure. Exit code: ' + $LASTEXITCODE)
+}
+
+Write-Output 'ODBC native CMD start, PowerShell syntax, UAC denial and success smoke: OK'
