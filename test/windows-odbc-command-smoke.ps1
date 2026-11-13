@@ -62,7 +62,7 @@ if ($script:launchCalls -ne 1) {
 
 $script:scenario = 'success'
 $output = & ([scriptblock]::Create($command))
-if ($script:launchCalls -ne 2 -or $output -ne 'ODBC (32-bit) launched.') {
+if ($script:launchCalls -ne 2 -or $null -ne $output) {
     throw 'Successful UAC launch did not return the expected result.'
 }
 
