@@ -22,33 +22,42 @@ var odbc = matches[0];
 
 assert.strictEqual(odbc.label, "ODBC (32-bit)");
 assert.ok(odbc.locales.pl.description && odbc.locales.en.description, "PL/EN descriptions must be defined.");
-assert.strictEqual(odbc.type, 2, "ODBC must be a PowerShell preset.");
-assert.strictEqual(odbc.runAsUser, 2, "ODBC must start in the logged-on user's interactive session.");
-assert.notStrictEqual(odbc.elevatedUserSession, true, "Task Scheduler elevation must not bypass the UAC consent path.");
-assert.ok(odbc.cmd.indexOf("SysWOW64\\odbcad32.exe") >= 0, "ODBC must resolve the 32-bit system executable.");
-assert.ok(odbc.cmd.indexOf("System32\\odbcad32.exe") < 0, "The 64-bit administrator must not be selected.");
-assert.ok(odbc.cmd.indexOf("[Environment+SpecialFolder]::Windows") >= 0, "Use the OS Windows directory, not an injectable argument.");
-assert.ok(odbc.cmd.indexOf("Test-Path -LiteralPath $odbc -PathType Leaf") >= 0 &&
-    odbc.cmd.indexOf("executable was not found") >= 0, "Missing ODBC executable must fail clearly.");
-assert.ok(odbc.cmd.indexOf("Start-Process -FilePath $odbc -Verb RunAs -PassThru -ErrorAction Stop") >= 0 &&
-    odbc.cmd.indexOf("catch{throw") >= 0, "UAC cancellation and launch failures must be surfaced.");
-assert.ok(odbc.cmd.indexOf("-Wait") < 0, "The GUI must remain open without exhausting the launcher timeout.");
+var existingCmd = catalog.system.commands.filter(function (item) { return item.id === "cmd"; })[0];
+assert.strictEqual(existingCmd.type, 1, "Existing CMD must keep native execution.");
+assert.strictEqual(odbc.type, existingCmd.type, "ODBC must use the native CMD command type.");
+assert.strictEqual(odbc.runAsUser, existingCmd.runAsUser, "ODBC must use the native interactive user session.");
+assert.strictEqual(odbc.nativeInteractiveGui, true, "ODBC must explicitly opt into the trusted native interactive launcher.");
+assert.notStrictEqual(odbc.elevatedUserSession, true, "Do not combine UAC with scheduled-task elevation.");
+assert.ok(/^powershell\.exe -NoProfile -WindowStyle Hidden -Command "/.test(odbc.cmd),
+    "The short UAC launcher must run synchronously through the native CMD transport.");
+assert.ok(odbc.cmd.indexOf("start \"\"") < 0 && odbc.cmd.indexOf("-NonInteractive") < 0,
+    "Native CMD start hides exit codes; UAC must remain interactive and synchronous.");
+var commandMatch = /-Command "([^"\r\n]+)"/.exec(odbc.cmd);
+assert.ok(commandMatch, "ODBC must embed exactly one quoted PowerShell command.");
+var odbcPowerShell = commandMatch[1];
+assert.ok(odbcPowerShell.indexOf("SysWOW64\\odbcad32.exe") >= 0, "ODBC must resolve the 32-bit executable.");
+assert.ok(odbcPowerShell.indexOf("System32\\odbcad32.exe") < 0, "Never select the 64-bit ODBC administrator.");
+assert.ok(odbcPowerShell.indexOf("[Environment+SpecialFolder]::Windows") >= 0,
+    "Only the OS Windows directory, without user-controlled path or arguments.");
+assert.ok(odbcPowerShell.indexOf("Test-Path -LiteralPath $odbc -PathType Leaf") >= 0 &&
+    odbcPowerShell.indexOf("executable was not found") >= 0, "Missing executable must fail clearly.");
+assert.ok(odbcPowerShell.indexOf("Start-Process -FilePath $odbc -Verb RunAs -PassThru -ErrorAction Stop") >= 0 &&
+    odbcPowerShell.indexOf("catch{throw") >= 0, "UAC denial and launch errors must propagate.");
+assert.ok(odbcPowerShell.indexOf("-Wait") < 0, "Do not block on the ODBC GUI lifetime.");
 
-var transformed = policy.transformCommand(odbc);
-assert.strictEqual(transformed.runAsUser, 0, "The existing MeshAgent wrapper runs as SYSTEM, not the ODBC GUI.");
-assert.strictEqual(transformed.type, 2);
-assert.ok(transformed.cmd.indexOf("New-ScheduledTaskPrincipal -UserId $userName -LogonType Interactive -RunLevel Limited") >= 0,
-    "UAC must be requested from a limited interactive token, not combined with RunLevel Highest.");
-assert.ok(transformed.cmd.indexOf("$directPowerShell=0") >= 0,
-    "The normal logged-on-user script path must be reused.");
-assert.ok(transformed.cmd.indexOf("No interactive Windows user session was found.") >= 0 &&
-    transformed.cmd.indexOf("SessionId -gt 0") >= 0, "No logged-on user must not fall through to Session 0.");
-assert.ok(transformed.cmd.indexOf("if($exitCode -ne 0){throw") >= 0,
-    "A failed command must propagate a nonzero result to existing Results.");
-var payload = /\$commandPath,\[Convert\]::FromBase64String\('([^']+)'\)/.exec(transformed.cmd);
-assert.ok(payload, "The launcher must include the preset's script body.");
-assert.strictEqual(Buffer.from(payload[1], "base64").toString("utf8").replace(/^\uFEFF/, ""), odbc.cmd,
-    "The existing launcher must transport the exact trusted ODBC command.");
+assert.strictEqual(policy.isNativeGuiLauncher(existingCmd), true, "CMD must retain native GUI routing.");
+assert.strictEqual(policy.isNativeGuiLauncher(odbc), true, "Trusted ODBC must use the same native user context as CMD.");
+assert.strictEqual(policy.transformCommand(odbc), odbc, "ODBC must avoid a scheduled-task runner.");
+assert.strictEqual(policy.transformCommand(existingCmd), existingCmd, "CMD must be unchanged.");
+var forged = Object.assign({}, odbc, { nativeInteractiveGui: false });
+assert.strictEqual(policy.isNativeGuiLauncher(forged), false, "Untrusted commands cannot opt into native GUI execution.");
+assert.strictEqual(policy.transformCommand(forged).runAsUser, 0,
+    "Untrusted PowerShell bodies must retain the normal guarded logged-on-user launcher.");
+assert.ok(source.indexOf('nativeInteractiveGui: found.command.nativeInteractiveGui === true') >= 0,
+    "Only the server-resolved canonical preset may set the trusted native GUI marker.");
+assert.ok(source.indexOf('return { label: payload.label || "Custom command"') >= 0 &&
+    source.indexOf('nativeInteractiveGui: Number(payload') < 0,
+    "Custom command payloads must not be able to set the trusted GUI marker.");
 
 assert.ok(source.indexOf('if (payload.commandId) requireCommandAccess(user, payload.commandId);') >= 0 &&
     source.indexOf('var accessible = requireCommandAccess(user, value.commandId).command;') >= 0 &&
@@ -58,5 +67,6 @@ assert.ok(source.indexOf('result.showOnDesktop = override.showOnDesktop !== fals
     source.indexOf('["system", "other"].indexOf(String(categoryKey || "")) < 0') >= 0,
     "The preset must retain standard desktop and no-desktop visibility defaults.");
 
-if (process.argv.indexOf("--print-script") >= 0) process.stdout.write(odbc.cmd);
+if (process.argv.indexOf("--print-script") >= 0) process.stdout.write(odbcPowerShell);
+else if (process.argv.indexOf("--print-cmd") >= 0) process.stdout.write(odbc.cmd);
 else console.log("ODBC 32-bit command catalog, UAC and negative-path contracts: OK");

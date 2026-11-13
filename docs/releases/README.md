@@ -4,6 +4,7 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.174`](0.1.174.md) — ODBC 32-bit corrected native user launch and UAC status (#460); pending physical MeshCentral smoke;
 - [`0.1.173`](0.1.173.md) — Commands / System: Windows server clock and time-zone synchronization (#462); pending real Windows MeshCentral smoke;
 - [`0.1.172`](0.1.172.md) — Commands / System: ODBC (32-bit) z UAC (#460); pending real MeshCentral GUI/UAC smoke;
 - [`0.1.171`](0.1.171.md) — configurable rdpsign.exe path;

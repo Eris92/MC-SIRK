@@ -1,3 +1,11 @@
+## 0.1.174 - 2026-11-13
+
+- Poprawka #460: ODBC 32-bit teraz korzysta z tej samej natywnej sesji MeshAgent co CMD (`type:1`, `runAsUser:2`), zamiast PowerShell w Scheduled Task. `nativeInteractiveGui` to flagowany wyłącznie po stronie serwera built-in, a custom Commands nie mogą ustawiać tej flagi.
+- Windows CI wykazało, że `start "" /B /WAIT powershell.exe` może zwrócić sukces po błędzie child process. Synchroniczny `powershell.exe -NoProfile -Command` propaguje rzeczywisty kod niepowodzenia do Results; `Start-Process -Verb RunAs` otwiera wyłącznie `SysWOW64\odbcad32.exe` i nie obchodzi UAC.
+- Testy JS, Windows parser, brak EXE/odmowa UAC/exit code, regresje. Realny MeshCentral smoke nadal wymagany do zamknięcia #460. Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.174.md`.
+
 ## 0.1.173 - 2026-11-13
 
 - Commands → System: `Set date, time & time zone from server` (#462); czas UTC pochodzi z zegara Node serwera MeshCentral tuż przed dispatch do Windows MeshAgent, identyfikator IANA/Windows pochodzi z konfiguracji TZ procesu i jest mapowany zgodnie z CLDR. Nie ma danych klienta ani odczytu czasu podczas renderowania/approval.
