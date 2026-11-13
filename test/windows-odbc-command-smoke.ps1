@@ -62,12 +62,12 @@ if ($script:launchCalls -ne 1) {
 
 $script:scenario = 'success'
 $output = & ([scriptblock]::Create($command))
-if ($script:launchCalls -ne 2 -or $null -ne $output) {
+if ($script:launchCalls -ne 2 -or $output -ne 'ODBC (32-bit) launched.') {
     throw 'Successful UAC launch did not return the expected result.'
 }
 
 
-# Validate the exact native CMD wrapper using harmless exit-code substitutes.
+# Validate that the native CMD launcher propagates helper exit codes.
 $nativeCmd = & node (Join-Path $PSScriptRoot 'odbc-command-contract.test.js') --print-cmd
 if ($LASTEXITCODE -ne 0 -or -not $nativeCmd) {
     throw 'Unable to read the native CMD ODBC preset.'
@@ -76,16 +76,16 @@ $probePath = Join-Path $env:TEMP ('SIRK-ODBC-Probe-' + [guid]::NewGuid().ToStrin
 try {
     [IO.File]::WriteAllText($probePath, $nativeCmd.Replace($command, 'exit 19'), [Text.Encoding]::ASCII)
     & $env:ComSpec '/d' '/c' $probePath | Out-Null
-    if ($LASTEXITCODE -ne 1) {
-        throw ('CMD wrapper failed to propagate a failed UAC launch. Exit code: ' + $LASTEXITCODE)
+    if ($LASTEXITCODE -ne 19) {
+        throw ('Native CMD launch must return the PowerShell/UAC failure. Exit code: ' + $LASTEXITCODE)
     }
     [IO.File]::WriteAllText($probePath, $nativeCmd.Replace($command, 'exit 0'), [Text.Encoding]::ASCII)
     & $env:ComSpec '/d' '/c' $probePath | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        throw ('CMD wrapper incorrectly rejected successful launch. Exit code: ' + $LASTEXITCODE)
+        throw ('Native CMD launch incorrectly failed success. Exit code: ' + $LASTEXITCODE)
     }
 } finally {
     Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
 }
 
-Write-Output 'ODBC native CMD start, PowerShell syntax, UAC denial and success smoke: OK'
+Write-Output 'ODBC direct CMD, PowerShell syntax, UAC denial and success smoke: OK'

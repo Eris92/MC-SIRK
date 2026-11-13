@@ -40,7 +40,7 @@ module.exports.createModule = function (context) {
                 { id: "devices", label: "Device Manager", description: "Open Device Manager.", type: 1, runAsUser: 2, cmd: "start \"\" mmc.exe devmgmt.msc" },
                 { id: "events", label: "Event Viewer", description: "Open Event Viewer.", type: 1, runAsUser: 2, cmd: "start \"\" mmc.exe eventvwr.msc" },
                 { id: "taskmgr", label: "Task Manager", description: "Open Task Manager.", type: 1, runAsUser: 2, cmd: "start \"\" taskmgr.exe" },
-                { id: "odbc-32", label: "ODBC (32-bit)", description: "Open the 32-bit ODBC Data Source Administrator with UAC approval.", locales: { pl: { description: "Otwórz 32-bitowego administratora źródeł danych ODBC (wymaga zgody UAC)." }, en: { description: "Open the 32-bit ODBC Data Source Administrator with UAC approval." } }, type: 1, runAsUser: 2, cmd: "start \"\" /B /WAIT powershell.exe -NoProfile -Command \"$odbc=Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)) 'SysWOW64\\odbcad32.exe';if(-not (Test-Path -LiteralPath $odbc -PathType Leaf)){throw 'ODBC (32-bit) executable was not found.'};try{$started=Start-Process -FilePath $odbc -Verb RunAs -PassThru -ErrorAction Stop}catch{throw ('ODBC (32-bit) administrator launch denied or failed: '+$_.Exception.Message)};if(-not $started){throw 'ODBC (32-bit) did not start.'}\" & if errorlevel 1 (echo ODBC 32-bit launch failed. & exit /b 1) & echo ODBC (32-bit) launched." }
+                { id: "odbc-32", label: "ODBC (32-bit)", description: "Open the 32-bit ODBC Data Source Administrator with UAC approval.", locales: { pl: { description: "Otwórz 32-bitowego administratora źródeł danych ODBC (wymaga zgody UAC)." }, en: { description: "Open the 32-bit ODBC Data Source Administrator with UAC approval." } }, type: 1, runAsUser: 2, nativeInteractiveGui: true, cmd: "powershell.exe -NoProfile -WindowStyle Hidden -Command \"$odbc=Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)) 'SysWOW64\\odbcad32.exe';if(-not (Test-Path -LiteralPath $odbc -PathType Leaf)){throw 'ODBC (32-bit) executable was not found.'};try{$started=Start-Process -FilePath $odbc -Verb RunAs -PassThru -ErrorAction Stop}catch{throw ('ODBC (32-bit) administrator launch denied or failed: '+$_.Exception.Message)};if(-not $started){throw 'ODBC (32-bit) did not start.'};'ODBC (32-bit) launched.'\"" }
             ]
         },
         other: {
@@ -273,7 +273,7 @@ module.exports.createModule = function (context) {
             var found = findCatalogCommand(payload.commandId);
             if (!found) throw new Error("Command preset not found.");
             var commandText = injectVariables(found.command.cmd, found.command.type, found.command.variables || [], payload.variableValues, null);
-            return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0, elevatedUserSession: found.command.elevatedUserSession === true };
+            return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0, elevatedUserSession: found.command.elevatedUserSession === true, nativeInteractiveGui: found.command.nativeInteractiveGui === true };
         }
         var custom = String(payload.command || "");
         if (!custom) throw new Error("Command is empty.");

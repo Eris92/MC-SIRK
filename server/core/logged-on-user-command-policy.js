@@ -154,9 +154,13 @@ function buildLoggedOnUserLauncher(command, options) {
 function isNativeGuiLauncher(command) {
     var commandText = String(command && command.cmd || "");
     if (/\bcertmgr\.msc\b/i.test(commandText)) return false;
-    return Number(command && command.runAsUser) === 2 &&
-        Number(command && command.type) === 1 &&
-        /^\s*start\s+\"\"\s+/i.test(commandText);
+    if (Number(command && command.runAsUser) !== 2 || Number(command && command.type) !== 1) return false;
+    if (/^\s*start\s+\"\"\s+/i.test(commandText)) return true;
+    // Only server-resolved built-in GUI presets may execute a short synchronous
+    // PowerShell/UAC launcher through MeshAgent's native interactive user path.
+    // Custom commands never receive the nativeInteractiveGui marker.
+    return command.nativeInteractiveGui === true &&
+        /^\s*powershell\.exe\s+-NoProfile\s+-WindowStyle\s+Hidden\s+-Command\s+\"/i.test(commandText);
 }
 
 function transformCommand(command, options) {
