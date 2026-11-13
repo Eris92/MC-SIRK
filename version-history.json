@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.172",
+    "date": "2026-11-13",
+    "summary": "Commands / System: add ODBC (32-bit) in the interactive Windows session with UAC request, SysWOW64 executable validation and safe failure reporting (#460).",
+    "notes": "docs/releases/0.1.172.md"
+  },
+  {
     "version": "0.1.171",
     "date": "2026-11-05",
     "summary": "CA integration: configurable rdpsign.exe path for the server stage (Microsoft signature required).",

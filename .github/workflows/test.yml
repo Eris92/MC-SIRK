@@ -45,6 +45,9 @@ jobs:
       - name: Validate Network Connections shell namespace
         shell: powershell
         run: .\test\windows-network-shell-smoke.ps1
+      - name: Validate ODBC 32-bit interactive UAC contract
+        shell: powershell
+        run: .\test\windows-odbc-command-smoke.ps1
       - name: Validate SMS UTF-8 form encoding
         shell: powershell
         run: .\test\windows-sms-utf8-smoke.ps1

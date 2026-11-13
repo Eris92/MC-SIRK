@@ -1,4 +1,4 @@
-# SIRK Management Platform 0.1.171
+# SIRK Management Platform 0.1.172
 
 **Status:** development pre-1.0 — brak pierwszego pełnego wydania produktu  
 **Repozytorium:** `MC-SIRK`  
@@ -37,7 +37,7 @@ Najważniejsze dokumenty:
 - [Test index](test/INDEX.md)
 - [Integracja SMSAPI i Active Directory](docs/SMSAPI-AD.md)
 - [Integracja SMTP Relay](docs/SMTP-RELAY.md)
-- [Aktualne development notes](docs/releases/0.1.141.md)
+- [Aktualne development notes](docs/releases/0.1.172.md)
 
 ## Warstwy
 
