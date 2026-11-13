@@ -1,7 +1,7 @@
 # SIRK Management Platform — project state
 
 Status: `development pre-1.0`  
-Current version: `0.1.173`
+Current version: `0.1.174`
 Product release: **none yet**  
 First complete product release: reserved for `1.0.0` after explicit release gate.
 
@@ -56,6 +56,7 @@ Nie utrzymywać compatibility z `MyCompany`, `mycompany-data`, starymi loaderami
 - `tools/install/Install-SIRK-Portal-FromGit.ps1` — utrzymywany deployment owner: wykrywa rzeczywistą usługę Windows MeshCentral, buduje runtime-only artifact, weryfikuje kompletne SHA-256 po instalacji i kończy sukcesem dopiero po świeżym runtime proof z uruchomionego procesu;
 - `server/core/mesh-events.js` — adapter zdarzeń SIRK do `MeshCentral.DispatchEvent()`;
 - `server/core/approval-service.js` — shared approval lifecycle, w tym opcjonalny post-result `awaiting_confirmation` potwierdzany przez original requestera albo Site Admina;
+- `server/core/logged-on-user-command-policy.js` — shared user-session runner; trusted built-in ODBC 32-bit uses the same native MeshAgent interactive session as CMD via server-only `nativeInteractiveGui`, without the scheduled-task wrapper or CMD START exit-code loss; custom Commands cannot set the marker.
 - `server/core/agent-command-guard.js` — per-node guard zwykłych agent `runcommands`; tylko rights-checked, server-resolved context native Desktop Quick direct execution ma wewnętrzny Symbol bypass, niezależny od `AsyncLocalStorage` i niewysyłany do MeshAgent. Ordinary Commands/approval/multi nadal zachowują lock; real smoke #411 jest wymagany;
 - `server/core/script-admin-service.js` — owner per-script secret/system-credential metadata; deklarowane `SirkSystemCredential` dependencies oraz kanoniczny namespace `Entra ID` są traktowane jako wymagane profile integracji, a odpowiadające im Entra tenant/client secret variables nie są oferowane jako duplikowane per-script secrets;
 - `server/core/server-script-executor.js` — server-side wykonanie My Scripts, globalna kolejka child-process oraz single-flight zwykłych aktywnych wykonań po requester/script/effective values; specjalne executionOptions zachowują odrębny lifecycle; dla profilu `entra` executor wstrzykuje globalne `tenantId`/`clientId`/`clientSecret` do `MYSCRIPTS_ENTRA_*` oraz kompatybilnych legacy PowerShell variables wyłącznie w child process i fail-closed, jeśli integracja jest niekompletna;

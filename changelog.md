@@ -1,8 +1,17 @@
+## 0.1.174 - 2026-11-13
+
+- Poprawka #460: ODBC 32-bit teraz korzysta z tej samej natywnej sesji MeshAgent co CMD (`type:1`, `runAsUser:2`), zamiast PowerShell w Scheduled Task. `nativeInteractiveGui` to flagowany wyłącznie po stronie serwera built-in, a custom Commands nie mogą ustawiać tej flagi.
+- Windows CI wykazało, że `start "" /B /WAIT powershell.exe` może zwrócić sukces po błędzie child process. Synchroniczny `powershell.exe -NoProfile -Command` propaguje rzeczywisty kod niepowodzenia do Results; `Start-Process -Verb RunAs` otwiera wyłącznie `SysWOW64\odbcad32.exe` i nie obchodzi UAC.
+- Testy JS, Windows parser, brak EXE/odmowa UAC/exit code, regresje. Realny MeshCentral smoke nadal wymagany do zamknięcia #460. Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.174.md`.
+
 ## 0.1.173 - 2026-11-13
 
-- Poprawka #460: ODBC (32-bit) korzysta teraz z tej samej natywnej sesji interaktywnej MeshAgent (`type: 1`, `runAsUser: 2`) co działający preset CMD. Poprzedni PowerShell w Scheduled Task uruchamiał GUI inną ścieżką; `start /WAIT` również nie przekazuje błędu procesu potomnego (potwierdzone testem Windows).
-- Zaufany preset ODBC wykorzystuje istniejący mechanizm `isNativeGuiLauncher` i jawny server-only marker, aby bez dodatkowego launchera wywołać synchronicznie `powershell.exe -NoProfile -Command` w sesji użytkownika. `Start-Process -Verb RunAs` uruchamia wyłącznie `SysWOW64\odbcad32.exe` i przekazuje kod błędu UAC/launch do Results.
-- Testy JS i Windows obejmują porównanie z CMD, odmowę UAC, brak EXE, brak unauthorized opt-in oraz propagację exit code. Development build; bez taga/release. Realny MeshCentral smoke pozostaje wymagany do zamknięcia #460.
+- Commands → System: `Set date, time & time zone from server` (#462); czas UTC pochodzi z zegara Node serwera MeshCentral tuż przed dispatch do Windows MeshAgent, identyfikator IANA/Windows pochodzi z konfiguracji TZ procesu i jest mapowany zgodnie z CLDR. Nie ma danych klienta ani odczytu czasu podczas renderowania/approval.
+- Windows PowerShell 5.1 / SYSTEM: precheck strefy i uprawnień, `Set-TimeZone`, bezpośrednie ustawienie UTC przez Windows `SetSystemTime` (bez niejednoznacznej konwersji DST), idempotencja, odczyt stanu i raport JSON z przyczyną błędu lub partial failure w Results.
+- Brak konfiguracji NTP/GPO/rejestru; opóźnienie sieci/kolejki nie jest mierzone (bez gwarancji dokładności NTP). Testy kontraktu, scenariusze negatywne i Windows parser CI.
+- Development build, bez taga i GitHub Release. Real MeshCentral smoke na Windows Server 2019/2022 pozostaje finalną weryfikacją hosta.
 
 Current development notes: `docs/releases/0.1.173.md`.
 

@@ -1,8 +1,14 @@
 [
   {
+    "version": "0.1.174",
+    "date": "2026-11-13",
+    "summary": "Correct ODBC 32-bit native interactive launch: same strict user session as CMD, synchronous trusted UAC helper, and propagated failure status (#460).",
+    "notes": "docs/releases/0.1.174.md"
+  },
+  {
     "version": "0.1.173",
     "date": "2026-11-13",
-    "summary": "Fix ODBC (32-bit) native interactive GUI launch: use the same runAsUser=2 CMD route as working System commands without a noninteractive scheduled task or START-exit-code loss (#460).",
+    "summary": "Commands / System: one-shot server-trusted UTC clock and DST-aware Windows time-zone sync with fail-closed mapping, SYSTEM execution, structured Results and negative tests (#462).",
     "notes": "docs/releases/0.1.173.md"
   },
   {

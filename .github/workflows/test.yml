@@ -48,6 +48,9 @@ jobs:
       - name: Validate ODBC 32-bit interactive UAC contract
         shell: powershell
         run: .\test\windows-odbc-command-smoke.ps1
+      - name: Validate server date/time preset Windows PowerShell 5.1 syntax
+        shell: powershell
+        run: .\test\windows-server-time-sync-smoke.ps1
       - name: Validate SMS UTF-8 form encoding
         shell: powershell
         run: .\test\windows-sms-utf8-smoke.ps1
