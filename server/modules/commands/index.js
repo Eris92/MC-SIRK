@@ -5,6 +5,8 @@ var libraryFactory = require("../../core/script-confirmation-library.js");
 var adminFactory = require("../../core/script-admin-service.js");
 var folderAccess = require("../../core/folder-access.js");
 var QUICK_DIRECT_CONTEXT = Symbol.for("sirk.platform.quick.direct");
+var serverClock = require("./server-time-sync.js");
+var SERVER_TIME_SYNC_ID = "sync-server-date-time";
 
 module.exports.createModule = function (context) {
     var root = context.path.join(context.pluginRoot, "seed", "MyCommands");
@@ -40,6 +42,7 @@ module.exports.createModule = function (context) {
                 { id: "devices", label: "Device Manager", description: "Open Device Manager.", type: 1, runAsUser: 2, cmd: "start \"\" mmc.exe devmgmt.msc" },
                 { id: "events", label: "Event Viewer", description: "Open Event Viewer.", type: 1, runAsUser: 2, cmd: "start \"\" mmc.exe eventvwr.msc" },
                 { id: "taskmgr", label: "Task Manager", description: "Open Task Manager.", type: 1, runAsUser: 2, cmd: "start \"\" taskmgr.exe" },
+                { id: "sync-server-date-time", label: "Set date, time & time zone from server", description: "Set this Windows host clock and time zone once from the MeshCentral server. Changes may affect Kerberos, TLS, audit timestamps and domain time policy. Network latency is not NTP-corrected.", locales: { pl: { label: "Ustaw datę, czas i strefę z serwera", description: "Jednorazowo ustaw zegar i strefę tego hosta Windows z serwera MeshCentral. Zmiana może wpłynąć na Kerberos, TLS, znaczniki audytu i politykę czasu domeny. Opóźnienie sieci nie jest korygowane jak w NTP." }, en: { label: "Set date, time & time zone from server", description: "Set this Windows host clock and time zone once from the MeshCentral server. Changes may affect Kerberos, TLS, audit timestamps and domain time policy. Network latency is not NTP-corrected." } }, type: 2, runAsUser: 0, cmd: "throw 'Server-owned time synchronization must be generated at dispatch.'" },
                 { id: "odbc-32", label: "ODBC (32-bit)", description: "Open the 32-bit ODBC Data Source Administrator with UAC approval.", locales: { pl: { description: "Otwórz 32-bitowego administratora źródeł danych ODBC (wymaga zgody UAC)." }, en: { description: "Open the 32-bit ODBC Data Source Administrator with UAC approval." } }, type: 2, runAsUser: 2, cmd: "$odbc=Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Windows)) 'SysWOW64\\odbcad32.exe';if(-not (Test-Path -LiteralPath $odbc -PathType Leaf)){throw 'ODBC (32-bit) executable was not found.'};try{$started=Start-Process -FilePath $odbc -Verb RunAs -PassThru -ErrorAction Stop}catch{throw ('ODBC (32-bit) administrator launch denied or failed: '+$_.Exception.Message)};if(-not $started){throw 'ODBC (32-bit) did not start.'};'ODBC (32-bit) launched.'" }
             ]
         },
@@ -140,7 +143,7 @@ module.exports.createModule = function (context) {
         if (overrideLabel && obsoleteDefaults.indexOf(overrideLabel) < 0) result.label = overrideLabel;
         if (Object.prototype.hasOwnProperty.call(override, "description")) result.description = shared.cleanText(override.description, 1000);
         result.approvalLevels = [];
-        result.confirmExecution = override.confirmExecution === true;
+        result.confirmExecution = override.confirmExecution === true || command.id === SERVER_TIME_SYNC_ID;
         result.showOnDesktop = override.showOnDesktop !== false;
         result.showWithoutDesktop = Object.prototype.hasOwnProperty.call(override, "showWithoutDesktop") ? override.showWithoutDesktop === true : ["system", "other"].indexOf(String(categoryKey || "")) < 0;
         return result;
@@ -261,7 +264,7 @@ module.exports.createModule = function (context) {
         return (names.length ? "@echo off\r\n" + names.map(function (name) { return "set \"" + name + "=" + cmdQuote(values[name]) + "\""; }).join("\r\n") + "\r\n" : "") + commandText;
     }
 
-    function buildCommand(payload, stageValues) {
+    function buildCommand(payload, stageValues, trustedSnapshot) {
         if (payload.scriptPath) {
             var script = library.getScript(payload.scriptPath, true);
             if (!script) throw new Error("Script not found.");
@@ -272,6 +275,11 @@ module.exports.createModule = function (context) {
         if (payload.commandId) {
             var found = findCatalogCommand(payload.commandId);
             if (!found) throw new Error("Command preset not found.");
+            if (found.command.id === SERVER_TIME_SYNC_ID) {
+                serverClock.rejectClientValues(payload);
+                if (!trustedSnapshot) throw new Error("Server clock snapshot is required at dispatch.");
+                return { label: found.command.label, cmd: serverClock.buildPowerShell(trustedSnapshot), type: 2, runAsUser: 0 };
+            }
             var commandText = injectVariables(found.command.cmd, found.command.type, found.command.variables || [], payload.variableValues, null);
             return { label: found.command.label, cmd: commandText, type: Number(found.command.type) || 1, runAsUser: Number(found.command.runAsUser) || 0, elevatedUserSession: found.command.elevatedUserSession === true };
         }
@@ -357,7 +365,8 @@ module.exports.createModule = function (context) {
         try {
             if (payload.scriptPath) requireScriptAccess(user);
             if (payload.commandId) requireCommandAccess(user, payload.commandId);
-            command = buildCommand(payload);
+            if (payload.commandId === SERVER_TIME_SYNC_ID) serverClock.rejectClientValues(payload);
+            else command = buildCommand(payload);
         } catch (error) { return Promise.reject(error); }
         var stagePath = serverStagePath(payload);
         return context.device.resolveNode(user, payload.nodeId, { requireCommandRights: true }).then(function (node) {
@@ -367,6 +376,10 @@ module.exports.createModule = function (context) {
                 return node;
             });
         }).then(function (node) {
+            if (payload.commandId === SERVER_TIME_SYNC_ID) {
+                serverClock.requireWindowsTarget(node.node);
+                command = buildCommand(payload, null, serverClock.readServerSnapshot());
+            }
             if (quickDirect === true) Object.defineProperty(node, QUICK_DIRECT_CONTEXT, { value: true });
             var id = "sirk-platform-" + shared.randomId(10);
             var now = Date.now();

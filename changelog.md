@@ -1,3 +1,12 @@
+## 0.1.173 - 2026-11-13
+
+- Commands → System: `Set date, time & time zone from server` (#462); czas UTC pochodzi z zegara Node serwera MeshCentral tuż przed dispatch do Windows MeshAgent, identyfikator IANA/Windows pochodzi z konfiguracji TZ procesu i jest mapowany zgodnie z CLDR. Nie ma danych klienta ani odczytu czasu podczas renderowania/approval.
+- Windows PowerShell 5.1 / SYSTEM: precheck strefy i uprawnień, `Set-TimeZone`, bezpośrednie ustawienie UTC przez Windows `SetSystemTime` (bez niejednoznacznej konwersji DST), idempotencja, odczyt stanu i raport JSON z przyczyną błędu lub partial failure w Results.
+- Brak konfiguracji NTP/GPO/rejestru; opóźnienie sieci/kolejki nie jest mierzone (bez gwarancji dokładności NTP). Testy kontraktu, scenariusze negatywne i Windows parser CI.
+- Development build, bez taga i GitHub Release. Real MeshCentral smoke na Windows Server 2019/2022 pozostaje finalną weryfikacją hosta.
+
+Current development notes: `docs/releases/0.1.173.md`.
+
 ## 0.1.172 - 2026-11-13
 
 - Commands → System: nowy preset `ODBC (32-bit)` (#460), uruchamiający `SysWOW64\odbcad32.exe` w sesji zalogowanego użytkownika z normalnym żądaniem UAC przez `Start-Process -Verb RunAs`. Sprawdzanie obecności EXE i czytelny błąd przy odmowie elevation lub nieudanym starcie.
