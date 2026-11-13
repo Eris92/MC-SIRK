@@ -58,4 +58,5 @@ assert.ok(source.indexOf('result.showOnDesktop = override.showOnDesktop !== fals
     source.indexOf('["system", "other"].indexOf(String(categoryKey || "")) < 0') >= 0,
     "The preset must retain standard desktop and no-desktop visibility defaults.");
 
-console.log("ODBC 32-bit command catalog, UAC and negative-path contracts: OK");
+if (process.argv.indexOf("--print-script") >= 0) process.stdout.write(odbc.cmd);
+else console.log("ODBC 32-bit command catalog, UAC and negative-path contracts: OK");
