@@ -1,3 +1,11 @@
+## 0.1.172 - 2026-11-13
+
+- Commands → System: nowy preset `ODBC (32-bit)` (#460), uruchamiający `SysWOW64\odbcad32.exe` w sesji zalogowanego użytkownika z normalnym żądaniem UAC przez `Start-Process -Verb RunAs`. Sprawdzanie obecności EXE i czytelny błąd przy odmowie elevation lub nieudanym starcie.
+- Reuse istniejącego Commands/Quick, permissions, transportu i Results; testy JS oraz Windows PowerShell (syntax i negatywne scenariusze) w GitHub Actions.
+- Development build, bez taga i GitHub Release. Realny test GUI/UAC w MeshCentral pozostaje wymagany do zamknięcia #460.
+
+Current development notes: `docs/releases/0.1.172.md`.
+
 ## 0.1.171 - 2026-11-05
 
 - Konfiguracja CA: nowe pole „rdpsign.exe path on the MeshCentral server (optional)”. Windows Server często nie ma `rdpsign.exe`; można wskazać lokalną kopię (pełna ścieżka kończąca się na `\rdpsign.exe`, bez UNC). Puste pole = `C:\Windows\System32\rdpsign.exe`. Etap serwerowy RDP przed użyciem sprawdza, że plik ma ważny podpis Authenticode Microsoft. Plik nie jest dołączany do wtyczki (binarka Microsoft).
