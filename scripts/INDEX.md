@@ -10,10 +10,12 @@ npm test
 
 | Cel | Plik |
 |---|---|
-| finalna struktura repozytorium | `validate-repository-layout.js` |
-| kontrakty architektury | `validate-architecture.js` |
+| indeks skryptów | `scripts/INDEX.md` |
+| pełny zestaw walidatorów i testów (`npm test`) | `scripts/run-tests.js` |
+| finalna struktura repozytorium | `scripts/validate-repository-layout.js` |
+| kontrakty architektury | `scripts/validate-architecture.js` |
 
-Pełna kolejność znajduje się w `package.json`.
+Pełna kolejność znajduje się w `scripts/run-tests.js`: najpierw `scripts/validate-repository-layout.js`, potem `scripts/validate-architecture.js`, a następnie wszystkie pliki `test/*.test.js` posortowane według nazwy. `package.json` wskazuje ten runner jako entrypoint `npm test`.
 
 Dla prostego sprawdzenia uruchom najpierw walidator najbliższy zmianie. Pełne `npm test` jest wymagane po zmianie runtime, loaderów, struktury katalogów, wspólnych komponentów albo bezpieczeństwa.
 
