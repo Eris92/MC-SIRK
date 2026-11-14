@@ -11,6 +11,7 @@ npm test
 | Cel | Plik |
 |---|---|
 | finalna struktura repozytorium | `validate-repository-layout.js` |
+| statyczna kontrola sekretów i nowych prymitywów wykonania | `scripts/security-review.js` |
 | kontrakty architektury | `validate-architecture.js` |
 
 Pełna kolejność znajduje się w `package.json`.
