@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.176",
+    "date": "2026-11-17",
+    "summary": "Nest My Scripts Vulnerabilities group permissions inside the existing Permissions disclosure.",
+    "notes": "docs/releases/0.1.176.md"
+  },
+  {
     "version": "0.1.175",
     "date": "2026-11-17",
     "summary": "My Scripts Vulnerabilities: explicit user-group read permission for all-host Nessus inventory, deny-by-default and server-side authorization.",

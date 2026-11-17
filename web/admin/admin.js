@@ -246,7 +246,7 @@
         };
     }
 
-    function modulePermissions(host, title, source, folders, sectionTitle) {
+    function modulePermissions(host, title, source, folders, sectionTitle, extraPermissions) {
         source = source || {};
         folders = Array.isArray(folders) ? folders : [];
         var configuredRules = source.folderPermissions && typeof source.folderPermissions === "object" && !Array.isArray(source.folderPermissions)
@@ -277,6 +277,7 @@
             foldersHost.appendChild(element("div", "mc-admin-notice", "No folders are currently available. Refresh this page after adding scripts."));
         }
         card.appendChild(foldersHost);
+        var extraReader = typeof extraPermissions === "function" ? extraPermissions(card) : null;
 
         return function () {
             var selectedAccessGroups = restrict.checked ? accessGroups() : [];
@@ -287,7 +288,9 @@
             folderReaders.forEach(function (entry) {
                 if (entry.key) folderPermissions[entry.key] = entry.read();
             });
-            return { accessGroupIds: selectedAccessGroups, folderPermissions: folderPermissions };
+            var permissions = { accessGroupIds: selectedAccessGroups, folderPermissions: folderPermissions };
+            if (extraReader) permissions.vulnerabilitiesGroupIds = extraReader();
+            return permissions;
         };
     }
 
@@ -577,15 +580,14 @@
             card.appendChild(element("h3", "", "My Scripts"));
             var scriptEnabled = checked(card, "Enable My Scripts", moduleEnabled("myscripts"));
             var scriptFolderData = data.folderPermissions || {};
-            var scriptPermissions = modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions");
-            var vulnerabilityGroups = groupLevel(card, "Vulnerabilities: groups allowed to view the all-host Nessus inventory (Site Admin always allowed)",
-                current.myscripts && current.myscripts.vulnerabilitiesGroupIds || []);
+            var scriptPermissions = modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions", function (permissionsCard) {
+                return groupLevel(permissionsCard, "Vulnerabilities: groups allowed to view the all-host Nessus inventory (Site Admin always allowed)",
+                    current.myscripts && current.myscripts.vulnerabilitiesGroupIds || []);
+            });
             actions(card, function () {
-                var permissions = scriptPermissions();
-                permissions.vulnerabilitiesGroupIds = vulnerabilityGroups();
                 return {
                     modules: { myscripts: scriptEnabled.checked },
-                    moduleOptions: { permissions: { myscripts: permissions } }
+                    moduleOptions: { permissions: { myscripts: scriptPermissions() } }
                 };
             });
         }

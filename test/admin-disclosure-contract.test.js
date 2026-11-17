@@ -15,7 +15,9 @@ assert.ok(browser.indexOf('disclosure(host, "mc-admin-permission-folder", label,
     "Folder/category permission blocks must be collapsible.");
 assert.strictEqual(browser.indexOf('.ontoggle'), -1, "Native disclosure must not rerender on toggle.");
 assert.strictEqual(browser.indexOf('addEventListener("toggle"'), -1, "Native disclosure must not add toggle request/event loops.");
-assert.ok(browser.indexOf('return { accessGroupIds: selectedAccessGroups, folderPermissions: folderPermissions };') >= 0,
+assert.ok(browser.indexOf('var permissions = { accessGroupIds: selectedAccessGroups, folderPermissions: folderPermissions };') >= 0 &&
+    browser.indexOf('if (extraReader) permissions.vulnerabilitiesGroupIds = extraReader();') >= 0 &&
+    browser.indexOf('return permissions;') >= 0,
     "Permissions save must still read the existing control closures independent of disclosure state.");
 assert.ok(browser.indexOf('providers: { moverequests: move(), mycommands: commands(), myscripts: scripts() }') >= 0,
     "Approval save must keep the same provider payload independent of disclosure state.");

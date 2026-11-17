@@ -12,7 +12,7 @@ var runtime = fs.readFileSync(path.join(root, "server", "core", "runtime.js"), "
 assert.ok(view.indexOf('data-tab="permissions"') < 0, "Top-level Permissions tab must be removed.");
 assert.ok(browser.indexOf('tab === "permissions"') < 0, "Administration browser must not keep a second Permissions page owner.");
 assert.ok(browser.indexOf('modulePermissions(card, "My Commands", current.mycommands, folderData.mycommands, "Permissions")') >= 0, "My Commands must render its existing permission owner locally.");
-assert.ok(browser.indexOf('modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions")') >= 0, "My Scripts must render its existing permission owner locally.");
+assert.ok(browser.indexOf('modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions", function (permissionsCard)') >= 0, "My Scripts must render its existing permission owner locally.");
 assert.ok(browser.indexOf("Restrict module access to selected MeshCentral user groups") >= 0);
 assert.ok(browser.indexOf("Allow every user who has module access") >= 0);
 assert.ok(runtime.indexOf("moduleOptions.permissions") >= 0);
