@@ -1,3 +1,10 @@
+## 0.1.175 - 2026-11-17
+
+- My Scripts / Vulnerabilities: osobne uprawnienia do odczytu wszystkich hostów Nessus, nadawane grupom MeshCentral w panelu administratora. Domyślnie dostęp ma wyłącznie Site Admin, a uprawnienia są egzekwowane po stronie API i serwisu Nessus.
+- Development build, bez tagu i GitHub Release.
+
+Current development notes: `docs/releases/0.1.175.md`.
+
 ## 0.1.174 - 2026-11-13
 
 - Poprawka #460: ODBC 32-bit teraz korzysta z tej samej natywnej sesji MeshAgent co CMD (`type:1`, `runAsUser:2`), zamiast PowerShell w Scheduled Task. `nativeInteractiveGui` to flagowany wyłącznie po stronie serwera built-in, a custom Commands nie mogą ustawiać tej flagi.
