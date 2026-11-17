@@ -15,7 +15,7 @@ var DEFAULTS = {
     schemaVersion: 6,
     ui: { iconMode: "auto" },
     modules: {
-        myscripts: { enabled: true, accessGroupIds: [], folderPermissions: {} },
+        myscripts: { enabled: true, accessGroupIds: [], vulnerabilitiesGroupIds: [], folderPermissions: {} },
         mycommands: {
             enabled: true,
             accessGroupIds: [],
@@ -130,7 +130,13 @@ module.exports.createRuntime = function (options) {
         path: nativePath,
         dataRoot: dataRoot,
         eventLog: eventLog,
-        device: context.device
+        device: context.device,
+        canReadAllHosts: function (user) {
+            if (!user || !settings.isModuleEnabled("myscripts")) return false;
+            var config = settings.read().modules.myscripts || {};
+            var groups = Array.isArray(config.vulnerabilitiesGroupIds) ? config.vulnerabilitiesGroupIds : [];
+            return groups.length > 0 && shared.isUserInAnyGroup(user, groups);
+        }
     });
     context.approval = approvalFactory.createApprovalService({
         fs: fs,
@@ -357,6 +363,9 @@ module.exports.createRuntime = function (options) {
                         if (!source || typeof source !== "object" || Array.isArray(source)) return;
                         var target = current.modules[key] || (current.modules[key] = {});
                         target.accessGroupIds = normalizeGroups(source.accessGroupIds, knownGroups);
+                        if (key === "myscripts" && Object.prototype.hasOwnProperty.call(source, "vulnerabilitiesGroupIds")) {
+                            target.vulnerabilitiesGroupIds = normalizeGroups(source.vulnerabilitiesGroupIds, knownGroups);
+                        }
                         var allowedFolderKeys = moduleFolders(key).map(function (item) { return String(item.key); });
                         target.folderPermissions = folderAccess.normalizeRules(source.folderPermissions, allowedFolderKeys, knownGroups);
                     });
