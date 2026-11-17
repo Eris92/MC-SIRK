@@ -578,10 +578,14 @@
             var scriptEnabled = checked(card, "Enable My Scripts", moduleEnabled("myscripts"));
             var scriptFolderData = data.folderPermissions || {};
             var scriptPermissions = modulePermissions(card, "My Scripts", current.myscripts, scriptFolderData.myscripts, "Permissions");
+            var vulnerabilityGroups = groupLevel(card, "Vulnerabilities: groups allowed to view the all-host Nessus inventory (Site Admin always allowed)",
+                current.myscripts && current.myscripts.vulnerabilitiesGroupIds || []);
             actions(card, function () {
+                var permissions = scriptPermissions();
+                permissions.vulnerabilitiesGroupIds = vulnerabilityGroups();
                 return {
                     modules: { myscripts: scriptEnabled.checked },
-                    moduleOptions: { permissions: { myscripts: scriptPermissions() } }
+                    moduleOptions: { permissions: { myscripts: permissions } }
                 };
             });
         }
