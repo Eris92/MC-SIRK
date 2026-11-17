@@ -63,6 +63,12 @@ module.exports.createModule = function (context) {
         var groups = Array.isArray(config.accessGroupIds) ? config.accessGroupIds : [];
         return !groups.length || shared.isUserInAnyGroup(user, groups);
     }
+    function canViewVulnerabilities(user) {
+        if (!allowed(user)) return false;
+        if (shared.isSiteAdmin(user)) return true;
+        var groups = context.settings.read().modules.myscripts.vulnerabilitiesGroupIds;
+        return Array.isArray(groups) && groups.length > 0 && shared.isUserInAnyGroup(user, groups);
+    }
     function requireAdmin(user) { if (!shared.isSiteAdmin(user)) throw new Error("Permission denied."); }
     function internalScriptPath(relativePath) {
         return String(relativePath || "").replace(/\\/g, "/").split("/").some(function (part) {
@@ -318,7 +324,7 @@ module.exports.createModule = function (context) {
                 toolbar: { refresh: true, clear: false, favorites: true, search: true, manage: true, settings: false }
             };
         },
-        getAccess: function (user) { return { allowed: allowed(user), siteAdmin: shared.isSiteAdmin(user) }; },
+        getAccess: function (user) { return { allowed: allowed(user), siteAdmin: shared.isSiteAdmin(user), vulnerabilities: canViewVulnerabilities(user) }; },
         initialize: function () {
             library.ensure();
             if (!unregister) unregister = context.approval.registerProvider(provider);
@@ -329,7 +335,10 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!allowed(user)) throw new Error("Permission denied.");
             var q = req && req.query || {};
-            if (asset === "vulnerabilities-all") return context.vulnerabilities.readAllHosts(user);
+            if (asset === "vulnerabilities-all") {
+                if (!canViewVulnerabilities(user)) throw new Error("Permission denied.");
+                return context.vulnerabilities.readAllHosts(user);
+            }
             if (asset === "tree" || asset === "scripts") return { ok: true, tree: visibleTree(user), scriptsRoot: shared.isSiteAdmin(user) ? root : "" };
             if (asset === "script") {
                 requireScriptAccess(user, q.path);
