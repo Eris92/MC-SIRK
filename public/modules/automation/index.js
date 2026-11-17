@@ -21,6 +21,9 @@
     function admin(shell) {
         return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.siteAdmin);
     }
+    function canViewVulnerabilities(shell) {
+        return !!(shell.state.bootstrap && shell.state.bootstrap.access && shell.state.bootstrap.access.vulnerabilities);
+    }
 
     function usesCredentials(script) {
         if (script && Array.isArray(script.secretVariables) && script.secretVariables.length > 0) return true;
@@ -494,7 +497,7 @@
             state: treeState,
             search: shell.state.search,
             resultsActive: mode === "results",
-            extraItems: admin(shell) ? [{
+            extraItems: canViewVulnerabilities(shell) ? [{
                 key: "vulnerabilities", label: vulnMsg("Podatności", "Vulnerabilities"), iconMarkup: VULN_ICON, active: mode === "vulnerabilities",
                 onClick: function () { progressSequence++; mode = "vulnerabilities"; treeState.selectedScript = ""; vulnState.data = null; vulnState.error = null; vulnState.page = 1; shell.render(); }
             }] : [],
@@ -897,7 +900,7 @@
             return shell.api("scripts").then(function (response) {
                 tree = response.tree;
                 tools.applyDeepLink(tree, treeState);
-                return mode === "results" ? results(shell) : mode === "vulnerabilities" && admin(shell) ? vulnerabilities(shell) : scripts(shell);
+                return mode === "results" ? results(shell) : mode === "vulnerabilities" && canViewVulnerabilities(shell) ? vulnerabilities(shell) : scripts(shell);
             });
         }
     });
