@@ -4,6 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.176`](0.1.176.md) — My Scripts Vulnerabilities group selection lives inside Permissions disclosure;
+
 - [`0.1.175`](0.1.175.md) — My Scripts Vulnerabilities: explicit group permissions and deny-by-default all-host inventory;
 
 - [`0.1.174`](0.1.174.md) — ODBC 32-bit corrected native user launch and UAC status (#460); pending physical MeshCentral smoke;
