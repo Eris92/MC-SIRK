@@ -134,6 +134,8 @@ module.exports.createRuntime = function (options) {
         canReadAllHosts: function (user) {
             if (!user || !settings.isModuleEnabled("myscripts")) return false;
             var config = settings.read().modules.myscripts || {};
+            var accessGroups = Array.isArray(config.accessGroupIds) ? config.accessGroupIds : [];
+            if (accessGroups.length && !shared.isUserInAnyGroup(user, accessGroups)) return false;
             var groups = Array.isArray(config.vulnerabilitiesGroupIds) ? config.vulnerabilitiesGroupIds : [];
             return groups.length > 0 && shared.isUserInAnyGroup(user, groups);
         }
