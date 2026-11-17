@@ -1,3 +1,10 @@
+## 0.1.176 - 2026-11-17
+
+- My Scripts: przeniesiono uprawnienia grup do zakładki Vulnerabilities wewnątrz istniejącej rozwijanej sekcji Permissions. Zapis ustawień oraz backend authorization pozostają bez zmian.
+- Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.176.md`.
+
 ## 0.1.175 - 2026-11-17
 
 - My Scripts / Vulnerabilities: osobne uprawnienia do odczytu wszystkich hostów Nessus, nadawane grupom MeshCentral w panelu administratora. Domyślnie dostęp ma wyłącznie Site Admin, a uprawnienia są egzekwowane po stronie API i serwisu Nessus.
