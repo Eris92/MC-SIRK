@@ -124,11 +124,12 @@ function seed(status, id, nodeId, type) {
     var preflight = await move.apiGet("meshes", { query: { nodeId: "node/domain/host-a" } }, user);
     assert.strictEqual(preflight.sourceMeshId, "mesh/domain/source");
     assert.strictEqual(preflight.meshes.some(function (mesh) { return mesh.id === "mesh/domain/source"; }), false);
-    var beforeDeniedSubmit = readRows().length;
+    var beforeDeniedSubmit = fs.existsSync(databasePath) ? readRows().length : 0;
     await assert.rejects(function () {
         return move.apiPost("submit", { body: payload("node/domain/host-a", "mesh/domain/target-b-denied") }, user);
     }, /permission to move/);
-    assert.strictEqual(readRows().length, beforeDeniedSubmit, "Forbidden destination must not create an approval request.");
+    assert.strictEqual(fs.existsSync(databasePath) ? readRows().length : 0, beforeDeniedSubmit,
+        "Forbidden destination must not create an approval request.");
     var throughApi = await move.apiPost("submit", {
         body: payload("node/domain/host-api", "mesh/domain/target-a")
     }, user);
