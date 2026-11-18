@@ -12,7 +12,8 @@ assert.ok(source.indexOf('function setDialogStatus(status, state, message)') >= 
 assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') >= 0,
     "Submit must expose an in-flight pending state in the native dialog.");
 assert.ok(source.indexOf('finishRequest(true, "Zlecono przeniesienie " + summary)') >= 0 &&
-    source.indexOf('finishRequest(false, "Nie udalo sie zlecic przeniesienia " + summary') >= 0 &&
+    source.indexOf('finishRequest(false, "Nie uda\\u0142o si\\u0119 zleci\\u0107 przeniesienia " + summary') >= 0 &&
+    source.indexOf('request.status === "failed"') >= 0 &&
     source.indexOf('fields.textContent = ""') >= 0 &&
     source.indexOf('sourceMeshName || sourceMeshId') >= 0 &&
     source.indexOf('option.textContent || option.value') >= 0,
