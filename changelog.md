@@ -1,3 +1,11 @@
+## 0.1.177 - 2026-11-18
+
+- Move Requests #265: walidacja idempotentnego move przez rzeczywisty odczyt DB zamiast zaufania potencjalnie nieaktualnemu GetNodeWithRights; zapis i weryfikacja wykonują się na tym samym ownerze DB co inventory.
+- Targeted stale-node i divergent-database regressions. Nie jest to jeszcze potwierdzone rozwiązanie wszystkich intermittent production failures; #265 pozostaje otwarte na real MeshCentral smoke.
+- Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.177.md`.
+
 ## 0.1.176 - 2026-11-17
 
 - My Scripts: przeniesiono uprawnienia grup do zakładki Vulnerabilities wewnątrz istniejącej rozwijanej sekcji Permissions. Zapis ustawień oraz backend authorization pozostają bez zmian.
