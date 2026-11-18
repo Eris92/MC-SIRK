@@ -81,7 +81,15 @@
                 if (submitted) return true;
                 if (submitting) return false; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return false; }
                 submitting = true; submit.disabled = true; setDialogStatus(status, "pending", "Submitting...");
-                module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () { submitting = false; submitted = true; setDialogStatus(status, "completed", "Request sent."); writeButtonText(submit, "OK"); submit.disabled = false; if (cancel) cancel.style.display = "none"; }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
+                module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () {
+                    submitting = false; submitted = true;
+                    if (target.previousElementSibling) target.previousElementSibling.hidden = true;
+                    if (note.previousElementSibling) note.previousElementSibling.hidden = true;
+                    target.hidden = true; note.hidden = true;
+                    setDialogStatus(status, "completed", "Request sent.");
+                    writeButtonText(submit, "OK"); submit.disabled = false;
+                    if (cancel) cancel.style.display = "none";
+                }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
                 return false;
             }
             function onClassicSubmit(event) {
