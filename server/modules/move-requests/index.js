@@ -82,7 +82,13 @@ module.exports.createModule = function (context) {
         }
         var requesterId = String(request && request.requester && request.requester.id || "");
         if (!requesterId) return Promise.reject(new Error("Move request user is unavailable."));
-        return context.device.moveNodeToMesh(requesterId, payload.nodeId, payload.targetMeshId).then(function (result) {
+        var decisions = request && Array.isArray(request.approvalDecisions) ? request.approvalDecisions : [];
+        var finalDecision = decisions.length ? decisions[decisions.length - 1] : null;
+        var actorId = finalDecision && finalDecision.approved === true && finalDecision.user &&
+            String(finalDecision.user.id || "") || requesterId;
+        // A final approver authorizes execution; native source/target rights
+        // are still enforced against the real actor by device-service.
+        return context.device.moveNodeToMesh(actorId, payload.nodeId, payload.targetMeshId).then(function (result) {
             result = result && typeof result === "object" ? result : {};
             return {
                 message: result.message || "Device moved.",
@@ -186,7 +192,7 @@ module.exports.createModule = function (context) {
             if (!user) throw new Error("Permission denied.");
             if (asset === "meshes") {
                 var nodeId = shared.cleanText(req && req.query && req.query.nodeId, 300);
-                return context.device.eligibleMoveTargets(user, nodeId).then(function (result) {
+                return context.device.requestableMoveTargets(user, nodeId).then(function (result) {
                     return { ok: true, meshes: result.meshes, sourceMeshId: result.sourceMeshId,
                         sourceMeshName: result.sourceMeshName };
                 });
@@ -210,10 +216,10 @@ module.exports.createModule = function (context) {
         apiPost: function (asset, req, user) {
             var value = req && req.body || {};
             if (asset === "submit") {
-                return context.device.eligibleMoveTargets(user, value.nodeId).then(function (result) {
+                return context.device.requestableMoveTargets(user, value.nodeId).then(function (result) {
                     var targetId = String(value.targetMeshId || "");
                     if (!result.meshes.some(function (mesh) { return mesh.id === targetId; })) {
-                        throw new Error("You do not have permission to move this device to the target group.");
+                        throw new Error("The requested destination is unavailable for this device.");
                     }
                     return context.approval.submit("moverequests", user, value, value.note);
                 }).then(function (request) {

@@ -63,8 +63,9 @@
             if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") { window.MeshThemeAdapter.control(target); window.MeshThemeAdapter.control(note); }
 
             var originalSubmitText = readButtonText(submit); var originalSubmitDisabled = !!submit.disabled;
+            var originalCancelDisplay = cancel && cancel.style.display;
             writeButtonText(submit, "Submit request"); submit.disabled = !target.options.length;
-            if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group with move permissions is available."); }
+            if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group is available."); }
 
             var submitting = false; var submitted = false; var cleaned = false; var modernModal = document.getElementById("xxAddAgentModal");
             function cleanup() {
@@ -74,14 +75,25 @@
                 if (close) close.removeEventListener("click", cleanup, true);
                 if (modernModal) modernModal.removeEventListener("hidden.bs.modal", cleanup);
                 writeButtonText(submit, originalSubmitText); submit.disabled = originalSubmitDisabled;
+                if (cancel) cancel.style.display = originalCancelDisplay;
             }
             function submitRequest() {
-                if (submitting || submitted) return false; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return false; }
+                if (submitted) return true;
+                if (submitting) return false; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return false; }
                 submitting = true; submit.disabled = true; setDialogStatus(status, "pending", "Submitting...");
-                module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () { submitting = false; submitted = true; submit.disabled = true; setDialogStatus(status, "completed", "Request sent."); }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
+                module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () {
+                    submitting = false; submitted = true;
+                    if (target.previousElementSibling) target.previousElementSibling.hidden = true;
+                    if (note.previousElementSibling) note.previousElementSibling.hidden = true;
+                    target.hidden = true; note.hidden = true;
+                    setDialogStatus(status, "completed", "Request sent.");
+                    writeButtonText(submit, "OK"); submit.disabled = false;
+                    if (cancel) cancel.style.display = "none";
+                }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
                 return false;
             }
             function onClassicSubmit(event) {
+                if (submitted) { cleanup(); return; }
                 if (event) { if (event.preventDefault) event.preventDefault(); if (event.stopImmediatePropagation) event.stopImmediatePropagation(); else if (event.stopPropagation) event.stopPropagation(); }
                 submitRequest();
             }

@@ -38,7 +38,7 @@ var context = {
     source: "test",
     device: {
         visibleMeshes: function () { return visibleMeshes; },
-        eligibleMoveTargets: function (actingUser, nodeId) {
+        requestableMoveTargets: function (actingUser, nodeId) {
             return Promise.resolve({
                 sourceMeshId: "mesh/domain/source",
                 sourceMeshName: "Source",
@@ -127,13 +127,31 @@ function seed(status, id, nodeId, type) {
     var beforeDeniedSubmit = fs.existsSync(databasePath) ? readRows().length : 0;
     await assert.rejects(function () {
         return move.apiPost("submit", { body: payload("node/domain/host-a", "mesh/domain/target-b-denied") }, user);
-    }, /permission to move/);
+    }, /destination is unavailable/);
     assert.strictEqual(fs.existsSync(databasePath) ? readRows().length : 0, beforeDeniedSubmit,
         "Forbidden destination must not create an approval request.");
     var throughApi = await move.apiPost("submit", {
         body: payload("node/domain/host-api", "mesh/domain/target-a")
     }, user);
     assert.strictEqual(throughApi.ok, true, "Allowed destination must retain the submit contract.");
+
+    var requester = { _id: "user/domain/requester", name: "Requester", domain: "domain" };
+    var approver = { _id: "user/domain/approver", name: "Approver", domain: "domain",
+        groups: ["ugrp/domain/move-approvers"] };
+    current.modules.approvals.providers.moverequests.levels = { 1: ["ugrp/domain/move-approvers"] };
+    var requesterSubmit = await move.apiPost("submit", {
+        body: payload("node/domain/requester-host", "mesh/domain/target-b")
+    }, requester);
+    assert.strictEqual(requesterSubmit.ok, true,
+        "Any device viewer may submit an approval request without edit-mesh permissions.");
+    assert.strictEqual(rowById(requesterSubmit.request.id).status, "pending");
+    assert.strictEqual(rowById(requesterSubmit.request.id).requester.id, requester._id);
+    await context.approval.decide(approver, requesterSubmit.request.id, true, "");
+    assert.strictEqual(rowById(requesterSubmit.request.id).status, "completed");
+    assert.deepStrictEqual(executionCalls[executionCalls.length - 1], {
+        nodeId: "node/domain/requester-host", targetMeshId: "mesh/domain/target-b",
+        requesterId: approver._id
+    }, "Final approval must execute under the approving actor, not the unprivileged requester.");
 
     var first = await submit("node/domain/host-a", "mesh/domain/target-a");
     var second = await submit("node/domain/host-a", "mesh/domain/target-b");

@@ -164,18 +164,15 @@ function fixture() {
     assert.strictEqual(divergent.setCalls.length, 0,
         "Move must not write to a different database than the device inventory owner.");
 
-    var eligible = fixture();
-    var permitted = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
-    assert.deepStrictEqual(permitted.meshes.map(function (mesh) { return mesh.id; }), [eligible.targetMesh._id],
-        "Only same-type target meshes with edit rights are selectable.");
-    assert.strictEqual(permitted.sourceMeshId, eligible.sourceMesh._id);
-    eligible.setTargetRights(0x00000008);
-    var deniedTargets = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
-    assert.strictEqual(deniedTargets.meshes.length, 0, "View rights must not enable move to a target.");
-    eligible.setTargetRights(1);
-    eligible.setSourceRights(0x00000008);
-    var deniedSourceTargets = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
-    assert.strictEqual(deniedSourceTargets.meshes.length, 0, "Missing source edit rights must disable all moves.");
+    var requestable = fixture();
+    requestable.setSourceRights(0x00000008);
+    requestable.setTargetRights(0x00000008);
+    var choices = await requestable.service.requestableMoveTargets(requestable.user, requestable.nodeId);
+    assert.deepStrictEqual(choices.meshes.map(function (mesh) { return mesh.id; }),
+        [requestable.targetMesh._id],
+        "A user without native edit rights may still request a move to a visible compatible mesh.");
+    assert.strictEqual(choices.sourceMeshId, requestable.sourceMesh._id);
+    assert.strictEqual(requestable.setCalls.length, 0, "Listing targets must be read-only.");
 
     var cross = fixture();
     await assert.rejects(function () {
