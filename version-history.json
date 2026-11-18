@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.178",
+    "date": "2026-11-18",
+    "summary": "Move Requests: block target selection and pre-submit approval for requester without source/target move rights (#265).",
+    "notes": "docs/releases/0.1.178.md"
+  },
+  {
     "version": "0.1.177",
     "date": "2026-11-18",
     "summary": "Move Requests: fail closed for stale already-current membership and prefer canonical inventory DB for move writes and verification (#265).",
