@@ -4,6 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.177`](0.1.177.md) — Move Requests verified current membership and authoritative inventory DB (#265), real smoke pending;
+
 - [`0.1.176`](0.1.176.md) — My Scripts Vulnerabilities group selection lives inside Permissions disclosure;
 
 - [`0.1.175`](0.1.175.md) — My Scripts Vulnerabilities: explicit group permissions and deny-by-default all-host inventory;
