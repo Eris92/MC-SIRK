@@ -28,7 +28,7 @@ assert.ok(source.indexOf('modernModal.addEventListener("hidden.bs.modal", cleanu
     source.indexOf('cancel.addEventListener("click", cleanup, true)') >= 0 &&
     source.indexOf('close.addEventListener("click", cleanup, true)') >= 0,
     "Modern hidden and Classic Cancel/X paths must restore the shared host OK control.");
-assert.ok(source.indexOf('var sourceMeshName = sourceMesh && sourceMesh.name || ""') >= 0 &&
+assert.ok(source.indexOf('var sourceMeshName = String(result.sourceMeshName || "")') >= 0 &&
     source.indexOf('sourceMeshName: sourceMeshName') >= 0,
     "Move Request submit must preserve human-readable source group metadata.");
 assert.strictEqual(source.indexOf('window.alert("Move request was created in Approval Center.")'), -1,
