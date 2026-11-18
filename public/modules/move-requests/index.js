@@ -40,34 +40,49 @@
             if (!dialogManager) { window.alert("Native MeshCentral dialog is unavailable."); return; }
 
             var content = document.createElement("div"); content.className = "mc-move-request-native-content";
-            var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); content.appendChild(device);
-            var groupLabel = document.createElement("label"); groupLabel.setAttribute("for", "SirkMoveRequestTarget"); groupLabel.textContent = "Target group"; content.appendChild(groupLabel);
+            var fields = document.createElement("div"); fields.id = "SirkMoveRequestFields"; content.appendChild(fields);
+            var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); fields.appendChild(device);
+            var groupLabel = document.createElement("label"); groupLabel.setAttribute("for", "SirkMoveRequestTarget"); groupLabel.textContent = "Target group"; fields.appendChild(groupLabel);
             var target = document.createElement("select"); target.id = "SirkMoveRequestTarget"; target.className = "mc-move-dialog-input";
             var sourceMeshId = String(result.sourceMeshId || currentMeshId(nodeId)); var sourceMeshName = String(result.sourceMeshName || "");
-            (result.meshes || []).filter(function (mesh) { return !sourceMeshId || String(mesh.id) !== sourceMeshId; }).forEach(function (mesh) { var option = document.createElement("option"); option.value = mesh.id; option.textContent = mesh.name; target.appendChild(option); }); content.appendChild(target);
-            var noteLabel = document.createElement("label"); noteLabel.setAttribute("for", "SirkMoveRequestNote"); noteLabel.textContent = "Requester note"; content.appendChild(noteLabel);
-            var note = document.createElement("textarea"); note.id = "SirkMoveRequestNote"; note.className = "mc-move-dialog-input"; note.rows = 4; content.appendChild(note);
+            (result.meshes || []).filter(function (mesh) { return !sourceMeshId || String(mesh.id) !== sourceMeshId; }).forEach(function (mesh) { var option = document.createElement("option"); option.value = mesh.id; option.textContent = mesh.name; target.appendChild(option); }); fields.appendChild(target);
+            var noteLabel = document.createElement("label"); noteLabel.setAttribute("for", "SirkMoveRequestNote"); noteLabel.textContent = "Requester note"; fields.appendChild(noteLabel);
+            var note = document.createElement("textarea"); note.id = "SirkMoveRequestNote"; note.className = "mc-move-dialog-input"; note.rows = 4; fields.appendChild(note);
             var status = document.createElement("div"); status.id = "SirkMoveRequestStatus"; status.className = "mc-move-dialog-status"; content.appendChild(status);
 
             if (dialogManager.mode === "modern") dialogManager.setContent("xxAddAgent", "Move Request", content.innerHTML);
             else dialogManager.show(2, "Move Request", 3, null, content.innerHTML);
 
+            fields = document.getElementById("SirkMoveRequestFields");
             target = document.getElementById("SirkMoveRequestTarget");
             note = document.getElementById("SirkMoveRequestNote");
             status = document.getElementById("SirkMoveRequestStatus");
             var submit = document.getElementById("idx_dlgOkButton");
             var cancel = document.getElementById("idx_dlgCancelButton");
             var close = document.getElementById("id_dialogclose");
-            if (!target || !note || !status || !submit) { window.alert("Native MeshCentral dialog controls are unavailable."); return; }
+            if (!fields || !target || !note || !status || !submit) { window.alert("Native MeshCentral dialog controls are unavailable."); return; }
 
             if (window.MeshThemeAdapter && typeof window.MeshThemeAdapter.control === "function") { window.MeshThemeAdapter.control(target); window.MeshThemeAdapter.control(note); }
 
             var originalSubmitText = readButtonText(submit); var originalSubmitDisabled = !!submit.disabled;
-            var originalCancelDisplay = cancel && cancel.style.display;
+            var modernModal = document.getElementById("xxAddAgentModal");
+            var cancelButtons = [];
+            function addCancelButton(button) {
+                if (button && cancelButtons.every(function (item) { return item.button !== button; })) {
+                    cancelButtons.push({ button: button, style: button.style.cssText });
+                }
+            }
+            addCancelButton(cancel);
+            if (dialogManager.mode === "modern" && modernModal) {
+                var footer = modernModal.querySelector(".modal-footer");
+                if (footer) Array.prototype.forEach.call(footer.querySelectorAll("button,input"), function (button) {
+                    if (/^(cancel|anuluj)$/i.test(readButtonText(button).trim())) addCancelButton(button);
+                });
+            }
             writeButtonText(submit, "Submit request"); submit.disabled = !target.options.length;
             if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group is available."); }
 
-            var submitting = false; var submitted = false; var cleaned = false; var modernModal = document.getElementById("xxAddAgentModal");
+            var submitting = false; var submitted = false; var cleaned = false;
             function cleanup() {
                 if (cleaned) return; cleaned = true;
                 if (dialogManager.mode === "classic") submit.removeEventListener("click", onClassicSubmit, true);
@@ -75,21 +90,31 @@
                 if (close) close.removeEventListener("click", cleanup, true);
                 if (modernModal) modernModal.removeEventListener("hidden.bs.modal", cleanup);
                 writeButtonText(submit, originalSubmitText); submit.disabled = originalSubmitDisabled;
-                if (cancel) cancel.style.display = originalCancelDisplay;
+                cancelButtons.forEach(function (item) { item.button.style.cssText = item.style; });
+            }
+            function finishRequest(ok, message) {
+                fields.textContent = "";
+                setDialogStatus(status, ok ? "completed" : "failed", message);
+                submitted = true;
+                writeButtonText(submit, "OK");
+                submit.disabled = false;
+                cancelButtons.forEach(function (item) { item.button.style.setProperty("display", "none", "important"); });
             }
             function submitRequest() {
                 if (submitted) return true;
                 if (submitting) return false; var option = target.options[target.selectedIndex]; if (!option) { setDialogStatus(status, "failed", "Select a target group."); return false; }
                 submitting = true; submit.disabled = true; setDialogStatus(status, "pending", "Submitting...");
-                module.api.post("submit", { nodeId: nodeId, nodeName: nodeName(nodeId), sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () {
-                    submitting = false; submitted = true;
-                    if (target.previousElementSibling) target.previousElementSibling.hidden = true;
-                    if (note.previousElementSibling) note.previousElementSibling.hidden = true;
-                    target.hidden = true; note.hidden = true;
-                    setDialogStatus(status, "completed", "Request sent.");
-                    writeButtonText(submit, "OK"); submit.disabled = false;
-                    if (cancel) cancel.style.display = "none";
-                }).catch(function (error) { submitting = false; submitted = false; setDialogStatus(status, "failed", error.message || String(error)); submit.disabled = !target.options.length; });
+                var deviceLabel = nodeName(nodeId);
+                var fromName = sourceMeshName || sourceMeshId || "unknown";
+                var toName = option.textContent || option.value;
+                var summary = deviceLabel + " z grupy " + fromName + " do grupy " + toName + ".";
+                module.api.post("submit", { nodeId: nodeId, nodeName: deviceLabel, sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () {
+                    submitting = false;
+                    finishRequest(true, "Zlecono przeniesienie " + summary);
+                }).catch(function (error) {
+                    submitting = false;
+                    finishRequest(false, "Nie udalo sie zlecic przeniesienia " + summary + " " + (error.message || String(error)));
+                });
                 return false;
             }
             function onClassicSubmit(event) {
