@@ -136,7 +136,33 @@ function fixture() {
     var noop = await value.service.moveNodeToMesh(value.user._id, value.nodeId, value.targetMesh._id);
     assert.strictEqual(noop.alreadyCurrent, true, "Already-current target must be an idempotent success.");
     assert.strictEqual(value.setCalls.length, writesBeforeNoop, "Already-current success must not invoke persistence again.");
-    assert.strictEqual(value.getCalls.length, readsBeforeNoop, "Already-current success is verified from the authoritative resolved node and needs no extra DB read.");
+    assert.strictEqual(value.getCalls.length, readsBeforeNoop + 1, "Already-current success must be verified against the authoritative device database.");
+
+    var stale = fixture();
+    stale.web.GetNodeWithRights = function (domain, actingUser, id, callback) {
+        callback(Object.assign({}, stale.docs[id], { meshid: stale.targetMesh._id }), 1, true);
+    };
+    await assert.rejects(function () {
+        return stale.service.moveNodeToMesh(stale.user._id, stale.nodeId, stale.targetMesh._id);
+    }, /did not confirm/);
+    assert.strictEqual(stale.setCalls.length, 0, "Stale target membership must not trigger a write or false success.");
+
+    var divergent = fixture();
+    var inventoryDb = {
+        GetAllTypeNoTypeFieldMeshFiltered: function () {},
+        Set: function (doc, callback) { if (callback) callback(null); },
+        Get: function (id, callback) { callback(null, [clone(divergent.docs[id])]); }
+    };
+    divergent.web.db = {
+        Set: divergent.db.Set,
+        Get: divergent.db.Get
+    };
+    divergent.web.parent.db = inventoryDb;
+    await assert.rejects(function () {
+        return divergent.service.moveNodeToMesh(divergent.user._id, divergent.nodeId, divergent.targetMesh._id);
+    }, /did not persist/);
+    assert.strictEqual(divergent.setCalls.length, 0,
+        "Move must not write to a different database than the device inventory owner.");
 
     var cross = fixture();
     await assert.rejects(function () {
