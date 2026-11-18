@@ -28,6 +28,13 @@ module.exports.createDeviceService = function (options) {
     }
 
     function getMoveDatabase() {
+        // Read and write through the same owner used by the device inventory.
+        // A successful readback against another database is not proof of a move
+        // in the MeshCentral instance serving the Devices view.
+        var inventoryDb = getDatabase();
+        if (inventoryDb) {
+            return typeof inventoryDb.Set === "function" && typeof inventoryDb.Get === "function" ? inventoryDb : null;
+        }
         var candidates = getServerCandidates();
         for (var i = 0; i < candidates.length; i++) {
             var db = candidates[i] && candidates[i].db;
@@ -199,6 +206,28 @@ module.exports.createDeviceService = function (options) {
         return value;
     }
 
+    function verifyCurrentMesh(db, nodeId, targetMeshId) {
+        if (!db || typeof db.Get !== "function") {
+            return Promise.reject(new Error("MeshCentral device move database API is unavailable."));
+        }
+        return new Promise(function (resolve, reject) {
+            try {
+                db.Get(nodeId, function (error, docs) {
+                    if (error) {
+                        reject(error instanceof Error ? error : new Error("MeshCentral device verification failed."));
+                        return;
+                    }
+                    var current = Array.isArray(docs) && docs.length === 1 ? docs[0] : null;
+                    if (!current || String(current._id || "") !== nodeId || String(current.meshid || "") !== targetMeshId) {
+                        reject(new Error("MeshCentral did not confirm the requested device group membership."));
+                        return;
+                    }
+                    resolve(current);
+                });
+            } catch (error) { reject(error); }
+        });
+    }
+
     function persistMovedNode(db, web, node, targetMeshId) {
         if (!db || typeof db.Set !== "function" || typeof db.Get !== "function") {
             return Promise.reject(new Error("MeshCentral device move database API is unavailable."));
@@ -216,17 +245,9 @@ module.exports.createDeviceService = function (options) {
                 if (settled) return;
                 settled = true;
                 if (error) { reject(error instanceof Error ? error : new Error(String(error))); return; }
-                try {
-                    db.Get(node._id, function (getError, docs) {
-                        if (getError) { reject(getError instanceof Error ? getError : new Error(String(getError))); return; }
-                        var current = Array.isArray(docs) && docs.length === 1 ? docs[0] : null;
-                        if (!current || String(current.meshid || "") !== targetMeshId) {
-                            reject(new Error("MeshCentral did not persist the requested device group change."));
-                            return;
-                        }
-                        resolve(current);
-                    });
-                } catch (getError) { reject(getError); }
+                verifyCurrentMesh(db, node._id, targetMeshId).then(resolve, function () {
+                    reject(new Error("MeshCentral did not persist the requested device group change."));
+                });
             }
             try { db.Set(saved, finish); }
             catch (error) { finish(error); }
@@ -311,7 +332,11 @@ module.exports.createDeviceService = function (options) {
             if (!sourceMesh) throw new Error("Source device group is unavailable.");
             if (!targetMesh) throw new Error("Target device group is unavailable.");
             if (sourceId === targetId) {
-                return { message: "Device is already in the target group.", nodeId: resolved.nodeId, targetMeshId: targetId, alreadyCurrent: true };
+                // Cached or otherwise stale GetNodeWithRights data must not
+                // create a terminal completed request without DB evidence.
+                return verifyCurrentMesh(getMoveDatabase(), resolved.nodeId, targetId).then(function () {
+                    return { message: "Device is already in the target group.", nodeId: resolved.nodeId, targetMeshId: targetId, alreadyCurrent: true };
+                });
             }
             if (sourceMesh.mtype !== targetMesh.mtype) throw new Error("Source and target device groups are of different types.");
             if ((resolved.rights & MESHRIGHT_EDITMESH) === 0) throw new Error("You do not have permission to move this device from its current group.");
