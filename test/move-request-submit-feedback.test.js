@@ -11,14 +11,18 @@ assert.ok(source.indexOf('function setDialogStatus(status, state, message)') >= 
     "Move Request must reuse the shared semantic status owner on the injected native-dialog status node.");
 assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') >= 0,
     "Submit must expose an in-flight pending state in the native dialog.");
-assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")') >= 0 &&
-    source.indexOf('writeButtonText(submit, "OK")') >= 0 &&
-    source.indexOf('writeButtonText(submit, "OK"); submit.disabled = false;') >= 0 &&
-    source.indexOf('if (cancel) cancel.style.display = "none"') >= 0 &&
-    source.indexOf('target.hidden = true; note.hidden = true;') >= 0,
-    "Success must remain visible and the native dialog must offer OK instead of Cancel.");
-assert.ok(source.indexOf('setDialogStatus(status, "failed", error.message || String(error))') >= 0,
-    "Rejected submit must keep the native dialog open and expose the error in the same status node.");
+assert.ok(source.indexOf('finishRequest(true, "Zlecono przeniesienie " + summary)') >= 0 &&
+    source.indexOf('finishRequest(false, "Nie udalo sie zlecic przeniesienia " + summary') >= 0 &&
+    source.indexOf('fields.textContent = ""') >= 0 &&
+    source.indexOf('sourceMeshName || sourceMeshId') >= 0 &&
+    source.indexOf('option.textContent || option.value') >= 0,
+    "Success and error must replace the form with a specific source/device/target summary.");
+assert.ok(source.indexOf('writeButtonText(submit, "OK")') >= 0 &&
+    source.indexOf('cancelButtons.forEach(function (item) { item.button.style.setProperty("display", "none", "important"); })') >= 0 &&
+    source.indexOf('if (dialogManager.mode === "modern" && modernModal)') >= 0,
+    "Native OK must be the only visible action in the completed Modern/Classic dialog.");
+assert.ok(source.indexOf('setDialogStatus(status, ok ? "completed" : "failed", message)') >= 0,
+    "Failed submissions must render a terminal error message without retaining the submission form.");
 assert.ok(source.indexOf('var submitting = false; var submitted = false;') >= 0 &&
     source.indexOf('if (submitted) return true;') >= 0 &&
     source.indexOf('if (submitting) return false;') >= 0,
