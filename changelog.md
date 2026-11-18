@@ -1,3 +1,11 @@
+## 0.1.179 - 2026-11-18
+
+- Move Requests #265: oddzielono role requester od approver: każdy użytkownik z dostępem do danego urządzenia może utworzyć request do widocznej, zgodnej grupy bez MESHRIGHT_EDITMESH; zatwierdzający jest aktorem właściwego wykonania, nadal podlega natywnym uprawnieniom source/target.
+- Dialog natywny: po skutecznym wysłaniu przycisk Submit przechodzi w OK, pozwala zamknąć okno, a Cancel jest ukryty.
+- Regressions dla delegowanego zatwierdzania i nowego OK lifecycle. Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.179.md`.
+
 ## 0.1.178 - 2026-11-18
 
 - Move Requests #265: UI oferuje wyłącznie grupy docelowe, do których requester posiada natywne uprawnienie MESHRIGHT_EDITMESH, przy zachowaniu wymogu uprawnień do grupy źródłowej.
