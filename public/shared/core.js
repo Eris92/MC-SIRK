@@ -4,6 +4,26 @@
     var core = window.SirkPlatformCore;
     core.assetVersion = String(window.__SIRK_PLATFORM_VERSION__ || "0");
     core.activePlugin = core.activePlugin || null;
+
+    // Distinguish deliberate native menu navigation from a MeshCentral
+    // background go(1) caused by an asynchronous device/approval event.
+    // One capture owner for every SIRK workspace; no polling or timers.
+    core.nativeMenuNavigationIntent = false;
+    core.installNativeMenuNavigationIntent = function () {
+        if (core.nativeMenuIntentInstalled || typeof document.addEventListener !== "function") return;
+        core.nativeMenuIntentInstalled = true;
+        function capture(event) {
+            if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+            var target = event.target;
+            if (!target || typeof target.closest !== "function" ||
+                !target.closest("#MainMenuSpan, #page_leftbar")) return;
+            core.nativeMenuNavigationIntent = true;
+            Promise.resolve().then(function () { core.nativeMenuNavigationIntent = false; });
+        }
+        document.addEventListener("click", capture, true);
+        document.addEventListener("mouseup", capture, true);
+        document.addEventListener("keydown", capture, true);
+    };
     core.requestTimeoutMs = Math.max(1000, Number(core.requestTimeoutMs) || 15000);
 
     function svgData(svg) {
