@@ -4,6 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.179`](0.1.179.md) — Move Requests requester/approver separation and native dialog OK confirmation (#265);
+
 - [`0.1.178`](0.1.178.md) — Move Requests permissions preflight and server-authoritative submit guard (#265);
 
 - [`0.1.177`](0.1.177.md) — Move Requests verified current membership and authoritative inventory DB (#265), real smoke pending;
