@@ -108,12 +108,18 @@
                 var fromName = sourceMeshName || sourceMeshId || "unknown";
                 var toName = option.textContent || option.value;
                 var summary = deviceLabel + " z grupy " + fromName + " do grupy " + toName + ".";
-                module.api.post("submit", { nodeId: nodeId, nodeName: deviceLabel, sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function () {
+                module.api.post("submit", { nodeId: nodeId, nodeName: deviceLabel, sourceMeshId: sourceMeshId, sourceMeshName: sourceMeshName, targetMeshId: option.value, targetMeshName: option.textContent, note: note.value || "" }).then(function (response) {
                     submitting = false;
+                    var request = response && response.request;
+                    if (request && request.status === "failed") {
+                        var reason = request.result && request.result.message || "Request execution failed.";
+                        finishRequest(false, "Nie uda\u0142o si\u0119 zleci\u0107 przeniesienia " + summary + " " + reason);
+                        return;
+                    }
                     finishRequest(true, "Zlecono przeniesienie " + summary);
                 }).catch(function (error) {
                     submitting = false;
-                    finishRequest(false, "Nie udalo sie zlecic przeniesienia " + summary + " " + (error.message || String(error)));
+                    finishRequest(false, "Nie uda\u0142o si\u0119 zleci\u0107 przeniesienia " + summary + " " + (error.message || String(error)));
                 });
                 return false;
             }
