@@ -1,5 +1,11 @@
 [
   {
+    "version": "0.1.180",
+    "date": "2026-11-18",
+    "summary": "Move Requests confirmation/error summary; preserve SIRK workspace during background native go(1) without blocking intentional navigation (#265, #471).",
+    "notes": "docs/releases/0.1.180.md"
+  },
+  {
     "version": "0.1.179",
     "date": "2026-11-18",
     "summary": "Move Requests: separate requester from final approver native move execution, and replace Cancel with OK after successful submission (#265).",

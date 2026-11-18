@@ -53,8 +53,13 @@ assert.ok(shell.indexOf("core.activePlugin = moduleInstance") >= 0,
     "The newly opened module must become the single active owner.");
 assert.ok(shell.indexOf("state.active = true") >= 0 && shell.indexOf("state.active = false") >= 0,
     "Each module must maintain an explicit active state.");
-assert.ok(shell.indexOf("if (state.active) close(true)") >= 0,
-    "Native MeshCentral navigation must close an active SIRK module through goPageStart.");
+assert.ok(shell.indexOf("if (state.active && !state.preserveWorkspace) close(true)") >= 0 &&
+    shell.indexOf("!core.nativeMenuNavigationIntent") >= 0 &&
+    shell.indexOf("core.setLogicalView(definition.viewMode)") >= 0,
+    "Explicit native navigation must close SIRK while background go(1) preserves the active workspace.");
+assert.ok(core.indexOf("core.installNativeMenuNavigationIntent = function ()") >= 0 &&
+    core.indexOf("core.nativeMenuNavigationIntent = true") >= 0,
+    "One shared owner must distinguish native menu interaction from unsolicited page switches.");
 assert.ok(shell.indexOf("syncMenu();") >= 0,
     "Every module must synchronize only its own menu item after native redraws.");
 assert.ok(shell.indexOf("definition.order || definition.viewMode || 200") >= 0,

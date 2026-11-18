@@ -263,12 +263,23 @@ assert.ok(!leftDevices.classList.contains("lbbuttonsel"), "Devices must remain u
 assert.strictEqual(context.window.SirkPlatformCore.activePlugin, scripts, "My Scripts must replace Approval Center as workspace owner.");
 
 context.window.go(1);
+assert.strictEqual(context.window.SirkPlatformCore.activePlugin, scripts,
+    "A background native go(1) during a SIRK workspace must not switch to My Devices.");
+assert.strictEqual(context.window.xxcurrentView, 101,
+    "Background native refresh must restore the logical SIRK view.");
+assert.ok(scriptsLeft.classList.contains("lbbuttonsel"),
+    "Background refresh must preserve the selected SIRK menu.");
+context.window.SirkPlatformCore.nativeMenuNavigationIntent = true;
+context.window.go(1);
+context.window.SirkPlatformCore.nativeMenuNavigationIntent = false;
 assert.ok(leftDevices.classList.contains("lbbuttonsel"), "Native Classic Devices must be restored after leaving SIRK.");
 assert.ok(!scriptsLeft.classList.contains("lbbuttonsel"), "My Scripts must be unselected after native navigation.");
 assert.strictEqual(context.window.SirkPlatformCore.activePlugin, null, "No SIRK module may stay active after native navigation.");
 
 approval.open();
+context.window.SirkPlatformCore.nativeMenuNavigationIntent = true;
 context.window.go(1);
+context.window.SirkPlatformCore.nativeMenuNavigationIntent = false;
 thirdParty.classList.add("lbbuttonsel2");
 modules.forEach(function (module) { module.onNativePageEnd(901); });
 assert.ok(thirdParty.classList.contains("lbbuttonsel2"), "Inactive SIRK modules must not clear another plugin's selected menu entry.");

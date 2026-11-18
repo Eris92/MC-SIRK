@@ -4,6 +4,8 @@ MC-SIRK nie ma jeszcze pierwszego kompletnego product release.
 
 Aktualna linia development:
 
+- [`0.1.180`](0.1.180.md) — Move Request result dialog with PC/source/target and background native navigation guard (#265, #471);
+
 - [`0.1.179`](0.1.179.md) — Move Requests requester/approver separation and native dialog OK confirmation (#265);
 
 - [`0.1.178`](0.1.178.md) — Move Requests permissions preflight and server-authoritative submit guard (#265);

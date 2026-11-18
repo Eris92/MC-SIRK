@@ -1,3 +1,11 @@
+## 0.1.180 - 2026-11-18
+
+- Move Requests #265: po POST dialog zastępuje formularz osobnym komunikatem z nazwą PC i grupą źródłową/docelową oraz przyciskiem OK. Błąd requestu (HTTP lub terminalny failed) pokazuje analogiczne podsumowanie przy zachowaniu natywnego dialog ownera.
+- Shared UI #471: aktywny SIRK workspace nie znika po pośrednim/background natywnym go(1) (np. zdarzenie po zatwierdzeniu); świadoma nawigacja przez menu MeshCentral nadal zamyka zakładkę SIRK.
+- Development build bez taga/GitHub Release. Real Classic/Modern MeshCentral smoke wymagany do potwierdzenia.
+
+Current development notes: `docs/releases/0.1.180.md`.
+
 ## 0.1.179 - 2026-11-18
 
 - Move Requests #265: oddzielono role requester od approver: każdy użytkownik z dostępem do danego urządzenia może utworzyć request do widocznej, zgodnej grupy bez MESHRIGHT_EDITMESH; zatwierdzający jest aktorem właściwego wykonania, nadal podlega natywnym uprawnieniom source/target.

@@ -400,6 +400,7 @@
         findDeviceTitleTextNode: findDeviceTitleTextNode,
         formatDeviceTitle: formatDeviceTitle,
         create: function (definition) {
+            if (typeof core.installNativeMenuNavigationIntent === "function") core.installNativeMenuNavigationIntent();
             definition.viewMode = Number(definition.viewMode || VIEW_MODES[definition.key] || 960);
             var state = {
                 page: null,
@@ -602,10 +603,20 @@
                     if (device) device.onDeviceRefreshEnd(nodeId);
                 },
                 onNativePageStart: function (view) {
-                    if (state.active) close(true);
+                    state.preserveWorkspace = state.active && Number(view) === 1 &&
+                        core.activePlugin === moduleInstance && !!core.workspaceState &&
+                        !core.nativeMenuNavigationIntent;
+                    if (state.active && !state.preserveWorkspace) close(true);
                     if (device) device.onNativePageStart(view);
                 },
                 onNativePageEnd: function (view) {
+                    if (state.preserveWorkspace) {
+                        state.preserveWorkspace = false;
+                        if (Number(view) === 1 && state.active) {
+                            core.setLogicalView(definition.viewMode);
+                            if (typeof core.activateMenu === "function") core.activateMenu(definition.viewMode);
+                        }
+                    }
                     refreshMenu();
                     if (device) device.onNativePageEnd(view);
                 }
