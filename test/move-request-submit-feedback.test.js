@@ -13,7 +13,9 @@ assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') 
     "Submit must expose an in-flight pending state in the native dialog.");
 assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")') >= 0 &&
     source.indexOf('writeButtonText(submit, "OK")') >= 0 &&
-    source.indexOf('submit.disabled = false; if (cancel) cancel.style.display = "none"') >= 0,
+    source.indexOf('writeButtonText(submit, "OK"); submit.disabled = false;') >= 0 &&
+    source.indexOf('if (cancel) cancel.style.display = "none"') >= 0 &&
+    source.indexOf('target.hidden = true; note.hidden = true;') >= 0,
     "Success must remain visible and the native dialog must offer OK instead of Cancel.");
 assert.ok(source.indexOf('setDialogStatus(status, "failed", error.message || String(error))') >= 0,
     "Rejected submit must keep the native dialog open and expose the error in the same status node.");
