@@ -43,7 +43,7 @@
             var device = document.createElement("div"); device.className = "mc-move-dialog-device"; device.textContent = nodeName(nodeId); content.appendChild(device);
             var groupLabel = document.createElement("label"); groupLabel.setAttribute("for", "SirkMoveRequestTarget"); groupLabel.textContent = "Target group"; content.appendChild(groupLabel);
             var target = document.createElement("select"); target.id = "SirkMoveRequestTarget"; target.className = "mc-move-dialog-input";
-            var sourceMeshId = currentMeshId(nodeId); var sourceMesh = (result.meshes || []).filter(function (mesh) { return String(mesh.id) === sourceMeshId; })[0]; var sourceMeshName = sourceMesh && sourceMesh.name || "";
+            var sourceMeshId = String(result.sourceMeshId || currentMeshId(nodeId)); var sourceMeshName = String(result.sourceMeshName || "");
             (result.meshes || []).filter(function (mesh) { return !sourceMeshId || String(mesh.id) !== sourceMeshId; }).forEach(function (mesh) { var option = document.createElement("option"); option.value = mesh.id; option.textContent = mesh.name; target.appendChild(option); }); content.appendChild(target);
             var noteLabel = document.createElement("label"); noteLabel.setAttribute("for", "SirkMoveRequestNote"); noteLabel.textContent = "Requester note"; content.appendChild(noteLabel);
             var note = document.createElement("textarea"); note.id = "SirkMoveRequestNote"; note.className = "mc-move-dialog-input"; note.rows = 4; content.appendChild(note);
@@ -64,7 +64,7 @@
 
             var originalSubmitText = readButtonText(submit); var originalSubmitDisabled = !!submit.disabled;
             writeButtonText(submit, "Submit request"); submit.disabled = !target.options.length;
-            if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group is available."); }
+            if (!target.options.length) { target.disabled = true; setDialogStatus(status, "failed", "No target group with move permissions is available."); }
 
             var submitting = false; var submitted = false; var cleaned = false; var modernModal = document.getElementById("xxAddAgentModal");
             function cleanup() {

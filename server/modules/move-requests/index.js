@@ -185,7 +185,11 @@ module.exports.createModule = function (context) {
         apiGet: function (asset, req, user) {
             if (!user) throw new Error("Permission denied.");
             if (asset === "meshes") {
-                return { ok: true, meshes: meshRows(user) };
+                var nodeId = shared.cleanText(req && req.query && req.query.nodeId, 300);
+                return context.device.eligibleMoveTargets(user, nodeId).then(function (result) {
+                    return { ok: true, meshes: result.meshes, sourceMeshId: result.sourceMeshId,
+                        sourceMeshName: result.sourceMeshName };
+                });
             }
             if (asset === "requests") {
                 var q = Object.assign({}, req && req.query || {}, {
@@ -206,10 +210,15 @@ module.exports.createModule = function (context) {
         apiPost: function (asset, req, user) {
             var value = req && req.body || {};
             if (asset === "submit") {
-                return context.approval.submit("moverequests", user, value, value.note)
-                    .then(function (request) {
-                        return { ok: true, request: request };
-                    });
+                return context.device.eligibleMoveTargets(user, value.nodeId).then(function (result) {
+                    var targetId = String(value.targetMeshId || "");
+                    if (!result.meshes.some(function (mesh) { return mesh.id === targetId; })) {
+                        throw new Error("You do not have permission to move this device to the target group.");
+                    }
+                    return context.approval.submit("moverequests", user, value, value.note);
+                }).then(function (request) {
+                    return { ok: true, request: request };
+                });
             }
             if (asset === "settings") {
                 if (!shared.isSiteAdmin(user)) throw new Error("Permission denied.");

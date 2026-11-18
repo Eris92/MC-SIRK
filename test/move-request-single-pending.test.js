@@ -38,6 +38,15 @@ var context = {
     source: "test",
     device: {
         visibleMeshes: function () { return visibleMeshes; },
+        eligibleMoveTargets: function (actingUser, nodeId) {
+            return Promise.resolve({
+                sourceMeshId: "mesh/domain/source",
+                sourceMeshName: "Source",
+                meshes: Object.keys(visibleMeshes).filter(function (id) {
+                    return id !== "mesh/domain/source" && id !== "mesh/domain/target-b-denied";
+                }).map(function (id) { return { id: id, name: visibleMeshes[id].name }; })
+            });
+        },
         visibleNodes: function () { return { nodes: [], meshes: Object.keys(visibleMeshes).map(function (id) { return visibleMeshes[id]; }) }; },
         moveNodeToMesh: function (requesterId, nodeId, targetMeshId) {
             executionCalls.push({ nodeId: nodeId, targetMeshId: targetMeshId, requesterId: requesterId });
@@ -111,6 +120,20 @@ function seed(status, id, nodeId, type) {
 
 (async function () {
     await move.initialize();
+
+    var preflight = await move.apiGet("meshes", { query: { nodeId: "node/domain/host-a" } }, user);
+    assert.strictEqual(preflight.sourceMeshId, "mesh/domain/source");
+    assert.strictEqual(preflight.meshes.some(function (mesh) { return mesh.id === "mesh/domain/source"; }), false);
+    var beforeDeniedSubmit = fs.existsSync(databasePath) ? readRows().length : 0;
+    await assert.rejects(function () {
+        return move.apiPost("submit", { body: payload("node/domain/host-a", "mesh/domain/target-b-denied") }, user);
+    }, /permission to move/);
+    assert.strictEqual(fs.existsSync(databasePath) ? readRows().length : 0, beforeDeniedSubmit,
+        "Forbidden destination must not create an approval request.");
+    var throughApi = await move.apiPost("submit", {
+        body: payload("node/domain/host-api", "mesh/domain/target-a")
+    }, user);
+    assert.strictEqual(throughApi.ok, true, "Allowed destination must retain the submit contract.");
 
     var first = await submit("node/domain/host-a", "mesh/domain/target-a");
     var second = await submit("node/domain/host-a", "mesh/domain/target-b");

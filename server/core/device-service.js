@@ -319,6 +319,33 @@ module.exports.createDeviceService = function (options) {
         try { web.parent.DispatchEvent(targets, source || parent, event); } catch (error) {}
     }
 
+    function eligibleMoveTargets(user, nodeId) {
+        return resolveNode(user, nodeId).then(function (resolved) {
+            var meshes = getMeshes();
+            var sourceId = String(resolved.node && resolved.node.meshid || "");
+            var source = meshes[sourceId];
+            var allowed = [];
+            if (!source || (resolved.rights & MESHRIGHT_EDITMESH) === 0) {
+                return { sourceMeshId: sourceId, sourceMeshName: source && source.name || "", meshes: [] };
+            }
+            var web = resolved.webServer;
+            if (!web || typeof web.GetMeshRights !== "function") {
+                throw new Error("MeshCentral device group rights API is unavailable.");
+            }
+            var visible = visibleMeshes(user);
+            Object.keys(visible).forEach(function (id) {
+                var mesh = visible[id];
+                var meshId = String(mesh && mesh._id || id);
+                if (meshId === sourceId || meshId.split("/")[1] !== resolved.domain.id ||
+                    !meshes[meshId] || meshes[meshId].mtype !== source.mtype) return;
+                if ((Number(web.GetMeshRights(user, meshId)) & MESHRIGHT_EDITMESH) === 0) return;
+                allowed.push({ id: meshId, name: mesh.name || mesh.mname || meshId });
+            });
+            allowed.sort(function (a, b) { return a.name.localeCompare(b.name); });
+            return { sourceMeshId: sourceId, sourceMeshName: source.name || sourceId, meshes: allowed };
+        });
+    }
+
     function moveNodeToMesh(userId, nodeId, targetMeshId) {
         var user = shared.findUser(parent, userId);
         if (!user) return Promise.reject(new Error("Move request user is unavailable."));
@@ -404,6 +431,7 @@ module.exports.createDeviceService = function (options) {
         getMeshes: getMeshes,
         getWebServer: getWebServer,
         moveNodeToMesh: moveNodeToMesh,
+        eligibleMoveTargets: eligibleMoveTargets,
         resolveNode: resolveNode,
         sendRunCommands: sendRunCommands,
         visibleMeshes: visibleMeshes,

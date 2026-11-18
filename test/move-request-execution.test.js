@@ -164,6 +164,19 @@ function fixture() {
     assert.strictEqual(divergent.setCalls.length, 0,
         "Move must not write to a different database than the device inventory owner.");
 
+    var eligible = fixture();
+    var permitted = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
+    assert.deepStrictEqual(permitted.meshes.map(function (mesh) { return mesh.id; }), [eligible.targetMesh._id],
+        "Only same-type target meshes with edit rights are selectable.");
+    assert.strictEqual(permitted.sourceMeshId, eligible.sourceMesh._id);
+    eligible.setTargetRights(0x00000008);
+    var deniedTargets = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
+    assert.strictEqual(deniedTargets.meshes.length, 0, "View rights must not enable move to a target.");
+    eligible.setTargetRights(1);
+    eligible.setSourceRights(0x00000008);
+    var deniedSourceTargets = await eligible.service.eligibleMoveTargets(eligible.user, eligible.nodeId);
+    assert.strictEqual(deniedSourceTargets.meshes.length, 0, "Missing source edit rights must disable all moves.");
+
     var cross = fixture();
     await assert.rejects(function () {
         return cross.service.moveNodeToMesh(cross.user._id, cross.nodeId, "mesh/other/target");
