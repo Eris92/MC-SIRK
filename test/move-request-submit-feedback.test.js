@@ -11,19 +11,23 @@ assert.ok(source.indexOf('function setDialogStatus(status, state, message)') >= 
     "Move Request must reuse the shared semantic status owner on the injected native-dialog status node.");
 assert.ok(source.indexOf('setDialogStatus(status, "pending", "Submitting...")') >= 0,
     "Submit must expose an in-flight pending state in the native dialog.");
-assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")') >= 0,
-    "Success must remain visible in the same native dialog status node.");
+assert.ok(source.indexOf('setDialogStatus(status, "completed", "Request sent.")') >= 0 &&
+    source.indexOf('writeButtonText(submit, "OK")') >= 0 &&
+    source.indexOf('submit.disabled = false; if (cancel) cancel.style.display = "none"') >= 0,
+    "Success must remain visible and the native dialog must offer OK instead of Cancel.");
 assert.ok(source.indexOf('setDialogStatus(status, "failed", error.message || String(error))') >= 0,
     "Rejected submit must keep the native dialog open and expose the error in the same status node.");
 assert.ok(source.indexOf('var submitting = false; var submitted = false;') >= 0 &&
-    source.indexOf('if (submitting || submitted) return false;') >= 0,
-    "Rapid repeated submit must remain guarded before issuing another POST.");
+    source.indexOf('if (submitted) return true;') >= 0 &&
+    source.indexOf('if (submitting) return false;') >= 0,
+    "Repeated clicks must not resubmit and the OK action must allow native close.");
 assert.ok(source.indexOf('dialogManager.show("xxAddAgentModal", "idx_dlgOkButton", submitRequest)') >= 0 &&
     source.indexOf('return false;', source.indexOf('function submitRequest()')) >= 0,
     "Modern submit must use the native showModal callback and return false so async status remains visible.");
 assert.ok(source.indexOf('event.stopImmediatePropagation') >= 0 &&
-    source.indexOf('submit.addEventListener("click", onClassicSubmit, true)') >= 0,
-    "Classic submit must intercept setDialogMode OK before dialogclose while Modern remains callback-owned.");
+    source.indexOf('submit.addEventListener("click", onClassicSubmit, true)') >= 0 &&
+    source.indexOf('if (submitted) { cleanup(); return; }') >= 0,
+    "Classic must intercept submission but allow native OK closure after success; Modern remains callback-owned.");
 assert.ok(source.indexOf('modernModal.addEventListener("hidden.bs.modal", cleanup)') >= 0 &&
     source.indexOf('cancel.addEventListener("click", cleanup, true)') >= 0 &&
     source.indexOf('close.addEventListener("click", cleanup, true)') >= 0,
