@@ -1,3 +1,11 @@
+## 0.1.178 - 2026-11-18
+
+- Move Requests #265: UI oferuje wyłącznie grupy docelowe, do których requester posiada natywne uprawnienie MESHRIGHT_EDITMESH, przy zachowaniu wymogu uprawnień do grupy źródłowej.
+- Serwer ponownie weryfikuje uprawnienia przed utworzeniem Approval requestu, zamiast akceptować niemożliwy request i kończyć go statusem failed dopiero po zatwierdzeniu.
+- Targeted tests dla niedozwolonej grupy i uprawnien source/target. Development build bez taga/GitHub Release.
+
+Current development notes: `docs/releases/0.1.178.md`.
+
 ## 0.1.177 - 2026-11-18
 
 - Move Requests #265: walidacja idempotentnego move przez rzeczywisty odczyt DB zamiast zaufania potencjalnie nieaktualnemu GetNodeWithRights; zapis i weryfikacja wykonują się na tym samym ownerze DB co inventory.
