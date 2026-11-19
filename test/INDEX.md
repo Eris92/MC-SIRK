@@ -25,6 +25,7 @@ Wybierz test na podstawie zmienianego kontraktu. Nie czytaj wszystkich testów p
 | import Nessus CSV, snapshot i dopasowanie hostów | `vulnerability-import.test.js`, `vulnerability-route.test.js` |
 | Podatności w Commands i alert/lista w Quick | `commands-vulnerabilities.test.js`, `quick-vulnerability-alert.test.js` |
 | raport Nessus wszystkich hostów (My Scripts) | `nessus-all-hosts-report.test.js`, `windows-nessus-report-smoke.ps1` |
+| kompletność scripts/INDEX.md | `scripts-index.test.js` |
 
 Po teście celowanym uruchom `npm test`, jeżeli zmiana wpływa na wiele warstw albo wspólny kontrakt.
 
